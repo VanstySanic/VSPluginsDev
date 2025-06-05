@@ -1,0 +1,17 @@
+.idea/
+.vs/
+.vsconfig
+*.DotSettings.user
+**/Binaries/
+**/Intermediate/
+**/Saved/
+**/DerivedDataCache/
+Build/
+Platforms/
+Config/
+Content/Collections/
+Content/Developers/
+Content/__ExternalActors__
+Content/__ExternalObjects__
+Content/Dev/
+Plugins/Developer/
