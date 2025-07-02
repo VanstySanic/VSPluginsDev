@@ -8,7 +8,7 @@
 
 class UVSGameplayTagController;
 
-UINTERFACE()
+UINTERFACE(MinimalAPI)
 class UVSGameplayTagControllerInterface : public UInterface
 {
 	GENERATED_BODY()

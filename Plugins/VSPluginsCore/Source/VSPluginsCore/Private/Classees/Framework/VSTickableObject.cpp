@@ -4,7 +4,7 @@
 
 UVSTickableObject::UVSTickableObject(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, bAllowTicking(true)
+	, bCanEverTicking(true)
 {
 	PrimaryObjectTick.bCanEverTick = true;
 	PrimaryObjectTick.bStartWithTickEnabled = true;
@@ -13,6 +13,7 @@ UVSTickableObject::UVSTickableObject(const FObjectInitializer& ObjectInitializer
 
 void UVSTickableObject::RegisterTickFunction()
 {
+	if (!bCanEverTicking) return;
 	PrimaryObjectTick.RegisterAndSetup(this);
 	if (!PrimaryObjectTick.IsTickFunctionRegistered()) return;
 	PrimaryObjectTick.CanExecuteTick.BindUObject(this, &UVSTickableObject::CanTick);
@@ -25,6 +26,7 @@ void UVSTickableObject::RegisterTickFunction()
 
 void UVSTickableObject::UnregisterTickFunction()
 {
+	if (!bCanEverTicking) return;
 	PrimaryObjectTick.UnregisterAndCleanup();
 	PrimaryObjectTick.CanExecuteTick.Unbind();
 	PrimaryObjectTick.OnExecuteTick.Unbind();
@@ -32,7 +34,7 @@ void UVSTickableObject::UnregisterTickFunction()
 
 bool UVSTickableObject::CanTick_Implementation() const
 {
-	return bAllowTicking;
+	return true;
 }
 
 void UVSTickableObject::Tick_Implementation(float DeltaTime)

@@ -15,6 +15,12 @@ UVSActorLibrary::UVSActorLibrary(const FObjectInitializer& ObjectInitializer)
 {
 }
 
+bool UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(AActor* Actor)
+{
+	if (!Actor) return false;
+	return (Actor->HasAuthority() || Actor->GetLocalRole() == ROLE_AutonomousProxy);
+}
+
 UActorComponent* UVSActorLibrary::GetActorComponentByName(const AActor* Actor, FName ComponentName)
 {
 	if (!Actor) return nullptr;
@@ -42,6 +48,28 @@ UCameraComponent* UVSActorLibrary::GetActiveCameraFromActor(const AActor* Actor)
 			return Component;
 		}
 	}
+	
+	if (const APawn* Pawn = Cast<ACharacter>(Actor))
+	{
+		if (AController* Controller = Pawn->GetController())
+		{
+			return GetActiveCameraFromActor(Controller->GetViewTarget());
+		}		
+	}
+
+	if (const AController* Controller = Cast<AController>(Actor))
+	{
+		return GetActiveCameraFromActor(Controller->GetViewTarget());
+	}	
+
+	if (const APlayerState* PlayerState = Cast<APlayerState>(Actor))
+	{
+		if (APlayerController* PlayerController = PlayerState->GetPlayerController())
+		{
+			return GetActiveCameraFromActor(PlayerController->GetViewTarget());
+		}
+	}
+	
 	return nullptr;
 }
 

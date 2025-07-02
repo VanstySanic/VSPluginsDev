@@ -1,0 +1,118 @@
+﻿// Copyright VanstySanic. All Rights Reserved.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
+#include "NativeGameplayTags.h"
+#include "UObject/Object.h"
+#include "VSGameplayTypes.generated.h"
+
+namespace EVSGameplayTagControllerTags
+{
+	VSPLUGINSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_TagsUpdated);
+}
+
+USTRUCT(BlueprintType)
+struct VSPLUGINSCORE_API FVSGameplayTagEventQuery
+{
+	GENERATED_BODY()
+
+	FVSGameplayTagEventQuery()
+		: bMatchExactTagEvent(true)
+		, bEmptyEventAsPass(true)
+		, bTagEventsEmptyAsPass(false)
+		, bTagQueryEmptyAsPass(true)
+	{
+	}
+
+	bool Matches(const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent = FGameplayTag::EmptyTag) const;
+	
+	/** Work as an entry. Requires TagEvent in the array. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTagContainer TagEvents;
+
+	/** Gameplay tag query to check. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTagQuery TagQuery;
+
+	/** If true, only exact tag event will match. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	uint8 bMatchExactTagEvent : 1;
+	
+	/** If true, empty tag will be considered as a pass to the tag events. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	uint8 bEmptyEventAsPass : 1;
+	
+	/** If true and TagEvents array is empty, any non-empty tag event will be considered as trigger. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	uint8 bTagEventsEmptyAsPass : 1;
+
+	/** If true and TagQuery is empty, any tag states will match the query. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	uint8 bTagQueryEmptyAsPass : 1;
+};
+
+/**
+ * Useful in multi-layer TMap with key type of gameplay tags.
+ */
+USTRUCT(BlueprintType)
+struct VSPLUGINSCORE_API FVSGameplayTagKey
+{
+	GENERATED_BODY()
+
+	FVSGameplayTagKey(const TArray<FGameplayTag>& GameplayTagKeys = TArray<FGameplayTag>())
+		: Keys(GameplayTagKeys)
+	{
+	}
+
+	bool operator==(const FVSGameplayTagKey& Other) const
+	{
+		return Keys == Other.Keys;
+	}
+
+	friend uint32 GetTypeHash(const FVSGameplayTagKey& InKey)
+	{
+		return GetTypeHash(InKey.Keys);
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ShowOnlyInnerProperties))
+	TArray<FGameplayTag> Keys;
+};
+
+/** Used to get user index or user id. */
+struct VSPLUGINSCORE_API FVSUserQueryParams
+{
+	FVSUserQueryParams() = delete;
+
+	FVSUserQueryParams(uint32 InUserIndex) : Key(KeyType::UserIndex) { Data.UserIndex = InUserIndex; }
+	FVSUserQueryParams(const FPlatformUserId& InUserId) : Key(KeyType::UserId) { Data.UserId = InUserId; }
+	FVSUserQueryParams(ULocalPlayer* InLocalPlayer) : Key(KeyType::LocalPlayer) { Data.LocalPlayer = InLocalPlayer; }
+	FVSUserQueryParams(APlayerController* InPlayerController) : Key(KeyType::PlayerController) { Data.PlayerController = InPlayerController; }
+
+	uint32 GetUserIndex() const;
+	FPlatformUserId GetUserId() const;
+
+private:
+	enum class KeyType
+	{
+		None,
+		UserIndex,
+		UserId,
+		LocalPlayer,
+		PlayerController
+	};
+	
+	union DataUnion
+	{
+		uint32 UserIndex;
+		FPlatformUserId UserId;
+		ULocalPlayer* LocalPlayer;
+		APlayerController* PlayerController;
+
+		DataUnion() : UserIndex(INDEX_NONE) {}
+	};
+
+	KeyType Key = KeyType::None;
+	DataUnion Data;
+};

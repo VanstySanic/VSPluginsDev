@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class VSMovementSystem : ModuleRules
+public class VSCameraSystem : ModuleRules
 {
-	public VSMovementSystem(ReadOnlyTargetRules Target) : base(Target)
+	public VSCameraSystem(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
@@ -27,8 +27,6 @@ public class VSMovementSystem : ModuleRules
 			{
 				"Core",
 				"GameplayTags",
-				"DeveloperSettings",
-				"NetCore",
 				// ... add other public dependencies that you statically link with here ...
 				"VSPluginsCore",
 			}

@@ -1,15 +1,15 @@
 ﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "VSMovementSystem.h"
+#include "VSPluginsCoreModule.h"
 
-#define LOCTEXT_NAMESPACE "FVSMovementSystemModule"
+#define LOCTEXT_NAMESPACE "FVSPluginsCoreModule"
 
-void FVSMovementSystemModule::StartupModule()
+void FVSPluginsCoreModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 }
 
-void FVSMovementSystemModule::ShutdownModule()
+void FVSPluginsCoreModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
@@ -17,4 +17,4 @@ void FVSMovementSystemModule::ShutdownModule()
 
 #undef LOCTEXT_NAMESPACE
 	
-IMPLEMENT_MODULE(FVSMovementSystemModule, VSMovementSystem)
+IMPLEMENT_MODULE(FVSPluginsCoreModule, VSPluginsCore)

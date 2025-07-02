@@ -23,8 +23,10 @@ public:
 	virtual bool IsSupportedForNetworking() const override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void BeginDestroy() override;
+	virtual int32 GetFunctionCallspace(UFunction* Function, FFrame* Stack) override;
+	virtual bool CallRemoteFunction(UFunction* Function, void* Parms, FOutParmRec* OutParms, FFrame* Stack) override;
 #if WITH_EDITOR
-	virtual bool Modify( bool bAlwaysMarkDirty = true ) override;
+	virtual bool Modify( bool bAlwaysMarkDirty = true) override;
 #endif
 	//~ End UObject Interface.
 
@@ -79,7 +81,7 @@ protected:
 	void EndPlay();
 
 public:
-	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void DestroyFeature();
 	
 	UFUNCTION(BlueprintCallable, Category = "Feature")
@@ -117,7 +119,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	UVSObjectFeature* GetSubFeatureByName(FName Name, bool bRecursive = true) const;
 
-	
+
+	UFUNCTION(BlueprintCallable, Category = "Feature")
+	void SetActive(bool bNewActive);
+
+	UFUNCTION(BlueprintCallable, Category = "Feature")
+	bool IsActive() const { return bIsActive; }
+
+protected:
+	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
+	void OnFeatureActivated();
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
+	void OnFeatureInactivated();
+
+public:
 	template <typename T>
 	T* FindSubFeatureByClass(TSubclassOf<T> Class = T::StaticClass(), bool bRecursive = true) const;
 
@@ -131,13 +147,19 @@ private:
 	
 	bool AddSubFeatureInternal(UVSObjectFeature* InFeature);
 
+	UFUNCTION()
+	void OnRep_bIsActive();
+
 public:
 	/** Literal name for the feature to distinguish between features. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Feature")
 	FName FeatureName = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Feature")
+	bool bAutoActivate = true;
 	
 private:
-	UPROPERTY(EditAnywhere, Category = "Feature")
+	UPROPERTY(EditAnywhere, Instanced, Category = "Feature", meta = (DisplayPriority = 1))
 	TArray<TObjectPtr<UVSObjectFeature>> SubFeatures;
 	
 	/**
@@ -148,7 +170,7 @@ private:
 	uint8 bReplicates:1;
 
 	/** Whether the feature is currently active. */
-	UPROPERTY(Replicated, DisplayName = "Feature Replicates")
+	UPROPERTY(ReplicatedUsing = "OnRep_bIsActive")
 	uint8 bIsActive : 1;
 
 	uint8 bIsRegistered: 1;

@@ -40,7 +40,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Tick")
 	FVSObjectTickFunction PrimaryObjectTick;
 
-	/** You can force disable the object tick function by set this to false. */
+	/** If true, the tick function won't register. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tick")
-	uint8 bAllowTicking : 1;
+	bool bCanEverTicking = true;
 };

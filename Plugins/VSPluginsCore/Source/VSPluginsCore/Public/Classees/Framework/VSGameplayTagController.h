@@ -21,7 +21,12 @@ class VSPLUGINSCORE_API UVSGameplayTagController : public UVSObjectFeature, publ
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameplayTagsUpdatedDelegate);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGameplayTagCountSignChangedDelegate, const FGameplayTag&, Tag, bool, bExists);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGameplayTagEventDelegate, const FGameplayTag&, TagEvent);
-
+	
+protected:
+	virtual void Initialize_Implementation() override;
+	virtual void Uninitialize_Implementation() override;
+	virtual void Tick_Implementation(float DeltaTime) override;
+	
 public:
 	//~ Begin IGameplayTagAssetInterface.
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
@@ -34,13 +39,16 @@ public:
 	virtual UVSGameplayTagController* GetGameplayTagController() const override { return const_cast<UVSGameplayTagController*>(this); }
 	//~ End IGameplayTagAssetInterface.
 
-	/** Checks whether the query matches the owned GameplayTags */
-	UFUNCTION(BlueprintCallable, Category = "GameplayTags", meta = (AutoCreateRefTerm = "TagQuery"))
-	bool MatchesGameplayTagQuery(const FGameplayTagQuery& TagQuery) const;
-
+	UFUNCTION(BlueprintCallable, Category = "GameplayTags")
+	FGameplayTagContainer GetGameplayTagContainer() const;
+	
 	/** Returns the number of instances of a given tag */
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags", meta = (AutoCreateRefTerm = "TagToCheck"))
 	int32 GetTagCount(FGameplayTag TagToCheck) const;
+
+	/** Checks whether the query matches the owned GameplayTags */
+	UFUNCTION(BlueprintCallable, Category = "GameplayTags", meta = (AutoCreateRefTerm = "TagQuery"))
+	bool MatchesGameplayTagQuery(const FGameplayTagQuery& TagQuery) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags", meta = (AutoCreateRefTerm = "GameplayTag"))
 	void AddTag(const FGameplayTag& GameplayTag, int32 Count = 1);
@@ -69,27 +77,45 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags", meta = (AutoCreateRefTerm = "GameplayTags"))
 	void RemoveReplicatedTags(const FGameplayTagContainer& GameplayTags);
 
-	/** Manual call for OnTagsUpdated. */
+	/** Notify that the tags have been updated. */
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags")
-	void NotifyTagsUpdated(bool bAllowCleanNotify = false);
-	
-	UFUNCTION(BlueprintCallable, Category = "GameplayTags", meta = (AutoCreateRefTerm = "GameplayTag"))
-	void NotifyTagEvent(const FGameplayTag& TagEvent);
+	void NotifyTagsUpdated(bool bAllowCleanNotify = false, bool bMulticast = false);
+
+	/** Trigger a gameplay tag event notify. */
+	UFUNCTION(BlueprintCallable, Category = "GameplayTags", meta = (AutoCreateRefTerm = "TagEvent"))
+	void NotifyTagEvent(const FGameplayTag& TagEvent, bool bMulticast = false);
 	
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags")
 	bool IsDirty() const { return bTagsDirty; }
-	
-protected:
-	virtual void Initialize_Implementation() override;
-	virtual void Uninitialize_Implementation() override;
-	virtual void Tick_Implementation(float DeltaTime) override;
 
-	UFUNCTION(BlueprintCallable, Category = "GameplyaTags")
-	UAbilitySystemComponent* GetAbilitySystemComponent();
+#if WITH_EDITORONLY_DATA
+	UFUNCTION(BlueprintCallable, Category = "GameplayTags")
+	FString ToDebugString();
+#endif
 
 private:
+	UAbilitySystemComponent* GetAbilitySystemComponent() const;
+
 	UFUNCTION()
 	void OnAnyTagChange(const FGameplayTag Tag, int32 Count);
+	
+	UFUNCTION(Server, Reliable)
+	void SetReplicatedTagExists_Server(const FGameplayTag& GameplayTag, bool bExists);
+
+	UFUNCTION(Server, Reliable)
+	void SetReplicatedTagsExist_Server(const FGameplayTagContainer& GameplayTags, bool bExists);
+
+	UFUNCTION(Server, Reliable)
+	void NotifyTagsUpdated_Server(bool bAllowCleanNotify);
+	
+	UFUNCTION(Server, Reliable)
+	void NotifyTagsUpdated_Multicast(bool bAllowCleanNotify);
+	
+	UFUNCTION(Server, Reliable)
+	void NotifyTagEvent_Server(const FGameplayTag& TagEvent);
+	
+	UFUNCTION(Server, Reliable)
+	void NotifyTagEvent_Multicast(const FGameplayTag& TagEvent);
 
 public:
 	/** Broadcast when any tag count reaches 0 or move away from zero. */
@@ -125,6 +151,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameplayTags", meta = (EditCondition = "bNotifyTagNewOrClearForAll"))
 	FGameplayTagContainer TagsToNotifyNewOrClear;
 
+#if WITH_EDITORONLY_DATA
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
+	bool bPrintDebugString = false;
+#endif
+	
 private:
 	TWeakObjectPtr<UAbilitySystemComponent> AbilitySystemComponentPrivate;
 	FDelegateHandle OnAnyTagChangeDelegateHandle;

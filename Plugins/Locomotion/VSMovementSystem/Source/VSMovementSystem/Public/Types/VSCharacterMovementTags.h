@@ -73,7 +73,7 @@ namespace EVSMovementState
 	VSMOVEMENTSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(WallRun_Finish);
 }
 
-namespace EVSMovementNotify
+namespace EVSMovementEvent
 {
 	VSMOVEMENTSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(StateChange_MovementMode);
 	VSMOVEMENTSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(StateChange_Stance);

@@ -5,6 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "Libraries/VSActorLibrary.h"
 #include "Libraries/VSPrivablicLibrary.h"
+#include "Types/VSGameplayTypes.h"
 
 VS_DECLARE_PRIVABLIC_MEMBER(UAbilitySystemComponent, GameplayTagCountContainer, FGameplayTagCountContainer);
 VS_DECLARE_PRIVABLIC_MEMBER(FGameplayTagCountContainer, OnAnyTagChangeDelegate, FOnGameplayEffectTagCountChanged);
@@ -41,13 +42,13 @@ void UVSGameplayTagController::Tick_Implementation(float DeltaTime)
 	Super::Tick_Implementation(DeltaTime);
 
 	if (bNotifyTagsUpdateDuringTicks && IsDirty()) { NotifyTagsUpdated(); }
-}
 
-UAbilitySystemComponent* UVSGameplayTagController::GetAbilitySystemComponent()
-{
-	return AbilitySystemComponentPrivate.IsValid()
-		? AbilitySystemComponentPrivate.Get()
-		: UVSActorLibrary::GetAbilitySystemComponentFormActor(GetOwnerActor());
+#if WITH_EDITORONLY_DATA
+	if (bPrintDebugString)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, DeltaTime, FColor::Blue, ToDebugString());
+	}
+#endif
 }
 
 void UVSGameplayTagController::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
@@ -73,6 +74,13 @@ bool UVSGameplayTagController::HasAnyMatchingGameplayTags(const FGameplayTagCont
 bool UVSGameplayTagController::MatchesGameplayTagQuery(const FGameplayTagQuery& TagQuery) const
 {
 	return AbilitySystemComponentPrivate.IsValid() ? AbilitySystemComponentPrivate->MatchesGameplayTagQuery(TagQuery) : false;
+}
+
+FGameplayTagContainer UVSGameplayTagController::GetGameplayTagContainer() const
+{
+	FGameplayTagContainer GameplayTagContainer;
+	GetOwnedGameplayTags(GameplayTagContainer);
+	return GameplayTagContainer;
 }
 
 int32 UVSGameplayTagController::GetTagCount(FGameplayTag TagToCheck) const
@@ -113,41 +121,103 @@ void UVSGameplayTagController::SetTagCount(const FGameplayTag& GameplayTag, int3
 void UVSGameplayTagController::AddReplicatedTag(const FGameplayTag& GameplayTag)
 {
 	if (!AbilitySystemComponentPrivate.IsValid()) { return; }
-	SetTagCount(GameplayTag, 1);
-	AbilitySystemComponentPrivate->AddReplicatedLooseGameplayTag(GameplayTag);
+	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	{
+		SetReplicatedTagExists_Server(GameplayTag, true);
+	}
+	else
+	{
+		SetTagCount(GameplayTag, 1);
+	}
 }
 
 void UVSGameplayTagController::AddReplicatedTags(const FGameplayTagContainer& GameplayTags)
 {
 	if (!AbilitySystemComponentPrivate.IsValid()) { return; }
-	for (const FGameplayTag& GameplayTag : GameplayTags.GetGameplayTagArray()) { SetTagCount(GameplayTag, 1); }
-	AbilitySystemComponentPrivate->AddReplicatedLooseGameplayTags(GameplayTags);
+	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	{
+		SetReplicatedTagsExist_Server(GameplayTags, true);
+	}
+	else
+	{
+		for (const FGameplayTag& GameplayTag : GameplayTags.GetGameplayTagArray()) { SetTagCount(GameplayTag, 1); }
+	}
 }
 
 void UVSGameplayTagController::RemoveReplicatedTag(const FGameplayTag& GameplayTag)
 {
 	if (!AbilitySystemComponentPrivate.IsValid()) { return; }
-	SetTagCount(GameplayTag, 0);
-	AbilitySystemComponentPrivate->RemoveReplicatedLooseGameplayTag(GameplayTag);
+	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	{
+		SetReplicatedTagExists_Server(GameplayTag, false);
+	}
+	else
+	{
+		SetTagCount(GameplayTag, 0);
+	}
 }
 
 void UVSGameplayTagController::RemoveReplicatedTags(const FGameplayTagContainer& GameplayTags)
 {
 	if (!AbilitySystemComponentPrivate.IsValid()) { return; }
-	for (const FGameplayTag& GameplayTag : GameplayTags.GetGameplayTagArray()) { SetTagCount(GameplayTag, 0); }
-	AbilitySystemComponentPrivate->RemoveReplicatedLooseGameplayTags(GameplayTags);
+	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	{
+		SetReplicatedTagsExist_Server(GameplayTags, false);
+	}
+	else
+	{
+		for (const FGameplayTag& GameplayTag : GameplayTags.GetGameplayTagArray()) { SetTagCount(GameplayTag, 0); }
+	}
 }
 
-void UVSGameplayTagController::NotifyTagsUpdated(bool bAllowCleanNotify)
+void UVSGameplayTagController::NotifyTagsUpdated(bool bAllowCleanNotify, bool bMulticast)
 {
 	if (!bAllowCleanNotify && !IsDirty()) return;
-	bTagsDirty = false;
-	OnTagsUpdated.Broadcast();
+	if (bMulticast && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	{
+		NotifyTagsUpdated_Server(bAllowCleanNotify);
+	}
+	else
+	{
+		bTagsDirty = false;
+		NotifyTagEvent(EVSGameplayTagControllerTags::Event_TagsUpdated);
+		OnTagsUpdated.Broadcast();
+	}
 }
 
-void UVSGameplayTagController::NotifyTagEvent(const FGameplayTag& TagEvent)
+void UVSGameplayTagController::NotifyTagEvent(const FGameplayTag& TagEvent, bool bMulticast)
 {
-	OnTagEventNotified.Broadcast(TagEvent);
+	if (bMulticast && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	{
+		NotifyTagEvent(TagEvent);
+	}
+	else
+	{
+		OnTagEventNotified.Broadcast(TagEvent);
+	}
+}
+
+#if WITH_EDITORONLY_DATA
+FString UVSGameplayTagController::ToDebugString()
+{
+	FString String = "Tags in actor " + GetOwnerActor()->GetName() + " ("
+		+ UEnum::GetValueAsString(GetOwnerActor()->GetLocalRole()) + " / "
+		+ UEnum::GetValueAsString(GetOwnerActor()->GetRemoteRole()) + "):";
+	FGameplayTagContainer GameplayTags;
+	GetOwnedGameplayTags(GameplayTags);
+	for (const FGameplayTag& GameplayTag : GameplayTags.GetGameplayTagArray())
+	{
+		String += "\n\t" + GameplayTag.ToString();
+	}
+	return String;
+}
+#endif
+
+UAbilitySystemComponent* UVSGameplayTagController::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponentPrivate.IsValid()
+		? AbilitySystemComponentPrivate.Get()
+		: UVSActorLibrary::GetAbilitySystemComponentFormActor(GetOwnerActor());
 }
 
 void UVSGameplayTagController::OnAnyTagChange(const FGameplayTag Tag, int32 Count)
@@ -155,4 +225,39 @@ void UVSGameplayTagController::OnAnyTagChange(const FGameplayTag Tag, int32 Coun
 	OnTagNewOrClear.Broadcast(Tag, Count > 0);
 	if (bNotifyTagsUpdateInstantly) { NotifyTagsUpdated(); }
 	else { bTagsDirty = true; }
+}
+
+void UVSGameplayTagController::SetReplicatedTagExists_Server_Implementation(const FGameplayTag& GameplayTag, bool bExists)
+{
+	SetTagCount(GameplayTag, bExists ? 1 : 0);
+	AbilitySystemComponentPrivate->SetReplicatedLooseGameplayTagCount(GameplayTag, bExists ? 1 : 0);
+}
+
+void UVSGameplayTagController::SetReplicatedTagsExist_Server_Implementation(const FGameplayTagContainer& GameplayTags, bool bExists)
+{
+	for (const FGameplayTag& GameplayTag : GameplayTags.GetGameplayTagArray())
+	{
+		SetTagCount(GameplayTag, bExists ? 1 : 0);
+		AbilitySystemComponentPrivate->SetReplicatedLooseGameplayTagCount(GameplayTag, bExists ? 1 : 0);
+	}
+}
+
+void UVSGameplayTagController::NotifyTagsUpdated_Server_Implementation(bool bAllowCleanNotify)
+{
+	NotifyTagsUpdated_Multicast(bAllowCleanNotify);
+}
+
+void UVSGameplayTagController::NotifyTagsUpdated_Multicast_Implementation(bool bAllowCleanNotify)
+{
+	NotifyTagsUpdated(bAllowCleanNotify);
+}
+
+void UVSGameplayTagController::NotifyTagEvent_Server_Implementation(const FGameplayTag& TagEvent)
+{
+	NotifyTagEvent_Multicast(TagEvent);
+}
+
+void UVSGameplayTagController::NotifyTagEvent_Multicast_Implementation(const FGameplayTag& TagEvent)
+{
+	NotifyTagEvent(TagEvent, false);
 }

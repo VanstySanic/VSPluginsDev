@@ -1,4 +1,4 @@
-﻿#include "VSPluginsCoreEditor.h"
+﻿#include "VSPluginsCoreEditorModule.h"
 
 #define LOCTEXT_NAMESPACE "FVSPluginsCoreEditorModule"
 

@@ -43,6 +43,7 @@ void UVSObjectFeature::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 	SharedParams.bIsPushBased = true;
 
 	DOREPLIFETIME_WITH_PARAMS_FAST(UVSObjectFeature, bIsActive, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(UVSObjectFeature, bReplicates, SharedParams);
 }
 
 void UVSObjectFeature::BeginDestroy()
@@ -63,6 +64,38 @@ void UVSObjectFeature::BeginDestroy()
 	if (UVSObjectFeature* OwnerFeature = GetOwnerFeature()) { OwnerFeature->RemoveSubFeature(this); }
 	
 	Super::BeginDestroy();
+}
+
+int32 UVSObjectFeature::GetFunctionCallspace(UFunction* Function, FFrame* Stack)
+{
+	if ((Function->FunctionFlags & FUNC_Static))
+	{
+		return GEngine->GetGlobalFunctionCallspace(Function, this, Stack);
+	}
+
+	AActor* MyOwner = GetOwnerActor();
+	return (MyOwner ? MyOwner->GetFunctionCallspace(Function, Stack) : FunctionCallspace::Local);
+}
+
+bool UVSObjectFeature::CallRemoteFunction(UFunction* Function, void* Parms, FOutParmRec* OutParms, FFrame* Stack)
+{
+	bool bProcessed = false;
+	if (AActor* MyOwner = GetOwnerActor())
+	{
+		FWorldContext* const Context = GEngine->GetWorldContextFromWorld(GetWorld());
+		if (Context != nullptr)
+		{
+			for (FNamedNetDriver& Driver : Context->ActiveNetDrivers)
+			{
+				if (Driver.NetDriver != nullptr && Driver.NetDriver->ShouldReplicateFunction(MyOwner, Function))
+				{
+					Driver.NetDriver->ProcessRemoteFunction(MyOwner, Function, Parms, OutParms, Stack, this);
+					bProcessed = true;
+				}
+			}
+		}
+	}
+	return bProcessed;
 }
 
 bool UVSObjectFeature::Modify(bool bAlwaysMarkDirty)
@@ -163,7 +196,11 @@ void UVSObjectFeature::RegisterFeature()
 		if (bOwnerActorBeginPlayStarted && bOwnerComponentBeginPlayStarted && bOwnerFeatureBeginPlayStarted)
 		{
 			if (!HasBeenInitialized()) { Initialize(); }
-			if (!HasBegunPlay()) { BeginPlay(); }
+			if (!HasBegunPlay())
+			{
+				BeginPlay();
+				SetActive(bAutoActivate);
+			}
 		}
 	}
 
@@ -233,7 +270,7 @@ void UVSObjectFeature::EndPlay_Implementation()
 	bHasBegunPlay = false;
 }
 
-void UVSObjectFeature::DestroyFeature_Implementation()
+void UVSObjectFeature::DestroyFeature()
 {
 	TArray<TObjectPtr<UVSObjectFeature>> SubFeaturesToDestroy = SubFeatures;
 	for (TObjectPtr<UVSObjectFeature> SubFeature : SubFeaturesToDestroy)
@@ -263,7 +300,7 @@ void UVSObjectFeature::SetIsReplicated(bool bShouldReplicate)
 	bReplicates = bShouldReplicate;
 	if (LIKELY(HasAnyFlags(RF_NeedInitialization)))
 	{
-		// MARK_PROPERTY_DIRTY_FROM_NAME(UVSObjectFeature, bReplicates, this);
+		MARK_PROPERTY_DIRTY_FROM_NAME(UVSObjectFeature, bReplicates, this);
 	}
 	else if (AActor* Actor = GetOwnerActor())
 	{
@@ -352,11 +389,28 @@ UVSObjectFeature* UVSObjectFeature::GetSubFeatureByName(FName Name, bool bRecurs
 	return nullptr;
 }
 
+void UVSObjectFeature::SetActive(bool bNewActive)
+{
+	if (bIsActive == bNewActive) return;
+	bIsActive = bNewActive;
+	bIsActive ? OnFeatureActivated() : OnFeatureInactivated();
+}
+
+void UVSObjectFeature::OnFeatureActivated_Implementation()
+{
+	
+}
+
+void UVSObjectFeature::OnFeatureInactivated_Implementation()
+{
+	
+}
+
 void UVSObjectFeature::BeginReplication()
 {
-	if (UActorComponent* OwnerComponent = GetOwnerComponent())
+	if (GetOwnerComponent() && GetOwnerComponent()->GetIsReplicated())
 	{
-		OwnerComponent->AddReplicatedSubObject(this);
+		GetOwnerComponent()->AddReplicatedSubObject(this);
 	}
 	else if (AActor* Actor = GetOwnerActor())
 	{
@@ -366,9 +420,9 @@ void UVSObjectFeature::BeginReplication()
 
 void UVSObjectFeature::EndReplication()
 {
-	if (UActorComponent* OwnerComponent = GetOwnerComponent())
+	if (GetOwnerComponent() && GetOwnerComponent()->IsReplicatedSubObjectRegistered(this))
 	{
-		OwnerComponent->RemoveReplicatedSubObject(this);
+		GetOwnerComponent()->RemoveReplicatedSubObject(this);
 	}
 	else if (AActor* Actor = GetOwnerActor())
 	{
@@ -384,4 +438,9 @@ bool UVSObjectFeature::AddSubFeatureInternal(UVSObjectFeature* InFeature)
 	if (IsRegistered() && !InFeature->IsRegistered()) { InFeature->RegisterFeature(); }
 	
 	return true;
+}
+
+void UVSObjectFeature::OnRep_bIsActive()
+{
+	bIsActive ? OnFeatureActivated() : OnFeatureInactivated();
 }
