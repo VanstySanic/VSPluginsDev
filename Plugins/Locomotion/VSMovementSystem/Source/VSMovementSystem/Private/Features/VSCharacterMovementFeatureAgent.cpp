@@ -7,10 +7,23 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Interfaces/VSGameplayTagControllerInterface.h"
+#include "Libraries/VSPrivablicLibrary.h"
+#include "Net/UnrealNetwork.h"
+
+VS_DECLARE_PRIVABLIC_MEMBER(UCharacterMovementComponent, Acceleration, FVector);
+VS_DECLARE_PRIVABLIC_MEMBER(APawn, LastControlInputVector, FVector);
 
 UVSCharacterMovementFeatureAgent::UVSCharacterMovementFeatureAgent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+}
+
+void UVSCharacterMovementFeatureAgent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(UVSCharacterMovementFeatureAgent, ReplicatedControlRotation, COND_SimulatedOnly);
+	DOREPLIFETIME_CONDITION(UVSCharacterMovementFeatureAgent, ReplicatedMovementInput, COND_SimulatedOnly);
 }
 
 void UVSCharacterMovementFeatureAgent::Initialize_Implementation()
@@ -18,18 +31,16 @@ void UVSCharacterMovementFeatureAgent::Initialize_Implementation()
 	ChrMovFeatureAgentPrivate = Cast<UVSCharacterMovementFeatureAgent>(this);
 
 	CharacterPrivate = GetTypedOuter<ACharacter>();
-	check(CharacterPrivate.IsValid());
+	check(CharacterPrivate.IsValid() && CharacterPrivate->Implements<UVSGameplayTagControllerInterface>());
 	
 	CharacterMovementComponentPrivate = CharacterPrivate->GetCharacterMovement();
-	check(CharacterMovementComponentPrivate.IsValid());
+	check(CharacterMovementComponentPrivate.IsValid() );
 	
-	if (CharacterPrivate->Implements<UVSGameplayTagControllerInterface>())
-	{
-		GameplayTagControllerPrivate = IVSGameplayTagControllerInterface::Execute_GetGameplayTagController_BP(CharacterPrivate.Get());
-	}
+	GameplayTagControllerPrivate = IVSGameplayTagControllerInterface::Execute_GetGameplayTagController(CharacterPrivate.Get());
 	check(GameplayTagControllerPrivate.IsValid());
 	
 	CharacterPrivate->MovementModeChangedDelegate.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnCharacterMovementChanged);
+	if (CharacterPrivate->HasAuthority()) { ReplicatedControlRotation = CharacterPrivate->GetControlRotation(); }
 
 	GetGameplayTagController()->OnTagsUpdated.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnMovementTagsUpdated);
 	GetGameplayTagController()->OnTagEventNotified.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnMovementTagEventNotified);
@@ -56,10 +67,17 @@ void UVSCharacterMovementFeatureAgent::BeginPlay_Implementation()
 void UVSCharacterMovementFeatureAgent::UpdateMovement_Implementation(float DeltaTime)
 {
 	Super::UpdateMovement_Implementation(DeltaTime);
-
-	if (DeltaTime < UE_KINDA_SMALL_NUMBER) return;
-
-	MovementData.RealAcceleration = (GetVelocity() - CharacterMovementComponentPrivate->GetLastUpdateVelocity()) / DeltaTime;
+	
+	MovementData.RealAcceleration = (GetVelocity() - MovementData.CachedVelocity) / DeltaTime;
+	MovementData.CachedVelocity = GetVelocity();
+	
+	CheckMovingAgainstWall2D();
+	
+	if (GetOwnerActor()->HasAuthority())
+	{
+		ReplicatedControlRotation = CharacterPrivate->GetControlRotation();
+		ReplicatedMovementInput = GetCharacterMovement()->GetCurrentAcceleration();
+	}
 }
 
 void UVSCharacterMovementFeatureAgent::CheckMovingAgainstWall2D()

@@ -21,6 +21,9 @@ class VSMOVEMENTSYSTEM_API UVSCharacterMovementFeatureAgent : public UVSCharacte
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnMovementModeChangedDelegate, const FGameplayTag&, NewMovementMode, const FGameplayTag&, PrevMovementMode);
 
+public:
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
 protected:
 	virtual void Initialize_Implementation() override;
 	virtual void Uninitialize_Implementation() override;
@@ -36,8 +39,17 @@ private:
 public:
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FOnMovementModeChangedDelegate OnMovementModeChanged;
-	
+
 private:
+
+private:
+	UPROPERTY(Replicated)
+	FRotator ReplicatedControlRotation = FRotator::ZeroRotator;
+	
+	UPROPERTY(Replicated)
+	FVector ReplicatedMovementInput = FVector::ZeroVector;
+
+	
 	TWeakObjectPtr<ACharacter> CharacterPrivate;
 	TWeakObjectPtr<UCharacterMovementComponent> CharacterMovementComponentPrivate;
 	TWeakObjectPtr<UVSGameplayTagController> GameplayTagControllerPrivate;
@@ -52,5 +64,7 @@ private:
 		FGameplayTag PrevMovementMode;
 		FVector RealAcceleration = FVector::ZeroVector;
 		uint8 bIsMovingAgainstWall2D : 1;
+
+		FVector CachedVelocity = FVector::ZeroVector;
 	} MovementData;
 };

@@ -34,3 +34,10 @@ void UVSCameraFeatureAgent::Initialize_Implementation()
 	}
 	check(CameraComponentPrivate.IsValid());
 }
+
+void UVSCameraFeatureAgent::BeginPlay_Implementation()
+{
+	Super::BeginPlay_Implementation();
+
+	CameraComponentPrivate->SetAbsolute(bCameraAbsoluteLocation, bCameraAbsoluteRotation, bCameraAbsoluteScale);
+}

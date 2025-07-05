@@ -18,6 +18,20 @@ bool FVSGameplayTagEventQuery::Matches(const FGameplayTagContainer& GameplayTags
 	return true;
 }
 
+bool FVSGameplayTagEventQueryContainer::Matches(const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent) const
+{
+	if (Queries.IsEmpty() && bQueriesEmptyAsPass) return true;
+	for (const FVSGameplayTagEventQuery& Query : Queries)
+	{
+		if (Query.Matches(GameplayTags, TagEvent))
+		{
+			return true;
+		}
+	}
+	
+	return false;
+}
+
 uint32 FVSUserQueryParams::GetUserIndex() const
 {
 	switch (Key)

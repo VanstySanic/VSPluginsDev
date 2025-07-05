@@ -47,11 +47,6 @@ void UVSCharacterMovementFeature::Tick_Implementation(float DeltaTime)
 	}
 }
 
-UVSCharacterMovementFeatureAgent* UVSCharacterMovementFeature::GetMovementAgentFeature_Implementation() const
-{
-	return ChrMovFeatureAgentPrivate.IsValid() ? ChrMovFeatureAgentPrivate.Get() : nullptr;
-}
-
 UCharacterMovementComponent* UVSCharacterMovementFeature::GetCharacterMovement() const
 {
 	return ChrMovFeatureAgentPrivate.IsValid() ? ChrMovFeatureAgentPrivate->CharacterMovementComponentPrivate.Get() : nullptr;
@@ -135,7 +130,12 @@ float UVSCharacterMovementFeature::GetSpeedZ() const
 
 FVector UVSCharacterMovementFeature::GetMovementInput() const
 {
-	return GetCharacterMovement() ? GetCharacterMovement()->GetCurrentAcceleration() : FVector::ZeroVector;
+	if (!GetCharacterMovement()) return FVector::ZeroVector;
+	if (!UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && ChrMovFeatureAgentPrivate.IsValid())
+	{
+		return ChrMovFeatureAgentPrivate->ReplicatedMovementInput;
+	}
+	return GetCharacterMovement()->GetCurrentAcceleration();
 }
 
 FVector UVSCharacterMovementFeature::GetMovementInput2D() const
@@ -187,6 +187,12 @@ FVector UVSCharacterMovementFeature::GetUpDirection() const
 FVector UVSCharacterMovementFeature::GetGravityDirection() const
 {
 	return GetCharacter() ? GetCharacter()->GetGravityDirection() : FVector::DownVector;
+}
+
+FRotator UVSCharacterMovementFeature::GetControlRotation() const
+{
+	if (GetController()) { return GetController()->GetControlRotation(); }
+	return ChrMovFeatureAgentPrivate.IsValid() ? ChrMovFeatureAgentPrivate->ReplicatedControlRotation : FRotator::ZeroRotator;
 }
 
 void UVSCharacterMovementFeature::UpdateMovement_Implementation(float DeltaTime)

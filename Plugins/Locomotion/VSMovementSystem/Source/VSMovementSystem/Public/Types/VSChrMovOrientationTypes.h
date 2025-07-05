@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "VSCharacterMovementTags.h"
+#include "Types/VSGameplayTypes.h"
 #include "Types/Animation/VSAnimSequenceReference.h"
 #include "UObject/Object.h"
 #include "VSChrMovOrientationTypes.generated.h"
@@ -25,6 +26,9 @@ struct FVSOrientationEvaluateCommonParamNames
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName UpDirection = FName("DownDirection");
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName AimTargetComponent = FName("AimTargetComponent");
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName AimTargetPoint = FName("AimTargetPoint");
 };
@@ -101,20 +105,26 @@ struct VSMOVEMENTSYSTEM_API FVSTurnInPlaceSettings2D : public FTableRowBase
 	TMap<FVector2D, FDataTableRowHandle> AngledAnims;
 };
 
-/** Data that needs to pass to the animation module. */
+/** Turn in place data that is unchanged during process used in animation. This may be replicated. */
 USTRUCT(BlueprintType)
-struct FVSTurnInPlaceAnimParams2D
+struct FVSTurnInPlaceSnappedParams2D
 {
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FDataTableRowHandle AnimRow;
+	FVSDataTableRowHandleWrap SettingsRow;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVSDataTableRowHandleWrap AnimRow;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float PlayRateMultiplier = 1.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 ActionID = 0;
+	float DeltaAngle = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, NotReplicated)
+	int32 ActionID = INDEX_NONE;
 };
 #pragma endregion 
 

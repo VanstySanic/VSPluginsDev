@@ -26,9 +26,9 @@ public class VSMovementSystem : ModuleRules
 			new string[]
 			{
 				"Core",
+				"NetCore",
 				"GameplayTags",
 				"DeveloperSettings",
-				"NetCore",
 				// ... add other public dependencies that you statically link with here ...
 				"VSPluginsCore",
 			}

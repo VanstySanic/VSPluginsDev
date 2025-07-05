@@ -53,6 +53,64 @@ struct VSPLUGINSCORE_API FVSGameplayTagEventQuery
 	uint8 bTagQueryEmptyAsPass : 1;
 };
 
+USTRUCT(BlueprintType)
+struct VSPLUGINSCORE_API FVSGameplayTagEventQueryContainer
+{
+	GENERATED_BODY()
+	
+	FVSGameplayTagEventQueryContainer()
+		: bQueriesEmptyAsPass(true)
+	{
+	}
+
+	/** Pass if matches one. */
+	bool Matches(const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent = FGameplayTag::EmptyTag) const;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FVSGameplayTagEventQuery> Queries;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	uint8 bQueriesEmptyAsPass : 1;
+};
+
+USTRUCT(BlueprintType)
+struct FVSDataTableRowHandleWrap
+{
+	GENERATED_BODY()
+
+	FVSDataTableRowHandleWrap(const FDataTableRowHandle& Row = FDataTableRowHandle())
+		: Row(Row)
+	{
+	}
+
+	friend uint8 GetTypeHash(const FVSDataTableRowHandleWrap& Wrap)
+	{
+		return HashCombine(GetTypeHash(Wrap.Row.DataTable), GetTypeHash(Wrap.Row.RowName.ToString()));
+	}
+	
+	template <typename T>
+	T* GetRow(const TCHAR* ContextString = nullptr) const;
+
+	bool IsNull() const
+	{
+		return Row.IsNull();
+	}
+
+	bool operator!=(const FVSDataTableRowHandleWrap& Other) const
+	{
+		return Row != Other.Row;
+	}
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ShowOnlyInnerProperties))
+	FDataTableRowHandle Row;
+};
+
+template <typename T>
+T* FVSDataTableRowHandleWrap::GetRow(const TCHAR* ContextString) const
+{
+	return Row.GetRow<T>(ContextString);
+}
+
 /**
  * Useful in multi-layer TMap with key type of gameplay tags.
  */

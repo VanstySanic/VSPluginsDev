@@ -100,6 +100,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void SetIsReplicated(bool bShouldReplicate);
 	
+	UFUNCTION(BlueprintCallable, Category = "Feature")
+	bool GetIsReplicated() const { return bReplicates; }
 		
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* AddSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName = NAME_None);

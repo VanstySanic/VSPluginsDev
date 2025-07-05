@@ -19,10 +19,13 @@ class VSMOVEMENTSYSTEM_API UVSChrMovFeature_WalkingMovement : public UVSCharacte
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStanceChangedSignature, const FGameplayTag&, NewStance, const FGameplayTag&, PrevStance);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGaitChangedSignature, const FGameplayTag&, NewGait, const FGameplayTag&, PrevGait);
 
-protected:
+public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+
+protected:
 	virtual void BeginPlay_Implementation() override;
 	virtual void Tick_Implementation(float DeltaTime) override;
+	virtual bool CanUpdateMovement_Implementation() const override;
 	virtual void OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent) override;
 
 public:
@@ -71,7 +74,9 @@ private:
 	void RefreshHalfHeight();
 	void ApplyMovementBaseSettings(const FVSMovementBaseSettings& Settings);
 	void RefreshMovementBaseSettings(const FGameplayTag& TagEvent);
-
+	void SetStanceInternal(const FGameplayTag& InStance);
+	void SetGaitInternal(const FGameplayTag& InGait, const FGameplayTag& InStance);
+	
 	UFUNCTION(Server, Reliable)
 	void SetStance_Server(const FGameplayTag& InStance);
 
@@ -84,9 +89,7 @@ private:
 	UFUNCTION()
 	void OnRep_ReplicatedStance();
 	
-	void SetStanceInternal(const FGameplayTag& InStance);
-	void SetGaitInternal(const FGameplayTag& InGait, const FGameplayTag& InStance);
-	
+
 public:
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable, Category = "Movement")
 	FOnStanceChangedSignature OnStanceChanged;
@@ -113,12 +116,22 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Movement")
 	FVSMovementBaseSettings DefaultMovementBaseSettings;
 	
+	/** Used when movement settings is refreshed and no valid one is selected. */
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	FVSMovementBaseSettings DefaultCrouchedMovementBaseSettings;
+	
 	UPROPERTY(EditAnywhere, Category = "Movement")
 	TMap<FVSMovementBaseSettings, FVSGameplayTagEventQuery> QueriedMovementBaseSettings;
 
 	/** Works as an entry to define when to refresh the tagged movement base settings. */
 	UPROPERTY(EditAnywhere, Category = "Movement")
-	TArray<FVSGameplayTagEventQuery> RefreshMovementBaseSettingsQueries;
+	FVSGameplayTagEventQueryContainer RefreshMovementBaseSettingsQueries;
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float MovementInputDirectionInterpSpeed = 16;
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float MovementInputDirectionInterpMaxTimeStepping = 0.0166667;
 	
 private:
 	UPROPERTY(ReplicatedUsing = "OnRep_ReplicatedStance")
@@ -126,13 +139,17 @@ private:
 	
 	struct FMovementData
 	{
+		FMovementData()
+		{
+		}
+		
 		FGameplayTag Stance;
 		FGameplayTag PrevStance;
 		/** <Stance, Gait> */
 		TMap<FGameplayTag, FGameplayTag> Gaits;
 		TMap<FGameplayTag, FGameplayTag> PrevGaits;
 		FVSMovementBaseSettings CurrentMovementBaseSettings;
-
+		
 		/** Only use once and reset. */
 		FGameplayTag DesiredUncrouchedStance = FGameplayTag::EmptyTag;
 		float RelativeOffsetToMeshZ = 0.f;

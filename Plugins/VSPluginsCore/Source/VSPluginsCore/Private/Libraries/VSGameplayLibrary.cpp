@@ -18,3 +18,8 @@ bool UVSGameplayLibrary::MatchesGameplayTagEventQuery(const FVSGameplayTagEventQ
 {
 	return Query.Matches(GameplayTags, TagEvent);
 }
+
+bool UVSGameplayLibrary::MatchesGameplayTagEventQueries(const FVSGameplayTagEventQueryContainer& Queries, const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent)
+{
+	return Queries.Matches(GameplayTags, TagEvent);
+}

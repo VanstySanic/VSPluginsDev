@@ -1,6 +1,8 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Features/Movement/VSChrMovFeature_WalkingMovement.h"
+
+#include "VSCharacterMovementUtils.h"
 #include "Classees/Framework/VSGameplayTagController.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
@@ -21,6 +23,9 @@ UVSChrMovFeature_WalkingMovement::UVSChrMovFeature_WalkingMovement(const FObject
 
 	DefaultUncrouchedStance = EVSStance::Standing;
 	StancedHalfHeights.Emplace(EVSStance::Crouching, 60.f);
+
+	DefaultMovementBaseSettings.MaxSpeed = 600.f;
+	DefaultCrouchedMovementBaseSettings.MaxSpeed = 240.f;
 }
 
 
@@ -41,12 +46,12 @@ void UVSChrMovFeature_WalkingMovement::BeginPlay_Implementation()
 	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
 	MovementData.Stance = DefaultStance;
 	MovementData.Gaits = DefaultGaits;
-	MovementData.CurrentMovementBaseSettings = DefaultMovementBaseSettings;
+	MovementData.CurrentMovementBaseSettings = IsCrouching() ? DefaultCrouchedMovementBaseSettings : DefaultMovementBaseSettings;
 	ReplicatedStance = DefaultStance;
 	GameplayTagController->SetTagCount(DefaultStance, 1);
 	GameplayTagController->SetTagCount(GetGait(DefaultStance), 1);
 	RefreshHalfHeight();
-	ApplyMovementBaseSettings(DefaultMovementBaseSettings);
+	ApplyMovementBaseSettings(MovementData.CurrentMovementBaseSettings);
 	RefreshMovementBaseSettings(EVSMovementEvent::StateChange_Stance);
 }
 
@@ -55,6 +60,11 @@ void UVSChrMovFeature_WalkingMovement::Tick_Implementation(float DeltaTime)
 	Super::Tick_Implementation(DeltaTime);
 
 	ListenToCrouchState();
+}
+
+bool UVSChrMovFeature_WalkingMovement::CanUpdateMovement_Implementation() const
+{
+	return Super::CanUpdateMovement_Implementation() && IsWalkingMode();
 }
 
 void UVSChrMovFeature_WalkingMovement::OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent)
@@ -214,19 +224,10 @@ void UVSChrMovFeature_WalkingMovement::RefreshMovementBaseSettings(const FGamepl
 	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
 	FGameplayTagContainer GameplayTags;
 	GameplayTagController->GetOwnedGameplayTags(GameplayTags);
-	bool bShouldRefreshMovementBaseSettings = false;
-	for (const FVSGameplayTagEventQuery& RefreshMovementBaseSettingsQuery : RefreshMovementBaseSettingsQueries)
-	{
-		if (RefreshMovementBaseSettingsQuery.Matches(GameplayTags, TagEvent))
-		{
-			bShouldRefreshMovementBaseSettings = true;
-			break;
-		}
-	}
 
-	if (bShouldRefreshMovementBaseSettings)
+	if (RefreshMovementBaseSettingsQueries.Matches(GameplayTags, TagEvent))
 	{
-		MovementData.CurrentMovementBaseSettings = DefaultMovementBaseSettings;
+		MovementData.CurrentMovementBaseSettings = IsCrouching() ? DefaultCrouchedMovementBaseSettings : DefaultMovementBaseSettings;
 		for (auto& Settings : QueriedMovementBaseSettings)
 		{
 			if (Settings.Value.Matches(GameplayTags, TagEvent))
@@ -237,21 +238,6 @@ void UVSChrMovFeature_WalkingMovement::RefreshMovementBaseSettings(const FGamepl
 		}
 		ApplyMovementBaseSettings(MovementData.CurrentMovementBaseSettings);
 	}
-}
-
-void UVSChrMovFeature_WalkingMovement::SetGait_Server_Implementation(const FGameplayTag& InGait, const FGameplayTag& InStance)
-{
-	SetGait_Multicast(InGait, InStance);
-}
-
-void UVSChrMovFeature_WalkingMovement::SetGait_Multicast_Implementation(const FGameplayTag& InGait, const FGameplayTag& InStance)
-{
-	SetGaitInternal(InGait, InStance);
-}
-
-void UVSChrMovFeature_WalkingMovement::OnRep_ReplicatedStance()
-{
-	SetStanceInternal(ReplicatedStance);
 }
 
 void UVSChrMovFeature_WalkingMovement::SetStanceInternal(const FGameplayTag& InStance)
@@ -306,4 +292,19 @@ void UVSChrMovFeature_WalkingMovement::SetGaitInternal(const FGameplayTag& InGai
 		GameplayTagController->NotifyTagEvent(EVSMovementEvent::StateChange_Gait);
 		OnGaitChanged.Broadcast(InGait, PrevGait);
 	}
+}
+
+void UVSChrMovFeature_WalkingMovement::SetGait_Server_Implementation(const FGameplayTag& InGait, const FGameplayTag& InStance)
+{
+	SetGait_Multicast(InGait, InStance);
+}
+
+void UVSChrMovFeature_WalkingMovement::SetGait_Multicast_Implementation(const FGameplayTag& InGait, const FGameplayTag& InStance)
+{
+	SetGaitInternal(InGait, InStance);
+}
+
+void UVSChrMovFeature_WalkingMovement::OnRep_ReplicatedStance()
+{
+	SetStanceInternal(ReplicatedStance);
 }

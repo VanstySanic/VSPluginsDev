@@ -25,6 +25,10 @@
 		{
 			"Name": "UNTLink",
 			"Enabled": true
+		},
+		{
+			"Name": "AnimationWarping",
+			"Enabled": true
 		}
 	]
 }

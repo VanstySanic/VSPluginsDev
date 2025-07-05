@@ -26,8 +26,12 @@ public class VSMovementAnim : ModuleRules
 			new string[]
 			{
 				"Core",
+				"GameplayTags",
+				"AnimGraphRuntime",
+				"AnimationLocomotionLibraryRuntime",
 				// ... add other public dependencies that you statically link with here ...
 				"VSPluginsCore",
+				"VSMovementSystem",
 			}
 			);
 			

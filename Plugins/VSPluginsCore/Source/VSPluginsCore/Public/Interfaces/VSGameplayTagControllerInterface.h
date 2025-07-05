@@ -21,13 +21,7 @@ class VSPLUGINSCORE_API IVSGameplayTagControllerInterface
 {
 	GENERATED_BODY()
 
-public:
-	virtual UVSGameplayTagController* GetGameplayTagController() const { return nullptr; }
-	
 protected:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, DisplayName = "GetGameplayTagController", Category = "GameplayTags")
-	UVSGameplayTagController* GetGameplayTagController_BP() const;
-
-private:
-	virtual UVSGameplayTagController* GetGameplayTagController_BP_Implementation() const final;
+	UVSGameplayTagController* GetGameplayTagController() const;
 };

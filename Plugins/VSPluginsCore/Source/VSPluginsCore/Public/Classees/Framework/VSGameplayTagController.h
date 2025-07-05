@@ -14,7 +14,7 @@ class UAbilitySystemComponent;
  * Gives control for gameplay tags in ability system component.
  */
 UCLASS(DisplayName = "Feature.GameplayTagController")
-class VSPLUGINSCORE_API UVSGameplayTagController : public UVSObjectFeature, public IGameplayTagAssetInterface, public IVSGameplayTagControllerInterface
+class VSPLUGINSCORE_API UVSGameplayTagController : public UVSObjectFeature, public IGameplayTagAssetInterface
 {
 	GENERATED_UCLASS_BODY()
 
@@ -33,10 +33,6 @@ public:
 	virtual bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const override;
 	virtual bool HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
 	virtual bool HasAnyMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const override;
-	//~ End IGameplayTagAssetInterface.
-
-	//~ Begin IVSGameplayTagControllerInterface.
-	virtual UVSGameplayTagController* GetGameplayTagController() const override { return const_cast<UVSGameplayTagController*>(this); }
 	//~ End IGameplayTagAssetInterface.
 
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags")

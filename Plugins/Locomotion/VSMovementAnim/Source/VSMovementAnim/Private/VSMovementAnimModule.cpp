@@ -1,6 +1,6 @@
 ﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "VSMovementAnim.h"
+#include "VSMovementAnimModule.h"
 
 #define LOCTEXT_NAMESPACE "FVSMovementAnimModule"
 

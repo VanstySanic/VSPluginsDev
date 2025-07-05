@@ -93,7 +93,7 @@ FTransform UVSCameraFeature::GetCameraRelatedTransformByType(const EVSCameraRela
 		break;
 		
 	case EVSCameraRelatedTransformType::AttachedComponent:
-		if (USceneComponent* Component = Camera->GetAttachParent()) { AnsTransform = Component->GetComponentTransform(); }
+		if (USceneComponent* Component = Camera->GetAttachParent()) { AnsTransform = Component->GetSocketTransform(Camera->GetAttachSocketName()); }
 		break;
 
 	case EVSCameraRelatedTransformType::Custom:

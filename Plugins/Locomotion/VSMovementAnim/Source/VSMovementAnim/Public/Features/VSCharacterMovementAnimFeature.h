@@ -3,42 +3,44 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Classees/Framework/VSObjectFeature.h"
-#include "GameplayTags.h"
-#include "VSCharacterMovementInterface.h"
-#include "VSCharacterMovementFeature.generated.h"
+#include "VSCharacterMovementAnimFeature.generated.h"
 
 class UVSGameplayTagController;
+class UVSCharacterMovementAnimFeatureAgent;
+class UVSCharacterMovementFeatureAgent;
 class UCharacterMovementComponent;
 
 /**
  * 
  */
-UCLASS(Abstract, DisplayName = "Feature.ChrMov.Base")
-class VSMOVEMENTSYSTEM_API UVSCharacterMovementFeature : public UVSObjectFeature
+UCLASS(Abstract, DisplayName = "Feature.ChrMovAnim.Base", meta = (BlueprintThreadSafe))
+class VSMOVEMENTANIM_API UVSCharacterMovementAnimFeature : public UVSObjectFeature
 {
 	GENERATED_UCLASS_BODY()
-	friend class UVSCharacterMovementFeatureAgent;
-	
+	friend class UVSCharacterMovementAnimFeatureAgent;
+
 protected:
 	virtual void Initialize_Implementation() override;
-	virtual void Uninitialize_Implementation() override;
-	virtual void Tick_Implementation(float DeltaTime) override;
 	
 public:
-	UFUNCTION(BlueprintCallable, Category = "Movement")
-	UCharacterMovementComponent* GetCharacterMovement() const;
-
 	UFUNCTION(BlueprintCallable, Category = "References")
 	ACharacter* GetCharacter() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	UCharacterMovementComponent* GetCharacterMovement() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "References")
 	AController* GetController() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
-	UVSCharacterMovementFeatureAgent* GetMovementFeatureAgent() const { return ChrMovFeatureAgentPrivate.Get(); }
+	UVSCharacterMovementAnimFeatureAgent* GetAnimFeatureAgent() const { return AnimFeatureAgentPrivate.Get(); }
+	
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	UVSCharacterMovementFeatureAgent* GetMovementFeatureAgent() const;
 
-	UFUNCTION(BlueprintCallable, Category = "References")
+	UFUNCTION(BlueprintCallable, Category = "Movement")
 	UVSGameplayTagController* GetGameplayTagController() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Movement")
@@ -47,9 +49,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	FGameplayTag GetPrevMovementMode() const;
 	
-	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "InMovementMode"))
-	void SetMovementMode(const FGameplayTag& InMovementMode);
-	
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	FVector GetVelocity() const;
 	
@@ -57,17 +56,17 @@ public:
 	FVector GetVelocity2D() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
-	FVector GetVelocityWallAdjusted2D() const;
+	FVector GetAnimVelocity2D() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	FVector GetVelocityZ() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	float GetSpeed2D() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Movement")
-	float GetSpeedWallAdjusted2D() const;
 	
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	float GetAnimSpeed2D() const;
+
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	float GetSpeedZ() const;
 	
@@ -109,13 +108,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	FRotator GetControlRotation() const;
 
+	
+	/** The direction between the velocity and character rotation. Moving only, wall adjusted, 2D. */
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	FGameplayTag GetAnimVelocityDirectionToCharacter2D() const;
+
+	
+	/** Need to be manually called in anim instance. Call on the agent will update sub anim features. */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Animation")
+	void UpdateAnimation(float DeltaTime);
+
+	/** Need to be manually called in anim instance. Call on the agent will update sub anim features. */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Animation")
+	void UpdateAnimationThreadSafe(float DeltaTime);
+	
 protected:
-	UFUNCTION(BlueprintNativeEvent, Category = "Camera")
-	void UpdateMovement(float DeltaTime);
-
-	UFUNCTION(BlueprintNativeEvent, Category = "Camera")
-	bool CanUpdateMovement() const;
-
 	UFUNCTION(BlueprintNativeEvent, Category = "Movement")
 	void OnMovementTagsUpdated();
 
@@ -123,11 +130,5 @@ protected:
 	void OnMovementTagEventNotified(const FGameplayTag& TagEvent);
 
 private:
-	UFUNCTION(Server, Reliable)
-	void SetMovementMode_Server(const FGameplayTag& InMovementMode);
-	
-	void SetMovementModeInternal(const FGameplayTag& InMovementMode);
-
-private:
-	TWeakObjectPtr<UVSCharacterMovementFeatureAgent> ChrMovFeatureAgentPrivate;
+	TWeakObjectPtr<UVSCharacterMovementAnimFeatureAgent> AnimFeatureAgentPrivate;
 };

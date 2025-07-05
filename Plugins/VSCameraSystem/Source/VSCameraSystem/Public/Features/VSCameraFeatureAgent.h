@@ -17,11 +17,23 @@ class VSCAMERASYSTEM_API UVSCameraFeatureAgent : public UVSCameraFeature
 
 protected:
 	virtual void Initialize_Implementation() override;
+	virtual void BeginPlay_Implementation() override;
 
 public:
 	/** If there is no camera component / actor in the outer chain, will find a camera with this name in the actor. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	FName CameraComponentName = NAME_None;
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	bool bCameraAbsoluteLocation = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	bool bCameraAbsoluteRotation = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	bool bCameraAbsoluteScale = true;
+
 	
 private:
 	UPROPERTY(EditAnywhere, Instanced, Category = "Camera")

@@ -9,7 +9,7 @@
 class UVSCharacterMovementFeatureAgent;
 
 UINTERFACE()
-class UVSCharacterMovementInterface : public UInterface
+class VSMOVEMENTSYSTEM_API UVSCharacterMovementInterface : public UInterface
 {
 	GENERATED_BODY()
 };

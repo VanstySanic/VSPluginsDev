@@ -25,7 +25,6 @@ namespace EVSOrientationEvaluateType
 	UE_DEFINE_GAMEPLAY_TAG(Input, "VSMovementSystem.Orientation.EvaluateType.Input");
 	UE_DEFINE_GAMEPLAY_TAG(Movement, "VSMovementSystem.Orientation.EvaluateType.Movement")
 	UE_DEFINE_GAMEPLAY_TAG(Control, "VSMovementSystem.Orientation.EvaluateType.Control");
-	UE_DEFINE_GAMEPLAY_TAG(View, "VSMovementSystem.Orientation.EvaluateType.View");
 	UE_DEFINE_GAMEPLAY_TAG(Aiming, "VSMovementSystem.Orientation.EvaluateType.Aiming");
 }
 
