@@ -174,9 +174,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Reference")
 	TWeakObjectPtr<UVSChrMovFeature_OrientationControl2D> ChrMovFeature_OrientationControl2D;
 
-	// UPROPERTY(BlueprintReadOnly, Category = "Reference")
-	// TWeakObjectPtr<UVSChrMovFeature_LandRecovery> ChrMovFeature_LandRecovery;
-
 private:
 	struct FAnimData
 	{

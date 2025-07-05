@@ -35,8 +35,6 @@ void UVSChrMovAnimFeature_WalkingMovement::Initialize_Implementation()
 	check(ChrMovFeature_WalkingMovement.IsValid());
 	ChrMovFeature_OrientationControl2D = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationControl2D>();
 	check(ChrMovFeature_OrientationControl2D.IsValid());
-	// ChrMovFeature_LandRecovery = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_LandRecovery>();
-	// check(ChrMovFeature_LandRecovery.IsValid());
 
 	AnimData.AnimSettingsPtr = AnimSettingsRow.GetRow<FVSWalkingMovementAnimSettings>(nullptr);
 	check(AnimData.AnimSettingsPtr);

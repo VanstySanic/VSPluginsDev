@@ -1,0 +1,64 @@
+﻿// Copyright VanstySanic. All Rights Reserved.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Features/VSCharacterMovementAnimFeature.h"
+#include "Types/VSCharacterMovementTags.h"
+#include "Types/VSGameplayTypes.h"
+#include "VSChrMovAnimFeature_AimOffset.generated.h"
+
+class UAimOffsetBlendSpace;
+
+/**
+ * 
+ */
+UCLASS(DisplayName = "Feature.ChrMovAnim.Details.AimOffset", meta = (BlueprintThreadSafe))
+class VSMOVEMENTANIM_API UVSChrMovAnimFeature_AimOffset : public UVSCharacterMovementAnimFeature
+{
+	GENERATED_UCLASS_BODY()
+
+	UFUNCTION(BlueprintCallable, Category = "Orientation")
+	UAimOffsetBlendSpace* GetAimOffsetBlendSpace() const { return AnimData.CurrentAimOffsetBlendSpace; }
+	
+	/** [Yaw, Pitch] */
+	UFUNCTION(BlueprintCallable, Category = "Orientation")
+	FVector2D GetAimOffsetAngles() const { return AnimData.AimOffsetAngle; }
+
+protected:
+	virtual void BeginPlay_Implementation() override;
+	virtual void UpdateAnimationThreadSafe_Implementation(float DeltaTime) override;
+	virtual void OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent) override;
+
+private:
+	void UpdateTagQueryStates(const FGameplayTag& TagEvent);
+	
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
+	FGameplayTag DefaultOrientationEvaluateType = EVSOrientationEvaluateType::Control;
+	
+
+	UPROPERTY(EditAnywhere, Category = "Orientation")
+	TMap<FGameplayTag, FVSGameplayTagEventQuery> QueriedOrientationEvaluateTypes;
+
+	UPROPERTY(EditAnywhere, Category = "Orientation")
+	FVSGameplayTagEventQueryContainer RefreshQueriedOrientationEvaluateTypeQuery;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orientation")
+	FVSGameplayTagEventQueryContainer EnabledTagQuerySettings;
+	
+	/** <MovementMode, AimOffsetBlendSpace> */
+	UPROPERTY(EditAnywhere, Category = "Animation")
+	TMap<FGameplayTag, TObjectPtr<UAimOffsetBlendSpace>> ModdedAimOffsetBlendSpaces;
+	
+private:
+	struct FAnimData
+	{
+		FGameplayTag CurrentOrientationEvaluateType = EVSOrientationEvaluateType::None;
+
+		/** [Yaw, Pitch] */
+		FVector2D AimOffsetAngle = FVector2D::ZeroVector;
+		UAimOffsetBlendSpace* CurrentAimOffsetBlendSpace = nullptr;
+		bool bMatchesTagQuery = false;
+	} AnimData;
+};

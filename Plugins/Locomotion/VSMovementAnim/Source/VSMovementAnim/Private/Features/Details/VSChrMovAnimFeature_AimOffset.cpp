@@ -1,0 +1,75 @@
+﻿// Copyright VanstySanic. All Rights Reserved.
+
+#include "Features/Details/VSChrMovAnimFeature_AimOffset.h"
+#include "VSCharacterMovementUtils.h"
+#include "Classees/Framework/VSGameplayTagController.h"
+#include "Features/VSCharacterMovementFeatureAgent.h"
+#include "GameFramework/Character.h"
+#include "Types/VSChrMovOrientationTypes.h"
+
+UVSChrMovAnimFeature_AimOffset::UVSChrMovAnimFeature_AimOffset(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+}
+
+void UVSChrMovAnimFeature_AimOffset::BeginPlay_Implementation()
+{
+	Super::BeginPlay_Implementation();
+
+	AnimData.CurrentOrientationEvaluateType = DefaultOrientationEvaluateType;
+	AnimData.CurrentAimOffsetBlendSpace = ModdedAimOffsetBlendSpaces.FindRef(GetMovementMode());
+	UpdateTagQueryStates(EVSMovementEvent::StateChange_MovementMode);
+}
+
+void UVSChrMovAnimFeature_AimOffset::UpdateAnimationThreadSafe_Implementation(float DeltaTime)
+{
+	Super::UpdateAnimationThreadSafe_Implementation(DeltaTime);
+
+	if (!AnimData.bMatchesTagQuery || !AnimData.CurrentAimOffsetBlendSpace)
+	{
+		AnimData.AimOffsetAngle = FVector2D::ZeroVector;
+	}
+	else
+	{
+		FVSOrientationEvaluateParams EvaluateParams(AnimData.CurrentOrientationEvaluateType);
+		EvaluateParams.bReturnRotationInSpace2D = false;
+		FRotator EvaluatedRotation = GetCharacter()->GetActorRotation();
+		UVSCharacterMovementUtils::EvaluateCharacterMovementOrientation(GetCharacter(), EvaluatedRotation, EvaluateParams);
+		const FRotator& RotationRS = GetCharacter()->GetActorTransform().InverseTransformRotation(EvaluatedRotation.Quaternion()).Rotator();
+		AnimData.AimOffsetAngle.X = RotationRS.Yaw;
+		AnimData.AimOffsetAngle.Y = RotationRS.Pitch;
+	}
+}
+
+void UVSChrMovAnimFeature_AimOffset::OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent)
+{
+	Super::OnMovementTagEventNotified_Implementation(TagEvent);
+
+	UpdateTagQueryStates(TagEvent);
+}
+
+void UVSChrMovAnimFeature_AimOffset::UpdateTagQueryStates(const FGameplayTag& TagEvent)
+{
+	const UVSGameplayTagController* GameplayTagSet = GetGameplayTagController();
+	FGameplayTagContainer GameplayTags;
+	GameplayTagSet->GetOwnedGameplayTags(GameplayTags);
+	AnimData.bMatchesTagQuery = EnabledTagQuerySettings.Matches(GameplayTags, TagEvent);
+
+	if (RefreshQueriedOrientationEvaluateTypeQuery.Matches(GameplayTags, TagEvent))
+	{
+		AnimData.CurrentOrientationEvaluateType = DefaultOrientationEvaluateType;
+		for (const auto& TaggedTargetOrientationEvaluateType : QueriedOrientationEvaluateTypes)
+		{
+			if (TaggedTargetOrientationEvaluateType.Value.Matches(GameplayTags, TagEvent))
+			{
+				AnimData.CurrentOrientationEvaluateType = TaggedTargetOrientationEvaluateType.Key;
+				break;
+			}
+		}
+	}
+
+	if (TagEvent == EVSMovementEvent::StateChange_MovementMode)
+	{
+		AnimData.CurrentAimOffsetBlendSpace = ModdedAimOffsetBlendSpaces.FindRef(GetMovementMode());
+	}
+}
