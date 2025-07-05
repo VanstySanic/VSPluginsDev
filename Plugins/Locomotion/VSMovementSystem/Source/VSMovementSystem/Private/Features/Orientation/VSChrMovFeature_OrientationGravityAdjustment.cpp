@@ -16,7 +16,7 @@ void UVSChrMovFeature_OrientationGravityAdjustment::BeginPlay_Implementation()
 {
 	Super::BeginPlay_Implementation();
 
-	MovementData.bMatchesTagQuery = MovementStateQuerySettings.Matches(GetGameplayTagController()->GetGameplayTagContainer(), EVSMovementEvent::StateChange_MovementMode);
+	MovementData.bMatchesTagQuery = MovementStateQuerySettings.Matches(GetGameplayTagController()->GetGameplayTags(), EVSMovementEvent::StateChange_MovementMode);
 }
 
 bool UVSChrMovFeature_OrientationGravityAdjustment::CanUpdateMovement_Implementation() const
@@ -41,5 +41,5 @@ void UVSChrMovFeature_OrientationGravityAdjustment::UpdateMovement_Implementatio
 
 void UVSChrMovFeature_OrientationGravityAdjustment::OnMovementTagEventNotified_Implementation( const FGameplayTag& TagEvent)
 {
-	MovementData.bMatchesTagQuery = MovementStateQuerySettings.Matches(GetGameplayTagController()->GetGameplayTagContainer(), TagEvent);
+	MovementData.bMatchesTagQuery = MovementStateQuerySettings.Matches(GetGameplayTagController()->GetGameplayTags(), TagEvent);
 }

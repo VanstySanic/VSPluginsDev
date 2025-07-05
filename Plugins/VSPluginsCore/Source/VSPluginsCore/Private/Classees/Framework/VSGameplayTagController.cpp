@@ -46,7 +46,7 @@ void UVSGameplayTagController::Tick_Implementation(float DeltaTime)
 #if WITH_EDITORONLY_DATA
 	if (bPrintDebugString)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, DeltaTime, FColor::Blue, ToDebugString());
+		GEngine->AddOnScreenDebugMessage(-1, DeltaTime, FColor::Blue, ToDebugString(), false);
 	}
 #endif
 }
@@ -76,7 +76,7 @@ bool UVSGameplayTagController::MatchesGameplayTagQuery(const FGameplayTagQuery& 
 	return AbilitySystemComponentPrivate.IsValid() ? AbilitySystemComponentPrivate->MatchesGameplayTagQuery(TagQuery) : false;
 }
 
-FGameplayTagContainer UVSGameplayTagController::GetGameplayTagContainer() const
+FGameplayTagContainer UVSGameplayTagController::GetGameplayTags() const
 {
 	FGameplayTagContainer GameplayTagContainer;
 	GetOwnedGameplayTags(GameplayTagContainer);
@@ -121,7 +121,7 @@ void UVSGameplayTagController::SetTagCount(const FGameplayTag& GameplayTag, int3
 void UVSGameplayTagController::AddReplicatedTag(const FGameplayTag& GameplayTag)
 {
 	if (!AbilitySystemComponentPrivate.IsValid()) { return; }
-	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
 	{
 		SetReplicatedTagExists_Server(GameplayTag, true);
 	}
@@ -134,7 +134,7 @@ void UVSGameplayTagController::AddReplicatedTag(const FGameplayTag& GameplayTag)
 void UVSGameplayTagController::AddReplicatedTags(const FGameplayTagContainer& GameplayTags)
 {
 	if (!AbilitySystemComponentPrivate.IsValid()) { return; }
-	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
 	{
 		SetReplicatedTagsExist_Server(GameplayTags, true);
 	}
@@ -147,7 +147,7 @@ void UVSGameplayTagController::AddReplicatedTags(const FGameplayTagContainer& Ga
 void UVSGameplayTagController::RemoveReplicatedTag(const FGameplayTag& GameplayTag)
 {
 	if (!AbilitySystemComponentPrivate.IsValid()) { return; }
-	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
 	{
 		SetReplicatedTagExists_Server(GameplayTag, false);
 	}
@@ -160,7 +160,7 @@ void UVSGameplayTagController::RemoveReplicatedTag(const FGameplayTag& GameplayT
 void UVSGameplayTagController::RemoveReplicatedTags(const FGameplayTagContainer& GameplayTags)
 {
 	if (!AbilitySystemComponentPrivate.IsValid()) { return; }
-	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
 	{
 		SetReplicatedTagsExist_Server(GameplayTags, false);
 	}
@@ -173,7 +173,7 @@ void UVSGameplayTagController::RemoveReplicatedTags(const FGameplayTagContainer&
 void UVSGameplayTagController::NotifyTagsUpdated(bool bAllowCleanNotify, bool bMulticast)
 {
 	if (!bAllowCleanNotify && !IsDirty()) return;
-	if (bMulticast && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	if (bMulticast && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
 	{
 		NotifyTagsUpdated_Server(bAllowCleanNotify);
 	}
@@ -187,7 +187,7 @@ void UVSGameplayTagController::NotifyTagsUpdated(bool bAllowCleanNotify, bool bM
 
 void UVSGameplayTagController::NotifyTagEvent(const FGameplayTag& TagEvent, bool bMulticast)
 {
-	if (bMulticast && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	if (bMulticast && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
 	{
 		NotifyTagEvent(TagEvent);
 	}

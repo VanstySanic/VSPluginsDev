@@ -6,7 +6,7 @@
 #if WITH_EDITOR
 FText UVSMovementSystemSettings::GetSectionText() const
 {
-	return FText::FromString("VSLocomotionSystem");
+	return FText::FromString("VSMovementSystem");
 }
 #endif
 

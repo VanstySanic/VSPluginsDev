@@ -28,4 +28,9 @@ class VSPLUGINSCORE_API UVSGameplayLibrary : public UBlueprintFunctionLibrary
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (AutoCreateRefTerm = "Query, GameplayTags, TagEvent"))
 	static bool MatchesGameplayTagEventQueries(const FVSGameplayTagEventQueryContainer& Queries, const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent = FGameplayTag());
+
+	/**
+	 * @return Whether the sweep has been blocked.
+	 */
+	static bool SweepSingleByShapeAndChannels(const UObject* WorldContext, FHitResult& OutHit, const FVector& Start, const FVector& End, const FQuat& Rotation, const FCollisionShape& Shape, const FCollisionResponseContainer& Channels, const FCollisionQueryParams& QueryParams = FCollisionQueryParams::DefaultQueryParam, FCollisionResponseParams ResponseParams = FCollisionResponseParams::DefaultResponseParam);
 };

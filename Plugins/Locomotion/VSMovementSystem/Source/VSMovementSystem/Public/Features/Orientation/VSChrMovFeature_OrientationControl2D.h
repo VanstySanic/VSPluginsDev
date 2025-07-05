@@ -24,23 +24,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Orientation")
 	FGameplayTag GetIdleOrientationEvaluateType() const { return MovementData.CurrentIdleOrientationEvaluateType; }
-
-	UFUNCTION(BlueprintCallable, Category = "Orientation", meta = (AutoCreateRefTerm = "Type"))
-	void SetOverridenMovingOrientationEvaluateType(const FGameplayTag& Type);
-	
-	UFUNCTION(BlueprintCallable, Category = "Orientation")
-	void SetOverrideMovingOrientationEvaluateType(const bool bOverride);
-
-	UFUNCTION(BlueprintCallable, Category = "Orientation", meta = (AutoCreateRefTerm = "Type"))
-	void SetOverridenIdleOrientationEvaluateType(const FGameplayTag& Type);
-	
-	UFUNCTION(BlueprintCallable, Category = "Orientation")
-	void SetOverrideIdleOrientationEvaluateType(const bool bOverride);
 	
 protected:
 	virtual void BeginPlay_Implementation() override;
 	virtual void UpdateMovement_Implementation(float DeltaTime) override;
-	virtual void OnMovementTagsUpdated_Implementation() override;
 	virtual void OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent) override;
 
 private:
@@ -62,6 +49,12 @@ public:
 	float LagMaxTimeSubstepping = 0.0166667f;
 	
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
+	FGameplayTag DefaultMovingOrientationEvaluateType = EVSOrientationEvaluateType::Control;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
+	FGameplayTag DefaultIdleOrientationEvaluateType = EVSOrientationEvaluateType::None;
+	
 	UPROPERTY(EditAnywhere, Category = "Orientation")
 	TMap<FGameplayTag, FVSGameplayTagEventQuery> QueriedMovingOrientationEvaluateTypes;
 
@@ -69,36 +62,23 @@ protected:
 	TMap<FGameplayTag, FVSGameplayTagEventQuery> QueriedIdleOrientationEvaluateTypes;
 
 	UPROPERTY(EditAnywhere, Category = "Orientation")
-	FVSGameplayTagEventQuery RefreshQueriedMovingOrientationEvaluateTypeQuery;
+	FVSGameplayTagEventQueryContainer RefreshQueriedMovingOrientationEvaluateTypeQueries;
 	
 	UPROPERTY(EditAnywhere, Category = "Orientation")
-	FVSGameplayTagEventQuery RefreshQueriedIdleOrientationEvaluateTypeQuery;
+	FVSGameplayTagEventQueryContainer RefreshQueriedIdleOrientationEvaluateTypeQueries;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
-	FGameplayTag OverridenMovingOrientationEvaluateType = EVSOrientationEvaluateType::Control;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
-	FGameplayTag OverridenIdleOrientationEvaluateType = EVSOrientationEvaluateType::None;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
-	bool bOverrideMovingOrientationEvaluateType = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
-	bool bOverrideIdleOrientationEvaluateType = false;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orientation")
-	FVSGameplayTagEventQuery MovingTagQuerySettings; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orientation")
-	FVSGameplayTagEventQuery IdleTagQuerySettings;
+	FVSGameplayTagEventQueryContainer MovingTagQueries; 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orientation")
+	FVSGameplayTagEventQueryContainer IdleTagQueries;
 	
 private:
 	struct FMovementData
 	{
 		FGameplayTag CurrentMovingOrientationEvaluateType = EVSOrientationEvaluateType::None;
-		FGameplayTag CurrentTaggedMovingOrientationEvaluateType = EVSOrientationEvaluateType::None;
 		FGameplayTag CurrentIdleOrientationEvaluateType = EVSOrientationEvaluateType::None;
-		FGameplayTag CurrentTaggedIdleOrientationEvaluateType = EVSOrientationEvaluateType::None;
 
 		bool bMatchesMovingTagQuery = false;
 		bool bMatchesIdleTagQuery = false;

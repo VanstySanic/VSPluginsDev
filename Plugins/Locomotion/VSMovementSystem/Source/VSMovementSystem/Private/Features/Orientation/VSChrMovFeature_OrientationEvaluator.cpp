@@ -13,6 +13,7 @@ UVSChrMovFeature_OrientationEvaluator::UVSChrMovFeature_OrientationEvaluator(con
 
 bool UVSChrMovFeature_OrientationEvaluator::EvaluateOrientation_Implementation(FRotator& OutRotation, const FVSOrientationEvaluateParams& Params)
 {
+	if (!GetCharacter()) return false;
 	const FVector& UpDirection =
 		Params.NamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.UpDirection)
 		? Params.NamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.UpDirection)
@@ -30,18 +31,17 @@ bool UVSChrMovFeature_OrientationEvaluator::EvaluateOrientation_Implementation(F
 
 
 
-UVSLS_ChrMovFeature_OrientationEvaluator_Common::UVSLS_ChrMovFeature_OrientationEvaluator_Common(const FObjectInitializer& ObjectInitializer)
+UVSChrMovFeature_OrientationEvaluator_Common::UVSChrMovFeature_OrientationEvaluator_Common(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 }
 
-bool UVSLS_ChrMovFeature_OrientationEvaluator_Common::EvaluateOrientation_Implementation(FRotator& OutRotation, const FVSOrientationEvaluateParams& Params)
+bool UVSChrMovFeature_OrientationEvaluator_Common::EvaluateOrientation_Implementation(FRotator& OutRotation, const FVSOrientationEvaluateParams& Params)
 {
 	Super::EvaluateOrientation_Implementation(OutRotation, Params);
 	if (!GetCharacter() || Params.Type == EVSOrientationEvaluateType::None) return false;
 	
-	const FVector& UpDirection =
-		Params.NamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.UpDirection)
+	const FVector& UpDirection = Params.NamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.UpDirection)
 		? Params.NamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.UpDirection)
 		: GetUpDirection();
 	
@@ -53,13 +53,16 @@ bool UVSLS_ChrMovFeature_OrientationEvaluator_Common::EvaluateOrientation_Implem
 		|| Params.Type == EVSOrientationEvaluateType::Input
 		|| Params.Type == EVSOrientationEvaluateType::Movement)
 	{
-		const FVector& VelocityToProcess = Params.NamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.Velocity)
-			? Params.NamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.Velocity)
-			: GetVelocity();
+		const bool bFuncParamsHasVelocity = Params.NamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.Velocity);
+		const bool bFuncParamsHasInput = Params.NamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.MovementInput);
+		const bool bDefaultParamsHasVelocity = DefaultNamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.Velocity);
+		const bool bDefaultParamsHasInput = DefaultNamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.MovementInput);
 		
-		const FVector& InputToProcess = Params.NamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.MovementInput)
-			? Params.NamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.MovementInput)
-			: GetMovementInput();
+		const FVector& VelocityToProcess = bFuncParamsHasVelocity ? Params.NamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.Velocity)
+			: (bDefaultParamsHasVelocity ? DefaultNamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.Velocity) : GetVelocity());
+		
+		const FVector& InputToProcess = bFuncParamsHasInput ? Params.NamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.MovementInput)
+			: (bDefaultParamsHasInput ? DefaultNamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.MovementInput) : GetMovementInput());
 		
 		FVector VelocityGS = UKismetMathLibrary::Quat_RotateVector(UpDirectionToWorldRotation, VelocityToProcess);
 		FVector InputGS = UKismetMathLibrary::Quat_RotateVector(UpDirectionToWorldRotation, InputToProcess);
@@ -93,11 +96,17 @@ bool UVSLS_ChrMovFeature_OrientationEvaluator_Common::EvaluateOrientation_Implem
 	/** Aiming. */
 	if (Params.Type == EVSOrientationEvaluateType::Aiming)
 	{
-		FVector TargetPoint = Params.NamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetPoint)
-			? Params.NamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetPoint) : AimTargetPoint;
+		const bool bFuncParamsHasAimingTargetPoint = Params.NamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetPoint);
+		const bool bFuncParamsHasAimingTargetComponent = Params.NamedParams.ComponentParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetComponent);
+		const bool bDefaultParamsHasAimingTargetPoint = DefaultNamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetPoint);
+		const bool bDefaultParamsHasAimingTargetComponent = DefaultNamedParams.ComponentParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetComponent);
+		if (!bFuncParamsHasAimingTargetPoint && !bFuncParamsHasAimingTargetComponent && !bDefaultParamsHasAimingTargetPoint && !bDefaultParamsHasAimingTargetComponent) return false;
 		
-		USceneComponent* ComponentToUse = Params.NamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetComponent)
-			? Params.NamedParams.ComponentParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetComponent) : AimingTargetComponent.Get();
+		FVector TargetPoint = bFuncParamsHasAimingTargetPoint ? Params.NamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetPoint)
+			: (bDefaultParamsHasAimingTargetPoint ? DefaultNamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetPoint) : FVector::ZeroVector);
+		
+		USceneComponent* ComponentToUse = bDefaultParamsHasAimingTargetPoint ? Params.NamedParams.ComponentParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetComponent)
+			: (bDefaultParamsHasAimingTargetComponent ? Params.NamedParams.ComponentParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetComponent) : nullptr);
 		if (ComponentToUse) { TargetPoint = ComponentToUse->GetComponentLocation(); }
 		
 		FVector AimingDirectionGS = UKismetMathLibrary::Quat_RotateVector(UpDirectionToWorldRotation, TargetPoint - GetCharacter()->GetActorLocation());

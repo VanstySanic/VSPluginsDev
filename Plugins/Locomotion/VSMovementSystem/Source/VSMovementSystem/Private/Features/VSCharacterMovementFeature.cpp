@@ -191,8 +191,8 @@ FVector UVSCharacterMovementFeature::GetGravityDirection() const
 
 FRotator UVSCharacterMovementFeature::GetControlRotation() const
 {
-	if (GetController()) { return GetController()->GetControlRotation(); }
-	return ChrMovFeatureAgentPrivate.IsValid() ? ChrMovFeatureAgentPrivate->ReplicatedControlRotation : FRotator::ZeroRotator;
+	if (GetController()) { return GetController()->GetControlRotation().GetNormalized(); }
+	return ChrMovFeatureAgentPrivate.IsValid() ? ChrMovFeatureAgentPrivate->ReplicatedControlRotation.GetNormalized() : FRotator::ZeroRotator;
 }
 
 void UVSCharacterMovementFeature::UpdateMovement_Implementation(float DeltaTime)

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Features/VSCharacterMovementFeature.h"
+#include "Types/VSChrMovOrientationTypes.h"
 #include "VSChrMovFeature_OrientationEvaluator.generated.h"
 
 class UCameraComponent;
@@ -27,10 +28,14 @@ class VSMOVEMENTSYSTEM_API UVSChrMovFeature_OrientationEvaluator : public UVSCha
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Orientation", meta = (AutoCreateRefTerm = "Params"))
 	bool EvaluateOrientation(FRotator& OutRotation, const FVSOrientationEvaluateParams& Params);
+	
+	/** If no named params is assigned in the function call, this will be used. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orientation")
+	FVSOrientationEvaluateNamedParams DefaultNamedParams;
 };
 
 UCLASS(DisplayName = "Feature.ChrMov.Orientation.Evaluator.Common")
-class VSMOVEMENTSYSTEM_API UVSLS_ChrMovFeature_OrientationEvaluator_Common : public UVSChrMovFeature_OrientationEvaluator
+class VSMOVEMENTSYSTEM_API UVSChrMovFeature_OrientationEvaluator_Common : public UVSChrMovFeature_OrientationEvaluator
 {
 	GENERATED_UCLASS_BODY()
 
@@ -40,13 +45,4 @@ protected:
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orientation")
 	bool bAdjustMovementAgainstWall2D = true;
-
-
-	
-	UPROPERTY(BlueprintReadWrite, Category = "Orientation")
-	TWeakObjectPtr<USceneComponent> AimingTargetComponent;
-
-	/** Used when AimingTargetComponent is not valid */
-	UPROPERTY(BlueprintReadWrite, Category = "Orientation")
-	FVector AimTargetPoint = FVector::ZeroVector;
 };

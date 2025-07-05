@@ -5,6 +5,7 @@
 #include "Classees/Framework/VSGameplayTagController.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Libraries/VSAnimationLibrary.h"
 #include "Net/UnrealNetwork.h"
@@ -23,7 +24,7 @@ void UVSChrMovFeature_TurnInPlace2D::Tick_Implementation(float DeltaTime)
 	if (IsMoving2D() || HasMovementInput2D())
 	{
 		if (IsTurningInPlace()) StopTurnInPlaceInternal();
-		MovementData.TriggerDelayedTime = 0.f;
+		MovementData.CachedParams.TriggerDelayedTime = 0.f;
 	}
 
 	if (GetOwnerActor()->HasAuthority())
@@ -60,23 +61,23 @@ void UVSChrMovFeature_TurnInPlace2D::UpdateMovement_Implementation(float DeltaTi
 	Super::UpdateMovement_Implementation(DeltaTime);
 
 	FVSAnimSequenceReference* Anim = MovementData.SnappedParams.AnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
-	UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, MovementData.AnimPlayedTime);
+	UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, MovementData.CachedParams.AnimPlayedTime);
 	
 	/** Update character rotation. */
-	const float AnimRotationYawCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, MovementData.AnimPlayedTime);
-	const float DeltaAnimRotationYawCurveValue = AnimRotationYawCurveValue - MovementData.LastUpdatedAnimRotationYawCurveValue;
-	const float RotateScale = MovementData.SnappedParams.DeltaAngle / MovementData.AnimRotationAngle;
+	const float AnimRotationYawCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, MovementData.CachedParams.AnimPlayedTime);
+	const float DeltaAnimRotationYawCurveValue = AnimRotationYawCurveValue - MovementData.CachedParams.LastUpdatedAnimRotationYawCurveValue;
+	const float RotateScale = MovementData.SnappedParams.DeltaAngle / MovementData.CachedParams.AnimRotationAngle;
 
 	/** TODO	Don't know why the angle should be multiplied by 2.f on clients. Maybe someday I'll find out. */
 	const float DeltaYaw = DeltaAnimRotationYawCurveValue * RotateScale * (GetOwnerActor()->HasAuthority() ? 1.f : 2.f);
 	GetCharacter()->AddActorLocalRotation(FRotator(0.0, DeltaYaw, 0.0));
 	
-	MovementData.LastUpdatedAnimRotationYawCurveValue = AnimRotationYawCurveValue;
+	MovementData.CachedParams.LastUpdatedAnimRotationYawCurveValue = AnimRotationYawCurveValue;
 	
 	/** Update time and state. */
 	const FVector2D& AnimSafePlayTimeRange = Anim->GetSafePlayTimeRange();
-	MovementData.AnimPlayedTime = FMath::Min(MovementData.AnimPlayedTime + DeltaTime * Anim->PlayRate * MovementData.SnappedParams.PlayRateMultiplier, AnimSafePlayTimeRange.Y);
-	if (FMath::IsNearlyEqual(MovementData.AnimPlayedTime, AnimSafePlayTimeRange.Y, 0.01f))
+	MovementData.CachedParams.AnimPlayedTime = FMath::Min(MovementData.CachedParams.AnimPlayedTime + DeltaTime * Anim->PlayRate * MovementData.SnappedParams.PlayRateMultiplier, AnimSafePlayTimeRange.Y);
+	if (FMath::IsNearlyEqual(MovementData.CachedParams.AnimPlayedTime, AnimSafePlayTimeRange.Y, 0.01f))
 	{
 		StopTurnInPlaceInternal();
 	}
@@ -98,7 +99,7 @@ void UVSChrMovFeature_TurnInPlace2D::TurnInPlaceCheck(float DeltaTime)
 	if (!GetCharacter()) return;
 	if (IsMoving2D() || HasMovementInput2D() || !MovementData.bMatchesEntranceTagQuery)
 	{
-		MovementData.TriggerDelayedTime = 0.f;
+		MovementData.CachedParams.TriggerDelayedTime = 0.f;
 		return;
 	}
 
@@ -107,21 +108,21 @@ void UVSChrMovFeature_TurnInPlace2D::TurnInPlaceCheck(float DeltaTime)
 	{
 		const FVSAnimSequenceReference* Anim = MovementData.SnappedParams.AnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 		if (!Anim || !Anim->IsValid() || !Anim->HasTimeMark(AnimRecoveryTimeMarkName)) return;
-		if (MovementData.AnimPlayedTime < Anim->GetMarkTime(AnimRecoveryTimeMarkName)) return;
+		if (MovementData.CachedParams.AnimPlayedTime < Anim->GetMarkTime(AnimRecoveryTimeMarkName)) return;
 	}
 	
 	const FVSTurnInPlaceSettings2D* Settings = MovementData.CurrentSettingsRow.GetRow<FVSTurnInPlaceSettings2D>(nullptr);
 	if (!Settings || !Settings->IsValid())
 	{
-		MovementData.TriggerDelayedTime = 0.f;
+		MovementData.CachedParams.TriggerDelayedTime = 0.f;
 		return;
 	}
 
 	/** Evaluate target rotation. */
 	FRotator EvaluatedRotation = GetCharacter()->GetActorRotation();
-	if (!UVSCharacterMovementUtils::EvaluateCharacterMovementOrientation(GetCharacter(), EvaluatedRotation, OrientationEvaluateType))
+	if (!UVSCharacterMovementUtils::EvaluateCharacterMovementOrientation(GetCharacter(), EvaluatedRotation, FVSOrientationEvaluateParams(OrientationEvaluateType)))
 	{
-		MovementData.TriggerDelayedTime = 0.f;
+		MovementData.CachedParams.TriggerDelayedTime = 0.f;
 		return;
 	}
 
@@ -135,13 +136,13 @@ void UVSChrMovFeature_TurnInPlace2D::TurnInPlaceCheck(float DeltaTime)
 	const float TriggerDelayTime = UKismetMathLibrary::MapRangeClamped(FMath::Abs(DeltaYaw), Settings->AngleThreshold, 180.f, Settings->TriggerDelayTimeRange.X, Settings->TriggerDelayTimeRange.Y);
 	if (FMath::Abs(DeltaYaw) > Settings->AngleThreshold)
 	{
-		MovementData.TriggerDelayedTime = FMath::Min(MovementData.TriggerDelayedTime + DeltaTime, Settings->TriggerDelayTimeRange.Y);
+		MovementData.CachedParams.TriggerDelayedTime = FMath::Min(MovementData.CachedParams.TriggerDelayedTime + DeltaTime, Settings->TriggerDelayTimeRange.Y);
 	}
 	else
 	{
-		MovementData.TriggerDelayedTime = bDeclineTriggerDelayTime ? FMath::Max(MovementData.TriggerDelayedTime - DeltaTime, 0.f) : 0.f;
+		MovementData.CachedParams.TriggerDelayedTime = bDeclineTriggerDelayTime ? FMath::Max(MovementData.CachedParams.TriggerDelayedTime - DeltaTime, 0.f) : 0.f;
 	}
-	if (MovementData.TriggerDelayedTime < TriggerDelayTime) return;
+	if (MovementData.CachedParams.TriggerDelayedTime < TriggerDelayTime) return;
 
 	/** Check the animation. */
 	FVSDataTableRowHandleWrap SettingsRow = FVSDataTableRowHandleWrap();
@@ -162,22 +163,27 @@ void UVSChrMovFeature_TurnInPlace2D::TurnInPlaceCheck(float DeltaTime)
 	/** Start new turning in place process. */
 	const FVector2D& AnimSafePlayTimeRange = Anim->GetSafePlayTimeRange();
 	
-	MovementData.TriggerDelayedTime = 0.f;
-	MovementData.AnimRotationAngle = UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, AnimSafePlayTimeRange.Y) - UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, AnimSafePlayTimeRange.X);
-	MovementData.LastUpdatedAnimRotationYawCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, AnimSafePlayTimeRange.X);
-	MovementData.AnimPlayedTime = AnimSafePlayTimeRange.X;
+	MovementData.CachedParams.TriggerDelayedTime = 0.f;
+	MovementData.CachedParams.AnimRotationAngle = UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, AnimSafePlayTimeRange.Y) - UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, AnimSafePlayTimeRange.X);
+	MovementData.CachedParams.LastUpdatedAnimRotationYawCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, AnimSafePlayTimeRange.X);
+	MovementData.CachedParams.AnimPlayedTime = AnimSafePlayTimeRange.X;
 
 	MovementData.SnappedParams.DeltaAngle = Settings->bRotationNoScale ? UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, AnimSafePlayTimeRange.Y) : DeltaYaw;
 	MovementData.SnappedParams.SettingsRow = MovementData.CurrentSettingsRow;
 	MovementData.SnappedParams.AnimRow = AnimRow;
 	MovementData.SnappedParams.ActionID = FMath::RandRange(0, INT16_MAX);
 	//MovementData.AnimParams.PlayRateMultiplier = UKismetMathLibrary::MapRangeClamped(DeltaYaw, Settings->PlayRateMultiplierByAngle.X, Settings->PlayRateMultiplierByAngle.Y, Settings->PlayRateMultiplierByAngle.Z, Settings->PlayRateMultiplierByAngle.W);
-	
+
+	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
 	if (!IsTurningInPlace())
 	{
-		UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
 		GameplayTagController->SetTagCount(EVSMovementState::TurnInPlace, 1);
 		GameplayTagController->NotifyTagsUpdated();
+		GameplayTagController->NotifyTagEvent(EVSMovementEvent::Action_TurnInPlace_Start);
+	}
+	else
+	{
+		GameplayTagController->NotifyTagEvent(EVSMovementEvent::Action_TurnInPlace_Connect);
 	}
 
 	ReplicatedSnappedParams = MovementData.SnappedParams;
@@ -190,7 +196,10 @@ void UVSChrMovFeature_TurnInPlace2D::StopTurnInPlaceInternal()
 	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
 	GameplayTagController->SetTagCount(EVSMovementState::TurnInPlace, 0);
 	GameplayTagController->NotifyTagsUpdated();
+	GameplayTagController->NotifyTagEvent(EVSMovementEvent::Action_TurnInPlace_End);
 
+	MovementData.SnappedParams = FVSTurnInPlaceSnappedParams2D();
+	MovementData.CachedParams = FMovementData::FMovementCachedParams();
 	ReplicatedSnappedParams = FVSTurnInPlaceSnappedParams2D();
 }
 
@@ -219,7 +228,7 @@ void UVSChrMovFeature_TurnInPlace2D::UpdateMovementTagQueryStates(const FGamepla
 			if (MovementData.CurrentSettingsRow != NewRow)
 			{
 				MovementData.CurrentSettingsRow = NewRow;
-				MovementData.TriggerDelayedTime = 0.f;
+				MovementData.CachedParams.TriggerDelayedTime = 0.f;
 				if (IsTurningInPlace()) { StopTurnInPlaceInternal(); }
 			}
 		}
@@ -228,13 +237,13 @@ void UVSChrMovFeature_TurnInPlace2D::UpdateMovementTagQueryStates(const FGamepla
 		MovementData.bMatchesEntranceTagQuery = EntranceTagQueries.Matches(GameplayTags, TagEvent);
 		if (!MovementData.bMatchesEntranceTagQuery)
 		{
-			MovementData.TriggerDelayedTime = 0.f;
+			MovementData.CachedParams.TriggerDelayedTime = 0.f;
 		}
 	}
 
 	if (IsTurningInPlace() && AutoBreakTagQueries.Matches(GameplayTags, TagEvent))
 	{
-		MovementData.TriggerDelayedTime = 0.f;
+		MovementData.CachedParams.TriggerDelayedTime = 0.f;
 		StopTurnInPlaceInternal();
 	}
 }
@@ -246,19 +255,24 @@ void UVSChrMovFeature_TurnInPlace2D::OnRep_ReplicatedSnappedParams()
 
 	const FVector2D& AnimSafePlayTimeRange = Anim->GetSafePlayTimeRange();
 	
-	MovementData.TriggerDelayedTime = 0.f;
-	MovementData.AnimRotationAngle = UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, AnimSafePlayTimeRange.Y) - UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, AnimSafePlayTimeRange.X);
-	MovementData.LastUpdatedAnimRotationYawCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, AnimSafePlayTimeRange.X);
-	MovementData.AnimPlayedTime = AnimSafePlayTimeRange.X;
+	MovementData.CachedParams.TriggerDelayedTime = 0.f;
+	MovementData.CachedParams.AnimRotationAngle = UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, AnimSafePlayTimeRange.Y) - UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, AnimSafePlayTimeRange.X);
+	MovementData.CachedParams.LastUpdatedAnimRotationYawCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, AnimSafePlayTimeRange.X);
+	MovementData.CachedParams.AnimPlayedTime = AnimSafePlayTimeRange.X;
 	MovementData.CurrentSettingsRow = ReplicatedSnappedParams.SettingsRow;
 
 	MovementData.SnappedParams = ReplicatedSnappedParams;
 	MovementData.SnappedParams.ActionID = FMath::RandRange(0, INT16_MAX);
 
+	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
 	if (!IsTurningInPlace())
 	{
-		UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
 		GameplayTagController->SetTagCount(EVSMovementState::TurnInPlace, 1);
 		GameplayTagController->NotifyTagsUpdated();
+		GameplayTagController->NotifyTagEvent(EVSMovementEvent::Action_TurnInPlace_Start);
+	}
+	else
+	{
+		GameplayTagController->NotifyTagEvent(EVSMovementEvent::Action_TurnInPlace_Connect);
 	}
 }

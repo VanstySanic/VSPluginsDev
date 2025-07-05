@@ -38,6 +38,6 @@ protected:
 private:
 	struct FAnimData
 	{
-		int32 LastActionID = 0;
+		int32 LastActionID = INDEX_NONE;
 	} AnimData;
 };

@@ -11,10 +11,9 @@ namespace EVSMovementMode
 	UE_DEFINE_GAMEPLAY_TAG(Swimming, "VSMovementSystem.State.MovementMode.Swimming");
 	UE_DEFINE_GAMEPLAY_TAG(Flying, "VSMovementSystem.State.MovementMode.Flying");
 	
-	UE_DEFINE_GAMEPLAY_TAG(Mantling, "VSMovementSystem.MovementMode.Mantling");
-	UE_DEFINE_GAMEPLAY_TAG(Vaulting, "VSMovementSystem.MovementMode.Vaulting");
-	UE_DEFINE_GAMEPLAY_TAG(WallRunning, "VSMovementSystem.MovementMode.WallRunning");
-	UE_DEFINE_GAMEPLAY_TAG(FixedPointLeap, "VSMovementSystem.MovementMode.FixedPointLeap");
+	UE_DEFINE_GAMEPLAY_TAG(MantlingOrVaulting, "VSMovementSystem.State.MovementMode.MantlingOrVaulting");
+	UE_DEFINE_GAMEPLAY_TAG(WallRunning, "VSMovementSystem.State.MovementMode.WallRunning");
+	UE_DEFINE_GAMEPLAY_TAG(FixedPointLeap, "VSMovementSystem.State.MovementMode.FixedPointLeap");
 }
 
 namespace EVSOrientationEvaluateType
@@ -56,6 +55,10 @@ namespace EVSMovementEvent
 	UE_DEFINE_GAMEPLAY_TAG(StateChange_Gait, "VSMovementSystem.Event.StateChange.Gait");
 	
 	UE_DEFINE_GAMEPLAY_TAG(Action_Jump, "VSMovementSystem.Event.Action.Jump");
+	
+	UE_DEFINE_GAMEPLAY_TAG(Action_TurnInPlace_Start, "VSMovementSystem.Event.Action.TurnInPlace.Start");
+	UE_DEFINE_GAMEPLAY_TAG(Action_TurnInPlace_Connect, "VSMovementSystem.Event.Action.Connect");
+	UE_DEFINE_GAMEPLAY_TAG(Action_TurnInPlace_End, "VSMovementSystem.Event.Action.End");
 	
 	// UE_DEFINE_GAMEPLAY_TAG(Action_TurnInPlace, "VSMovementSystem.MovementNotify.Action.TurnInPlace");
 	// UE_DEFINE_GAMEPLAY_TAG(Action_LandRecovery, "VSMovementSystem.MovementNotify.Action.LandRecovery");

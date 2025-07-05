@@ -29,4 +29,15 @@ class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
 	static UAbilitySystemComponent* GetAbilitySystemComponentFormActor(AActor* Actor);
+
+
+	/**
+	 * Whether the character is on walkable floor.
+	 * @param ToleranceToFloor The vertical height tolerance form the character's capsule lower sphere shape.
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Character")
+	static bool IsCharacterOnWalkableFloor(const ACharacter* Character, const float ToleranceToFloor = 0.f, const bool bConsiderCollisionOffset = true);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Character")
+	static FVector GetCharacterRootLocation(const ACharacter* Character, const float VerticalOffset = 0.f /** 2.f */);
 };

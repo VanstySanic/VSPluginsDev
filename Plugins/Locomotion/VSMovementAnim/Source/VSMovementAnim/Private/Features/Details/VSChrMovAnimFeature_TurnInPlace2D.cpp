@@ -57,7 +57,7 @@ void UVSChrMovAnimFeature_TurnInPlace2D::UpdateTurnInPlaceAnim_Implementation(co
 	FVSAnimSequenceReference* Anim = ChrMovFeature_TurnInPlace2D->GetTurnInPlaceSnappedParams().AnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 	
 	/** New turn in place process. */
-	if (AnimData.LastActionID != ChrMovFeature_TurnInPlace2D->GetTurnInPlaceSnappedParams().ActionID)
+	if (AnimData.LastActionID != ChrMovFeature_TurnInPlace2D->GetTurnInPlaceSnappedParams().ActionID && ChrMovFeature_TurnInPlace2D->GetTurnInPlaceSnappedParams().ActionID != INDEX_NONE)
 	{
 		if (UAnimSequenceBase* NewAnim = Anim ? Anim->AnimSequence : nullptr)
 		{

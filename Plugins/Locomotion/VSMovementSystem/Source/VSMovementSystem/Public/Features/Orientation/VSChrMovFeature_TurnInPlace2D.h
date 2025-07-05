@@ -85,15 +85,16 @@ private:
 private:
 	struct FMovementData
 	{
-		bool bMatchesEntranceTagQuery = false;
-		float TriggerDelayedTime = 0.f;
-
-		FVSDataTableRowHandleWrap SettingsRow;
-		float AnimRotationAngle = 0.f;
-		float AnimPlayedTime = 0.f;
-		float LastUpdatedAnimRotationYawCurveValue = 0.f;
-		FVSTurnInPlaceSnappedParams2D SnappedParams;
-
 		FVSDataTableRowHandleWrap CurrentSettingsRow;
+		bool bMatchesEntranceTagQuery = false;
+
+		FVSTurnInPlaceSnappedParams2D SnappedParams;
+		struct FMovementCachedParams
+		{
+			float TriggerDelayedTime = 0.f;
+			float AnimRotationAngle = 0.f;
+			float AnimPlayedTime = 0.f;
+			float LastUpdatedAnimRotationYawCurveValue = 0.f;
+		} CachedParams;
 	} MovementData;
 };

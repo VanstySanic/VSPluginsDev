@@ -36,7 +36,7 @@ public:
 	//~ End IGameplayTagAssetInterface.
 
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags")
-	FGameplayTagContainer GetGameplayTagContainer() const;
+	FGameplayTagContainer GetGameplayTags() const;
 	
 	/** Returns the number of instances of a given tag */
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags", meta = (AutoCreateRefTerm = "TagToCheck"))

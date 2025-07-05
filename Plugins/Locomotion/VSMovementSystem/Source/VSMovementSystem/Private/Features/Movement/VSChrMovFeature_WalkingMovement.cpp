@@ -129,7 +129,7 @@ FGameplayTag UVSChrMovFeature_WalkingMovement::GetPrevGait(const FGameplayTag& I
 
 void UVSChrMovFeature_WalkingMovement::SetStance(const FGameplayTag& InStance)
 {
-	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
 	{
 		SetStance_Server(InStance);
 	}
@@ -151,7 +151,7 @@ void UVSChrMovFeature_WalkingMovement::SetStance_Server_Implementation(const FGa
 
 void UVSChrMovFeature_WalkingMovement::SetGait(const FGameplayTag& InGait, const FGameplayTag& InStance)
 {
-	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
 	{
 		SetGait_Server(InGait, InStance);
 	}
