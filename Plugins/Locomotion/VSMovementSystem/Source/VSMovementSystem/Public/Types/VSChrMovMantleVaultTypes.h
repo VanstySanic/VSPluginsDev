@@ -64,6 +64,15 @@ USTRUCT(BlueprintType)
 struct VSMOVEMENTSYSTEM_API FVSMantleVaultLimits
 {
 	GENERATED_BODY()
+
+	FVSMantleVaultLimits()
+	{
+		TerrainObjectTypes =
+			{
+				ObjectTypeQuery1,
+				ObjectTypeQuery2,
+			};
+	}
 	
 	bool IsValid() const;
 
@@ -92,6 +101,10 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultLimits
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bRequireMovementInput2D = true;
 
+	/** Empty as all. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TEnumAsByte<EObjectTypeQuery>> TerrainObjectTypes; 
+
 	/** Empty as pass. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTagQuery MovementTagQuery;
@@ -118,9 +131,13 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultSettings : public FTableRowBase
 	/** Defines the valid working condition. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSMantleVaultLimits Limits;
+
+	/** Below 0.f means default half height. Unscaled. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float CapsuleHalfHeight = 0.f;
 };
 
-/** Snapped params to define a mantle /vault movement and its animation. Replicated. */
+/** Snapped params to define a mantle / vault movement and its animation. Replicated. */
 USTRUCT(BlueprintType)
 struct VSMOVEMENTSYSTEM_API FVSMantleVaultSnappedParams
 {
@@ -135,11 +152,13 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultSnappedParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<EVSMantleVaultMovementType::Type> MovementType = EVSMantleVaultMovementType::None;
 
+	/** This might be lost because of non-replication. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector StartMovementDirection2DWS = FVector::ZeroVector;
+	TObjectPtr<UPrimitiveComponent> Component;
 
+	/** Safe during replication. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector StartFrontWallPointWS = FVector::ZeroVector;
+	FTransform StartComponentTransform;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector MovementDirection2DRS = FVector::ZeroVector;

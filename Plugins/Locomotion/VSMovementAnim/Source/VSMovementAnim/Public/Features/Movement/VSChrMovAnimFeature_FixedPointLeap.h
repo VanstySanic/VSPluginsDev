@@ -4,17 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "Features/VSCharacterMovementAnimFeature.h"
-#include "VSChrMovAnimFeature_MantleVaultMovement.generated.h"
+#include "VSChrMovAnimFeature_FixedPointLeap.generated.h"
 
-class UVSChrMovFeature_MantleVaultMovement;
+class UVSChrMovFeature_FixedPointLeap;
 struct FAnimUpdateContext;
 struct FAnimNodeReference;
 
 /**
  * 
  */
-UCLASS(DisplayName = "Feautre.ChrMovAnim.Movement.MantleVault", meta = (BlueprintThreadSafe))
-class VSMOVEMENTANIM_API UVSChrMovAnimFeature_MantleVaultMovement : public UVSCharacterMovementAnimFeature
+UCLASS(DisplayName = "Feautre.ChrMovAnim.Movement.FixedPointLeap", meta = (BlueprintThreadSafe))
+class VSMOVEMENTANIM_API UVSChrMovAnimFeature_FixedPointLeap : public UVSCharacterMovementAnimFeature
 {
 	GENERATED_UCLASS_BODY()
 
@@ -22,17 +22,17 @@ public:
 	virtual void Initialize_Implementation() override;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Node Events")
-	bool HasValidMantleVaultAnim() const;
+	bool HasValidFixedPointLeapAnim() const;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Node Events")
-	void SetupMantleVaultAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node);
+	void SetupFixedPointLeapAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Node Events")
-	void UpdateMantleVaultAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node);
+	void UpdateFixedPointLeapAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node);
 
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Reference")
-	TWeakObjectPtr<UVSChrMovFeature_MantleVaultMovement> ChrMovFeature_MantleVaultMovement;
+	TWeakObjectPtr<UVSChrMovFeature_FixedPointLeap> ChrMovFeature_FixedPointLeapMovement;
 	
 private:
 	struct FAnimData

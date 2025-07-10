@@ -84,10 +84,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags")
 	bool IsDirty() const { return bTagsDirty; }
 
-#if WITH_EDITORONLY_DATA
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags")
 	FString ToDebugString();
-#endif
 
 private:
 	UAbilitySystemComponent* GetAbilitySystemComponent() const;

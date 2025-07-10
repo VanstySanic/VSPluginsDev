@@ -1,13 +1,12 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
-#include "Types/VSChrMovAnimInAirTypes.h"
-
+#include "Types/VSChrMovInAirTypes.h"
 #include "Classees/Framework/VSGameplayTagController.h"
-#include "Features/VSCharacterMovementAnimFeatureAgent.h"
+#include "Features/VSCharacterMovementFeatureAgent.h"
 #include "GameFramework/Character.h"
 #include "Kismet/KismetMathLibrary.h"
 
-bool FVSFallingMovementAnimLimits::IsValid() const
+bool FVSFixedPointLeapLimits::IsValid() const
 {
 	if (SpeedRange2D.X < 0.f || SpeedRange2D.X > SpeedRange2D.Y) return false;	
 	if (SpeedRangeZ.X > SpeedRangeZ.Y) return false;
@@ -21,9 +20,10 @@ bool FVSFallingMovementAnimLimits::IsValid() const
 	return true;
 }
 
-bool FVSFallingMovementAnimLimits::Matches(const UVSCharacterMovementAnimFeatureAgent* Agent) const
+bool FVSFixedPointLeapLimits::Matches(const UVSCharacterMovementFeatureAgent* Agent) const
 {
 	if (!Agent) return false;
+
 	const FTransform& CharacterTransformWS = Agent->GetCharacter()->GetActorTransform();
 	const FVector& Velocity2DRS = CharacterTransformWS.InverseTransformVector(FVector::VectorPlaneProject(Agent->GetVelocity(), Agent->GetUpDirection()));
 	const FVector& VelocityZRS = CharacterTransformWS.InverseTransformVector(Agent->GetVelocity().ProjectOnToNormal(Agent->GetUpDirection()));
@@ -39,19 +39,19 @@ bool FVSFallingMovementAnimLimits::Matches(const UVSCharacterMovementAnimFeature
 		VelocityAnglePitch = SpeedSignZ * UKismetMathLibrary::DegAtan(Tan);
 	}
 
-	if (!AllowedPrevMovementModes.IsEmpty() && !AllowedPrevMovementModes.Contains(Agent->GetPrevMovementMode())) return false;
 	if (!UKismetMathLibrary::InRange_FloatFloat(Velocity2DRS.Size(), SpeedRange2D.X, SpeedRange2D.Y)) return false;
 	if (!UKismetMathLibrary::InRange_FloatFloat(SpeedSignZ * VelocityZRS.Size(), SpeedRangeZ.X, SpeedRangeZ.Y)) return false;
 	if (!UKismetMathLibrary::InRange_FloatFloat(VelocityAnglePitch, VelocityAngleRangePitch.X, VelocityAngleRangePitch.Y)) return false;
 	if (!UKismetMathLibrary::InRange_FloatFloat(VelocityAngleYaw, VelocityAngleRangeYaw.X, VelocityAngleRangeYaw.Y)) return false;
 	if (!MovementTagQuery.IsEmpty() && MovementTagQuery.Matches(Agent->GetGameplayTagController()->GetGameplayTags())) return false;
-	
+
 	return true;
 }
 
-bool FVSFallingMovementAnimSettings::IsValid() const
+bool FVSFixedPointLeapSettings::IsValid() const
 {
 	if (!Limits.IsValid()) return false;
-	if (!FallAnim) return false;
+	if (AnimRows.IsEmpty()) return false;
+	
 	return true;
 }

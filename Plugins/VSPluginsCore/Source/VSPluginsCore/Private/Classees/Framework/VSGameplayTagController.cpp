@@ -197,9 +197,9 @@ void UVSGameplayTagController::NotifyTagEvent(const FGameplayTag& TagEvent, bool
 	}
 }
 
-#if WITH_EDITORONLY_DATA
 FString UVSGameplayTagController::ToDebugString()
 {
+#if WITH_EDITORONLY_DATA
 	FString String = "Tags in actor " + GetOwnerActor()->GetName() + " ("
 		+ UEnum::GetValueAsString(GetOwnerActor()->GetLocalRole()) + " / "
 		+ UEnum::GetValueAsString(GetOwnerActor()->GetRemoteRole()) + "):";
@@ -210,8 +210,10 @@ FString UVSGameplayTagController::ToDebugString()
 		String += "\n\t" + GameplayTag.ToString();
 	}
 	return String;
-}
+#else
+	return FString();
 #endif
+}
 
 UAbilitySystemComponent* UVSGameplayTagController::GetAbilitySystemComponent() const
 {

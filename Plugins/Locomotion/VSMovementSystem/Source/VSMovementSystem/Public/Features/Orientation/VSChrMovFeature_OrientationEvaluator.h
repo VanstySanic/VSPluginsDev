@@ -15,7 +15,7 @@ struct FVSOrientationEvaluateParams;
  * Other features may rely on this.
  * You can add multiple evaluators into the features.
  */
-UCLASS(Abstract)
+UCLASS(Abstract, DisplayName = "Feature.ChrMov.Orientation.Evaluator")
 class VSMOVEMENTSYSTEM_API UVSChrMovFeature_OrientationEvaluator : public UVSCharacterMovementFeature
 {
 	GENERATED_UCLASS_BODY()
@@ -42,7 +42,4 @@ class VSMOVEMENTSYSTEM_API UVSChrMovFeature_OrientationEvaluator_Common : public
 protected:
 	virtual bool EvaluateOrientation_Implementation(FRotator& OutRotation, const FVSOrientationEvaluateParams& Params) override;
 
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orientation")
-	bool bAdjustMovementAgainstWall2D = true;
 };

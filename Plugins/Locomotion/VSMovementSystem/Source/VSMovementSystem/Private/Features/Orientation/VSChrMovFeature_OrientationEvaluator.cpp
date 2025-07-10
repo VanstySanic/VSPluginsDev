@@ -25,7 +25,7 @@ bool UVSChrMovFeature_OrientationEvaluator::EvaluateOrientation_Implementation(F
 	if (Params.bReturnRotationInSpace2D) CharacterRotationDS.SetComponentForAxis(EAxis::Y, 0.f);
 	CharacterRotationDS.Normalize();
 	OutRotation = UKismetMathLibrary::ComposeRotators(CharacterRotationDS, WorldToDownVectorRotation.Rotator());
-	
+
 	return false;
 }
 
@@ -69,9 +69,7 @@ bool UVSChrMovFeature_OrientationEvaluator_Common::EvaluateOrientation_Implement
 		if (Params.bReturnRotationInSpace2D) VelocityGS.Z = 0.f;
 		if (Params.bReturnRotationInSpace2D) InputGS.Z = 0.f;
 
-		FVector AdjustedVelocityDirectionDS =
-			(bAdjustMovementAgainstWall2D && Params.bMovementAgainstWallAdjustment2D && !InputGS.IsNearlyZero(0.01f) && IsMovingAgainstWall2D())
-			? InputGS : VelocityGS;
+		FVector AdjustedVelocityDirectionDS = (Params.bMovementAgainstWallAdjustment2D && IsMovingAgainstWall2D()) ? InputGS : VelocityGS;
 
 		if (VelocityGS.IsNearlyZero(0.01f) && InputGS.IsNearlyZero(0.01f)) return false;
 		

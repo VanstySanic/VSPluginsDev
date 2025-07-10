@@ -48,3 +48,19 @@ bool UVSGameplayLibrary::SweepSingleByShapeAndChannels(const UObject* WorldConte
 	
 	return false;
 }
+
+FVector UVSGameplayLibrary::SuggestVelocityForProjectileMovementByTime(const FVector& StartLocation, const FVector& EndLocation, const float MovementTime, const FVector& GravityDirection, float GravitySize)
+{
+	if (MovementTime <= 0.f) return FVector::ZeroVector;
+
+	const FVector& NegativeGravityNormal = GravityDirection.GetSafeNormal();
+	
+	const FVector& DeltaLocation2D = FVector::VectorPlaneProject((EndLocation - StartLocation), NegativeGravityNormal);
+	const FVector& DeltaLocationZ = (EndLocation - StartLocation).ProjectOnToNormal(NegativeGravityNormal);
+
+	FVector AnsVelocity = FVector::ZeroVector;
+	AnsVelocity += DeltaLocation2D / MovementTime;
+	AnsVelocity += DeltaLocationZ / MovementTime - GravitySize * NegativeGravityNormal * MovementTime;
+
+	return AnsVelocity;
+}

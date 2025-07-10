@@ -8,7 +8,7 @@
 #include "VSChrMovFeature_MantleVaultMovement.generated.h"
 
 /**
- * If you are controlling rotation using orientation control 2D feature, set the moving and idle evaluate type to aiming.
+ * 
  */
 UCLASS(DisplayName = "Feature.ChrMov.Movement.MantleVault")
 class VSMOVEMENTSYSTEM_API UVSChrMovFeature_MantleVaultMovement : public UVSCharacterMovementFeature
@@ -20,7 +20,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "Settings"))
 	bool IsMantlingOrVaultingMode() const;
-	
+
+	/**
+	 * Try mantle or vault.
+	 * If you are controlling rotation using orientation control 2D feature, set the moving and idle evaluate type to aiming.
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows"))
 	void TryMantleVault(const TArray<FDataTableRowHandle>& SettingRows, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType = EVSMantleVaultMovementType::MantleOrVault);
 

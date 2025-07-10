@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Types/VSCharacterMovementTags.h"
 #include "UObject/Object.h"
 #include "VSChrMovAnimInAirTypes.generated.h"
 
@@ -15,6 +16,17 @@ struct FVSFallingMovementAnimLimits
 {
 	GENERATED_BODY()
 
+	FVSFallingMovementAnimLimits()
+	{
+		AllowedPrevMovementModes =
+			{
+				EVSMovementMode::Walking,
+				EVSMovementMode::NavWalking,
+				EVSMovementMode::Falling,
+				EVSMovementMode::FixedPointLeap,
+			};
+	}
+	
 	bool IsValid() const;
 	bool Matches(const UVSCharacterMovementAnimFeatureAgent* Agent) const;
 
@@ -35,6 +47,10 @@ struct FVSFallingMovementAnimLimits
 	/** Empty as all. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FGameplayTag> AllowedPrevMovementModes;
+
+	/** Empty as pass. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTagQuery MovementTagQuery;
 };
 
 USTRUCT(BlueprintType)

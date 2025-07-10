@@ -20,6 +20,11 @@ class VSMOVEMENTANIM_API UVSChrMovAnimFeature_FallingMovement : public UVSCharac
 {
 	GENERATED_BODY()
 
+protected:
+	virtual void BeginPlay_Implementation() override;
+	virtual void UpdateAnimation_Implementation(float DeltaTime) override;
+	virtual void UpdateAnimationThreadSafe_Implementation(float DeltaTime) override;
+	virtual void OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent) override;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Conditions")
@@ -76,28 +81,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Node Events")
 	void UpdateLandAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node);
 
-	
-protected:
-	virtual void BeginPlay_Implementation() override;
-	virtual void UpdateAnimation_Implementation(float DeltaTime) override;
-	virtual void UpdateAnimationThreadSafe_Implementation(float DeltaTime) override;
-	virtual void OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent) override;
-
 private:
 	void UpdateMovementTagQueryStates(const FGameplayTag& TagEvent);
 	
 protected:
 	/** Used when no valid anim settings row is renewed. */
-	UPROPERTY(EditAnywhere, Category = "Animation", meta = (RowType = "/Script/VSLocomotionAnim.VSFallingMovementAnimSettings"))
-	FVSDataTableRowHandleWrap DefaultAnimSettingsRow;
+	UPROPERTY(EditAnywhere, Category = "Animation", meta = (RowType = "/Script/VSMovementAnim.VSFallingMovementAnimSettings"))
+	FDataTableRowHandle DefaultSettingsRow;
 	
-	/**
-	 * Every reassigned row will only use once, until the character reaches ground.
-	 * Notice that reassignment will only occur in falling mode.
-	 */
-	UPROPERTY(EditAnywhere, Category = "Animation", meta = (ShowOnlyInnerProperties, RowType = "/Script/VSLocomotionAnim.VSFallingMovementAnimSettings"))
-	TMap<FVSDataTableRowHandleWrap, FVSGameplayTagEventQuery> QueriedAnimSettingRows;
-
+	UPROPERTY(EditAnywhere, Category = "Animation", meta = (RowType = "/Script/VSMovementAnim.VSFallingMovementAnimSettings"))
+	TArray<FDataTableRowHandle> AnimSettingRows;
+	
 	/**
 	 * Reassign the settings when tags matches the container.
 	 * Every renewed row will only use once, until the process is over and character reaches ground.
@@ -146,8 +140,7 @@ private:
 	struct FAnimData
 	{
 		uint8 AnimSettingsReassignedMark;
-
-		FVSFallingMovementAnimSettings* AnimSettingsPtr;
+		FVSFallingMovementAnimSettings* CurrentAnimSettingsPtr;
 
 		float StartAnimPlayedTime = 0.f;
 		float DistanceToLandThreshold = 0.f;

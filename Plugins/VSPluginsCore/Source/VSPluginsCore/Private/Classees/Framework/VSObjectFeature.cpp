@@ -98,6 +98,7 @@ bool UVSObjectFeature::CallRemoteFunction(UFunction* Function, void* Parms, FOut
 	return bProcessed;
 }
 
+#if WITH_EDITOR
 bool UVSObjectFeature::Modify(bool bAlwaysMarkDirty)
 {
 	AActor* OwnerActor = GetOwnerActor();    
@@ -110,6 +111,7 @@ bool UVSObjectFeature::Modify(bool bAlwaysMarkDirty)
 
 	return Super::Modify(bAlwaysMarkDirty);
 }
+#endif
 
 void UVSObjectFeature::OnCreatedFromReplication()
 {

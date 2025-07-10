@@ -16,6 +16,15 @@ struct FVSLandRecoveryLimits
 {
 	GENERATED_BODY()
 
+	FVSLandRecoveryLimits()
+	{
+		AllowedPrevMovementModes = TArray<FGameplayTag>
+			{
+				EVSMovementMode::Falling,
+				EVSMovementMode::FixedPointLeap,
+			};
+	}
+
 	bool IsValid() const;
 	bool Validate();
 	bool Matches(const UVSCharacterMovementFeatureAgent* Agent) const;
@@ -43,7 +52,9 @@ struct FVSLandRecoveryLimits
 
 	/** Empty as matching. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FGameplayTag> AllowedPrevMovementModes = TArray<FGameplayTag> { EVSMovementMode::Falling };
+	TArray<FGameplayTag> AllowedPrevMovementModes = TArray<FGameplayTag> {
+		EVSMovementMode::Falling
+	};
 };
 
 UENUM(BlueprintType)

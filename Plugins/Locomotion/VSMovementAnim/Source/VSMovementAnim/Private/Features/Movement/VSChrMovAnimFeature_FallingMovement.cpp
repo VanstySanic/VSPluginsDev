@@ -70,31 +70,31 @@ void UVSChrMovAnimFeature_FallingMovement::UpdateAnimationThreadSafe_Implementat
 
 bool UVSChrMovAnimFeature_FallingMovement::HasPossibleStartAnim() const
 {
-	if (!AnimData.AnimSettingsPtr) return false;
-	FVSAnimSequenceReference* StartAnim = AnimData.AnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+	if (!AnimData.CurrentAnimSettingsPtr) return false;
+	FVSAnimSequenceReference* StartAnim = AnimData.CurrentAnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 	return StartAnim && StartAnim->IsValid();
 }
 
 bool UVSChrMovAnimFeature_FallingMovement::HasPossibleStartLoopAnim() const
 {
-	if (!AnimData.AnimSettingsPtr) return false;
-	if (AnimData.AnimSettingsPtr->StartLoopAnim) return true;
-	FVSAnimSequenceReference* Anim = AnimData.AnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+	if (!AnimData.CurrentAnimSettingsPtr) return false;
+	if (AnimData.CurrentAnimSettingsPtr->StartLoopAnim) return true;
+	FVSAnimSequenceReference* Anim = AnimData.CurrentAnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 	return Anim && Anim->IsValid() && Anim->HasTimePeriod(StartAnimLoopSwingTimePeriodName);
 }
 
 bool UVSChrMovAnimFeature_FallingMovement::HasPossibleApexAnim() const
 {
-	if (!AnimData.AnimSettingsPtr) return false;
-	if (AnimData.AnimSettingsPtr->StartLoopAnim) return true;
-	FVSAnimSequenceReference* Anim = AnimData.AnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+	if (!AnimData.CurrentAnimSettingsPtr) return false;
+	if (AnimData.CurrentAnimSettingsPtr->StartLoopAnim) return true;
+	FVSAnimSequenceReference* Anim = AnimData.CurrentAnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 	return Anim && Anim->IsValid() && Anim->HasTimeMark(StartAnimApexTimeMarkName);
 }
 
 bool UVSChrMovAnimFeature_FallingMovement::HasPossibleLandAnim() const
 {
-	if (!AnimData.AnimSettingsPtr) return false;
-	FVSAnimSequenceReference* LandAnim = AnimData.AnimSettingsPtr->LandAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+	if (!AnimData.CurrentAnimSettingsPtr) return false;
+	FVSAnimSequenceReference* LandAnim = AnimData.CurrentAnimSettingsPtr->LandAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 	return LandAnim && LandAnim->IsValid();
 }
 
@@ -102,10 +102,10 @@ bool UVSChrMovAnimFeature_FallingMovement::CanExitStartStateNaturally() const
 {
 	if (!HasPossibleStartAnim()) return true;
 
-	FVSAnimSequenceReference* StartAnim = AnimData.AnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+	FVSAnimSequenceReference* StartAnim = AnimData.CurrentAnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 	
-	const bool bStartAsLoop = !AnimData.AnimSettingsPtr->StartLoopAnim && StartAnim->HasTimePeriod(StartAnimLoopSwingTimePeriodName);
-	const bool bStartAsApex = !AnimData.AnimSettingsPtr->ApexAnim && StartAnim->HasTimeMark(StartAnimApexTimeMarkName);
+	const bool bStartAsLoop = !AnimData.CurrentAnimSettingsPtr->StartLoopAnim && StartAnim->HasTimePeriod(StartAnimLoopSwingTimePeriodName);
+	const bool bStartAsApex = !AnimData.CurrentAnimSettingsPtr->ApexAnim && StartAnim->HasTimeMark(StartAnimApexTimeMarkName);
 	if (!bStartAsLoop && !bStartAsApex && AnimData.StartAnimPlayedTime >= StartAnim->GetSafePlayTimeRange().Y) return true;
 	if (bStartAsLoop && AnimData.StartAnimPlayedTime >= StartAnim->GetPeriodTimeRange(StartAnimLoopSwingTimePeriodName).X) return true;
 	if (!bStartAsLoop && bStartAsApex && AnimData.StartAnimPlayedTime >= StartAnim->GetMarkTime(StartAnimApexTimeMarkName)) return true;
@@ -208,7 +208,7 @@ void UVSChrMovAnimFeature_FallingMovement::SetupStartAnim(const FAnimUpdateConte
 	USequenceEvaluatorLibrary::ConvertToSequenceEvaluatorPure(Node, SequenceEvaluator, bResult);
 	if (!bResult) return;
 
-	FVSAnimSequenceReference* StartAnim = AnimData.AnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+	FVSAnimSequenceReference* StartAnim = AnimData.CurrentAnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 
 	if (UAnimSequenceBase* NewAnim = StartAnim->AnimSequence)
 	{
@@ -228,7 +228,7 @@ void UVSChrMovAnimFeature_FallingMovement::UpdateStartAnim(const FAnimUpdateCont
 	USequenceEvaluatorLibrary::ConvertToSequenceEvaluatorPure(Node, SequenceEvaluator, bResult);
 	if (!bResult) return;
 
-	FVSAnimSequenceReference* StartAnim = AnimData.AnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+	FVSAnimSequenceReference* StartAnim = AnimData.CurrentAnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 
 	/** Check for new movement process. */
 	if (bMovementReassignedThisFrame)
@@ -255,14 +255,14 @@ void UVSChrMovAnimFeature_FallingMovement::SetupStartLoopAnim(const FAnimUpdateC
 	USequenceEvaluatorLibrary::ConvertToSequenceEvaluatorPure(Node, SequenceEvaluator, bResult);
 	if (!bResult) return;
 	
-	FVSAnimSequenceReference* StartAnim = AnimData.AnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+	FVSAnimSequenceReference* StartAnim = AnimData.CurrentAnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 
-	if (UAnimSequenceBase* NewAnim = AnimData.AnimSettingsPtr->StartLoopAnim ? AnimData.AnimSettingsPtr->StartLoopAnim : StartAnim->AnimSequence)
+	if (UAnimSequenceBase* NewAnim = AnimData.CurrentAnimSettingsPtr->StartLoopAnim ? AnimData.CurrentAnimSettingsPtr->StartLoopAnim : StartAnim->AnimSequence)
 	{
 		USequenceEvaluatorLibrary::SetSequence(SequenceEvaluator, NewAnim);
 	}
 	
-	USequenceEvaluatorLibrary::SetExplicitTime(SequenceEvaluator, AnimData.AnimSettingsPtr->StartLoopAnim ? 0.f : StartAnim->GetPeriodTimeRange(StartAnimLoopSwingTimePeriodName).X);
+	USequenceEvaluatorLibrary::SetExplicitTime(SequenceEvaluator, AnimData.CurrentAnimSettingsPtr->StartLoopAnim ? 0.f : StartAnim->GetPeriodTimeRange(StartAnimLoopSwingTimePeriodName).X);
 }
 
 void UVSChrMovAnimFeature_FallingMovement::UpdateStartLoopAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node)
@@ -274,22 +274,22 @@ void UVSChrMovAnimFeature_FallingMovement::UpdateStartLoopAnim(const FAnimUpdate
 	USequenceEvaluatorLibrary::ConvertToSequenceEvaluatorPure(Node, SequenceEvaluator, bResult);
 	if (!bResult) return;
 
-	FVSAnimSequenceReference* StartAnim = AnimData.AnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+	FVSAnimSequenceReference* StartAnim = AnimData.CurrentAnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 
 	/** Check for new movement process. */
 	if (bMovementReassignedThisFrame)
 	{
-		if (UAnimSequenceBase* NewAnim = AnimData.AnimSettingsPtr->StartLoopAnim ? AnimData.AnimSettingsPtr->StartLoopAnim : StartAnim->AnimSequence)
+		if (UAnimSequenceBase* NewAnim = AnimData.CurrentAnimSettingsPtr->StartLoopAnim ? AnimData.CurrentAnimSettingsPtr->StartLoopAnim : StartAnim->AnimSequence)
 		{
 			if (NewAnim != USequenceEvaluatorLibrary::GetSequence(SequenceEvaluator))
 			{
 				USequenceEvaluatorLibrary::SetSequenceWithInertialBlending(Context, SequenceEvaluator, NewAnim);
 			}
-			USequenceEvaluatorLibrary::SetExplicitTime(SequenceEvaluator, AnimData.AnimSettingsPtr->StartLoopAnim ? 0.f : StartAnim->GetPeriodTimeRange(StartAnimLoopSwingTimePeriodName).X);
+			USequenceEvaluatorLibrary::SetExplicitTime(SequenceEvaluator, AnimData.CurrentAnimSettingsPtr->StartLoopAnim ? 0.f : StartAnim->GetPeriodTimeRange(StartAnimLoopSwingTimePeriodName).X);
 		}
 	}
 
-	if (AnimData.AnimSettingsPtr->StartLoopAnim)
+	if (AnimData.CurrentAnimSettingsPtr->StartLoopAnim)
 	{
 		USequenceEvaluatorLibrary::AdvanceTime(Context, SequenceEvaluator);
 	}
@@ -311,14 +311,14 @@ void UVSChrMovAnimFeature_FallingMovement::SetupApexAnim(const FAnimUpdateContex
 	USequenceEvaluatorLibrary::ConvertToSequenceEvaluatorPure(Node, SequenceEvaluator, bResult);
 	if (!bResult) return;
 
-	FVSAnimSequenceReference* StartAnim = AnimData.AnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+	FVSAnimSequenceReference* StartAnim = AnimData.CurrentAnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 
-	if (UAnimSequenceBase* NewAnim = AnimData.AnimSettingsPtr->ApexAnim ? AnimData.AnimSettingsPtr->ApexAnim : StartAnim->AnimSequence)
+	if (UAnimSequenceBase* NewAnim = AnimData.CurrentAnimSettingsPtr->ApexAnim ? AnimData.CurrentAnimSettingsPtr->ApexAnim : StartAnim->AnimSequence)
 	{
 		USequenceEvaluatorLibrary::SetSequence(SequenceEvaluator, NewAnim);
 	}
 	
-	USequenceEvaluatorLibrary::SetExplicitTime(SequenceEvaluator, AnimData.AnimSettingsPtr->ApexAnim ? 0.f : StartAnim->GetMarkTime(StartAnimApexTimeMarkName));
+	USequenceEvaluatorLibrary::SetExplicitTime(SequenceEvaluator, AnimData.CurrentAnimSettingsPtr->ApexAnim ? 0.f : StartAnim->GetMarkTime(StartAnimApexTimeMarkName));
 }
 
 void UVSChrMovAnimFeature_FallingMovement::UpdateApexAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node)
@@ -330,32 +330,32 @@ void UVSChrMovAnimFeature_FallingMovement::UpdateApexAnim(const FAnimUpdateConte
 	USequenceEvaluatorLibrary::ConvertToSequenceEvaluatorPure(Node, SequenceEvaluator, bResult);
 	if (!bResult) return;
 
-	FVSAnimSequenceReference* StartAnim = AnimData.AnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+	FVSAnimSequenceReference* StartAnim = AnimData.CurrentAnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 
 	/** Check for new movement process. */
 	if (bMovementReassignedThisFrame)
 	{
-		if (UAnimSequenceBase* NewAnim = AnimData.AnimSettingsPtr->ApexAnim ? AnimData.AnimSettingsPtr->ApexAnim : StartAnim->AnimSequence)
+		if (UAnimSequenceBase* NewAnim = AnimData.CurrentAnimSettingsPtr->ApexAnim ? AnimData.CurrentAnimSettingsPtr->ApexAnim : StartAnim->AnimSequence)
 		{
 			USequenceEvaluatorLibrary::SetSequence(SequenceEvaluator, NewAnim);
 		}
-		USequenceEvaluatorLibrary::SetExplicitTime(SequenceEvaluator, AnimData.AnimSettingsPtr->ApexAnim ? 0.f : StartAnim->GetMarkTime(StartAnimApexTimeMarkName));
+		USequenceEvaluatorLibrary::SetExplicitTime(SequenceEvaluator, AnimData.CurrentAnimSettingsPtr->ApexAnim ? 0.f : StartAnim->GetMarkTime(StartAnimApexTimeMarkName));
 		UVSAnimationLibrary::SetInterialBlendingForSequenceEvaluator(Context, SequenceEvaluator);
 	}
 
-	USequenceEvaluatorLibrary::AdvanceTime(Context, SequenceEvaluator, AnimData.AnimSettingsPtr->ApexAnim ? 1.f : StartAnim->PlayRate);
+	USequenceEvaluatorLibrary::AdvanceTime(Context, SequenceEvaluator, AnimData.CurrentAnimSettingsPtr->ApexAnim ? 1.f : StartAnim->PlayRate);
 }
 
 void UVSChrMovAnimFeature_FallingMovement::UpdateFallAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node)
 {
-	if (!AnimData.AnimSettingsPtr) return;
+	if (!AnimData.CurrentAnimSettingsPtr) return;
 	
 	FSequencePlayerReference SequencePlayer;
 	bool bResult = false;
 	USequencePlayerLibrary::ConvertToSequencePlayerPure(Node, SequencePlayer, bResult);
 	if (!bResult) return;
 
-	if (UAnimSequenceBase* NewAnim = AnimData.AnimSettingsPtr->FallAnim)
+	if (UAnimSequenceBase* NewAnim = AnimData.CurrentAnimSettingsPtr->FallAnim)
 	{
 		if (NewAnim != USequencePlayerLibrary::GetSequencePure(SequencePlayer))
 		{
@@ -373,7 +373,7 @@ void UVSChrMovAnimFeature_FallingMovement::SetupLandAnim(const FAnimUpdateContex
 	USequenceEvaluatorLibrary::ConvertToSequenceEvaluatorPure(Node, SequenceEvaluator, bResult);
 	if (!bResult) return;
 
-	FVSAnimSequenceReference* LandAnim = AnimData.AnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+	FVSAnimSequenceReference* LandAnim = AnimData.CurrentAnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 	if (UAnimSequenceBase* NewAnim = LandAnim->AnimSequence)
 	{
 		USequenceEvaluatorLibrary::SetSequence(SequenceEvaluator, NewAnim);
@@ -391,7 +391,7 @@ void UVSChrMovAnimFeature_FallingMovement::UpdateLandAnim(const FAnimUpdateConte
 	USequenceEvaluatorLibrary::ConvertToSequenceEvaluatorPure(Node, SequenceEvaluator, bResult);
 	if (!bResult) return;
 
-	FVSAnimSequenceReference* LandAnim = AnimData.AnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+	FVSAnimSequenceReference* LandAnim = AnimData.CurrentAnimSettingsPtr->StartAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 	/** Check for new movement process. */
 	if (bMovementReassignedThisFrame)
 	{
@@ -434,43 +434,38 @@ void UVSChrMovAnimFeature_FallingMovement::UpdateMovementTagQueryStates(const FG
 		{
 			bIsFallingDown = GetVelocityZ().Dot(GetUpDirection()) < 0.f;
 			bIsMovingUp = GetVelocityZ().Dot(GetUpDirection()) > 0.f;
-			
-			AnimData.AnimSettingsPtr = DefaultAnimSettingsRow.GetRow<FVSFallingMovementAnimSettings>(nullptr);
-			AnimData.AnimSettingsReassignedMark = true;
 		}
 	}
 	/** Refresh movement data when enter falling mode. */
 	else if (GetMovementMode() == EVSMovementMode::Falling)
 	{
-		FVSDataTableRowHandleWrap SettingsRowToUse = DefaultAnimSettingsRow;
+		FDataTableRowHandle SettingsRowToUse = DefaultSettingsRow;
 		if (ReassignAnimSettingsQuery.Matches(GameplayTags, TagEvent))
 		{
-			for (const auto& TaggedAnimSettingRow : QueriedAnimSettingRows)
+			for (const FDataTableRowHandle& AnimSettingRow : AnimSettingRows)
 			{
-				if (!TaggedAnimSettingRow.Value.Matches(GameplayTags, TagEvent)) continue;
-				FVSFallingMovementAnimSettings* Settings = TaggedAnimSettingRow.Key.GetRow<FVSFallingMovementAnimSettings>(nullptr);
+				FVSFallingMovementAnimSettings* Settings = AnimSettingRow.GetRow<FVSFallingMovementAnimSettings>(nullptr);
 				if (!Settings || !Settings->IsValid()) continue;
 				if (!Settings->Limits.Matches(AnimFeatureAgent)) continue;
-				SettingsRowToUse = TaggedAnimSettingRow.Key;
+				SettingsRowToUse = AnimSettingRow;
 				break;
 			}
 		}
 		
-		AnimData.AnimSettingsPtr = SettingsRowToUse.GetRow<FVSFallingMovementAnimSettings>(nullptr);
-		if (AnimData.AnimSettingsPtr && AnimData.AnimSettingsPtr->IsValid())
+		AnimData.CurrentAnimSettingsPtr = SettingsRowToUse.GetRow<FVSFallingMovementAnimSettings>(nullptr);
+		if (AnimData.CurrentAnimSettingsPtr && AnimData.CurrentAnimSettingsPtr->IsValid())
 		{
-			FVSAnimSequenceReference* Anim = AnimData.AnimSettingsPtr->LandAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+			FVSAnimSequenceReference* Anim = AnimData.CurrentAnimSettingsPtr->LandAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 			if (Anim && Anim->IsValid() && UVSAnimationLibrary::AnimationHasCurve(Anim->AnimSequence, DistanceToLandCurveName))
 			{
 				const float StartCurve = UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, DistanceToLandCurveName, Anim->GetSafePlayTimeRange().X);
 				const float EndCurve = UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, DistanceToLandCurveName, Anim->GetSafePlayTimeRange().Y);
 				AnimData.DistanceToLandThreshold = FMath::Abs(EndCurve - StartCurve);
+				AnimData.StartAnimPlayedTime = Anim->GetSafePlayTimeRange().X;
 			}
 		}
 
 		AnimData.AnimSettingsReassignedMark = true;
-		AnimData.StartAnimPlayedTime = 0.f;
-		AnimData.DistanceToLandThreshold = 0.f;
 		bMovementReassignedThisFrame = true;
 	}
 }

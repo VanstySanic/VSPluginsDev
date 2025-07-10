@@ -33,4 +33,8 @@ class VSPLUGINSCORE_API UVSGameplayLibrary : public UBlueprintFunctionLibrary
 	 * @return Whether the sweep has been blocked.
 	 */
 	static bool SweepSingleByShapeAndChannels(const UObject* WorldContext, FHitResult& OutHit, const FVector& Start, const FVector& End, const FQuat& Rotation, const FCollisionShape& Shape, const FCollisionResponseContainer& Channels, const FCollisionQueryParams& QueryParams = FCollisionQueryParams::DefaultQueryParam, FCollisionResponseParams ResponseParams = FCollisionResponseParams::DefaultResponseParam);
+
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Projectile")
+	static FVector SuggestVelocityForProjectileMovementByTime(const FVector& StartLocation, const FVector& EndLocation, const float MovementTime = 1.f, const FVector& GravityDirection = FVector(0.0, 0.0, -1.0), float GravitySize = 980.f);
 };
