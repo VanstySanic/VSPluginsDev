@@ -92,22 +92,46 @@ bool UVSChrMovFeature_OrientationEvaluator_Common::EvaluateOrientation_Implement
 
 
 	/** Aiming. */
-	if (Params.Type == EVSOrientationEvaluateType::Aiming)
+	if (Params.Type == EVSOrientationEvaluateType::Aim_Component)
+	{
+		const bool bFuncParamsHasAimingTargetComponent = Params.NamedParams.ComponentParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetComponent);
+		const bool bDefaultParamsHasAimingTargetComponent = DefaultNamedParams.ComponentParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetComponent);
+		if (!bFuncParamsHasAimingTargetComponent && !bDefaultParamsHasAimingTargetComponent) return false;
+
+		USceneComponent* ComponentToUse = bFuncParamsHasAimingTargetComponent ? Params.NamedParams.ComponentParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetComponent)
+			: (bDefaultParamsHasAimingTargetComponent ? Params.NamedParams.ComponentParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetComponent) : nullptr);
+		
+		FVector AimingDirectionGS = UKismetMathLibrary::Quat_RotateVector(UpDirectionToWorldRotation, ComponentToUse->GetComponentLocation() - GetCharacter()->GetActorLocation());
+		if (Params.bReturnRotationInSpace2D) AimingDirectionGS.Z = 0.f;
+
+		OutRotation = UKismetMathLibrary::ComposeRotators(AimingDirectionGS.Rotation(), WorldToUpDirectionRotation.Rotator());
+		return true;
+	}
+	if (Params.Type == EVSOrientationEvaluateType::Aim_Point)
 	{
 		const bool bFuncParamsHasAimingTargetPoint = Params.NamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetPoint);
-		const bool bFuncParamsHasAimingTargetComponent = Params.NamedParams.ComponentParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetComponent);
 		const bool bDefaultParamsHasAimingTargetPoint = DefaultNamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetPoint);
-		const bool bDefaultParamsHasAimingTargetComponent = DefaultNamedParams.ComponentParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetComponent);
-		if (!bFuncParamsHasAimingTargetPoint && !bFuncParamsHasAimingTargetComponent && !bDefaultParamsHasAimingTargetPoint && !bDefaultParamsHasAimingTargetComponent) return false;
+		if (!bFuncParamsHasAimingTargetPoint && !bDefaultParamsHasAimingTargetPoint) return false;
 		
 		FVector TargetPoint = bFuncParamsHasAimingTargetPoint ? Params.NamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetPoint)
 			: (bDefaultParamsHasAimingTargetPoint ? DefaultNamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetPoint) : FVector::ZeroVector);
 		
-		USceneComponent* ComponentToUse = bDefaultParamsHasAimingTargetPoint ? Params.NamedParams.ComponentParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetComponent)
-			: (bDefaultParamsHasAimingTargetComponent ? Params.NamedParams.ComponentParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetComponent) : nullptr);
-		if (ComponentToUse) { TargetPoint = ComponentToUse->GetComponentLocation(); }
-		
 		FVector AimingDirectionGS = UKismetMathLibrary::Quat_RotateVector(UpDirectionToWorldRotation, TargetPoint - GetCharacter()->GetActorLocation());
+		if (Params.bReturnRotationInSpace2D) AimingDirectionGS.Z = 0.f;
+
+		OutRotation = UKismetMathLibrary::ComposeRotators(AimingDirectionGS.Rotation(), WorldToUpDirectionRotation.Rotator());
+		return true;
+	}
+	if (Params.Type == EVSOrientationEvaluateType::Aim_Direction)
+	{
+		const bool bFuncParamsHasAimingTargetDirection = Params.NamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection);
+		const bool bDefaultParamsHasAimingTargetDirection = DefaultNamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection);
+		if (!bFuncParamsHasAimingTargetDirection && !bDefaultParamsHasAimingTargetDirection) return false;
+		
+		FVector TargetDirection = bFuncParamsHasAimingTargetDirection ? Params.NamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetPoint)
+			: (bDefaultParamsHasAimingTargetDirection ? DefaultNamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection) : FVector::ZeroVector);
+		
+		FVector AimingDirectionGS = UKismetMathLibrary::Quat_RotateVector(UpDirectionToWorldRotation, TargetDirection);
 		if (Params.bReturnRotationInSpace2D) AimingDirectionGS.Z = 0.f;
 
 		OutRotation = UKismetMathLibrary::ComposeRotators(AimingDirectionGS.Rotation(), WorldToUpDirectionRotation.Rotator());

@@ -65,7 +65,7 @@ void UVSChrMovFeature_MantleVaultMovement::StopMantleVault()
 
 	if (UVSChrMovFeature_OrientationEvaluator* Evaluator = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationEvaluator>())
 	{
-		Evaluator->DefaultNamedParams.VectorParams.Remove(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetPoint);
+		Evaluator->DefaultNamedParams.VectorParams.Remove(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection);
 	}
 	
 	MovementData = FMovementData();
@@ -128,7 +128,7 @@ void UVSChrMovFeature_MantleVaultMovement::UpdateMovement_Implementation(float D
 	
 	if (UVSChrMovFeature_OrientationEvaluator_Common* Evaluator = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationEvaluator_Common>())
 	{
-		Evaluator->DefaultNamedParams.VectorParams.Emplace(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetPoint, GetCharacter()->GetActorLocation() + MovementDirectionWS * 16.f);
+		Evaluator->DefaultNamedParams.VectorParams.Emplace(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection, MovementDirectionWS);
 	}
 
 	MovementData.MovementElapsedTime = FMath::Clamp(MovementData.MovementElapsedTime + DeltaTime * MovementData.CachedParams.AnimPlayRate, 0.f, MovementData.AnimPtr->GetSafePlayTimeRange().Y);

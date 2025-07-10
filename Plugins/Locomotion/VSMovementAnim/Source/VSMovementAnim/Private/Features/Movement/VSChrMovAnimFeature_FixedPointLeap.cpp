@@ -37,6 +37,8 @@ void UVSChrMovAnimFeature_FixedPointLeap::SetupFixedPointLeapAnim_Implementation
 	if (!bResult) return;
 
 	FVSAnimSequenceReference* Anim = ChrMovFeature_FixedPointLeapMovement->GetFixedPointLeapSnappedParams().AnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+	if (!Anim) return;
+
 	if (UAnimSequenceBase* NewAnim = Anim->AnimSequence)
 	{
 		USequenceEvaluatorLibrary::SetSequence(SequenceEvaluator, NewAnim);
@@ -56,6 +58,7 @@ void UVSChrMovAnimFeature_FixedPointLeap::UpdateFixedPointLeapAnim_Implementatio
 	if (!bResult) return;
 
 	FVSAnimSequenceReference* Anim = ChrMovFeature_FixedPointLeapMovement->GetFixedPointLeapSnappedParams().AnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+	if (!Anim) return;
 
 	/** Check for new mantle process. */
 	if (AnimData.LastActionID != ChrMovFeature_FixedPointLeapMovement->GetFixedPointLeapSnappedParams().ActionID && ChrMovFeature_FixedPointLeapMovement->GetFixedPointLeapSnappedParams().ActionID != INDEX_NONE && ChrMovFeature_FixedPointLeapMovement->IsFixedPointLeapMode())

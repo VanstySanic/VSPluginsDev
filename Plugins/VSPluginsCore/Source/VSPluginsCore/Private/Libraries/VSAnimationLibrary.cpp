@@ -88,11 +88,12 @@ int32 UVSAnimationLibrary::GetAnimationFrameAtTime(const UAnimSequenceBase* Anim
 	return FMath::Clamp(Animation->GetSamplingFrameRate().AsFrameTime(Time).RoundToFrame().Value, 0, Animation->GetNumberOfSampledKeys() - 1);
 }
 
-FTransform UVSAnimationLibrary::GetAnimationBoneTransformAtTime(const UAnimSequenceBase* Animation, FName BoneName, float Time, bool bExtractRootMotion, bool bUseComponentSpace)
+FTransform UVSAnimationLibrary::GetAnimationBoneTransformAtTime(const UAnimSequenceBase* Animation, FName BoneName, float Time, bool bExtractRootMotion, bool bUseComponentSpace, bool bThreadSafe)
 {
 	if (Animation == nullptr) return FTransform::Identity;
+	const UAnimSequenceBase* AnimationToCheck = bThreadSafe ? DuplicateObject(Animation, nullptr) : Animation;
 	
-	USkeleton* Skeleton = Animation->GetSkeleton();
+	USkeleton* Skeleton = AnimationToCheck->GetSkeleton();
 	if (Skeleton == nullptr) return FTransform::Identity;
 	
 	const int32 BoneIndex = Skeleton->GetReferenceSkeleton().FindBoneIndex(BoneName);
@@ -114,16 +115,16 @@ FTransform UVSAnimationLibrary::GetAnimationBoneTransformAtTime(const UAnimSeque
 
 	FAnimExtractContext Context(static_cast<double>(Time), bExtractRootMotion);
 	UE::Anim::FStackAttributeContainer Attributes;
-	FAnimationPoseData AnimationPoseData(Pose, Curve, Attributes);
+	FAnimationPoseData AnimationToCheckPoseData(Pose, Curve, Attributes);
 
-	if (const UAnimSequence* AnimSequence = Cast<UAnimSequence>(Animation))
+	if (const UAnimSequence* AnimSequence = Cast<UAnimSequence>(AnimationToCheck))
 	{
 		//TGuardValue<bool> ForceRootLockGuard = TGuardValue<bool>(AnimSequence->bForceRootLock, false);
-		GetAnimSequenceBonePose(AnimSequence, AnimationPoseData, Context);
+		GetAnimSequenceBonePose(AnimSequence, AnimationToCheckPoseData, Context);
 	}
 	else
 	{
-		Animation->GetAnimationPose(AnimationPoseData, Context);
+		AnimationToCheck->GetAnimationPose(AnimationToCheckPoseData, Context);
 	}
 
 	check(Pose.IsValidIndex(CompactPoseBoneIndex));
@@ -135,14 +136,19 @@ FTransform UVSAnimationLibrary::GetAnimationBoneTransformAtTime(const UAnimSeque
 		return ComponentSpacePose.GetComponentSpaceTransform(CompactPoseBoneIndex);
 	}
 
+	if (bThreadSafe)
+	{
+		const_cast<UAnimSequenceBase*>(AnimationToCheck)->MarkAsGarbage();
+	}
+
 	return Pose[CompactPoseBoneIndex];
 }
 
-FTransform UVSAnimationLibrary::GetAnimationBoneTransformAtFrame(const UAnimSequenceBase* Animation, FName BoneName, float Frame, bool bExtractRootMotion, bool bUseComponentSpace)
+FTransform UVSAnimationLibrary::GetAnimationBoneTransformAtFrame(const UAnimSequenceBase* Animation, FName BoneName, float Frame, bool bExtractRootMotion, bool bUseComponentSpace, bool bThreadSafe)
 {
 	if (Animation == nullptr) return FTransform::Identity;
 	const float Time = GetAnimationTimeAtFrame(Animation, Frame);
-	return GetAnimationBoneTransformAtTime(Animation, BoneName, Time, bExtractRootMotion, bUseComponentSpace);
+	return GetAnimationBoneTransformAtTime(Animation, BoneName, Time, bExtractRootMotion, bUseComponentSpace, bThreadSafe);
 }
 
 FSequencePlayerReference UVSAnimationLibrary::SetInterialBlendingForSequencePlayer(const FAnimUpdateContext& UpdateContext, const FSequencePlayerReference& SequencePlayer, float BlendTime)

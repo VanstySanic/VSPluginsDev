@@ -40,7 +40,8 @@ void UVSChrMovAnimFeature_MantleVaultMovement::SetupMantleVaultAnim_Implementati
 	FVSMantleVaultAnimSettings* AnimSettings = ChrMovFeature_MantleVaultMovement->GetMantleVaultSnappedParams().AnimSettingsRow.GetRow<FVSMantleVaultAnimSettings>(nullptr);
 	if (!AnimSettings) return;
 	FVSAnimSequenceReference* Anim = AnimSettings->AnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
-	
+	if (!Anim) return;
+
 	if (UAnimSequenceBase* NewAnim = Anim->AnimSequence)
 	{
 		USequenceEvaluatorLibrary::SetSequence(SequenceEvaluator, NewAnim);
@@ -62,7 +63,8 @@ void UVSChrMovAnimFeature_MantleVaultMovement::UpdateMantleVaultAnim_Implementat
 	FVSMantleVaultAnimSettings* AnimSettings = ChrMovFeature_MantleVaultMovement->GetMantleVaultSnappedParams().AnimSettingsRow.GetRow<FVSMantleVaultAnimSettings>(nullptr);
 	if (!AnimSettings) return;
 	FVSAnimSequenceReference* Anim = AnimSettings->AnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
-	
+	if (!Anim) return;
+
 	/** Check for new mantle process. */
 	if (AnimData.LastActionID != ChrMovFeature_MantleVaultMovement->GetMantleVaultCachedParams().ActionID && ChrMovFeature_MantleVaultMovement->GetMantleVaultCachedParams().ActionID != INDEX_NONE && ChrMovFeature_MantleVaultMovement->IsMantlingOrVaultingMode())
 	{

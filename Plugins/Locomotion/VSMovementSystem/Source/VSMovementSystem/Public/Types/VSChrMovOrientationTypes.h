@@ -31,6 +31,9 @@ struct FVSOrientationEvaluateCommonParamNames
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName AimTargetPoint = FName("AimTargetPoint");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName AimTargetDirection = FName("AimTargetDirection");
 };
 
 USTRUCT(BlueprintType)

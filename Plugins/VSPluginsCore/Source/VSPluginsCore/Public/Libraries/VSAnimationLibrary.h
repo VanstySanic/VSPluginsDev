@@ -55,10 +55,10 @@ public:
 	static int32 GetAnimationFrameAtTime(const UAnimSequenceBase* Animation, float Time);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, DisplayName = "GetBoneTransformAtTime", Category = "Anim Assets")
-	static FTransform GetAnimationBoneTransformAtTime(const UAnimSequenceBase* Animation, FName BoneName, float Time, bool bExtractRootMotion = false, bool bUseComponentSpace = true);
+	static FTransform GetAnimationBoneTransformAtTime(const UAnimSequenceBase* Animation, FName BoneName, float Time, bool bExtractRootMotion = false, bool bUseComponentSpace = true, bool bThreadSafe = false);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, DisplayName = "GetBoneTransformAtFrame", Category = "Anim Assets")
-	static FTransform GetAnimationBoneTransformAtFrame(const UAnimSequenceBase* Animation, FName BoneName, float Frame, bool bExtractRootMotion = false, bool bUseComponentSpace = true);
+	static FTransform GetAnimationBoneTransformAtFrame(const UAnimSequenceBase* Animation, FName BoneName, float Frame, bool bExtractRootMotion = false, bool bUseComponentSpace = true, bool bThreadSafe = false);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, DisplayName = "SetInterialBlending", Category = "Anim Node")
 	static FSequencePlayerReference SetInterialBlendingForSequencePlayer(const FAnimUpdateContext& UpdateContext, const FSequencePlayerReference& SequencePlayer, float BlendTime = 0.2f);

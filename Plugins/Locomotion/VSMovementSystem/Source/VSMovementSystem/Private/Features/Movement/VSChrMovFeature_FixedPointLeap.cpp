@@ -75,8 +75,7 @@ void UVSChrMovFeature_FixedPointLeap::UpdateMovement_Implementation(float DeltaT
 	{
 		if (!TargetRootPointWS.Equals(RootLocationWS))
 		{
-			Evaluator->DefaultNamedParams.VectorParams.Emplace(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetPoint, GetCharacter()->GetActorLocation() + FVector::VectorPlaneProject(TargetRootPointWS - RootLocationWS, GetUpDirection()).GetSafeNormal() * 16.f);
-
+			Evaluator->DefaultNamedParams.VectorParams.Emplace(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection, FVector::VectorPlaneProject(TargetRootPointWS - RootLocationWS, GetUpDirection()).GetSafeNormal());
 		}
 	}
 
@@ -140,7 +139,7 @@ void UVSChrMovFeature_FixedPointLeap::StopFixPointLeap()
 	
 	if (UVSChrMovFeature_OrientationEvaluator* Evaluator = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationEvaluator>())
 	{
-		Evaluator->DefaultNamedParams.VectorParams.Remove(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetPoint);
+		Evaluator->DefaultNamedParams.VectorParams.Remove(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection);
 	}
 	
 	MovementData = FMovementData();
