@@ -1,7 +1,6 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Features/Movement/VSChrMovAnimFeature_WalkingMovement.h"
-
 #include "AnimCharacterMovementLibrary.h"
 #include "AnimDistanceMatchingLibrary.h"
 #include "AnimExecutionContextLibrary.h"
@@ -14,7 +13,6 @@
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "Features/Movement/VSChrMovFeature_WalkingMovement.h"
 #include "Features/Orientation/VSChrMovFeature_OrientationControl2D.h"
-#include "Features/Orientation/VSChrMovFeature_OrientationEvaluator.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -97,7 +95,7 @@ FRotator UVSChrMovAnimFeature_WalkingMovement::EvaluateTargetOrientationForInput
 {
 	if (!GetCharacter() || !ChrMovFeature_OrientationControl2D.IsValid()) return FRotator::ZeroRotator;
 	FVSOrientationEvaluateParams EvaluateParams;
-	EvaluateParams.Type = ChrMovFeature_OrientationControl2D->GetMovingOrientationEvaluateType();
+	EvaluateParams.Type = ChrMovFeature_OrientationControl2D->GetOrientationControlSettings2D().MovingEvaluateType;
 	EvaluateParams.NamedParams.VectorParams.Emplace(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.Velocity, GetMovementInput2D());
 	EvaluateParams.NamedParams.VectorParams.Emplace(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.MovementInput, GetMovementInput2D());
 	FRotator Rotation = GetCharacter()->GetActorRotation();

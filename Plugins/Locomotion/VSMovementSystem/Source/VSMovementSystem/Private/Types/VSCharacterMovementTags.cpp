@@ -50,6 +50,13 @@ namespace EVSMovementState
 	UE_DEFINE_GAMEPLAY_TAG(LandRecovery, "VSMovementSystem.State.LandRecovery");
 }
 
+namespace EVSWallRunState
+{
+	UE_DEFINE_GAMEPLAY_TAG(Starting, "VSMovementSystem.State.WallRun.Starting");
+	UE_DEFINE_GAMEPLAY_TAG(Cycling, "VSMovementSystem.State.WallRun.Cycling");
+	UE_DEFINE_GAMEPLAY_TAG(Ending, "VSMovementSystem.State.WallRun.Ending");
+}
+
 namespace EVSMovementEvent
 {
 	UE_DEFINE_GAMEPLAY_TAG(StateChange_MovementMode, "VSMovementSystem.Event.StateChange.MovementMode");

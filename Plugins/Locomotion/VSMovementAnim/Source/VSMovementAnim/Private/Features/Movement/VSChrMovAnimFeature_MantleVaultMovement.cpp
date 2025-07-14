@@ -5,6 +5,7 @@
 #include "SequenceEvaluatorLibrary.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "Features/Movement/VSChrMovFeature_MantleVaultMovement.h"
+#include "GameFramework/Character.h"
 #include "Libraries/VSAnimationLibrary.h"
 
 UVSChrMovAnimFeature_MantleVaultMovement::UVSChrMovAnimFeature_MantleVaultMovement(const FObjectInitializer& ObjectInitializer)
@@ -20,7 +21,7 @@ void UVSChrMovAnimFeature_MantleVaultMovement::Initialize_Implementation()
 	check(ChrMovFeature_MantleVaultMovement.IsValid());
 }
 
-bool UVSChrMovAnimFeature_MantleVaultMovement::HasValidMantleVaultAnim_Implementation() const
+bool UVSChrMovAnimFeature_MantleVaultMovement::HasValidMantleVaultAnim() const
 {
 	FVSMantleVaultAnimSettings* AnimSettings = ChrMovFeature_MantleVaultMovement->GetMantleVaultSnappedParams().AnimSettingsRow.GetRow<FVSMantleVaultAnimSettings>(nullptr);
 	if (!AnimSettings) return false;
@@ -28,7 +29,7 @@ bool UVSChrMovAnimFeature_MantleVaultMovement::HasValidMantleVaultAnim_Implement
 	return Anim && Anim->IsValid();
 }
 
-void UVSChrMovAnimFeature_MantleVaultMovement::SetupMantleVaultAnim_Implementation(const FAnimUpdateContext& Context, const FAnimNodeReference& Node)
+void UVSChrMovAnimFeature_MantleVaultMovement::SetupMantleVaultAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node)
 {
 	if (!ChrMovFeature_MantleVaultMovement.IsValid() || !HasValidMantleVaultAnim()) return;
 
@@ -51,7 +52,7 @@ void UVSChrMovAnimFeature_MantleVaultMovement::SetupMantleVaultAnim_Implementati
 	AnimData.LastActionID = ChrMovFeature_MantleVaultMovement->GetMantleVaultCachedParams().ActionID;
 }
 
-void UVSChrMovAnimFeature_MantleVaultMovement::UpdateMantleVaultAnim_Implementation(const FAnimUpdateContext& Context, const FAnimNodeReference& Node)
+void UVSChrMovAnimFeature_MantleVaultMovement::UpdateMantleVaultAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node)
 {
 	if (!ChrMovFeature_MantleVaultMovement.IsValid() || !HasValidMantleVaultAnim()) return;
 

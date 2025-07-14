@@ -6,7 +6,11 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/GameStateBase.h"
+#include "GameFramework/PlayerState.h"
 #include "Interfaces/VSGameplayTagControllerInterface.h"
+#include "Kismet/GameplayStatics.h"
+#include "Libraries/VSGameplayLibrary.h"
 #include "Libraries/VSPrivablicLibrary.h"
 #include "Net/UnrealNetwork.h"
 
@@ -62,6 +66,17 @@ void UVSCharacterMovementFeatureAgent::BeginPlay_Implementation()
 
 	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
 	GameplayTagController->SetTagCount(GetMovementMode(), 1);
+
+	if (IConsoleVariable* ConsoleVariable = IConsoleManager::Get().FindConsoleVariable(*FString("p.NetEnableMoveCombining", false)))
+	{
+		ConsoleVariable->SetWithCurrentPriority(ConsoleVariable->GetInt());
+		ConsoleVariable->Set(ConsoleVariable->GetInt(), ECVF_SetByCode);
+	}
+}
+
+void UVSCharacterMovementFeatureAgent::EndPlay_Implementation()
+{
+	Super::EndPlay_Implementation();
 }
 
 void UVSCharacterMovementFeatureAgent::UpdateMovement_Implementation(float DeltaTime)
@@ -72,11 +87,42 @@ void UVSCharacterMovementFeatureAgent::UpdateMovement_Implementation(float Delta
 	MovementData.CachedVelocity = GetVelocity();
 	
 	CheckMovingAgainstWall2D();
-	
+
 	if (GetOwnerActor()->HasAuthority())
 	{
 		ReplicatedControlRotation = CharacterPrivate->GetControlRotation();
 		ReplicatedMovementInput = GetCharacterMovement()->GetCurrentAcceleration();
+	}
+}
+
+void UVSCharacterMovementFeatureAgent::OnMovementTagsUpdated_Implementation()
+{
+	Super::OnMovementTagsUpdated_Implementation();
+	
+	const FGameplayTagContainer& GameplayTags = GetGameplayTagController()->GetGameplayTags();
+	if (NetworkDisableMoveCombiningQuery.Matches(GameplayTags))
+	{
+		if (IConsoleVariable* ConsoleVariable = IConsoleManager::Get().FindConsoleVariable(*FString("p.NetEnableMoveCombining"), false))
+		{
+			ConsoleVariable->SetWithCurrentPriority(0);
+		}	
+	}
+	else
+	{
+		if (IConsoleVariable* ConsoleVariable = IConsoleManager::Get().FindConsoleVariable(*FString("p.NetEnableMoveCombining"), false))
+		{
+			ConsoleVariable->SetWithCurrentPriority(FCString::Atoi(*ConsoleVariable->GetDefaultValue()));
+		}	
+	}
+	if (NetworkIgnoreClientCorrectionQuery.Matches(GameplayTags))
+	{
+		GetCharacterMovement()->bIgnoreClientMovementErrorChecksAndCorrection = true;
+	}
+	else
+	{
+		const ACharacter* DefaultCharacter = GetCharacter()->GetClass()->GetDefaultObject<ACharacter>();
+		const UCharacterMovementComponent* DefaultCharacterMove = DefaultCharacter->GetCharacterMovement();
+		GetCharacterMovement()->bIgnoreClientMovementErrorChecksAndCorrection = DefaultCharacterMove->bIgnoreClientMovementErrorChecksAndCorrection;
 	}
 }
 

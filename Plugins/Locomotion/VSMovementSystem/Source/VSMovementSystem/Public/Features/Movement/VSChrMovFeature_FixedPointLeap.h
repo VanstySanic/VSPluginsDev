@@ -19,10 +19,11 @@ class VSMOVEMENTSYSTEM_API UVSChrMovFeature_FixedPointLeap : public UVSCharacter
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
 protected:
 	virtual bool CanUpdateMovement_Implementation() const override;
 	virtual void UpdateMovement_Implementation(float DeltaTime) override;
+
 	virtual void OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent) override;
 	
 public:
@@ -32,10 +33,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows"))
 	void TryFixedPointLeap(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocation, USceneComponent* ComponentToFollow = nullptr);
 
+protected:
+	/** Stop the movement. This is not replicated. */
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows"))
 	void StopFixPointLeap();
 
-
+public:
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows"))
 	FVSFixedPointLeapSnappedParams GetFixedPointLeapSnappedParams() const { return MovementData.SnappedParams; }
 

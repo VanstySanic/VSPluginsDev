@@ -1,8 +1,538 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Features/Movement/VSChrMovFeature_WallRunMovement.h"
+#include "KismetTraceUtils.h"
+#include "VSMovementSystemSettings.h"
+#include "Classees/Framework/VSGameplayTagController.h"
+#include "Components/CapsuleComponent.h"
+#include "Features/VSCharacterMovementFeatureAgent.h"
+#include "Features/Orientation/VSChrMovFeature_OrientationEvaluator.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Libraries/VSActorLibrary.h"
+#include "Libraries/VSAnimationLibrary.h"
+#include "Libraries/VSGameplayLibrary.h"
+#include "Net/UnrealNetwork.h"
+#include "Net/Core/PushModel/PushModel.h"
+#include "Types/Animation/VSAnimSequenceReference.h"
 
 UVSChrMovFeature_WallRunMovement::UVSChrMovFeature_WallRunMovement(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 }
+
+void UVSChrMovFeature_WallRunMovement::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	FDoRepLifetimeParams SharedParams;
+	SharedParams.bIsPushBased = true;
+
+	DOREPLIFETIME_WITH_PARAMS_FAST(UVSChrMovFeature_WallRunMovement, ReplicatedSnappedParams, SharedParams);
+}
+
+void UVSChrMovFeature_WallRunMovement::OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent)
+{
+	Super::OnMovementTagEventNotified_Implementation(TagEvent);
+
+	if (TagEvent == EVSMovementEvent::StateChange_MovementMode)
+	{
+		if (!IsWallRunMode() && GetPrevMovementMode() == EVSMovementMode::WallRunning && !MovementData.SnappedParams.SettingsRow.IsNull())
+		{
+			EndWallRun(false, false);
+		}
+	}
+}
+
+bool UVSChrMovFeature_WallRunMovement::CanUpdateMovement_Implementation() const
+{
+	return Super::CanUpdateMovement_Implementation() && IsWallRunMode() && MovementData.SnappedParams.Component.IsValid();
+}
+
+void UVSChrMovFeature_WallRunMovement::UpdateMovement_Implementation(float DeltaTime)
+{
+	const FTransform& ComponentTransformWS = MovementData.SnappedParams.Component->GetComponentTransform();
+	const FVector& UpVectorRS = UKismetMathLibrary::InverseTransformDirection(ComponentTransformWS, GetUpDirection());
+	const FVector& RootLocationWS = UVSActorLibrary::GetCharacterRootLocation(GetCharacter());
+
+
+	const FCollisionShape& RadiusTraceShape = FCollisionShape::MakeSphere(GetCharacter()->GetCapsuleComponent()->GetScaledCapsuleRadius());
+	FCollisionQueryParams TraceQueryParams;
+	TraceQueryParams.AddIgnoredActor(GetCharacter());
+	
+	/** Trace side wall to adjust the movement direction. */
+	bool bShouldTraceForSideWallToAdjustMovementDirection = true;
+	if (MovementData.WallRunState == EVSWallRunState::Starting)
+	{
+		const float StartReachTargetWallTime = MovementData.StartAnimPtr->HasTimeMark(AnimStartReachWallMarkName) ? MovementData.StartAnimPtr->GetMarkTime(AnimStartReachWallMarkName) : MovementData.StartAnimPtr->GetSafePlayTimeRange().Y;
+		if (MovementData.StartMovementElapsedTime <= StartReachTargetWallTime)
+		{
+			bShouldTraceForSideWallToAdjustMovementDirection = false;
+		}
+	}
+	else if (MovementData.WallRunState == EVSWallRunState::Ending)
+	{
+		const float EndLeaveWallWallTime = MovementData.EndAnimPtr->HasTimeMark(AnimStartReachWallMarkName) ? MovementData.EndAnimPtr->GetMarkTime(AnimEndLeaveWallMarkName) : MovementData.EndAnimPtr->GetSafePlayTimeRange().Y;
+		if (MovementData.EndMovementElapsedTime >= EndLeaveWallWallTime)
+		{
+			bShouldTraceForSideWallToAdjustMovementDirection = false;
+		}
+	}
+	if (bShouldTraceForSideWallToAdjustMovementDirection)
+	{
+		FHitResult TraceSideWallHitResult;
+		const float CapsuleRadiusSC = GetCharacter()->GetCapsuleComponent()->GetScaledCapsuleRadius();
+		const FVector& TraceSideWallStart = UVSActorLibrary::GetCharacterRootLocation(GetCharacter()) + CapsuleRadiusSC * GetUpDirection();
+		const FVector& TraceSideWallEnd = TraceSideWallStart + ComponentTransformWS.TransformVectorNoScale(-MovementData.LastTracedWallNormalRS) * MovementData.SettingsPtr->CycleDistanceToWall * 1.2f;
+		UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, TraceSideWallHitResult, TraceSideWallStart, TraceSideWallEnd, GetCharacter()->GetActorQuat(), RadiusTraceShape, GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
+#if WITH_EDITORONLY_DATA
+		if (bDrawDebugShapes) { DrawDebugSphereTraceSingle(GetWorld(), TraceSideWallStart, TraceSideWallEnd, CapsuleRadiusSC, EDrawDebugTrace::ForOneFrame, TraceSideWallHitResult.bBlockingHit, TraceSideWallHitResult, FColor::Cyan, FColor::Magenta, 0.f); }
+#endif
+		if (TraceSideWallHitResult.IsValidBlockingHit())
+		{
+			MovementData.LastTracedWallNormalRS = ComponentTransformWS.InverseTransformVectorNoScale(TraceSideWallHitResult.ImpactNormal);
+		}
+	}
+	
+	FVector MovementDirectionWS = GetUpDirection().Cross(MovementData.LastTracedWallNormalRS).GetSafeNormal() * (!MovementData.SnappedParams.bLeftOrRight ? -1.f : 1.f);
+
+	/** Update the movement for different states. */
+	FHitResult UpdateMovementHitResult;
+	if (MovementData.WallRunState == EVSWallRunState::Starting)
+	{
+		const float ForwardMovementCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.StartAnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::X), MovementData.StartMovementElapsedTime);
+		const float SideMovementCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.StartAnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Y), MovementData.StartMovementElapsedTime);
+		const float UpMovementCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.StartAnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Z), MovementData.StartMovementElapsedTime);
+
+		const float StartReachTargetWallTime = MovementData.StartAnimPtr->HasTimeMark(AnimStartReachWallMarkName) ? MovementData.StartAnimPtr->GetMarkTime(AnimStartReachWallMarkName) : MovementData.StartAnimPtr->GetSafePlayTimeRange().Y;
+
+		FVector TargetRootLocationWS = UVSActorLibrary::GetCharacterRootLocation(GetCharacter());
+		if (MovementData.StartMovementElapsedTime <= StartReachTargetWallTime)
+		{
+			FVector TargetRootLocationRS = MovementData.CachedParams.StartRootLocationRS;
+			const FVector& DeltaToReachTargetWallRS = MovementData.CachedParams.StartReachWallRootLocationRS - MovementData.CachedParams.StartRootLocationRS;
+			TargetRootLocationRS += (ForwardMovementCurveValue - MovementData.CachedParams.AnimStartMovementCurveValues.X) / (MovementData.CachedParams.AnimStartReachWallMovementCurveValues.X - MovementData.CachedParams.AnimStartMovementCurveValues.X) * UKismetMathLibrary::Vector_ProjectOnToNormal(DeltaToReachTargetWallRS, MovementData.SnappedParams.StartMovementDirection2DRS);
+			TargetRootLocationRS += (SideMovementCurveValue - MovementData.CachedParams.AnimStartMovementCurveValues.Y) / (MovementData.CachedParams.AnimStartReachWallMovementCurveValues.Y - MovementData.CachedParams.AnimStartMovementCurveValues.Y) * UKismetMathLibrary::Vector_ProjectOnToNormal(DeltaToReachTargetWallRS, -MovementData.SnappedParams.StartWallNormal2DRS);
+			TargetRootLocationRS += (UpMovementCurveValue - MovementData.CachedParams.AnimStartMovementCurveValues.Z) / (MovementData.CachedParams.AnimStartReachWallMovementCurveValues.Z - MovementData.CachedParams.AnimStartMovementCurveValues.Z) * UKismetMathLibrary::Vector_ProjectOnToNormal(DeltaToReachTargetWallRS, UpVectorRS);
+			TargetRootLocationWS = ComponentTransformWS.TransformPosition(TargetRootLocationRS);
+		}
+		else
+		{
+			TargetRootLocationWS += (ForwardMovementCurveValue - MovementData.LastUpdatedStartMovementCurveValues.X) * MovementDirectionWS * GetCharacter()->GetActorScale3D().X;
+			TargetRootLocationWS += (SideMovementCurveValue - MovementData.LastUpdatedStartMovementCurveValues.Y) * ComponentTransformWS.TransformVectorNoScale(-MovementData.LastTracedWallNormalRS) * GetCharacter()->GetActorScale3D().Y;
+			TargetRootLocationWS += (UpMovementCurveValue - MovementData.LastUpdatedStartMovementCurveValues.Z) * GetUpDirection() * GetCharacter()->GetActorScale3D().Z;
+		}
+		
+		const FVector& RootLocationDeltaWS = TargetRootLocationWS - RootLocationWS;
+		GetCharacterMovement()->SafeMoveUpdatedComponent(TargetRootLocationWS - RootLocationWS, GetCharacter()->GetActorQuat(), false, UpdateMovementHitResult);
+		GetCharacterMovement()->Velocity = RootLocationDeltaWS / DeltaTime;
+
+		MovementData.LastUpdatedRootLocationRS = ComponentTransformWS.InverseTransformPosition(TargetRootLocationWS);
+		MovementData.LastUpdatedStartMovementCurveValues = FVector(ForwardMovementCurveValue, SideMovementCurveValue, UpMovementCurveValue);
+		
+		MovementData.StartMovementElapsedTime = FMath::Clamp(MovementData.StartMovementElapsedTime + DeltaTime * MovementData.StartAnimPtr->PlayRate, 0.f, MovementData.StartAnimPtr->GetSafePlayTimeRange().Y);
+		if (MovementData.StartMovementElapsedTime >= MovementData.StartAnimPtr->GetSafePlayTimeRange().Y)
+		{
+			SetWallRunState(EVSWallRunState::Cycling);
+		}
+	}
+	else if (MovementData.WallRunState == EVSWallRunState::Cycling)
+	{
+		// float SpeedSizeDelta = GetVelocity2D().Size() - MovementData.SettingsPtr->CycleSpeed;
+		// if (SpeedSizeDelta < 0.f)
+		// {
+		// 	SpeedSizeDelta = FMath::Clamp(SpeedSizeDelta + DeltaTime * MovementData.SettingsPtr->CycleAccelerationSize, SpeedSizeDelta, 0.f);
+		// }
+		// else
+		// {
+		// 	SpeedSizeDelta = FMath::Clamp(SpeedSizeDelta - DeltaTime * MovementData.SettingsPtr->CycleAccelerationSize, 0.f, SpeedSizeDelta);
+		// }
+		GetCharacterMovement()->Velocity = MovementDirectionWS * (MovementData.SettingsPtr->CycleSpeed /*+ SpeedSizeDelta*/);
+		GetCharacterMovement()->SafeMoveUpdatedComponent(GetCharacterMovement()->Velocity * DeltaTime, GetCharacter()->GetActorQuat(), true, UpdateMovementHitResult);
+		MovementData.LastUpdatedRootLocationRS = ComponentTransformWS.InverseTransformPosition(GetCharacter()->GetActorLocation());
+	}
+	else if (MovementData.WallRunState == EVSWallRunState::Ending)
+	{
+		const float ForwardMovementCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.EndAnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::X), MovementData.EndMovementElapsedTime);
+		const float SideMovementCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.EndAnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Y), MovementData.EndMovementElapsedTime);
+		const float UpMovementCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.EndAnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Z), MovementData.EndMovementElapsedTime);
+		
+		FVector TargetRootLocationWS = UVSActorLibrary::GetCharacterRootLocation(GetCharacter());
+		TargetRootLocationWS += (ForwardMovementCurveValue - MovementData.LastUpdatedEndMovementCurveValues.X) * MovementDirectionWS * GetCharacter()->GetActorScale3D().X;
+		TargetRootLocationWS += (SideMovementCurveValue - MovementData.LastUpdatedEndMovementCurveValues.Y) * ComponentTransformWS.TransformVectorNoScale(-MovementData.LastTracedWallNormalRS) * GetCharacter()->GetActorScale3D().Y;
+		TargetRootLocationWS += (UpMovementCurveValue - MovementData.LastUpdatedEndMovementCurveValues.Z) * GetUpDirection() * GetCharacter()->GetActorScale3D().Z;
+		
+		const FVector& RootLocationDeltaWS = TargetRootLocationWS - RootLocationWS;
+		GetCharacterMovement()->SafeMoveUpdatedComponent(TargetRootLocationWS - RootLocationWS, GetCharacter()->GetActorQuat(), true, UpdateMovementHitResult);
+		GetCharacterMovement()->Velocity = RootLocationDeltaWS / DeltaTime;
+
+		MovementData.LastUpdatedRootLocationRS = ComponentTransformWS.InverseTransformPosition(TargetRootLocationWS);
+		MovementData.LastUpdatedEndMovementCurveValues = FVector(ForwardMovementCurveValue, SideMovementCurveValue, UpMovementCurveValue);
+
+		MovementData.EndMovementElapsedTime = FMath::Clamp(MovementData.EndMovementElapsedTime + DeltaTime * MovementData.EndAnimPtr->PlayRate, 0.f, MovementData.EndAnimPtr->GetSafePlayTimeRange().Y);
+	}
+	
+	if (UVSChrMovFeature_OrientationEvaluator* Evaluator = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationEvaluator>())
+	{
+		Evaluator->DefaultNamedParams.VectorParams.Emplace(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection, MovementDirectionWS);
+	}
+
+	bool bShouldBreakMovement = false;
+	if (UpdateMovementHitResult.bBlockingHit) { bShouldBreakMovement = true; }
+	else if (MovementData.WallRunState == EVSWallRunState::Ending && MovementData.EndMovementElapsedTime >= MovementData.EndAnimPtr->GetSafePlayTimeRange().Y) { bShouldBreakMovement = true; }
+
+	if (bShouldBreakMovement)
+	{
+		EndWallRun(false, false);
+	}
+}
+
+bool UVSChrMovFeature_WallRunMovement::IsWallRunMode() const
+{
+	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
+	return GameplayTagController ? (GameplayTagController->GetTagCount(EVSMovementMode::WallRunning) >= 1) : false;
+}
+
+void UVSChrMovFeature_WallRunMovement::TryWallRun(const TArray<FDataTableRowHandle>& SettingRows)
+{
+	if (SettingRows.IsEmpty() && DefaultSettingRows.IsEmpty()) return;
+	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
+	{
+		TryWallRun_Server(SettingRows);
+	}
+	else
+	{
+		TryWallRunInternal(SettingRows);
+	}
+}
+
+void UVSChrMovFeature_WallRunMovement::EndWallRun(bool bTryEndMovement, bool bReplicated)
+{
+	if (bReplicated && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
+	{
+		EndWallRun_Server(bTryEndMovement);
+	}
+	else
+	{
+		EndWallRunInternal(bTryEndMovement);
+	}
+}
+
+void UVSChrMovFeature_WallRunMovement::SetWallRunState(const FGameplayTag& NewWallRunState)
+{
+	if (NewWallRunState == MovementData.WallRunState) return;
+	const FGameplayTag PrevWallRunState = MovementData.WallRunState;
+	MovementData.WallRunState = NewWallRunState;
+
+	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
+	if (GameplayTagController->GetTagCount(PrevWallRunState) > 0)
+	{
+		GameplayTagController->SetTagCount(PrevWallRunState, 0);
+	}
+	if (NewWallRunState != FGameplayTag::EmptyTag)
+	{
+		GameplayTagController->SetTagCount(NewWallRunState, 1);
+	}
+	GameplayTagController->NotifyTagsUpdated();
+}
+
+void UVSChrMovFeature_WallRunMovement::TryWallRunInternal(const TArray<FDataTableRowHandle>& SettingRows)
+{
+	/** Can't move or input backward. */
+	if (GetVelocity2D().Dot(GetCharacter()->GetActorForwardVector()) < 0.f) return;
+	if (GetMovementInput2D().Dot(GetCharacter()->GetActorForwardVector()) < 0.f) return;
+	
+	TArray<FDataTableRowHandle> SettingRowsToUse = SettingRows.IsEmpty() ? DefaultSettingRows : SettingRows;
+	FVSWallRunSnappedParams SnappedParams;
+	for (const FDataTableRowHandle& SettingRow : SettingRowsToUse)
+	{
+		if (CalcWallRunSnappedParams(SnappedParams, SettingRow))
+		{
+			WallRunBySnappedParams(SnappedParams);
+			return;
+		}
+	}
+}
+
+void UVSChrMovFeature_WallRunMovement::WallRunBySnappedParams(const FVSWallRunSnappedParams& SnappedParams)
+{
+	if (SnappedParams.SettingsRow.IsNull()) return;
+	
+	MovementData.SnappedParams = SnappedParams;
+	MovementData.SettingsPtr = MovementData.SnappedParams.SettingsRow.GetRow<FVSWallRunSettings>(nullptr);
+
+	if (!SnappedParams.Component.IsValid())
+	{
+		/** Retrace the component. */
+		const FCollisionShape& SphereTraceShape = FCollisionShape::MakeSphere(1.f);
+		FCollisionQueryParams TraceParams;
+		TraceParams.AddIgnoredActor(GetCharacter());
+		FHitResult ComponentTraceHit;
+		const FVector& StartFrontWallPointWS = SnappedParams.StartComponentTransform.TransformPosition(SnappedParams.StartWallPointRS);
+		UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, ComponentTraceHit, StartFrontWallPointWS, StartFrontWallPointWS - SnappedParams.StartWallNormal2DRS * 16.f, FQuat::Identity,
+			SphereTraceShape, GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceParams);
+		if (!ComponentTraceHit.bBlockingHit) return;
+		MovementData.SnappedParams.Component = ComponentTraceHit.Component;
+	}
+	else
+	{
+		MovementData.SnappedParams.Component = SnappedParams.Component;
+	}
+
+	MovementData.CachedParams.ActionID = FMath::RandRange(0, INT16_MAX);
+
+	const FTransform& ComponentTransformWS = MovementData.SnappedParams.Component->GetComponentTransform();
+	const FVector& StartRootLocationRS = UKismetMathLibrary::InverseTransformLocation(ComponentTransformWS, UVSActorLibrary::GetCharacterRootLocation(GetCharacter()));
+	
+	if (FVSAnimSequenceReference* StartAnim = (!MovementData.SnappedParams.bLeftOrRight ? MovementData.SettingsPtr->LeftAnims : MovementData.SettingsPtr->RightAnims).StartAnim.GetRow<FVSAnimSequenceReference>(nullptr))
+	{
+		if (StartAnim->IsValid())
+		{
+			const FVector2D& AnimSafePlayTimeRange = StartAnim->GetSafePlayTimeRange();
+			const float ReachTargetWallTime = StartAnim->HasTimeMark(AnimStartReachWallMarkName) ? StartAnim->GetMarkTime(AnimStartReachWallMarkName) : StartAnim->GetSafePlayTimeRange().Y;
+			MovementData.StartAnimPtr = StartAnim;
+			MovementData.CachedParams.AnimStartMovementCurveValues.X = UVSAnimationLibrary::GetAnimationCurveValueAtTime(StartAnim->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::X), AnimSafePlayTimeRange.X);
+			MovementData.CachedParams.AnimStartMovementCurveValues.Y = UVSAnimationLibrary::GetAnimationCurveValueAtTime(StartAnim->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Y), AnimSafePlayTimeRange.X);
+			MovementData.CachedParams.AnimStartMovementCurveValues.Z = UVSAnimationLibrary::GetAnimationCurveValueAtTime(StartAnim->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Z), AnimSafePlayTimeRange.X);
+			MovementData.CachedParams.AnimStartReachWallMovementCurveValues.X = UVSAnimationLibrary::GetAnimationCurveValueAtTime(StartAnim->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::X), ReachTargetWallTime);
+			MovementData.CachedParams.AnimStartReachWallMovementCurveValues.Y = UVSAnimationLibrary::GetAnimationCurveValueAtTime(StartAnim->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Y), ReachTargetWallTime);
+			MovementData.CachedParams.AnimStartReachWallMovementCurveValues.Z = UVSAnimationLibrary::GetAnimationCurveValueAtTime(StartAnim->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Z), ReachTargetWallTime);
+			MovementData.CachedParams.AnimStartSettleMovementCurveValues.X = UVSAnimationLibrary::GetAnimationCurveValueAtTime(StartAnim->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::X), AnimSafePlayTimeRange.Y);
+			MovementData.CachedParams.AnimStartSettleMovementCurveValues.Y = UVSAnimationLibrary::GetAnimationCurveValueAtTime(StartAnim->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Y), AnimSafePlayTimeRange.Y);
+			MovementData.CachedParams.AnimStartSettleMovementCurveValues.Z = UVSAnimationLibrary::GetAnimationCurveValueAtTime(StartAnim->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Z), AnimSafePlayTimeRange.Y);
+			
+			const FVector& StartWallRootLocationWS = ComponentTransformWS.TransformPosition(MovementData.SnappedParams.StartWallRootPointRS);
+			const FVector& StartWallNormalWS = ComponentTransformWS.TransformVectorNoScale(MovementData.SnappedParams.StartWallNormal2DRS);
+			FVector StartReachWallRootLocationWS = StartWallRootLocationWS + MovementData.SettingsPtr->CycleDistanceToWall * StartWallNormalWS;
+			StartReachWallRootLocationWS += StartWallNormalWS * FMath::Abs(MovementData.CachedParams.AnimStartSettleMovementCurveValues.Y - MovementData.CachedParams.AnimStartReachWallMovementCurveValues.Y);
+
+			MovementData.CachedParams.StartReachWallRootLocationRS = ComponentTransformWS.InverseTransformPosition(StartReachWallRootLocationWS);
+			MovementData.LastUpdatedStartMovementCurveValues = MovementData.CachedParams.AnimStartMovementCurveValues;
+			MovementData.StartMovementElapsedTime = AnimSafePlayTimeRange.X;
+		}
+	}
+	if (FVSAnimSequenceReference* EndAnim = (!MovementData.SnappedParams.bLeftOrRight ? MovementData.SettingsPtr->LeftAnims : MovementData.SettingsPtr->RightAnims).EndAnim.GetRow<FVSAnimSequenceReference>(nullptr))
+	{
+		if (EndAnim->IsValid())
+		{
+			MovementData.EndAnimPtr = EndAnim;
+			const FVector2D& AnimSafePlayTimeRange = EndAnim->GetSafePlayTimeRange();
+			MovementData.LastUpdatedEndMovementCurveValues.X = UVSAnimationLibrary::GetAnimationCurveValueAtTime(EndAnim->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Z), AnimSafePlayTimeRange.X);
+			MovementData.LastUpdatedEndMovementCurveValues.Y = UVSAnimationLibrary::GetAnimationCurveValueAtTime(EndAnim->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Y), AnimSafePlayTimeRange.X);
+			MovementData.LastUpdatedEndMovementCurveValues.Z = UVSAnimationLibrary::GetAnimationCurveValueAtTime(EndAnim->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Z), AnimSafePlayTimeRange.X);
+			MovementData.EndMovementElapsedTime = AnimSafePlayTimeRange.X;
+		}
+	}
+	
+	MovementData.CachedParams.StartRootLocationRS = StartRootLocationRS;
+	MovementData.LastUpdatedRootLocationRS = StartRootLocationRS;
+	MovementData.LastTracedWallNormalRS = SnappedParams.StartWallNormal2DRS;
+
+	GetCharacterMovement()->StopMovementImmediately();
+	if (IConsoleVariable* ConsoleVariable = IConsoleManager::Get().FindConsoleVariable(*FString("p.NetEnableMoveCombining", false)))
+	{
+		ConsoleVariable->SetWithCurrentPriority(0);
+	}
+	if (!IsWallRunMode())
+	{
+		SetMovementMode(EVSMovementMode::WallRunning, false);
+	}
+	SetWallRunState((SnappedParams.bFromGround && MovementData.StartAnimPtr) ? EVSWallRunState::Starting : EVSWallRunState::Cycling);
+
+	if (GetOwnerActor()->HasAuthority())
+	{
+		ReplicatedSnappedParams = SnappedParams;
+		MARK_PROPERTY_DIRTY_FROM_NAME(UVSChrMovFeature_WallRunMovement, ReplicatedSnappedParams, this);
+	}
+}
+
+void UVSChrMovFeature_WallRunMovement::EndWallRunInternal(bool bTryEndMovement)
+{
+	bool bCanDoEndMovement = bTryEndMovement && MovementData.EndAnimPtr && MovementData.WallRunState != EVSWallRunState::Ending;
+	if (bCanDoEndMovement)
+	{
+		if (MovementData.WallRunState == EVSWallRunState::Starting)
+		{
+			const float StartReachTargetWallTime = MovementData.StartAnimPtr->HasTimeMark(AnimStartReachWallMarkName) ? MovementData.StartAnimPtr->GetMarkTime(AnimStartReachWallMarkName) : MovementData.StartAnimPtr->GetSafePlayTimeRange().Y;
+			if (MovementData.StartMovementElapsedTime < StartReachTargetWallTime)
+			{
+				bCanDoEndMovement = false;
+			}
+		}
+	}
+	
+	if (!bCanDoEndMovement)
+	{
+		if (IsWallRunMode())
+		{
+			if (UVSActorLibrary::IsCharacterOnWalkableFloor(GetCharacter()))
+			{
+				GetCharacterMovement()->StopMovementImmediately();
+			}
+			if (UVSChrMovFeature_OrientationEvaluator* Evaluator = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationEvaluator>())
+			{
+				Evaluator->DefaultNamedParams.VectorParams.Remove(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection);
+			}
+			SetMovementMode(UVSActorLibrary::IsCharacterOnWalkableFloor(GetCharacter()) ? EVSMovementMode::Walking : EVSMovementMode::Falling, false);
+		}
+		
+		SetWallRunState(FGameplayTag::EmptyTag);
+		MovementData = FMovementData();
+		ReplicatedSnappedParams = FVSWallRunSnappedParams();
+	}
+	else
+	{
+		MovementData.WallRunState = EVSWallRunState::Ending;
+	}
+}
+
+bool UVSChrMovFeature_WallRunMovement::CalcWallRunSnappedParams(FVSWallRunSnappedParams& OutSnappedParams, const FDataTableRowHandle& SettingsRow) const
+{
+	FVSWallRunSettings* Settings = SettingsRow.GetRow<FVSWallRunSettings>(nullptr);
+	if (!Settings || !Settings->IsValid()) return false;
+
+	if (Settings->Limits.bRequireMovementInput2D && !HasMovementInput2D()) return false;
+	
+	const bool bFromGround = UVSActorLibrary::IsCharacterOnWalkableFloor(GetCharacter());
+
+	/** SC means scaled. */
+	const FVector& CharacterScaleWS = GetCharacter()->GetActorScale();
+	const FVector& RootLocationSC = UVSActorLibrary::GetCharacterRootLocation(GetCharacter());
+	// const float HalfHeightSC = GetCharacter()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	const float RadiusSC = GetCharacter()->GetCapsuleComponent()->GetScaledCapsuleRadius();
+
+	const FCollisionShape& RadiusTraceShape = FCollisionShape::MakeSphere(RadiusSC);
+	FCollisionQueryParams TraceQueryParams;
+	TraceQueryParams.AddIgnoredActor(GetCharacter());
+	
+	FVector WallTraceDirection = GetCharacter()->GetActorForwardVector();
+	if (bFromGround)
+	{
+		if (HasMovementInput2D()) { WallTraceDirection = GetMovementInput2D().GetSafeNormal(); }
+		else if (IsMoving2D()) { WallTraceDirection = GetVelocity2D().GetSafeNormal(); }
+	}
+	else
+	{
+		if (IsMoving2D()) { WallTraceDirection = GetVelocity2D().GetSafeNormal(); }
+		else if (HasMovementInput2D()) { WallTraceDirection = GetMovementInput2D().GetSafeNormal(); }
+	}
+
+	/** Trace forward to find a possible wall. */
+	const FVector& WallForwardTraceStart = RootLocationSC + (bFromGround ? Settings->WallTraceOffset.Z * CharacterScaleWS.Z * GetCharacter()->GetActorUpVector() : FVector::ZeroVector) - WallTraceDirection * 0.01f;
+	const FVector& WallForwardTraceEnd = WallForwardTraceStart + Settings->WallTraceOffset.X * CharacterScaleWS.X * WallTraceDirection;
+	FHitResult WallForwardTraceHitResult;
+	UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, WallForwardTraceHitResult, WallForwardTraceStart, WallForwardTraceEnd, GetCharacter()->GetActorQuat(), RadiusTraceShape, GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
+#if WITH_EDITORONLY_DATA && ENABLE_DRAW_DEBUG
+	if (bDrawDebugShapes) DrawDebugSphereTraceSingle(GetWorld(), WallForwardTraceStart, WallForwardTraceEnd, RadiusSC, EDrawDebugTrace::ForDuration, WallForwardTraceHitResult.bBlockingHit, WallForwardTraceHitResult, FColor::Red, FColor::Green, 3.f);
+#endif
+	if (WallForwardTraceHitResult.bBlockingHit && !WallForwardTraceHitResult.IsValidBlockingHit()) return false;
+
+	/** If has forward traced wall, then adjust the forward direction, and trace for side. */
+	FVector WallTraceAdjustedDirectionWS = !WallForwardTraceHitResult.bBlockingHit ? WallTraceDirection : GetUpDirection().Cross(WallForwardTraceHitResult.Normal).GetSafeNormal();
+	if (WallTraceAdjustedDirectionWS.Dot(WallTraceDirection) < 0.f) WallTraceAdjustedDirectionWS *= -1.f;
+	
+	/** Trace side to find a wall. */
+	/** Left side trace. */
+	const FVector& WallTraceLeftDirection = GetCharacter()->GetActorUpVector().Cross(WallTraceAdjustedDirectionWS).GetSafeNormal();
+	const FVector& WallTraceLeftSideStart = WallForwardTraceStart + WallTraceAdjustedDirectionWS * (bFromGround ? Settings->WallTraceOffset.X * CharacterScaleWS.X : RadiusSC);
+	const FVector& WallTraceLeftSideEnd = WallTraceLeftSideStart - Settings->WallTraceOffset.Y * CharacterScaleWS.Y * WallTraceLeftDirection;
+	FHitResult WallTraceLeftSideHitResult;
+	UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, WallTraceLeftSideHitResult, WallTraceLeftSideStart, WallTraceLeftSideEnd, GetCharacter()->GetActorQuat(), RadiusTraceShape, GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
+#if WITH_EDITORONLY_DATA && ENABLE_DRAW_DEBUG
+	if (bDrawDebugShapes) DrawDebugSphereTraceSingle(GetWorld(), WallTraceLeftSideStart, WallTraceLeftSideEnd, RadiusSC, EDrawDebugTrace::ForDuration, WallTraceLeftSideHitResult.bBlockingHit, WallTraceLeftSideHitResult, FColor::Blue, FColor::Yellow, 3.f);
+#endif
+
+	bool bValidWallLeftSide = true;
+	const FVector& MovementDirectionLeft = FVector::VectorPlaneProject(WallTraceLeftSideHitResult.ImpactNormal.Cross(GetUpDirection()), GetUpDirection()).GetSafeNormal();
+	if (!WallTraceLeftSideHitResult.IsValidBlockingHit()) { bValidWallLeftSide = false; }
+	Settings->Limits.FacingMovementAngleRange2D;
+	const float FacingLeftMovementAngle = (FMath::RadiansToDegrees(FQuat::FindBetweenNormals(MovementDirectionLeft, GetCharacter()->GetActorForwardVector()).GetAngle())) * (FMath::Sign(GetCharacter()->GetActorForwardVector().Dot(-WallTraceLeftSideHitResult.ImpactNormal)));
+
+	if (!UKismetMathLibrary::InRange_FloatFloat(FacingLeftMovementAngle, Settings->Limits.FacingMovementAngleRange2D.X, Settings->Limits.FacingMovementAngleRange2D.Y)) { bValidWallLeftSide = false; }
+	if (bValidWallLeftSide && IsMoving2D())
+	{
+		const float VelocityMovementAngle = (FMath::RadiansToDegrees(FQuat::FindBetweenNormals(MovementDirectionLeft, GetVelocity2D()).GetAngle())) * (FMath::Sign(GetVelocity2D().Dot(-WallTraceLeftSideHitResult.ImpactNormal)));
+		if (!UKismetMathLibrary::InRange_FloatFloat(VelocityMovementAngle, Settings->Limits.VelocityTowardsMovementAngleRange2D.X, Settings->Limits.VelocityTowardsMovementAngleRange2D.Y)) { bValidWallLeftSide = false; }
+	}
+	else if (bValidWallLeftSide && HasMovementInput2D())
+	{	const float InputMovementAngle = (FMath::RadiansToDegrees(FQuat::FindBetweenNormals(MovementDirectionLeft, GetMovementInput2D()).GetAngle())) * (FMath::Sign(GetMovementInput2D().Dot(-WallTraceLeftSideHitResult.ImpactNormal)));
+		if (!UKismetMathLibrary::InRange_FloatFloat(InputMovementAngle, Settings->Limits.InputTowardsMovementAngleRange2D.X, Settings->Limits.InputTowardsMovementAngleRange2D.Y)) { bValidWallLeftSide = false; }
+	}
+
+	/** Right side trace. */
+	const FVector& WallTraceRightDirection = -WallTraceLeftDirection;
+	const FVector& WallTraceRightSideStart = WallForwardTraceStart + WallTraceAdjustedDirectionWS * (bFromGround ? Settings->WallTraceOffset.X * CharacterScaleWS.X : RadiusSC);
+	const FVector& WallTraceRightSideEnd = WallTraceRightSideStart - Settings->WallTraceOffset.Y * CharacterScaleWS.Y * WallTraceRightDirection;
+	FHitResult WallTraceRightSideHitResult;
+	UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, WallTraceRightSideHitResult, WallTraceRightSideStart, WallTraceRightSideEnd, GetCharacter()->GetActorQuat(), RadiusTraceShape, GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
+#if WITH_EDITORONLY_DATA && ENABLE_DRAW_DEBUG
+	if (bDrawDebugShapes) DrawDebugSphereTraceSingle(GetWorld(), WallTraceRightSideStart, WallTraceRightSideEnd, RadiusSC, EDrawDebugTrace::ForDuration, WallTraceRightSideHitResult.bBlockingHit, WallTraceRightSideHitResult, FColor::Blue, FColor::Yellow, 3.f);
+#endif
+
+	bool bValidWallRightSide = true;
+	const FVector& MovementDirectionRight = FVector::VectorPlaneProject(GetUpDirection().Cross(WallTraceRightSideHitResult.ImpactNormal), GetUpDirection()).GetSafeNormal();
+	if (!WallTraceRightSideHitResult.IsValidBlockingHit()) { bValidWallRightSide = false; }
+	Settings->Limits.FacingMovementAngleRange2D;
+	const float FacingRightMovementAngle = (FMath::DegreesToRadians(FQuat::FindBetweenNormals(MovementDirectionRight, GetCharacter()->GetActorForwardVector()).GetAngle())) * (FMath::Sign(GetCharacter()->GetActorForwardVector().Dot(-WallTraceRightSideHitResult.ImpactNormal)));
+	if (!UKismetMathLibrary::InRange_FloatFloat(FacingRightMovementAngle, Settings->Limits.FacingMovementAngleRange2D.X, Settings->Limits.FacingMovementAngleRange2D.Y)) { bValidWallRightSide = false; }
+	if (bValidWallRightSide && IsMoving2D())
+	{
+		const float VelocityMovementAngle = (FMath::RadiansToDegrees(FQuat::FindBetweenNormals(MovementDirectionRight, GetVelocity2D()).GetAngle())) * (FMath::Sign(GetVelocity2D().Dot(-WallTraceRightSideHitResult.ImpactNormal)));
+		if (!UKismetMathLibrary::InRange_FloatFloat(VelocityMovementAngle, Settings->Limits.VelocityTowardsMovementAngleRange2D.X, Settings->Limits.VelocityTowardsMovementAngleRange2D.Y)) { bValidWallRightSide = false; }
+	}
+	else if (bValidWallRightSide && HasMovementInput2D())
+	{	const float InputMovementAngle = (FMath::RadiansToDegrees(FQuat::FindBetweenNormals(MovementDirectionRight, GetMovementInput2D()).GetAngle())) * (FMath::Sign(GetMovementInput2D().Dot(-WallTraceRightSideHitResult.ImpactNormal)));
+		if (!UKismetMathLibrary::InRange_FloatFloat(InputMovementAngle, Settings->Limits.InputTowardsMovementAngleRange2D.X, Settings->Limits.InputTowardsMovementAngleRange2D.Y)) { bValidWallRightSide = false; }
+	}
+
+	/** No valid wall. */
+	if (!bValidWallLeftSide && !bValidWallRightSide) return false;
+
+	/** Left : false. */
+	bool bLeftOrRight = !bValidWallLeftSide;
+	if (bValidWallLeftSide && bValidWallRightSide)
+	{
+		const float DistanceLeftSide = (WallTraceLeftSideHitResult.ImpactPoint - GetCharacter()->GetActorLocation()).ProjectOnToNormal(GetCharacter()->GetActorRightVector()).Size();
+		const float DistanceRightSide = (WallTraceRightSideHitResult.ImpactPoint - GetCharacter()->GetActorLocation()).ProjectOnToNormal(GetCharacter()->GetActorRightVector()).Size();
+		if (DistanceRightSide < DistanceLeftSide) bLeftOrRight = true;
+	}
+	FHitResult* WallHitResult = !bLeftOrRight ? &WallTraceLeftSideHitResult : &WallTraceRightSideHitResult;
+
+	const FTransform& ComponentTransformWS = WallHitResult->Component->GetComponentTransform();
+	OutSnappedParams.SettingsRow = SettingsRow;
+	OutSnappedParams.Component = WallHitResult->Component;
+	OutSnappedParams.StartComponentTransform = ComponentTransformWS;
+	OutSnappedParams.StartWallNormal2DRS = ComponentTransformWS.InverseTransformVectorNoScale(WallHitResult->ImpactNormal);
+	OutSnappedParams.StartWallPointRS = ComponentTransformWS.InverseTransformPosition(WallHitResult->ImpactPoint);
+	OutSnappedParams.StartWallRootPointRS = ComponentTransformWS.InverseTransformPosition(WallHitResult->Location - RadiusSC * GetUpDirection() - RadiusSC * WallHitResult->ImpactNormal);
+	OutSnappedParams.StartMovementDirection2DRS = ComponentTransformWS.InverseTransformVectorNoScale(!bLeftOrRight ? MovementDirectionLeft : MovementDirectionRight);
+	OutSnappedParams.ServerSideServerStartTime = UVSGameplayLibrary::GetServerTimeSeconds(this);
+	OutSnappedParams.bLeftOrRight = bLeftOrRight;
+	OutSnappedParams.bFromGround = bFromGround;
+	
+	return true;
+}
+
+void UVSChrMovFeature_WallRunMovement::TryWallRun_Server_Implementation(const TArray<FDataTableRowHandle>& SettingRows)
+{
+	TryWallRunInternal(SettingRows);
+}
+
+void UVSChrMovFeature_WallRunMovement::EndWallRun_Server_Implementation(bool bTryEndMovement)
+{
+	EndWallRun_Multicast(bTryEndMovement);
+}
+
+void UVSChrMovFeature_WallRunMovement::EndWallRun_Multicast_Implementation(bool bTryEndMovement)
+{
+	EndWallRunInternal(bTryEndMovement);
+}
+
+void UVSChrMovFeature_WallRunMovement::OnRep_ReplicatedSnappedParams()
+{
+	if (ReplicatedSnappedParams.SettingsRow.IsNull()) return;
+	WallRunBySnappedParams(ReplicatedSnappedParams);
+}
+
+

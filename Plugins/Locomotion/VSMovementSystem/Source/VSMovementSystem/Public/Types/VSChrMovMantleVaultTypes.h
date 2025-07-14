@@ -154,7 +154,7 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultSnappedParams
 
 	/** This might be lost because of non-replication. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TObjectPtr<UPrimitiveComponent> Component;
+	TWeakObjectPtr<UPrimitiveComponent> Component;
 
 	/** Safe during replication. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -172,6 +172,9 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultSnappedParams
 	/** Animation curve value, not scaled. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float AnimReachTargetDistanceToWall2D = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float ServerSideServerStartTime = 0.f;
 };
 
 USTRUCT(BlueprintType)
@@ -185,16 +188,6 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultCachedParams
 	/** Scaled by character. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float PlatformHeight = 0.f;
-	
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TWeakObjectPtr<UPrimitiveComponent> Component;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector MovementDirection2DRS = FVector::ZeroVector;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector FrontWallPointRS = FVector::ZeroVector;
 
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -206,9 +199,6 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultCachedParams
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector ReachTargetRootLocationScaledRS = FVector::ZeroVector;
-
-	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	// FVector VaultOffPlatformRootLocationRS = FVector::ZeroVector;
 
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -223,6 +213,8 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultCachedParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector2D AnimVaultOffPlatformMovementCurveValues = FVector2D::ZeroVector;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float ClientSideServerStartTime = 0.f;
 	
 	/** This is for animation, used to restart the anim action. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

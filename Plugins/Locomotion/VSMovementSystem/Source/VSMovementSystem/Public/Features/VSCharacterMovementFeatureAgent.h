@@ -28,19 +28,27 @@ protected:
 	virtual void Initialize_Implementation() override;
 	virtual void Uninitialize_Implementation() override;
 	virtual void BeginPlay_Implementation() override;
+	virtual void EndPlay_Implementation() override;
 	virtual void UpdateMovement_Implementation(float DeltaTime) override;
+	virtual void OnMovementTagsUpdated_Implementation() override;
 
 private:
 	void CheckMovingAgainstWall2D();
-
+	
 	UFUNCTION()
 	void OnCharacterMovementChanged(ACharacter* Character, EMovementMode PrevMovementMode, uint8 PreviousCustomMode);
-	
+
 public:
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FOnMovementModeChangedDelegate OnMovementModeChanged;
 
-private:
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Networks")
+	FGameplayTagQuery NetworkIgnoreClientCorrectionQuery;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Networks")
+	FGameplayTagQuery NetworkDisableMoveCombiningQuery;
 
 private:
 	UPROPERTY(Replicated)
@@ -64,7 +72,6 @@ private:
 		FGameplayTag PrevMovementMode;
 		FVector RealAcceleration = FVector::ZeroVector;
 		uint8 bIsMovingAgainstWall2D : 1;
-
 		FVector CachedVelocity = FVector::ZeroVector;
 	} MovementData;
 };

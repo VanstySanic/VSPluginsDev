@@ -42,19 +42,19 @@ bool UVSChrMovFeature_FixedPointLeap::CanUpdateMovement_Implementation() const
 void UVSChrMovFeature_FixedPointLeap::UpdateMovement_Implementation(float DeltaTime)
 {
 	Super::UpdateMovement_Implementation(DeltaTime);
-
-	FVector TargetRootPointWS = MovementData.SnappedParams.OriginalTargetRootPointWS;
-	if (MovementData.SnappedParams.Component.IsValid())
-	{
-		const FVector& OriginalTargetRootPointRS = MovementData.SnappedParams.StartComponentTransformWS.InverseTransformPosition(MovementData.SnappedParams.OriginalTargetRootPointWS);
-		TargetRootPointWS = MovementData.SnappedParams.Component->GetComponentTransform().TransformPosition(OriginalTargetRootPointRS);
-	};
-
+	
 	const FVector& RootLocationWS = UVSActorLibrary::GetCharacterRootLocation(GetCharacter());
 
 	bool bShouldStopMovement = false;
 	if (UKismetMathLibrary::InRange_FloatFloat(MovementData.MovementElapsedTime, MovementData.AnimPtr->GetMarkTime(AnimMovementStartTimeMarkName), MovementData.AnimPtr->GetMarkTime(AnimMovementEndTimeMarkName)))
 	{
+		FVector TargetRootPointWS = MovementData.SnappedParams.OriginalTargetRootPointWS;
+		if (MovementData.SnappedParams.Component.IsValid())
+		{
+			const FVector& OriginalTargetRootPointRS = MovementData.SnappedParams.StartComponentTransformWS.InverseTransformPosition(MovementData.SnappedParams.OriginalTargetRootPointWS);
+			TargetRootPointWS = MovementData.SnappedParams.Component->GetComponentTransform().TransformPosition(OriginalTargetRootPointRS);
+		}
+		
 		const FVector& SuggestedVelocity = UVSGameplayLibrary::SuggestVelocityForProjectileMovementByTime(
 			RootLocationWS,
 			TargetRootPointWS,
@@ -62,8 +62,14 @@ void UVSChrMovFeature_FixedPointLeap::UpdateMovement_Implementation(float DeltaT
 			GetCharacterMovement()->GetGravityDirection(),
 			FMath::Abs(GetCharacterMovement()->GetGravityZ()));
 		FHitResult UpdateMovementHit;
+		
 		GetCharacterMovement()->Velocity = SuggestedVelocity;
 		GetCharacterMovement()->SafeMoveUpdatedComponent(SuggestedVelocity * DeltaTime, GetCharacter()->GetActorRotation(), true, UpdateMovementHit);
+		
+		if (UVSChrMovFeature_OrientationEvaluator* Evaluator = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationEvaluator>())
+		{
+			Evaluator->DefaultNamedParams.VectorParams.Emplace(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection, FVector::VectorPlaneProject(TargetRootPointWS - RootLocationWS, GetUpDirection()).GetSafeNormal());
+		}
 		
 		if (UpdateMovementHit.bBlockingHit)
 		{
@@ -71,15 +77,7 @@ void UVSChrMovFeature_FixedPointLeap::UpdateMovement_Implementation(float DeltaT
 		}
 	}
 	
-	if (UVSChrMovFeature_OrientationEvaluator_Common* Evaluator = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationEvaluator_Common>())
-	{
-		if (!TargetRootPointWS.Equals(RootLocationWS))
-		{
-			Evaluator->DefaultNamedParams.VectorParams.Emplace(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection, FVector::VectorPlaneProject(TargetRootPointWS - RootLocationWS, GetUpDirection()).GetSafeNormal());
-		}
-	}
-
-	MovementData.MovementElapsedTime = FMath::Clamp(MovementData.MovementElapsedTime + DeltaTime * MovementData.AnimPtr->PlayRate, 0.f, MovementData.AnimPtr->GetSafePlayTimeRange().Y);
+	MovementData.MovementElapsedTime = FMath::Clamp(MovementData.MovementElapsedTime + DeltaTime * MovementData.CachedParams.AnimPlayRate, 0.f, MovementData.AnimPtr->GetSafePlayTimeRange().Y);
 	if (MovementData.MovementElapsedTime >= MovementData.AnimPtr->GetSafePlayTimeRange().Y)
 	{
 		bShouldStopMovement = true;
@@ -134,12 +132,11 @@ void UVSChrMovFeature_FixedPointLeap::StopFixPointLeap()
 {
 	if (IsFixedPointLeapMode())
 	{
-		SetMovementMode(UVSActorLibrary::IsCharacterOnWalkableFloor(GetCharacter()) ? EVSMovementMode::Walking : EVSMovementMode::Falling);
-	}
-	
-	if (UVSChrMovFeature_OrientationEvaluator* Evaluator = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationEvaluator>())
-	{
-		Evaluator->DefaultNamedParams.VectorParams.Remove(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection);
+		if (UVSChrMovFeature_OrientationEvaluator* Evaluator = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationEvaluator>())
+		{
+			Evaluator->DefaultNamedParams.VectorParams.Remove(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection);
+		}
+		SetMovementMode(UVSActorLibrary::IsCharacterOnWalkableFloor(GetCharacter()) ? EVSMovementMode::Walking : EVSMovementMode::Falling, false);
 	}
 	
 	MovementData = FMovementData();
@@ -205,6 +202,7 @@ void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeapInternal(const TArray<FDa
 			MovementData.SnappedParams.AnimRow = AnimRow;
 			MovementData.SnappedParams.OriginalTargetRootPointWS = TargetRootLocationWS;
 			MovementData.SnappedParams.StartComponentTransformWS = ComponentToFollow ? ComponentToFollow->GetComponentTransform() : FTransform::Identity;
+			MovementData.SnappedParams.ServerSideServerStartTime = UVSGameplayLibrary::GetServerTimeSeconds(this);
 
 			FixedPointLeapBySnappedParams(MovementData.SnappedParams);
 			return;
@@ -220,8 +218,10 @@ void UVSChrMovFeature_FixedPointLeap::FixedPointLeapBySnappedParams(const FVSFix
 	MovementData.SettingsPtr = MovementData.SnappedParams.SettingsRow.GetRow<FVSFixedPointLeapSettings>(nullptr);
 	MovementData.AnimPtr = MovementData.SnappedParams.AnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 	MovementData.MovementElapsedTime = MovementData.AnimPtr->GetSafePlayTimeRange().X;
-	
-	MovementData.SnappedParams.ActionID = FMath::RandRange(0, INT16_MAX);
+
+	MovementData.CachedParams.AnimPlayRate = MovementData.AnimPtr->PlayRate;
+	MovementData.CachedParams.ClientSideServerStartTime = UVSGameplayLibrary::GetServerTimeSeconds(this);
+	MovementData.CachedParams.ActionID = FMath::RandRange(0, INT16_MAX);
 	
 	const float TargetHalfHeight = MovementData.SettingsPtr->CapsuleHalfHeight > 0.f ? (MovementData.SettingsPtr->CapsuleHalfHeight * GetScale3D().Z) : GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 	
@@ -229,7 +229,7 @@ void UVSChrMovFeature_FixedPointLeap::FixedPointLeapBySnappedParams(const FVSFix
 	GetCharacter()->GetCapsuleComponent()->SetCapsuleHalfHeight(TargetHalfHeight);
 	if (!IsFixedPointLeapMode())
 	{
-		SetMovementMode(EVSMovementMode::FixedPointLeap);
+		SetMovementMode(EVSMovementMode::FixedPointLeap, false);
 	}
 
 	if (GetCharacter()->HasAuthority() && GetIsReplicated())

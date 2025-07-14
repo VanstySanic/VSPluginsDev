@@ -21,13 +21,13 @@ class VSMOVEMENTANIM_API UVSChrMovAnimFeature_MantleVaultMovement : public UVSCh
 public:
 	virtual void Initialize_Implementation() override;
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Node Events")
+	UFUNCTION(BlueprintCallable, Category = "Node Events")
 	bool HasValidMantleVaultAnim() const;
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Node Events")
+	UFUNCTION(BlueprintCallable, Category = "Node Events")
 	void SetupMantleVaultAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Node Events")
+	UFUNCTION(BlueprintCallable, Category = "Node Events")
 	void UpdateMantleVaultAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node);
 
 protected:

@@ -8,6 +8,7 @@
 #include "VSCharacterMovementInterface.h"
 #include "VSCharacterMovementFeature.generated.h"
 
+class UVSCharacterMovementComponent;
 class UVSGameplayTagController;
 class UCharacterMovementComponent;
 
@@ -19,6 +20,7 @@ class VSMOVEMENTSYSTEM_API UVSCharacterMovementFeature : public UVSObjectFeature
 {
 	GENERATED_UCLASS_BODY()
 	friend class UVSCharacterMovementFeatureAgent;
+	friend class UVSCharacterMovementComponent;
 	
 protected:
 	virtual void Initialize_Implementation() override;
@@ -48,7 +50,7 @@ public:
 	FGameplayTag GetPrevMovementMode() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "InMovementMode"))
-	void SetMovementMode(const FGameplayTag& InMovementMode);
+	void SetMovementMode(const FGameplayTag& InMovementMode, bool bReplicated = false);
 	
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	FVector GetVelocity() const;
