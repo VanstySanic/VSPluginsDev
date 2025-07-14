@@ -1,7 +1,9 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Libraries/VSGameplayLibrary.h"
-
+#include "GameFramework/GameStateBase.h"
+#include "GameFramework/PlayerState.h"
+#include "Kismet/GameplayStatics.h"
 #include "Types/VSGameplayTypes.h"
 
 UVSGameplayLibrary::UVSGameplayLibrary(const FObjectInitializer& ObjectInitializer)
@@ -12,6 +14,13 @@ UVSGameplayLibrary::UVSGameplayLibrary(const FObjectInitializer& ObjectInitializ
 bool UVSGameplayLibrary::IsInGame()
 {
 	return !GIsEditor || GIsPlayInEditorWorld || (GWorld && GWorld->HasBegunPlay());
+}
+
+float UVSGameplayLibrary::GetServerTimeSeconds(const UObject* WorldContext)
+{
+	AGameStateBase* GameState = UGameplayStatics::GetGameState(WorldContext);
+	// APlayerState* FirstPlayerState = UGameplayStatics::GetPlayerState(WorldContext, 0);
+	return GameState ? GameState->GetServerWorldTimeSeconds() : 0.f;
 }
 
 bool UVSGameplayLibrary::MatchesGameplayTagEventQuery(const FVSGameplayTagEventQuery& Query, const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent)
@@ -60,7 +69,7 @@ FVector UVSGameplayLibrary::SuggestVelocityForProjectileMovementByTime(const FVe
 
 	FVector AnsVelocity = FVector::ZeroVector;
 	AnsVelocity += DeltaLocation2D / MovementTime;
-	AnsVelocity += DeltaLocationZ / MovementTime - GravitySize * NegativeGravityNormal * MovementTime;
+	AnsVelocity += DeltaLocationZ / MovementTime - 0.5f * GravitySize * NegativeGravityNormal * MovementTime;
 
 	return AnsVelocity;
 }

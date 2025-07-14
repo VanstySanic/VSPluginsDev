@@ -71,7 +71,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Node Events")
 	void UpdateApexAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node);
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Node Events")
 	void UpdateFallAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node);
 	

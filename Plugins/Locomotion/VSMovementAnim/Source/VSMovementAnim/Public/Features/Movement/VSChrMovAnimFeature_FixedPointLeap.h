@@ -21,13 +21,13 @@ class VSMOVEMENTANIM_API UVSChrMovAnimFeature_FixedPointLeap : public UVSCharact
 public:
 	virtual void Initialize_Implementation() override;
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Node Events")
+	UFUNCTION(BlueprintCallable, Category = "Node Events")
 	bool HasValidFixedPointLeapAnim() const;
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Node Events")
+	UFUNCTION(BlueprintCallable, Category = "Node Events")
 	void SetupFixedPointLeapAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Node Events")
+	UFUNCTION(BlueprintCallable, Category = "Node Events")
 	void UpdateFixedPointLeapAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node);
 
 protected:

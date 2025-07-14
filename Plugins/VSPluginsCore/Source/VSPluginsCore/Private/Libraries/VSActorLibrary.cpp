@@ -119,7 +119,7 @@ bool UVSActorLibrary::IsCharacterOnWalkableFloor(const ACharacter* Character, co
 	const float CapsuleRadius = Character->GetCapsuleComponent()->GetScaledCapsuleRadius();
 	const FVector& LowerSphereCenter = Character->GetActorLocation() - Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight_WithoutHemisphere() * CharacterUpVector;
 
-	float DownTraceDistance = (ToleranceToFloor * CharacterScaleZ) / UKismetMathLibrary::DegCos(WalkableAngle) + (bConsiderCollisionOffset ? 2.1f : 0.f);
+	float DownTraceDistance = (bConsiderCollisionOffset ? 2.56f : 0.f) + (ToleranceToFloor * CharacterScaleZ) / UKismetMathLibrary::DegCos(WalkableAngle);
 	const FVector& TraceEnd = LowerSphereCenter - DownTraceDistance * CharacterUpVector;
 
 	const FCollisionShape& TraceShape = FCollisionShape::MakeSphere(CapsuleRadius);

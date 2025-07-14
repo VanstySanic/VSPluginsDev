@@ -7,6 +7,8 @@
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/PlayerState.h"
+#include "Kismet/GameplayStatics.h"
 #include "Libraries/VSActorLibrary.h"
 
 UVSCharacterMovementFeature::UVSCharacterMovementFeature(const FObjectInitializer& ObjectInitializer)
@@ -78,9 +80,9 @@ FGameplayTag UVSCharacterMovementFeature::GetPrevMovementMode() const
 	return ChrMovFeatureAgentPrivate.IsValid() ? ChrMovFeatureAgentPrivate->MovementData.PrevMovementMode : FGameplayTag::EmptyTag;
 }
 
-void UVSCharacterMovementFeature::SetMovementMode(const FGameplayTag& InMovementMode)
+void UVSCharacterMovementFeature::SetMovementMode(const FGameplayTag& InMovementMode, bool bReplicated)
 {
-	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated() && bReplicated)
 	{
 		SetMovementMode_Server(InMovementMode);
 	}

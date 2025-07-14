@@ -79,6 +79,32 @@ struct FVSOrientationEvaluateParams
 };
 #pragma endregion
 
+USTRUCT(BlueprintType)
+struct FVSOrientationControlSettings2D
+{
+	GENERATED_BODY()
+
+	friend uint32 GetTypeHash(const FVSOrientationControlSettings2D& Settings)
+	{
+		const uint32 HashA = HashCombine(GetTypeHash(Settings.MovingEvaluateType), GetTypeHash(Settings.IdleEvaluateType));
+		const uint32 HashB = HashCombine(GetTypeHash(Settings.OrientationLagSpeed), GetTypeHash(Settings.OrientationLagSpeed));
+		return HashCombine(HashA, HashB);
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
+	FGameplayTag MovingEvaluateType = EVSOrientationEvaluateType::Control;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
+	FGameplayTag IdleEvaluateType = EVSOrientationEvaluateType::None;
+	
+	/** Lag the moving orientation 2D to the desired. 0.f means no lag. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float OrientationLagSpeed = 10.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bMovingRequireInput = true;
+};
+
 #pragma region TurnInPlace2D
 USTRUCT(BlueprintType)
 struct VSMOVEMENTSYSTEM_API FVSTurnInPlaceSettings2D : public FTableRowBase

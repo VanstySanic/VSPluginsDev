@@ -22,6 +22,8 @@ struct FVSLandRecoveryLimits
 			{
 				EVSMovementMode::Falling,
 				EVSMovementMode::FixedPointLeap,
+				EVSMovementMode::MantlingOrVaulting,
+				EVSMovementMode::WallRunning,
 			};
 	}
 
@@ -52,9 +54,7 @@ struct FVSLandRecoveryLimits
 
 	/** Empty as matching. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FGameplayTag> AllowedPrevMovementModes = TArray<FGameplayTag> {
-		EVSMovementMode::Falling
-	};
+	TArray<FGameplayTag> AllowedPrevMovementModes;
 };
 
 UENUM(BlueprintType)

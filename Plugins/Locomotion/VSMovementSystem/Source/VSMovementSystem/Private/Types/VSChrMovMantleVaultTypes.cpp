@@ -32,6 +32,9 @@ bool FVSMantleVaultLimits::IsValid() const
 	if (FacingMovementMaxAngle < 0.f) return false;
 	if (Velocity2DTowardsMovementMaxAngle < 0.f) return false;
 	if (Input2DTowardsMovementMaxAngle < 0.f) return false;
+	if (!UKismetMathLibrary::InRange_FloatFloat(FacingMovementMaxAngle, 0.f, 180.f)) return false;
+	if (!UKismetMathLibrary::InRange_FloatFloat(Velocity2DTowardsMovementMaxAngle, 0.f, 180.f)) return false;
+	if (!UKismetMathLibrary::InRange_FloatFloat(Input2DTowardsMovementMaxAngle, 0.f, 180.f)) return false;
 
 	return true;
 }

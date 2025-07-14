@@ -75,14 +75,21 @@ struct FVSFixedPointLeapSnappedParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FTransform StartComponentTransformWS = FTransform::Identity;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, NotReplicated)
-	int32 ActionID = INDEX_NONE;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float ServerSideServerStartTime = 0.f;
 };
-
 
 USTRUCT(BlueprintType)
 struct FVSFixedPointLeapCachedParams
 {
 	GENERATED_BODY()
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float ClientSideServerStartTime = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float AnimPlayRate = 1.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 ActionID = INDEX_NONE;
 };

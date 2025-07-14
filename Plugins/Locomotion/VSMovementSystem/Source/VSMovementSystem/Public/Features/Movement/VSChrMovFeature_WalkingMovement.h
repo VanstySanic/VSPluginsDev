@@ -127,6 +127,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Movement")
 	FVSGameplayTagEventQueryContainer RefreshMovementBaseSettingsQueries;
 
+public:
 	UPROPERTY(EditAnywhere, Category = "Movement")
 	float MovementInputDirectionInterpSpeed = 16;
 

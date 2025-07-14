@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Features/VSCharacterMovementFeature.h"
 #include "Types/VSCharacterMovementTags.h"
+#include "Types/VSChrMovOrientationTypes.h"
 #include "Types/VSGameplayTypes.h"
 #include "VSChrMovFeature_OrientationControl2D.generated.h"
 
@@ -20,11 +21,8 @@ class VSMOVEMENTSYSTEM_API UVSChrMovFeature_OrientationControl2D : public UVSCha
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Orientation")
-	FGameplayTag GetMovingOrientationEvaluateType() const { return MovementData.CurrentMovingOrientationEvaluateType; }
+	FVSOrientationControlSettings2D GetOrientationControlSettings2D() const { return MovementData.CurrentSettings; }
 
-	UFUNCTION(BlueprintCallable, Category = "Orientation")
-	FGameplayTag GetIdleOrientationEvaluateType() const { return MovementData.CurrentIdleOrientationEvaluateType; }
-	
 protected:
 	virtual void BeginPlay_Implementation() override;
 	virtual void UpdateMovement_Implementation(float DeltaTime) override;
@@ -35,52 +33,26 @@ private:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	bool bMovingRequireInput = true;
-	
-	/** Lag the moving orientation 2D to the desired. 0.f means no lag. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float MovingOrientationLagSpeed = 10.f;
-
-	/** Lag the idle orientation 2D to the desired. 0.f means no lag. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float IdleOrientationLagSpeed = 10.f;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float LagMaxTimeSubstepping = 0.0166667f;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
-	FGameplayTag DefaultMovingOrientationEvaluateType = EVSOrientationEvaluateType::Control;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
-	FGameplayTag DefaultIdleOrientationEvaluateType = EVSOrientationEvaluateType::None;
+	FVSOrientationControlSettings2D DefaultSettings;
 	
 	UPROPERTY(EditAnywhere, Category = "Orientation")
-	TMap<FGameplayTag, FVSGameplayTagEventQuery> QueriedMovingOrientationEvaluateTypes;
+	TMap<FVSOrientationControlSettings2D, FVSGameplayTagEventQuery> QueriedSettings;
 
 	UPROPERTY(EditAnywhere, Category = "Orientation")
-	TMap<FGameplayTag, FVSGameplayTagEventQuery> QueriedIdleOrientationEvaluateTypes;
-
-	UPROPERTY(EditAnywhere, Category = "Orientation")
-	FVSGameplayTagEventQueryContainer RefreshQueriedMovingOrientationEvaluateTypeQueries;
+	FVSGameplayTagEventQueryContainer RefreshQueriedSettingsQueries;
 	
-	UPROPERTY(EditAnywhere, Category = "Orientation")
-	FVSGameplayTagEventQueryContainer RefreshQueriedIdleOrientationEvaluateTypeQueries;
-	
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orientation")
-	FVSGameplayTagEventQueryContainer MovingTagQueries; 
+	FVSGameplayTagEventQueryContainer MovementTagQueries; 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orientation")
-	FVSGameplayTagEventQueryContainer IdleTagQueries;
-	
 private:
 	struct FMovementData
 	{
-		FGameplayTag CurrentMovingOrientationEvaluateType = EVSOrientationEvaluateType::None;
-		FGameplayTag CurrentIdleOrientationEvaluateType = EVSOrientationEvaluateType::None;
-
-		bool bMatchesMovingTagQuery = false;
-		bool bMatchesIdleTagQuery = false;
+		FVSOrientationControlSettings2D CurrentSettings;
+		
+		bool bMatchesTagQuery = false;
 	} MovementData;
 };

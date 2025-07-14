@@ -24,6 +24,8 @@ struct FVSFallingMovementAnimLimits
 				EVSMovementMode::NavWalking,
 				EVSMovementMode::Falling,
 				EVSMovementMode::FixedPointLeap,
+				EVSMovementMode::MantlingOrVaulting,
+				EVSMovementMode::WallRunning,
 			};
 	}
 	

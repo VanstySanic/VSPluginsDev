@@ -4,6 +4,8 @@
 #include "Classees/Framework/VSGameplayTagController.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Libraries/VSActorLibrary.h"
+#include "Libraries/VSMathLibrary.h"
 #include "Types/VSCharacterMovementTags.h"
 
 UVSChrMovFeature_FallingMovement::UVSChrMovFeature_FallingMovement(const FObjectInitializer& ObjectInitializer)
@@ -48,4 +50,33 @@ void UVSChrMovFeature_FallingMovement::OnMovementTagEventNotified_Implementation
 			MovementData.CachedJumpCount = 0;
 		}
 	}
+}
+
+void UVSChrMovFeature_FallingMovement::LaunchCharacter(const FVector& NewVelocity, TEnumAsByte<EVSVectorAxes::Type> RelativeAxesToOverride, bool bReplicated)
+{
+	if (RelativeAxesToOverride == EVSVectorAxes::None) return;
+	if (bReplicated && GetIsReplicated() && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	{
+		LaunchCharacter_Server(NewVelocity, RelativeAxesToOverride);
+	}
+	else
+	{
+		LaunchCharacterInternal(NewVelocity, RelativeAxesToOverride);
+	}
+}
+
+void UVSChrMovFeature_FallingMovement::LaunchCharacterInternal(const FVector& NewVelocity, TEnumAsByte<EVSVectorAxes::Type> RelativeAxesToOverride)
+{
+	const FVector& AxesedNewVelocity = UVSMathLibrary::VectorApplyAxes(GetVelocity(), NewVelocity, RelativeAxesToOverride, GetCharacter()->GetActorRotation());
+	GetCharacter()->LaunchCharacter(AxesedNewVelocity, true, true);
+}
+
+void UVSChrMovFeature_FallingMovement::LaunchCharacter_Server_Implementation(const FVector& NewVelocity, EVSVectorAxes::Type RelativeAxesToOverride)
+{
+	LaunchCharacter_Multicast(NewVelocity, RelativeAxesToOverride);
+}
+
+void UVSChrMovFeature_FallingMovement::LaunchCharacter_Multicast_Implementation(const FVector& NewVelocity, EVSVectorAxes::Type RelativeAxesToOverride)
+{
+	LaunchCharacterInternal(NewVelocity, RelativeAxesToOverride);
 }

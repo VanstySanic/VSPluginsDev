@@ -21,13 +21,13 @@ void UVSChrMovAnimFeature_FixedPointLeap::Initialize_Implementation()
 	check(ChrMovFeature_FixedPointLeapMovement.IsValid());
 }
 
-bool UVSChrMovAnimFeature_FixedPointLeap::HasValidFixedPointLeapAnim_Implementation() const
+bool UVSChrMovAnimFeature_FixedPointLeap::HasValidFixedPointLeapAnim() const
 {
 	FVSAnimSequenceReference* Anim = ChrMovFeature_FixedPointLeapMovement->GetFixedPointLeapSnappedParams().AnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 	return Anim && Anim->IsValid();
 }
 
-void UVSChrMovAnimFeature_FixedPointLeap::SetupFixedPointLeapAnim_Implementation(const FAnimUpdateContext& Context, const FAnimNodeReference& Node)
+void UVSChrMovAnimFeature_FixedPointLeap::SetupFixedPointLeapAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node)
 {
 	if (!ChrMovFeature_FixedPointLeapMovement.IsValid() || !HasValidFixedPointLeapAnim()) return;
 
@@ -45,10 +45,10 @@ void UVSChrMovAnimFeature_FixedPointLeap::SetupFixedPointLeapAnim_Implementation
 	}
 	
 	USequenceEvaluatorLibrary::SetExplicitTime(SequenceEvaluator, Anim->GetSafePlayTimeRange().X);
-	AnimData.LastActionID = ChrMovFeature_FixedPointLeapMovement->GetFixedPointLeapSnappedParams().ActionID;
+	AnimData.LastActionID = ChrMovFeature_FixedPointLeapMovement->GetFixedPointLeapCachedParams().ActionID;
 }
 
-void UVSChrMovAnimFeature_FixedPointLeap::UpdateFixedPointLeapAnim_Implementation(const FAnimUpdateContext& Context, const FAnimNodeReference& Node)
+void UVSChrMovAnimFeature_FixedPointLeap::UpdateFixedPointLeapAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node)
 {
 	if (!ChrMovFeature_FixedPointLeapMovement.IsValid() || !HasValidFixedPointLeapAnim()) return;
 
@@ -61,7 +61,7 @@ void UVSChrMovAnimFeature_FixedPointLeap::UpdateFixedPointLeapAnim_Implementatio
 	if (!Anim) return;
 
 	/** Check for new mantle process. */
-	if (AnimData.LastActionID != ChrMovFeature_FixedPointLeapMovement->GetFixedPointLeapSnappedParams().ActionID && ChrMovFeature_FixedPointLeapMovement->GetFixedPointLeapSnappedParams().ActionID != INDEX_NONE && ChrMovFeature_FixedPointLeapMovement->IsFixedPointLeapMode())
+	if (AnimData.LastActionID != ChrMovFeature_FixedPointLeapMovement->GetFixedPointLeapCachedParams().ActionID && ChrMovFeature_FixedPointLeapMovement->GetFixedPointLeapCachedParams().ActionID != INDEX_NONE && ChrMovFeature_FixedPointLeapMovement->IsFixedPointLeapMode())
 	{
 		if (UAnimSequenceBase* NewAnim = Anim->AnimSequence)
 		{
@@ -70,7 +70,7 @@ void UVSChrMovAnimFeature_FixedPointLeap::UpdateFixedPointLeapAnim_Implementatio
 		
 		USequenceEvaluatorLibrary::SetExplicitTime(SequenceEvaluator, Anim->GetSafePlayTimeRange().X);
 		UVSAnimationLibrary::SetInterialBlendingForSequenceEvaluator(Context, SequenceEvaluator);
-		AnimData.LastActionID = ChrMovFeature_FixedPointLeapMovement->GetFixedPointLeapSnappedParams().ActionID;
+		AnimData.LastActionID = ChrMovFeature_FixedPointLeapMovement->GetFixedPointLeapCachedParams().ActionID;
 	}
-	USequenceEvaluatorLibrary::AdvanceTime(Context, SequenceEvaluator, Anim->PlayRate);
+	USequenceEvaluatorLibrary::AdvanceTime(Context, SequenceEvaluator, ChrMovFeature_FixedPointLeapMovement->GetFixedPointLeapCachedParams().AnimPlayRate);
 }

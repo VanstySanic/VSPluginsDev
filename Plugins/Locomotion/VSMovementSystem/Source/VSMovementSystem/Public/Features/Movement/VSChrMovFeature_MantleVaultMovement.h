@@ -18,37 +18,41 @@ class VSMOVEMENTSYSTEM_API UVSChrMovFeature_MantleVaultMovement : public UVSChar
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+protected:
+	virtual bool CanUpdateMovement_Implementation() const override;
+	virtual void UpdateMovement_Implementation(float DeltaTime) override;
+	virtual void OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent) override;
+
+public:
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "Settings"))
 	bool IsMantlingOrVaultingMode() const;
 
 	/**
 	 * Try mantle or vault.
-	 * If you are controlling rotation using orientation control 2D feature, set the moving and idle evaluate type to aiming.
+	 * If you are controlling rotation using orientation control 2D feature, set the moving and idle evaluate type to Aim.Direction.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows"))
 	void TryMantleVault(const TArray<FDataTableRowHandle>& SettingRows, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType = EVSMantleVaultMovementType::MantleOrVault);
 
+protected:
+	/** Stop the mantle / vault movement. This is not replicated. */
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "Settings"))
 	void StopMantleVault();
-	
+
+public:
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "Settings"))
 	FVSMantleVaultSnappedParams GetMantleVaultSnappedParams() const { return MovementData.SnappedParams; }
 
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "Settings"))
 	FVSMantleVaultCachedParams GetMantleVaultCachedParams() const { return MovementData.CachedParams; }
 
-	
-protected:
-	virtual bool CanUpdateMovement_Implementation() const override;
-	virtual void UpdateMovement_Implementation(float DeltaTime) override;
-	virtual void OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent) override;
 
 private:
 	void TryMantleVaultInternal(const TArray<FDataTableRowHandle>& SettingRows, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType);
 	void MantleVaultBySnappedParams(const FVSMantleVaultSnappedParams& SnappedParams);
 
 	/** Get the first snapped entry that meets with the requirements. */
-	bool CalcMantleVaultSnappedParams(FVSMantleVaultSnappedParams& OutSnappedParams, const FDataTableRowHandle& SettingsRow, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType);
+	bool CalcMantleVaultSnappedParams(FVSMantleVaultSnappedParams& OutSnappedParams, const FDataTableRowHandle& SettingsRow, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType) const;
 
 	UFUNCTION(Server, Reliable)
 	void TryMantleVault_Server(const TArray<FDataTableRowHandle>& SettingRows, EVSMantleVaultMovementType::Type SupportedMovementType);

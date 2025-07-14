@@ -5,7 +5,6 @@
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "Features/Orientation/VSChrMovFeature_OrientationEvaluator.h"
 #include "GameFramework/Character.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Libraries/VSMathLibrary.h"
 #include "Types/VSChrMovOrientationTypes.h"
 
@@ -19,8 +18,7 @@ void UVSChrMovFeature_OrientationControl2D::BeginPlay_Implementation()
 {
 	Super::BeginPlay_Implementation();
 
-	MovementData.CurrentMovingOrientationEvaluateType = DefaultMovingOrientationEvaluateType;
-	MovementData.CurrentIdleOrientationEvaluateType = DefaultIdleOrientationEvaluateType;
+	MovementData.CurrentSettings = DefaultSettings;
 	UpdateTagQueryStates(EVSMovementEvent::StateChange_MovementMode);
 }
 
@@ -29,34 +27,39 @@ void UVSChrMovFeature_OrientationControl2D::UpdateMovement_Implementation(float 
 	const FRotator& CurrentRotationWS = GetCharacter()->GetActorRotation();
 	const FRotator& WorldToUpRotation = FQuat::FindBetweenNormals(FVector::UpVector, GetUpDirection()).Rotator();
 	FRotator EvaluatedRotation = GetCharacter()->GetActorRotation();
+
 	bool bEvaluatedRotation = false;
-	if (MovementData.bMatchesMovingTagQuery && IsMoving2D() && (!bMovingRequireInput || HasMovementInput2D()))
+	if (MovementData.bMatchesTagQuery)
 	{
-		for (UVSChrMovFeature_OrientationEvaluator* FindSubFeaturesByClass : GetMovementFeatureAgent()->FindSubFeaturesByClass<UVSChrMovFeature_OrientationEvaluator>())
+		if (IsMoving2D() && (!MovementData.CurrentSettings.bMovingRequireInput || HasMovementInput2D()))
 		{
-			if (FindSubFeaturesByClass->EvaluateOrientation(EvaluatedRotation, FVSOrientationEvaluateParams(MovementData.CurrentMovingOrientationEvaluateType)))
+			for (UVSChrMovFeature_OrientationEvaluator* FindSubFeaturesByClass : GetMovementFeatureAgent()->FindSubFeaturesByClass<UVSChrMovFeature_OrientationEvaluator>())
 			{
-				bEvaluatedRotation = true;
-				break;
+				if (FindSubFeaturesByClass->EvaluateOrientation(EvaluatedRotation, FVSOrientationEvaluateParams(MovementData.CurrentSettings.MovingEvaluateType)))
+				{
+					bEvaluatedRotation = true;
+					break;
+				}
 			}
 		}
-	}
-	else if (MovementData.bMatchesIdleTagQuery && !IsMoving2D())
-	{
-		for (UVSChrMovFeature_OrientationEvaluator* FindSubFeaturesByClass :GetMovementFeatureAgent()->FindSubFeaturesByClass<UVSChrMovFeature_OrientationEvaluator>())
+		else if (!IsMoving2D())
 		{
-			if (FindSubFeaturesByClass->EvaluateOrientation(EvaluatedRotation, FVSOrientationEvaluateParams(MovementData.CurrentIdleOrientationEvaluateType)))
+			for (UVSChrMovFeature_OrientationEvaluator* FindSubFeaturesByClass :GetMovementFeatureAgent()->FindSubFeaturesByClass<UVSChrMovFeature_OrientationEvaluator>())
 			{
-				bEvaluatedRotation = true;
-				break;
+				if (FindSubFeaturesByClass->EvaluateOrientation(EvaluatedRotation, FVSOrientationEvaluateParams(MovementData.CurrentSettings.IdleEvaluateType)))
+				{
+					bEvaluatedRotation = true;
+					break;
+				}
 			}
 		}
-	}
-	if (bEvaluatedRotation)
-	{
-		const FRotator& LaggedRotationWS = UVSMathLibrary::RotatorInterpTo(CurrentRotationWS, EvaluatedRotation, DeltaTime, FRotator(MovingOrientationLagSpeed), false, LagMaxTimeSubstepping, WorldToUpRotation);
-		const FRotator& AxesedRotation = UVSMathLibrary::RotatorApplyAxes(LaggedRotationWS, LaggedRotationWS, EVSRotatorAxes::PitchYaw, WorldToUpRotation);
-		GetCharacter()->SetActorRotation(AxesedRotation);
+
+		if (bEvaluatedRotation)
+		{
+			const FRotator& LaggedRotationWS = UVSMathLibrary::RotatorInterpTo(CurrentRotationWS, EvaluatedRotation, DeltaTime, FRotator(MovementData.CurrentSettings.OrientationLagSpeed), false, LagMaxTimeSubstepping, WorldToUpRotation);
+			const FRotator& AxesedRotation = UVSMathLibrary::RotatorApplyAxes(LaggedRotationWS, LaggedRotationWS, EVSRotatorAxes::PitchYaw, WorldToUpRotation);
+			GetCharacter()->SetActorRotation(AxesedRotation);
+		}
 	}
 }
 
@@ -71,30 +74,16 @@ void UVSChrMovFeature_OrientationControl2D::UpdateTagQueryStates(const FGameplay
 	FGameplayTagContainer GameplayTags;
 	GameplayTagController->GetOwnedGameplayTags(GameplayTags);
 	
-	MovementData.bMatchesMovingTagQuery = MovingTagQueries.Matches(GameplayTags, TagEvent);
-	MovementData.bMatchesIdleTagQuery = IdleTagQueries.Matches(GameplayTags, TagEvent);
+	MovementData.bMatchesTagQuery = MovementTagQueries.Matches(GameplayTags, TagEvent);
 
-	if (RefreshQueriedMovingOrientationEvaluateTypeQueries.Matches(GameplayTags, TagEvent))
+	if (RefreshQueriedSettingsQueries.Matches(GameplayTags, TagEvent))
 	{
-		MovementData.CurrentMovingOrientationEvaluateType = DefaultMovingOrientationEvaluateType;
-		for (const auto& QueriedMovingOrientationEvaluateType : QueriedMovingOrientationEvaluateTypes)
+		MovementData.CurrentSettings = DefaultSettings;
+		for (const auto& QueriedSetting : QueriedSettings)
 		{
-			if (QueriedMovingOrientationEvaluateType.Value.Matches(GameplayTags, TagEvent))
+			if (QueriedSetting.Value.Matches(GameplayTags, TagEvent))
 			{
-				MovementData.CurrentMovingOrientationEvaluateType = QueriedMovingOrientationEvaluateType.Key;
-				break;
-			}
-		}
-	}
-
-	if (RefreshQueriedIdleOrientationEvaluateTypeQueries.Matches(GameplayTags, TagEvent))
-	{
-		MovementData.CurrentIdleOrientationEvaluateType = DefaultIdleOrientationEvaluateType;
-		for (const auto& TaggedIdleOrientationEvaluateType : QueriedIdleOrientationEvaluateTypes)
-		{
-			if (TaggedIdleOrientationEvaluateType.Value.Matches(GameplayTags, TagEvent))
-			{
-				MovementData.CurrentIdleOrientationEvaluateType = TaggedIdleOrientationEvaluateType.Key;
+				MovementData.CurrentSettings = QueriedSetting.Key;
 				break;
 			}
 		}

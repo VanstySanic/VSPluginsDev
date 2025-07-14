@@ -61,15 +61,13 @@ void UVSChrMovFeature_TurnInPlace2D::UpdateMovement_Implementation(float DeltaTi
 	Super::UpdateMovement_Implementation(DeltaTime);
 
 	FVSAnimSequenceReference* Anim = MovementData.SnappedParams.AnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
-	UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, MovementData.CachedParams.AnimPlayedTime);
 	
 	/** Update character rotation. */
 	const float AnimRotationYawCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, AnimRotationYawCurveName, MovementData.CachedParams.AnimPlayedTime);
 	const float DeltaAnimRotationYawCurveValue = AnimRotationYawCurveValue - MovementData.CachedParams.LastUpdatedAnimRotationYawCurveValue;
 	const float RotateScale = MovementData.SnappedParams.DeltaAngle / MovementData.CachedParams.AnimRotationAngle;
-
-	/** TODO	Don't know why the angle should be multiplied by 2.f on clients. Maybe someday I'll find out. */
-	const float DeltaYaw = DeltaAnimRotationYawCurveValue * RotateScale * (GetOwnerActor()->HasAuthority() ? 1.f : 2.f);
+	
+	const float DeltaYaw = DeltaAnimRotationYawCurveValue * RotateScale;
 	GetCharacter()->AddActorLocalRotation(FRotator(0.0, DeltaYaw, 0.0));
 	
 	MovementData.CachedParams.LastUpdatedAnimRotationYawCurveValue = AnimRotationYawCurveValue;
