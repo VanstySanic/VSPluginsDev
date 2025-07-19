@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "VSCharacterMovementTags.h"
 #include "Types/VSGameplayTypes.h"
-#include "Types/Animation/VSAnimSequenceReference.h"
 #include "UObject/Object.h"
 #include "VSChrMovOrientationTypes.generated.h"
 
@@ -48,9 +47,6 @@ struct FVSOrientationEvaluateNamedParams
 	TMap<FName, FRotator> RotatorParams;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<FName, AActor*> ActorParams;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TMap<FName, USceneComponent*> ComponentParams;
 };
 
@@ -70,6 +66,7 @@ struct FVSOrientationEvaluateParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSOrientationEvaluateNamedParams NamedParams;
 
+	/** If true, the movement will be adjusted if moving against wall. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bMovementAgainstWallAdjustment2D = true;
 	
@@ -91,15 +88,18 @@ struct FVSOrientationControlSettings2D
 		return HashCombine(HashA, HashB);
 	}
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FGameplayTag MovingEvaluateType = EVSOrientationEvaluateType::Control;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FGameplayTag IdleEvaluateType = EVSOrientationEvaluateType::None;
 	
 	/** Lag the moving orientation 2D to the desired. 0.f means no lag. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float OrientationLagSpeed = 10.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float OrientationLagMaxTimeSubstepping = 0.0166667f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bMovingRequireInput = true;

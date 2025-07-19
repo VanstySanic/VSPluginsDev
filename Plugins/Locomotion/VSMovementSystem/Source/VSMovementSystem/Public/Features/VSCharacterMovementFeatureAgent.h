@@ -5,8 +5,10 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "VSCharacterMovementFeature.h"
+#include "Types/VSCharacterMovementTypes.h"
 #include "VSCharacterMovementFeatureAgent.generated.h"
 
+class UVSChrMovCapsuleComponent;
 class UVSGameplayTagController;
 class UCharacterMovementComponent;
 
@@ -23,7 +25,7 @@ class VSMOVEMENTSYSTEM_API UVSCharacterMovementFeatureAgent : public UVSCharacte
 
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-	
+
 protected:
 	virtual void Initialize_Implementation() override;
 	virtual void Uninitialize_Implementation() override;
@@ -42,13 +44,13 @@ public:
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FOnMovementModeChangedDelegate OnMovementModeChanged;
 
-
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Networks")
 	FGameplayTagQuery NetworkIgnoreClientCorrectionQuery;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Networks")
 	FGameplayTagQuery NetworkDisableMoveCombiningQuery;
+
 
 private:
 	UPROPERTY(Replicated)
@@ -61,6 +63,9 @@ private:
 	TWeakObjectPtr<ACharacter> CharacterPrivate;
 	TWeakObjectPtr<UCharacterMovementComponent> CharacterMovementComponentPrivate;
 	TWeakObjectPtr<UVSGameplayTagController> GameplayTagControllerPrivate;
+	/** Capsule component that takes place of the character's capsule collision. */
+	TWeakObjectPtr<UVSChrMovCapsuleComponent> MovementCapsuleComponent;
+
 	
 	struct FMovementData
 	{

@@ -31,10 +31,6 @@ protected:
 private:
 	void UpdateTagQueryStates(const FGameplayTag& TagEvent);
 
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float LagMaxTimeSubstepping = 0.0166667f;
-	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
 	FVSOrientationControlSettings2D DefaultSettings;

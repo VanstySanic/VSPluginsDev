@@ -10,6 +10,7 @@
 
 class UVSCharacterMovementComponent;
 class UVSGameplayTagController;
+class UVSChrMovCapsuleComponent;
 class UCharacterMovementComponent;
 
 /**
@@ -42,6 +43,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "References")
 	UVSGameplayTagController* GetGameplayTagController() const;
+
+	/** Get the capsule component that takes place of the character's capsule collision. */
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	UVSChrMovCapsuleComponent* GetMovementCapsuleComponent() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	FGameplayTag GetMovementMode() const;
@@ -110,6 +115,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	FRotator GetControlRotation() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	FVector GetRootLocation() const;
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "Camera")

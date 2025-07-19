@@ -45,11 +45,6 @@ public:
 private:
 	struct FMovementData
 	{
-		FMovementData()
-			: bMatchesTagQuery(false)
-		{
-		}
-		
-		uint8 bMatchesTagQuery : 1;
+		bool bMatchesTagQuery = false;
 	} MovementData;
 };

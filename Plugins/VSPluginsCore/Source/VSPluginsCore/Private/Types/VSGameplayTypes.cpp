@@ -75,3 +75,20 @@ FPlatformUserId FVSUserQueryParams::GetUserId() const
 
 	return FPlatformUserId();
 }
+
+
+FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::LocalExecution
+{
+	.AutonomousLocalPolicy = EVSNetAutonomousMethodExecPolicy::Client,
+	.AuthorityLocalPolicy = EVSNetAuthorityMethodExecPolicy::Server,
+	.ServerRPCPolicy = EVSNetAuthorityMethodExecPolicy::None,
+	.bSimulatedLocalExecution = true
+};
+
+FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::AutonomousPredictedMulticast
+{
+	.AutonomousLocalPolicy = EVSNetAutonomousMethodExecPolicy::ClientAndServer,
+	.AuthorityLocalPolicy = EVSNetAuthorityMethodExecPolicy::Multicast,
+	.ServerRPCPolicy = EVSNetAuthorityMethodExecPolicy::ServerAndSimulated,
+	.bSimulatedLocalExecution = false
+};

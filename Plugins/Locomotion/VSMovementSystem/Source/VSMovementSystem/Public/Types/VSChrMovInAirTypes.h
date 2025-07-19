@@ -46,7 +46,7 @@ struct FVSFixedPointLeapSettings : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (RowType = "/Script/VSPluginsCore.VSAnimSequenceReference"))
 	TArray<FDataTableRowHandle> AnimRows;
 
-	/** Below 0.f means default capsule radius. */
+	/** Below 0.f means default capsule radius. Unscaled. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float CapsuleHalfHeight = 0.f;
 	

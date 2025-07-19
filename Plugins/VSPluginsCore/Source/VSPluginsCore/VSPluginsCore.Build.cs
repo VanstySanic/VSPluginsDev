@@ -34,6 +34,7 @@ public class VSPluginsCore : ModuleRules
 				"GameplayAbilities",
 				"GameplayTasks",
 				// ... add other public dependencies that you statically link with here ...
+				"VSPluginsCoreCPP"
 			}
 			);
 			

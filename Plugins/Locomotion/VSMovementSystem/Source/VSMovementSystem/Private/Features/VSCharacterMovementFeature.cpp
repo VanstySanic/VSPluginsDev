@@ -2,6 +2,7 @@
 
 #include "Features/VSCharacterMovementFeature.h"
 #include "GameplayTagContainer.h"
+#include "VSChrMovCapsuleComponent.h"
 #include "VSMovementSystemSettings.h"
 #include "Classees/Framework/VSGameplayTagController.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
@@ -67,6 +68,11 @@ AController* UVSCharacterMovementFeature::GetController() const
 UVSGameplayTagController* UVSCharacterMovementFeature::GetGameplayTagController() const
 {
 	return ChrMovFeatureAgentPrivate.IsValid() ? ChrMovFeatureAgentPrivate->GameplayTagControllerPrivate.Get() : nullptr;
+}
+
+UVSChrMovCapsuleComponent* UVSCharacterMovementFeature::GetMovementCapsuleComponent() const
+{
+	return ChrMovFeatureAgentPrivate.IsValid() ? ChrMovFeatureAgentPrivate->MovementCapsuleComponent.Get() : nullptr;
 }
 
 FGameplayTag UVSCharacterMovementFeature::GetMovementMode() const
@@ -195,6 +201,11 @@ FRotator UVSCharacterMovementFeature::GetControlRotation() const
 {
 	if (GetController()) { return GetController()->GetControlRotation().GetNormalized(); }
 	return ChrMovFeatureAgentPrivate.IsValid() ? ChrMovFeatureAgentPrivate->ReplicatedControlRotation.GetNormalized() : FRotator::ZeroRotator;
+}
+
+FVector UVSCharacterMovementFeature::GetRootLocation() const
+{
+	return GetMovementCapsuleComponent() ? GetMovementCapsuleComponent()->GetCapsuleRootLocation() : FVector::ZeroVector;
 }
 
 void UVSCharacterMovementFeature::UpdateMovement_Implementation(float DeltaTime)

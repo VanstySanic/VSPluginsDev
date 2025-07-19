@@ -1,6 +1,9 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Features/VSCharacterMovementFeatureAgent.h"
+
+#include "VSCharacterMovementUtils.h"
+#include "VSChrMovCapsuleComponent.h"
 #include "VSMovementSystemSettings.h"
 #include "Classees/Framework/VSGameplayTagController.h"
 #include "Components/CapsuleComponent.h"
@@ -10,8 +13,9 @@
 #include "GameFramework/PlayerState.h"
 #include "Interfaces/VSGameplayTagControllerInterface.h"
 #include "Kismet/GameplayStatics.h"
+#include "Libraries/VSActorLibrary.h"
 #include "Libraries/VSGameplayLibrary.h"
-#include "Libraries/VSPrivablicLibrary.h"
+#include "VSPrivablic.h"
 #include "Net/UnrealNetwork.h"
 
 VS_DECLARE_PRIVABLIC_MEMBER(UCharacterMovementComponent, Acceleration, FVector);
@@ -46,6 +50,9 @@ void UVSCharacterMovementFeatureAgent::Initialize_Implementation()
 	CharacterPrivate->MovementModeChangedDelegate.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnCharacterMovementChanged);
 	if (CharacterPrivate->HasAuthority()) { ReplicatedControlRotation = CharacterPrivate->GetControlRotation(); }
 
+	MovementCapsuleComponent = Cast<UVSChrMovCapsuleComponent>(GetCharacter()->GetCapsuleComponent());
+	check(MovementCapsuleComponent.IsValid());
+	
 	GetGameplayTagController()->OnTagsUpdated.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnMovementTagsUpdated);
 	GetGameplayTagController()->OnTagEventNotified.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnMovementTagEventNotified);
 }
@@ -63,7 +70,7 @@ void UVSCharacterMovementFeatureAgent::Uninitialize_Implementation()
 void UVSCharacterMovementFeatureAgent::BeginPlay_Implementation()
 {
 	Super::BeginPlay_Implementation();
-
+	
 	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
 	GameplayTagController->SetTagCount(GetMovementMode(), 1);
 
@@ -160,7 +167,7 @@ void UVSCharacterMovementFeatureAgent::OnCharacterMovementChanged(ACharacter* Ch
 
 	/** Reset capsule halfheight. */
 	const ACharacter* DefaultCharacter = GetCharacter()->GetClass()->GetDefaultObject<ACharacter>();
-	GetCharacter()->GetCapsuleComponent()->SetCapsuleHalfHeight(DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight());
+	// GetCharacter()->GetCapsuleComponent()->SetCapsuleHalfHeight(DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight());
 	
 	/** Reset movement base settings to default. */
 	const UCharacterMovementComponent* DefaultCharacterMove = DefaultCharacter->GetCharacterMovement();

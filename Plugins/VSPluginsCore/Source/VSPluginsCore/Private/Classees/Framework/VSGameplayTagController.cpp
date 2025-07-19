@@ -4,7 +4,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Libraries/VSActorLibrary.h"
-#include "Libraries/VSPrivablicLibrary.h"
+#include "VSPrivablic.h"
 #include "Types/VSGameplayTypes.h"
 
 VS_DECLARE_PRIVABLIC_MEMBER(UAbilitySystemComponent, GameplayTagCountContainer, FGameplayTagCountContainer);

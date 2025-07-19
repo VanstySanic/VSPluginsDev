@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Features/VSCharacterMovementFeature.h"
 #include "Types/VSChrMovInAirTypes.h"
+#include "Types/VSGameplayTypes.h"
 #include "VSChrMovFeature_FixedPointLeap.generated.h"
 
 struct FVSAnimSequenceReference;
@@ -17,9 +18,6 @@ class VSMOVEMENTSYSTEM_API UVSChrMovFeature_FixedPointLeap : public UVSCharacter
 {
 	GENERATED_UCLASS_BODY()
 
-public:
-	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-
 protected:
 	virtual bool CanUpdateMovement_Implementation() const override;
 	virtual void UpdateMovement_Implementation(float DeltaTime) override;
@@ -30,8 +28,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows"))
 	bool IsFixedPointLeapMode() const;
 	
-	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows"))
-	void TryFixedPointLeap(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocation, USceneComponent* ComponentToFollow = nullptr);
+	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows, NetPolicies"))
+	void TryFixedPointLeap(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocation, USceneComponent* ComponentToFollow = nullptr, const FVSNetMethodExecutionPolicies& NetPolicies = FVSNetMethodExecutionPolicies());
 
 protected:
 	/** Stop the movement. This is not replicated. */
@@ -46,16 +44,14 @@ public:
 	FVSFixedPointLeapCachedParams GetFixedPointLeapCachedParams() const { return MovementData.CachedParams; }
 	
 private:
-	void TryFixedPointLeapInternal(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, USceneComponent* ComponentToFollow);
+	bool TryFixedPointLeapInternal(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, USceneComponent* ComponentToFollow);
 	void FixedPointLeapBySnappedParams(const FVSFixedPointLeapSnappedParams& SnappedParams);
 
 	UFUNCTION(Server, Reliable)
-	void TryFixedPointLeap_Server(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, USceneComponent* ComponentToFollow);
+	void TryFixedPointLeap_Server(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, USceneComponent* ComponentToFollow, EVSNetAuthorityMethodExecPolicy::Type NetPolicy);
 
-	UFUNCTION()
-	void OnRep_ReplicatedSnappedParams();
-
-
+	UFUNCTION(NetMulticast, Reliable)
+	void TryFixedPointLeap_Multicast(const FVSFixedPointLeapSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetPolicy);
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (RowType = "/Script/VSMovementSystem.VSFixedPointLeapSettings"))
@@ -67,10 +63,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	FName AnimMovementEndTimeMarkName = FName("MovementEnd");
-	
-private:
-	UPROPERTY(ReplicatedUsing = "OnRep_ReplicatedSnappedParams")
-	FVSFixedPointLeapSnappedParams ReplicatedSnappedParams;
 
 private:
 	struct FMovementData
@@ -80,5 +72,6 @@ private:
 		float MovementElapsedTime = 0.f;
 		FVSFixedPointLeapSettings* SettingsPtr = nullptr;
 		FVSAnimSequenceReference* AnimPtr = nullptr;
+		float CapsuleHalfHeightOffsetUSCZ = 0.f;
 	} MovementData;
 };

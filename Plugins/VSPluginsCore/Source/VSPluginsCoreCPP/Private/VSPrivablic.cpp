@@ -1,3 +1,3 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
-#include "Libraries/VSPrivablicLibrary.h"
+#include "VSPrivablic.h"

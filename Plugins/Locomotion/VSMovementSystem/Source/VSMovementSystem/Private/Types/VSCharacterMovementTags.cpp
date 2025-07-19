@@ -33,13 +33,15 @@ namespace EVSStance
 {
 	UE_DEFINE_GAMEPLAY_TAG(Standing, "VSMovementSystem.State.Stance.Standing");
 	UE_DEFINE_GAMEPLAY_TAG(Crouching, "VSMovementSystem.State.Stance.Crouching");
+
+	/** Equals to Crouching in most cases. This is used to avoid the character movement original crouching state. */
+	UE_DEFINE_GAMEPLAY_TAG(Squatting, "VSMovementSystem.State.Stance.Squatting");
 	UE_DEFINE_GAMEPLAY_TAG(Crawling, "VSMovementSystem.State.Stance.Crawling");
 }
 
 namespace EVSGait
 {
 	UE_DEFINE_GAMEPLAY_TAG(Walking, "VSMovementSystem.State.Gait.Walking");
-	UE_DEFINE_GAMEPLAY_TAG(Jogging, "VSMovementSystem.State.Gait.Jogging");
 	UE_DEFINE_GAMEPLAY_TAG(Running, "VSMovementSystem.State.Gait.Running");
 	UE_DEFINE_GAMEPLAY_TAG(Sprinting, "VSMovementSystem.State.Gait.Sprinting");
 }

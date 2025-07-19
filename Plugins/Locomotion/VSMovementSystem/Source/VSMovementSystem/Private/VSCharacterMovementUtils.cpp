@@ -2,10 +2,12 @@
 
 #include "VSCharacterMovementUtils.h"
 #include "VSCharacterMovementInterface.h"
+#include "Components/CapsuleComponent.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "Features/Orientation/VSChrMovFeature_OrientationEvaluator.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Libraries/VSActorLibrary.h"
 
 UVSCharacterMovementUtils::UVSCharacterMovementUtils(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

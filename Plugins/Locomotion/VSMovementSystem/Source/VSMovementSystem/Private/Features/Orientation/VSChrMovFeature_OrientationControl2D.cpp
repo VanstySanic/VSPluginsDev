@@ -56,7 +56,7 @@ void UVSChrMovFeature_OrientationControl2D::UpdateMovement_Implementation(float 
 
 		if (bEvaluatedRotation)
 		{
-			const FRotator& LaggedRotationWS = UVSMathLibrary::RotatorInterpTo(CurrentRotationWS, EvaluatedRotation, DeltaTime, FRotator(MovementData.CurrentSettings.OrientationLagSpeed), false, LagMaxTimeSubstepping, WorldToUpRotation);
+			const FRotator& LaggedRotationWS = UVSMathLibrary::RotatorInterpTo(CurrentRotationWS, EvaluatedRotation, DeltaTime, FRotator(MovementData.CurrentSettings.OrientationLagSpeed), false, MovementData.CurrentSettings.OrientationLagMaxTimeSubstepping, WorldToUpRotation);
 			const FRotator& AxesedRotation = UVSMathLibrary::RotatorApplyAxes(LaggedRotationWS, LaggedRotationWS, EVSRotatorAxes::PitchYaw, WorldToUpRotation);
 			GetCharacter()->SetActorRotation(AxesedRotation);
 		}

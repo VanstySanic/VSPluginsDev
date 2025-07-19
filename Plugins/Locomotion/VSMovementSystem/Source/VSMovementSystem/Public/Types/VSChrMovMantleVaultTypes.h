@@ -169,6 +169,9 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultSnappedParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector GroundPivotPointRS = FVector::ZeroVector;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector VaultOffPlatformPointRS = FVector::ZeroVector;
+	
 	/** Animation curve value, not scaled. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float AnimReachTargetDistanceToWall2D = 0.f;

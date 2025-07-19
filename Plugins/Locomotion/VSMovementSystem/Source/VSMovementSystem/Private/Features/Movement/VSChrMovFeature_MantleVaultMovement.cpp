@@ -2,6 +2,7 @@
 
 #include "Features/Movement/VSChrMovFeature_MantleVaultMovement.h"
 #include "KismetTraceUtils.h"
+#include "VSChrMovCapsuleComponent.h"
 #include "VSMovementSystemSettings.h"
 #include "Algo/RandomShuffle.h"
 #include "Classees/Framework/VSGameplayTagController.h"
@@ -14,23 +15,12 @@
 #include "Libraries/VSActorLibrary.h"
 #include "Libraries/VSAnimationLibrary.h"
 #include "Libraries/VSGameplayLibrary.h"
-#include "Net/UnrealNetwork.h"
-#include "Net/Core/PushModel/PushModel.h"
+#include "Libraries/VSMathLibrary.h"
 
 UVSChrMovFeature_MantleVaultMovement::UVSChrMovFeature_MantleVaultMovement(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	
-}
-
-void UVSChrMovFeature_MantleVaultMovement::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	FDoRepLifetimeParams SharedParams;
-	SharedParams.bIsPushBased = true;
-
-	DOREPLIFETIME_WITH_PARAMS_FAST(UVSChrMovFeature_MantleVaultMovement, ReplicatedSnappedParams, SharedParams);
 }
 
 bool UVSChrMovFeature_MantleVaultMovement::IsMantlingOrVaultingMode() const
@@ -39,37 +29,60 @@ bool UVSChrMovFeature_MantleVaultMovement::IsMantlingOrVaultingMode() const
 	return GameplayTagController ? (GameplayTagController->GetTagCount(EVSMovementMode::MantlingOrVaulting) >= 1) : false;
 }
 
-void UVSChrMovFeature_MantleVaultMovement::TryMantleVault(const TArray<FDataTableRowHandle>& SettingRows, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType)
+void UVSChrMovFeature_MantleVaultMovement::TryMantleVault(const TArray<FDataTableRowHandle>& SettingRows, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType, const FVSNetMethodExecutionPolicies& NetPolicies)
 {
 	if (SupportedMovementType == EVSMantleVaultMovementType::None || (SettingRows.IsEmpty() && DefaultSettingRows.IsEmpty())) return;
-	if (GetIsReplicated() && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	
+	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy)
 	{
-		TryMantleVault_Server(SettingRows, SupportedMovementType);
+		if (NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
+		{
+			const bool bSucceeded = TryMantleVaultInternal(SettingRows, SupportedMovementType);
+			if (bSucceeded && NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
+			{
+				/** Only send server RPC if local execution succeeded.  */
+				TryMantleVault_Server(SettingRows, SupportedMovementType, NetPolicies.ServerRPCPolicy);
+			}
+		}
+		if (NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
+		{
+			TryMantleVault_Server(SettingRows, SupportedMovementType, NetPolicies.ServerRPCPolicy);
+		}
 	}
-	else
+	else if (GetCharacter()->GetLocalRole() == ROLE_Authority)
 	{
-		TryMantleVaultInternal(SettingRows, SupportedMovementType);
+		TryMantleVault_Server(SettingRows, SupportedMovementType, NetPolicies.AuthorityLocalPolicy);
+	}
+	else if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy)
+	{
+		if (NetPolicies.bSimulatedLocalExecution)
+		{
+			TryMantleVaultInternal(SettingRows, SupportedMovementType);
+		}
 	}
 }
 
 void UVSChrMovFeature_MantleVaultMovement::StopMantleVault()
 {
+	if (UVSActorLibrary::IsCharacterOnWalkableFloor(GetCharacter()))
+	{
+		GetCharacterMovement()->StopMovementImmediately();
+	}
+	if (UVSChrMovFeature_OrientationEvaluator* Evaluator = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationEvaluator>())
+	{
+		Evaluator->DefaultNamedParams.VectorParams.Remove(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection);
+	}
+	if (!FMath::IsNearlyZero(MovementData.CapsuleHalfHeightOffsetUSCZ, 0.01f))
+	{
+		GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(GetMovementCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - MovementData.CapsuleHalfHeightOffsetUSCZ);
+		MovementData.CapsuleHalfHeightOffsetUSCZ = 0.f;
+	}
+	MovementData = FMovementData();
+
 	if (IsMantlingOrVaultingMode())
 	{
-		if (UVSActorLibrary::IsCharacterOnWalkableFloor(GetCharacter()))
-		{
-			GetCharacterMovement()->StopMovementImmediately();
-		}
-		if (UVSChrMovFeature_OrientationEvaluator* Evaluator = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationEvaluator>())
-		{
-			Evaluator->DefaultNamedParams.VectorParams.Remove(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection);
-		}
-		
 		SetMovementMode(UVSActorLibrary::IsCharacterOnWalkableFloor(GetCharacter()) ? EVSMovementMode::Walking : EVSMovementMode::Falling, false);
 	}
-	
-	MovementData = FMovementData();
-	ReplicatedSnappedParams = FVSMantleVaultSnappedParams();
 }
 
 bool UVSChrMovFeature_MantleVaultMovement::CanUpdateMovement_Implementation() const
@@ -82,7 +95,7 @@ void UVSChrMovFeature_MantleVaultMovement::UpdateMovement_Implementation(float D
 	Super::UpdateMovement_Implementation(DeltaTime);
 	
 	const FTransform& ComponentTransformWS = MovementData.SnappedParams.Component->GetComponentTransform();
-	
+
 	/** Update the movement by stage. */
 	const FVector& CharacterScaleWS = GetCharacter()->GetActorTransform().GetScale3D();
 	const FVector& UpVectorRS = ComponentTransformWS.InverseTransformVectorNoScale(GetUpDirection());
@@ -92,40 +105,76 @@ void UVSChrMovFeature_MantleVaultMovement::UpdateMovement_Implementation(float D
 	
 	const float ForwardMovementCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::X), MovementData.MovementElapsedTime);
 	const float UpMovementCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Z), MovementData.MovementElapsedTime);
-
-	FVector TargetRootLocationRS = MovementData.CachedParams.StartRootLocationRS;
+	
+	FVector TargetRootLocationRS = ComponentTransformWS.InverseTransformPosition(GetRootLocation());
 	if (MovementData.MovementElapsedTime <= MovementData.AnimPtr->GetMarkTime(AnimReachTargetTimeMarkName))
 	{
-		TargetRootLocationRS += (ForwardMovementCurveValue - MovementData.CachedParams.AnimStartMovementCurveValues.X) / (MovementData.CachedParams.AnimReachTargetMovementValues.X - MovementData.CachedParams.AnimStartMovementCurveValues.X) * UKismetMathLibrary::ProjectVectorOnToVector(MovementData.CachedParams.ReachTargetRootLocationRS - MovementData.CachedParams.StartRootLocationRS, MovementData.SnappedParams.MovementDirection2DRS);
-		TargetRootLocationRS += (UpMovementCurveValue - MovementData.CachedParams.AnimStartMovementCurveValues.Y) / (MovementData.CachedParams.AnimReachTargetMovementValues.Y - MovementData.CachedParams.AnimStartMovementCurveValues.Y) * UKismetMathLibrary::ProjectVectorOnToVector(MovementData.CachedParams.ReachTargetRootLocationRS - MovementData.CachedParams.StartRootLocationRS, UpVectorRS);
+		TargetRootLocationRS = MovementData.CachedParams.StartRootLocationRS;
+		if (!FMath::IsNearlyZero(MovementData.CachedParams.AnimReachTargetMovementValues.X - MovementData.CachedParams.AnimStartMovementCurveValues.X))
+		{
+			TargetRootLocationRS += (ForwardMovementCurveValue - MovementData.CachedParams.AnimStartMovementCurveValues.X) / (MovementData.CachedParams.AnimReachTargetMovementValues.X - MovementData.CachedParams.AnimStartMovementCurveValues.X) * UKismetMathLibrary::ProjectVectorOnToVector(MovementData.CachedParams.ReachTargetRootLocationRS - MovementData.CachedParams.StartRootLocationRS, MovementData.SnappedParams.MovementDirection2DRS);
+		}
+		if (!FMath::IsNearlyZero(MovementData.CachedParams.AnimReachTargetMovementValues.Y - MovementData.CachedParams.AnimStartMovementCurveValues.Y))
+		{
+			TargetRootLocationRS += (UpMovementCurveValue - MovementData.CachedParams.AnimStartMovementCurveValues.Y) / (MovementData.CachedParams.AnimReachTargetMovementValues.Y - MovementData.CachedParams.AnimStartMovementCurveValues.Y) * UKismetMathLibrary::ProjectVectorOnToVector(MovementData.CachedParams.ReachTargetRootLocationRS - MovementData.CachedParams.StartRootLocationRS, UpVectorRS);
+		}
 	}
 	else if (MovementData.MovementElapsedTime <= MovementData.AnimPtr->GetMarkTime(AnimGroundPivotTimeMarkName))
 	{
 		TargetRootLocationRS = MovementData.CachedParams.ReachTargetRootLocationRS;
-		TargetRootLocationRS += (ForwardMovementCurveValue - MovementData.CachedParams.AnimReachTargetMovementValues.X) / (MovementData.CachedParams.AnimGroundPivotMovementValues.X - MovementData.CachedParams.AnimReachTargetMovementValues.X) * UKismetMathLibrary::ProjectVectorOnToVector(MovementData.SnappedParams.GroundPivotPointRS - MovementData.CachedParams.ReachTargetRootLocationRS, MovementData.SnappedParams.MovementDirection2DRS);
-		TargetRootLocationRS += (UpMovementCurveValue - MovementData.CachedParams.AnimReachTargetMovementValues.Y) / (MovementData.CachedParams.AnimGroundPivotMovementValues.Y - MovementData.CachedParams.AnimReachTargetMovementValues.Y) * UKismetMathLibrary::ProjectVectorOnToVector(MovementData.SnappedParams.GroundPivotPointRS - MovementData.CachedParams.ReachTargetRootLocationRS, UpVectorRS);
+		if (!FMath::IsNearlyZero(MovementData.CachedParams.AnimGroundPivotMovementValues.X - MovementData.CachedParams.AnimReachTargetMovementValues.X))
+		{
+			TargetRootLocationRS += (ForwardMovementCurveValue - MovementData.CachedParams.AnimReachTargetMovementValues.X) / (MovementData.CachedParams.AnimGroundPivotMovementValues.X - MovementData.CachedParams.AnimReachTargetMovementValues.X) * UKismetMathLibrary::ProjectVectorOnToVector(MovementData.SnappedParams.GroundPivotPointRS - MovementData.CachedParams.ReachTargetRootLocationRS, MovementData.SnappedParams.MovementDirection2DRS);
+		}
+		if (!FMath::IsNearlyZero(MovementData.CachedParams.AnimGroundPivotMovementValues.Y - MovementData.CachedParams.AnimReachTargetMovementValues.Y))
+		{
+			TargetRootLocationRS += (UpMovementCurveValue - MovementData.CachedParams.AnimReachTargetMovementValues.Y) / (MovementData.CachedParams.AnimGroundPivotMovementValues.Y - MovementData.CachedParams.AnimReachTargetMovementValues.Y) * UKismetMathLibrary::ProjectVectorOnToVector(MovementData.SnappedParams.GroundPivotPointRS - MovementData.CachedParams.ReachTargetRootLocationRS, UpVectorRS);
+		}
 	}
 	else
 	{
-		TargetRootLocationRS = MovementData.SnappedParams.GroundPivotPointRS;
-		TargetRootLocationRS += (ForwardMovementCurveValue - MovementData.CachedParams.AnimGroundPivotMovementValues.X) * MovementDirectionUnitRS;
-		TargetRootLocationRS += (UpMovementCurveValue - MovementData.CachedParams.AnimGroundPivotMovementValues.Y) * UpVectorUnitRS;
+		// if (MovementData.SnappedParams.MovementType != EVSMantleVaultMovementType::Vault)
+		{
+			TargetRootLocationRS = MovementData.SnappedParams.GroundPivotPointRS;
+			TargetRootLocationRS += (ForwardMovementCurveValue - MovementData.CachedParams.AnimGroundPivotMovementValues.X) * MovementDirectionUnitRS;
+			TargetRootLocationRS += (UpMovementCurveValue - MovementData.CachedParams.AnimGroundPivotMovementValues.Y) * UpVectorUnitRS;
+		}
+		// else
+		// {
+		// 	if (MovementData.MovementElapsedTime <= MovementData.AnimPtr->GetMarkTime(AnimVaultOffPlatformTimeMarkName))
+		// 	{
+		// 		TargetRootLocationRS = MovementData.SnappedParams.GroundPivotPointRS;
+		// 		if (!FMath::IsNearlyZero(MovementData.CachedParams.AnimVaultOffPlatformMovementCurveValues.X - MovementData.CachedParams.AnimGroundPivotMovementValues.X))
+		// 		{
+		// 			TargetRootLocationRS += (ForwardMovementCurveValue - MovementData.CachedParams.AnimGroundPivotMovementValues.X) / (MovementData.CachedParams.AnimVaultOffPlatformMovementCurveValues.X - MovementData.CachedParams.AnimGroundPivotMovementValues.X) * UKismetMathLibrary::ProjectVectorOnToVector(MovementData.SnappedParams.VaultOffPlatformPointRS - MovementData.SnappedParams.GroundPivotPointRS, MovementData.SnappedParams.MovementDirection2DRS);
+		// 		}
+		// 		if (!FMath::IsNearlyZero(MovementData.CachedParams.AnimVaultOffPlatformMovementCurveValues.Y - MovementData.CachedParams.AnimGroundPivotMovementValues.Y))
+		// 		{
+		// 			TargetRootLocationRS += (UpMovementCurveValue - MovementData.CachedParams.AnimGroundPivotMovementValues.Y) / (MovementData.CachedParams.AnimVaultOffPlatformMovementCurveValues.Y - MovementData.CachedParams.AnimGroundPivotMovementValues.Y) * UKismetMathLibrary::ProjectVectorOnToVector(MovementData.SnappedParams.VaultOffPlatformPointRS - MovementData.SnappedParams.GroundPivotPointRS, UpVectorRS);
+		// 		}
+		// 	}
+		// 	else
+		// 	{
+		// 		TargetRootLocationRS = MovementData.SnappedParams.VaultOffPlatformPointRS;
+		// 		TargetRootLocationRS += (ForwardMovementCurveValue - MovementData.CachedParams.AnimVaultOffPlatformMovementCurveValues.X) * MovementDirectionUnitRS;
+		// 		TargetRootLocationRS += (UpMovementCurveValue - MovementData.CachedParams.AnimVaultOffPlatformMovementCurveValues.Y) * UpVectorUnitRS;
+		// 	}
+		// }
 	}
 
 	/** Update character world space location. */
 	const FVector& TargetRootLocationWS = UKismetMathLibrary::TransformLocation(ComponentTransformWS, TargetRootLocationRS);
-	const FVector& TargetLocationWS = TargetRootLocationWS + GetCharacter()->GetActorUpVector() * GetCharacter()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 	
 	/** Update the velocity in the character movement component. */
 	const FVector& DeltaRootLocationRS = TargetRootLocationRS - MovementData.LastUpdatedRootLocationRS;
 	if (!DeltaRootLocationRS.ContainsNaN())
 	{
 		FHitResult UpdateMovementHitResult;
-		GetCharacterMovement()->SafeMoveUpdatedComponent(TargetLocationWS - GetCharacter()->GetActorLocation(), GetCharacter()->GetActorRotation(), false, UpdateMovementHitResult);
+		GetCharacterMovement()->SafeMoveUpdatedComponent(ComponentTransformWS.TransformVector(DeltaRootLocationRS), GetCharacter()->GetActorRotation(), false, UpdateMovementHitResult);
 		GetCharacterMovement()->Velocity = ComponentTransformWS.TransformVector(DeltaRootLocationRS) / DeltaTime;
 		MovementData.LastUpdatedRootLocationRS = TargetRootLocationRS;
 	}
-	
+
 	if (UVSChrMovFeature_OrientationEvaluator_Common* Evaluator = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationEvaluator_Common>())
 	{
 		Evaluator->DefaultNamedParams.VectorParams.Emplace(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection, MovementDirectionWS);
@@ -134,7 +183,7 @@ void UVSChrMovFeature_MantleVaultMovement::UpdateMovement_Implementation(float D
 	MovementData.MovementElapsedTime = FMath::Clamp(MovementData.MovementElapsedTime + DeltaTime * MovementData.CachedParams.AnimPlayRate, 0.f, MovementData.AnimPtr->GetSafePlayTimeRange().Y);
 	
 	bool bShouldBreakOut = false;
-	if (FMath::IsNearlyEqual(MovementData.MovementElapsedTime, MovementData.AnimPtr->GetSafePlayTimeRange().Y, 0.01f)) { bShouldBreakOut = true; }
+	if (FMath::IsNearlyEqual(MovementData.MovementElapsedTime, MovementData.AnimPtr->GetSafePlayTimeRange().Y, 0.001f)) { bShouldBreakOut = true; }
 	else if (MovementData.SnappedParams.MovementType == EVSMantleVaultMovementType::Mantle)
 	{
 		if (MovementData.MovementElapsedTime >= MovementData.AnimPtr->GetMarkTime(AnimGroundPivotTimeMarkName))
@@ -148,7 +197,11 @@ void UVSChrMovFeature_MantleVaultMovement::UpdateMovement_Implementation(float D
 		if (MovementData.MovementElapsedTime >= MovementData.AnimPtr->GetMarkTime(AnimVaultOffPlatformTimeMarkName) && HasMovementInput2D())
 		{
 			const FVector& DeltaHeightWS = ComponentTransformWS.TransformVector((TargetRootLocationRS - MovementData.SnappedParams.GroundPivotPointRS).ProjectOnToNormal(UpVectorRS));
-			if (DeltaHeightWS.Size() >= GetCharacter()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()) { bShouldBreakOut = true; }
+			if (DeltaHeightWS.Size() >= GetCharacter()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()
+				&& (TargetRootLocationWS - ComponentTransformWS.TransformPosition(MovementData.SnappedParams.VaultOffPlatformPointRS)).ProjectOnToNormal(MovementDirectionWS).Dot(MovementDirectionWS) > 0.f)
+			{
+				bShouldBreakOut = true;
+			}
 		}
 	}
 	
@@ -171,9 +224,9 @@ void UVSChrMovFeature_MantleVaultMovement::OnMovementTagEventNotified_Implementa
 	}
 }
 
-void UVSChrMovFeature_MantleVaultMovement::TryMantleVaultInternal(const TArray<FDataTableRowHandle>& SettingRows, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType)
+bool UVSChrMovFeature_MantleVaultMovement::TryMantleVaultInternal(const TArray<FDataTableRowHandle>& SettingRows, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType)
 {
-	if (SupportedMovementType == EVSMantleVaultMovementType::None || (SettingRows.IsEmpty() && DefaultSettingRows.IsEmpty())) return;
+	if (SupportedMovementType == EVSMantleVaultMovementType::None || (SettingRows.IsEmpty() && DefaultSettingRows.IsEmpty())) return false;
 	
 	const TArray<FDataTableRowHandle> SettingRowsToUse = SettingRows.IsEmpty() ? DefaultSettingRows : SettingRows;
 	FVSMantleVaultSnappedParams SnappedParams = FVSMantleVaultSnappedParams();
@@ -182,9 +235,11 @@ void UVSChrMovFeature_MantleVaultMovement::TryMantleVaultInternal(const TArray<F
 		if (CalcMantleVaultSnappedParams(SnappedParams, SettingsRowToUse, SupportedMovementType))
 		{
 			MantleVaultBySnappedParams(SnappedParams);
-			return;
+			return true;
 		}
 	}
+
+	return false;
 }
 
 void UVSChrMovFeature_MantleVaultMovement::MantleVaultBySnappedParams(const FVSMantleVaultSnappedParams& SnappedParams)
@@ -215,14 +270,16 @@ void UVSChrMovFeature_MantleVaultMovement::MantleVaultBySnappedParams(const FVSM
 	}
 	MovementData.CachedParams.AnimPlayRate = MovementData.AnimPtr->PlayRate;
 	MovementData.CachedParams.ActionID = FMath::RandRange(0, INT16_MAX);
+	
+	const float TargetCapsuleHalfHeightUSC = MovementData.SettingsPtr->CapsuleHalfHeight > 0.f ? MovementData.SettingsPtr->CapsuleHalfHeight : GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
 
-	const FVector& CharacterScaleWS = GetCharacter()->GetActorTransform().GetScale3D();
+	const FVector& RootLocationWS = GetRootLocation();
 	const FTransform& ComponentTransformWS = MovementData.SnappedParams.Component->GetComponentTransform();
 	const FVector& UpVectorRS = ComponentTransformWS.InverseTransformVectorNoScale(GetUpDirection());
-	const FVector& UpVectorUnitRS = ComponentTransformWS.InverseTransformVector(GetUpDirection() * CharacterScaleWS.Z);
+	const FVector& UpVectorUnitRS = ComponentTransformWS.InverseTransformVector(GetUpDirection() * GetScale3D().Z);
 	const FVector& MovementDirectionWS = ComponentTransformWS.TransformVectorNoScale(SnappedParams.MovementDirection2DRS);
-	const FVector& MovementDirectionUnitRS = ComponentTransformWS.InverseTransformVector(MovementDirectionWS * CharacterScaleWS.X);
-	const FVector& StartRootLocationRS = UKismetMathLibrary::InverseTransformLocation(ComponentTransformWS, UVSActorLibrary::GetCharacterRootLocation(GetCharacter()));
+	const FVector& MovementDirectionUnitRS = ComponentTransformWS.InverseTransformVector(MovementDirectionWS * GetScale3D().X);
+	const FVector& StartRootLocationRS = UKismetMathLibrary::InverseTransformLocation(ComponentTransformWS, RootLocationWS);
 	const float DistanceToWall2DRS = (SnappedParams.FrontWallPointRS - StartRootLocationRS).ProjectOnToNormal(SnappedParams.MovementDirection2DRS).Size() / MovementDirectionUnitRS.Size();
 	const float PlatformHeightRS = (SnappedParams.GroundPivotPointRS - StartRootLocationRS).ProjectOnToNormal(UpVectorRS).Size();
 	
@@ -234,6 +291,7 @@ void UVSChrMovFeature_MantleVaultMovement::MantleVaultBySnappedParams(const FVSM
 	MovementData.CachedParams.AnimReachTargetMovementValues.Y = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Z), MovementData.AnimPtr->GetMarkTime(AnimReachTargetTimeMarkName));
 	MovementData.CachedParams.AnimGroundPivotMovementValues.X = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::X), MovementData.AnimPtr->GetMarkTime(AnimGroundPivotTimeMarkName));
 	MovementData.CachedParams.AnimGroundPivotMovementValues.Y = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Z), MovementData.AnimPtr->GetMarkTime(AnimGroundPivotTimeMarkName));
+	
 	if (SnappedParams.MovementType == EVSMantleVaultMovementType::Vault)
 	{
 		MovementData.CachedParams.AnimVaultOffPlatformMovementCurveValues.X = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::X), MovementData.AnimPtr->GetMarkTime(AnimVaultOffPlatformTimeMarkName));
@@ -254,22 +312,14 @@ void UVSChrMovFeature_MantleVaultMovement::MantleVaultBySnappedParams(const FVSM
 	
 	MovementData.MovementElapsedTime = MovementData.AnimPtr->GetSafePlayTimeRange().X;
 	MovementData.LastUpdatedRootLocationRS = StartRootLocationRS;
-
-	const float TargetCapsuleHalfHeightSC = MovementData.SettingsPtr->CapsuleHalfHeight > 0.f ? (MovementData.SettingsPtr->CapsuleHalfHeight * CharacterScaleWS.Z) : GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-
-	GetCharacterMovement()->StopMovementImmediately();
+	
 	if (!IsMantlingOrVaultingMode())
 	{
 		SetMovementMode(EVSMovementMode::MantlingOrVaulting, false);
 	}
-	
-	GetCharacter()->GetCapsuleComponent()->SetCapsuleHalfHeight(TargetCapsuleHalfHeightSC);
-
-	if (GetOwnerActor()->HasAuthority())
-	{
-		ReplicatedSnappedParams = SnappedParams;
-		MARK_PROPERTY_DIRTY_FROM_NAME(UVSChrMovFeature_MantleVaultMovement, ReplicatedSnappedParams, this);
-	}
+	GetCharacterMovement()->StopMovementImmediately();
+	MovementData.CapsuleHalfHeightOffsetUSCZ = TargetCapsuleHalfHeightUSC - GetCharacter()->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+	GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(TargetCapsuleHalfHeightUSC);
 }
 
 bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantleVaultSnappedParams& OutSnappedParams, const FDataTableRowHandle& SettingsRow, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType) const
@@ -298,11 +348,10 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 	/** SC means scaled. */
 	const float CapsuleHalfHeightSC = SettingsPtr->CapsuleHalfHeight > 0.f ? (SettingsPtr->CapsuleHalfHeight * CharacterScaleWS.Z) : GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 	const float CapsuleRadiusSC = GetCharacter()->GetCapsuleComponent()->GetScaledCapsuleRadius();
-	const FCollisionResponseContainer& CollisionChannels = GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels();
-	const FVector& RootLocationWS = UVSActorLibrary::GetCharacterRootLocation(GetCharacter());
-
+	const FVector& RootLocationWS = GetRootLocation();
 	FVector2D PlatformHeightRangeSC = SettingsPtr->Limits.PlatformHeightRange * CharacterScaleWS.Z;
 
+	const FCollisionResponseContainer& CollisionChannels = GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels();
 	const FCollisionShape& HalfHeightTraceShape = FCollisionShape::MakeCapsule(CapsuleRadiusSC, CapsuleHalfHeightSC);
 	const FCollisionShape& RadiusSphereTraceShape = FCollisionShape::MakeSphere(CapsuleRadiusSC);
 	FCollisionQueryParams TraceQueryParams;
@@ -435,11 +484,11 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 
 			/** Check wall thickness. */
 			const float DeltaGroundPivotSize = ((OtherSideWallHitResult.bBlockingHit ? OtherSideWallHitResult.ImpactPoint : HorizontalSpaceTraceLocationFarthestWS) - RootLocationWS).ProjectOnToNormal(MovementDirection2DWS).Size() - (HorizontalSpaceTraceLocationFarthestWS - RootLocationWS).ProjectOnToNormal(MovementDirection2DWS).Size();
-			const float AnimReachTargetWallDistanceToWall2DMinByWallThickness =AnimSettings->ReachTargetDistanceToWallRange.X + (DeltaGroundPivotSize >= 0.f ? 0.f : -DeltaGroundPivotSize / CharacterScaleWS.X);
+			const float AnimReachTargetWallDistanceToWall2DMinByWallThickness = AnimSettings->ReachTargetDistanceToWallRange.X + (DeltaGroundPivotSize >= 0.f ? 0.f : -DeltaGroundPivotSize / CharacterScaleWS.X);
 			/** The wall is too thin or the platform is too short. */
 			if (!UKismetMathLibrary::InRange_FloatFloat(AnimReachTargetWallDistanceToWall2DMinByWallThickness, AnimSettings->ReachTargetDistanceToWallRange.X - 0.01f, AnimSettings->ReachTargetDistanceToWallRange.Y + 0.01f)) continue;
 			
-			const float ReachTargetWallDistanceToWall2DMin = FMath::Min(AnimReachTargetWallDistanceToWall2DMinByHorizontalSpace, AnimReachTargetWallDistanceToWall2DMinByWallThickness);
+			const float ReachTargetWallDistanceToWall2DMin = FMath::Max(AnimReachTargetWallDistanceToWall2DMinByHorizontalSpace, AnimReachTargetWallDistanceToWall2DMinByWallThickness);
 			const float ReachTargetWallDistanceToWall2D = FMath::Clamp(AnimReachTargetDistanceToWall2DNoScaleWS, ReachTargetWallDistanceToWall2DMin, AnimSettings->ReachTargetDistanceToWallRange.Y);
 			FVector CurrentReachTargetWallRootLocationXWS = RootLocationWS + (DistanceToWall2DWS - ReachTargetWallDistanceToWall2D * CharacterScaleWS.X) * MovementDirection2DWS;
 			FVector CurrentGroundPivotTimeRootLocationXWS = CurrentReachTargetWallRootLocationXWS;
@@ -493,6 +542,8 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 
 			/** This is a valid mantle / vault animation. */
 			const FTransform& ComponentTransformWS = GroundPivotVerticalTraceHitResult.Component->GetComponentTransform();
+
+			
 			OutSnappedParams.SettingsRow = SettingsRow;
 			OutSnappedParams.AnimSettingsRow = AvailableAnimRow;
 			OutSnappedParams.Component = GroundPivotVerticalTraceHitResult.GetComponent();
@@ -502,6 +553,13 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 			OutSnappedParams.GroundPivotPointRS = ComponentTransformWS.InverseTransformPosition(GroundPivotVerticalTraceHitResult.ImpactPoint + VerticalCollisionOffset);
 			OutSnappedParams.MovementType = (bSupportVault && bSupportVaultInternal) ? EVSMantleVaultMovementType::Vault : EVSMantleVaultMovementType::Mantle;
 			OutSnappedParams.ServerSideServerStartTime = UVSGameplayLibrary::GetServerTimeSeconds(this);
+
+			if (OutSnappedParams.MovementType == EVSMantleVaultMovementType::Vault)
+			{
+				const FVector& VaultOffPlatformLocationWS = UVSMathLibrary::VectorApplyAxes((OtherSideWallHitResult.ImpactPoint + MovementDirection2DWS * CapsuleRadiusSC), GroundPivotVerticalTraceHitResult.ImpactPoint + VerticalCollisionOffset, EVSVectorAxes::Z, GetCharacter()->GetActorRotation());
+				OutSnappedParams.VaultOffPlatformPointRS = ComponentTransformWS.InverseTransformPosition(VaultOffPlatformLocationWS);
+			}
+			
 			return true;
 		}
 	}
@@ -509,28 +567,31 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 	return false;
 }
 
-void UVSChrMovFeature_MantleVaultMovement::TryMantleVault_Server_Implementation(const TArray<FDataTableRowHandle>& SettingRows, EVSMantleVaultMovementType::Type SupportedMovementType)
+void UVSChrMovFeature_MantleVaultMovement::TryMantleVault_Server_Implementation(const TArray<FDataTableRowHandle>& SettingRows, EVSMantleVaultMovementType::Type SupportedMovementType, EVSNetAuthorityMethodExecPolicy::Type NetPolicy)
 {
-	TryMantleVaultInternal(SettingRows, SupportedMovementType);
+	if (NetPolicy & EVSNetAuthorityMethodExecPolicy::Server)
+	{
+		const bool bSuccessful = TryMantleVaultInternal(SettingRows, SupportedMovementType);
+		if (bSuccessful && NetPolicy > EVSNetAuthorityMethodExecPolicy::Server)
+		{
+			MantleVault_Multicast(MovementData.SnappedParams, NetPolicy);
+		}
+	}
 }
 
-void UVSChrMovFeature_MantleVaultMovement::OnRep_ReplicatedSnappedParams()
+void UVSChrMovFeature_MantleVaultMovement::MantleVault_Multicast_Implementation(const FVSMantleVaultSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetPolicy)
 {
-	bool bShouldMantleVault = true;
-	if (ReplicatedSnappedParams.SettingsRow.IsNull() || ReplicatedSnappedParams.AnimSettingsRow.IsNull()) { bShouldMantleVault = false; }
-	else if (ReplicatedSnappedParams.MovementType == EVSMantleVaultMovementType::None) { bShouldMantleVault = false; }
+	bool bShouldExecute = true;
+	if (SnappedParams.SettingsRow.IsNull() || SnappedParams.AnimSettingsRow.IsNull()) { bShouldExecute = false; }
+	else if (SnappedParams.MovementType == EVSMantleVaultMovementType::None) { bShouldExecute = false; }
 
-	if (bShouldMantleVault)
-	{
-		MantleVaultBySnappedParams(ReplicatedSnappedParams);
-	}
+	/** Authority already handled. */
+	if (GetCharacter()->HasAuthority()) { bShouldExecute = false; }
+	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy && !(NetPolicy & EVSNetAuthorityMethodExecPolicy::Client)) { bShouldExecute = false; }
+	if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy && !(NetPolicy & EVSNetAuthorityMethodExecPolicy::Simulated)) { bShouldExecute = false; }
 	
-	// if (!bShouldMantleVault)
-	// {
-	// 	if (IsMantlingOrVaultingMode())
-	// 	{
-	// 		SetMovementMode(UVSActorLibrary::IsCharacterOnWalkableFloor(GetCharacter()) ? EVSMovementMode::Walking : EVSMovementMode::Falling, false);
-	// 	}
-	// 	return;
-	// }
+	if (bShouldExecute)
+	{
+		MantleVaultBySnappedParams(SnappedParams);
+	}
 }

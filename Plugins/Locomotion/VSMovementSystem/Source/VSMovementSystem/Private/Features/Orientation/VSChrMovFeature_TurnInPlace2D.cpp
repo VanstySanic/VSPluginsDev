@@ -5,11 +5,11 @@
 #include "Classees/Framework/VSGameplayTagController.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "GameFramework/Character.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Libraries/VSAnimationLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "Net/Core/PushModel/PushModel.h"
+#include "Types/Animation/VSAnimSequenceReference.h"
 
 UVSChrMovFeature_TurnInPlace2D::UVSChrMovFeature_TurnInPlace2D(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

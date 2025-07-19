@@ -36,9 +36,6 @@ public:
 	bool IsPrevWalkingMode() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
-	bool IsCrouching() const;
-	
-	UFUNCTION(BlueprintCallable, Category = "Movement")
 	FGameplayTag GetStance() const { return MovementData.Stance; }
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
@@ -59,17 +56,17 @@ public:
 	FGameplayTag GetPrevGait(const FGameplayTag& InStance = FGameplayTag()) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "InStance"))
-	void SetStance(const FGameplayTag& InStance);
+	void SetStance(const FGameplayTag& InStance, bool bReplicated = false);
 
 	/**
 	 * Set the gait for the specified stance.
 	 * If InStance is empty, set the gait for the current stance.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "InGait, InStance"))
-	void SetGait(const FGameplayTag& InGait, const FGameplayTag& InStance = FGameplayTag());
-
+	void SetGait(const FGameplayTag& InGait, const FGameplayTag& InStance = FGameplayTag(), bool bReplicated = false);
 
 private:
+	/* Listen to the crouch state here, so user needn't do it in the character. Sync the stance and crouch state. */
 	void ListenToCrouchState();
 	void RefreshHalfHeight();
 	void ApplyMovementBaseSettings(const FVSMovementBaseSettings& Settings);
@@ -153,6 +150,6 @@ private:
 		
 		/** Only use once and reset. */
 		FGameplayTag DesiredUncrouchedStance = FGameplayTag::EmptyTag;
-		float RelativeOffsetToMeshZ = 0.f;
+		float CapsuleHalfHeightOffsetUSCZ = 0.f;
 	} MovementData;
 };

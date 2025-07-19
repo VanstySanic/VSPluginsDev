@@ -39,5 +39,5 @@ class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
 	static bool IsCharacterOnWalkableFloor(const ACharacter* Character, const float ToleranceToFloor = 0.f, const bool bConsiderCollisionOffset = true);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Character")
-	static FVector GetCharacterRootLocation(const ACharacter* Character, const float VerticalOffset = 0.f /** 2.f */);
+	static FVector GetCharacterRootLocation(const ACharacter* Character, const float VerticalOffset = 0.f /** 2.f */, float UnscaledHalfHeightOverride = 0.f);
 };

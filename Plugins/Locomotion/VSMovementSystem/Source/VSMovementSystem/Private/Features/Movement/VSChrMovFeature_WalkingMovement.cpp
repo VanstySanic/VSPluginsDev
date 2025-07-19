@@ -1,8 +1,11 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Features/Movement/VSChrMovFeature_WalkingMovement.h"
+#include "VSCharacterMovementUtils.h"
+#include "VSChrMovCapsuleComponent.h"
 #include "Classees/Framework/VSGameplayTagController.h"
 #include "Components/CapsuleComponent.h"
+#include "Features/VSCharacterMovementFeatureAgent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Libraries/VSActorLibrary.h"
@@ -44,7 +47,7 @@ void UVSChrMovFeature_WalkingMovement::BeginPlay_Implementation()
 	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
 	MovementData.Stance = DefaultStance;
 	MovementData.Gaits = DefaultGaits;
-	MovementData.CurrentMovementBaseSettings = IsCrouching() ? DefaultCrouchedMovementBaseSettings : DefaultMovementBaseSettings;
+	MovementData.CurrentMovementBaseSettings = MovementData.Stance == EVSStance::Crouching ? DefaultCrouchedMovementBaseSettings : DefaultMovementBaseSettings;
 	ReplicatedStance = DefaultStance;
 	GameplayTagController->SetTagCount(DefaultStance, 1);
 	GameplayTagController->SetTagCount(GetGait(DefaultStance), 1);
@@ -76,15 +79,21 @@ void UVSChrMovFeature_WalkingMovement::OnMovementTagEventNotified_Implementation
 			RefreshHalfHeight();
 			ApplyMovementBaseSettings(MovementData.CurrentMovementBaseSettings);
 		}
-		else if (!IsWalkingMode())
+		else if (!IsWalkingMode() && IsPrevWalkingMode())
 		{
-			GetCharacter()->GetMesh()->AddRelativeLocation(FVector(0.0, 0.0, -MovementData.RelativeOffsetToMeshZ));
-			GetCharacter()->AddActorLocalOffset(FVector(0.0, 0.0, MovementData.RelativeOffsetToMeshZ * GetScale3D().Z));
-			MovementData.RelativeOffsetToMeshZ = 0.f;
-
-			if (IsCrouching())
+			if (!FMath::IsNearlyZero(MovementData.CapsuleHalfHeightOffsetUSCZ, 0.01f))
 			{
-				GetCharacter()->UnCrouch();
+				if (GetStance() == EVSStance::Crouching && GetCharacterMovement()->bWantsToCrouch)
+				{
+					GetCharacter()->AddActorWorldOffset(-MovementData.CapsuleHalfHeightOffsetUSCZ * GetUpDirection());
+					GetMovementCapsuleComponent()->SetCapsuleCenterOffsetZ(MovementData.CapsuleHalfHeightOffsetUSCZ);
+					MovementData.CapsuleHalfHeightOffsetUSCZ = 0.f;
+				}
+				else
+				{
+					GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(GetMovementCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - MovementData.CapsuleHalfHeightOffsetUSCZ);
+					MovementData.CapsuleHalfHeightOffsetUSCZ = 0.f;
+				}
 			}
 		}
 	}
@@ -111,11 +120,6 @@ bool UVSChrMovFeature_WalkingMovement::IsPrevWalkingMode() const
 	return GetPrevMovementMode() == EVSMovementMode::Walking || GetPrevMovementMode() == EVSMovementMode::NavWalking;
 }
 
-bool UVSChrMovFeature_WalkingMovement::IsCrouching() const
-{
-	return MovementData.Stance == EVSStance::Crouching;
-}
-
 FGameplayTag UVSChrMovFeature_WalkingMovement::GetGait(const FGameplayTag& InStance) const
 {
 	const FGameplayTag& StanceToFind = InStance == FGameplayTag::EmptyTag ? GetStance() : InStance;
@@ -138,9 +142,9 @@ FGameplayTag UVSChrMovFeature_WalkingMovement::GetPrevGait(const FGameplayTag& I
 	return FGameplayTag::EmptyTag;
 }
 
-void UVSChrMovFeature_WalkingMovement::SetStance(const FGameplayTag& InStance)
+void UVSChrMovFeature_WalkingMovement::SetStance(const FGameplayTag& InStance, bool bReplicated)
 {
-	if (GetIsReplicated() && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	if (bReplicated && GetIsReplicated() && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
 	{
 		SetStance_Server(InStance);
 	}
@@ -160,9 +164,9 @@ void UVSChrMovFeature_WalkingMovement::SetStance_Server_Implementation(const FGa
 	}
 }
 
-void UVSChrMovFeature_WalkingMovement::SetGait(const FGameplayTag& InGait, const FGameplayTag& InStance)
+void UVSChrMovFeature_WalkingMovement::SetGait(const FGameplayTag& InGait, const FGameplayTag& InStance, bool bReplicated)
 {
-	if (GetIsReplicated() && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	if (bReplicated && GetIsReplicated() && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
 	{
 		SetGait_Server(InGait, InStance);
 	}
@@ -178,6 +182,12 @@ void UVSChrMovFeature_WalkingMovement::ListenToCrouchState()
 	const bool bIsOriginalCrouching = GetCharacterMovement()->IsCrouching();
 	if (MovementData.Stance == EVSStance::Crouching && (!bIsOriginalCrouching && !GetCharacterMovement()->bWantsToCrouch))
 	{
+		if (!FMath::IsNearlyZero(MovementData.CapsuleHalfHeightOffsetUSCZ, 0.01f))
+		{
+			// GetCharacter()->AddActorWorldOffset(-MovementData.CapsuleHalfHeightOffsetUSCZ * GetUpDirection());
+			// GetMovementCapsuleComponent()->SetCapsuleCenterOffsetZ(MovementData.CapsuleHalfHeightOffsetUSCZ);
+			// MovementData.CapsuleHalfHeightOffsetUSCZ = 0.f;
+		}
 		if (MovementData.DesiredUncrouchedStance != FGameplayTag::EmptyTag)
 		{
 			SetStanceInternal(MovementData.DesiredUncrouchedStance);
@@ -197,27 +207,27 @@ void UVSChrMovFeature_WalkingMovement::ListenToCrouchState()
 void UVSChrMovFeature_WalkingMovement::RefreshHalfHeight()
 {
 	if (!GetCharacter() || !IsWalkingMode()) return;
-	
+
+	const UCapsuleComponent* DefaultCapsule =  GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent();
+
 	const float LastUnscaledHalfHeight = GetCharacter()->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
 	const float NewUnscaledHalfHeight = StancedHalfHeights.Contains(MovementData.Stance) ? StancedHalfHeights.FindRef(MovementData.Stance)
-		: (IsCrouching() ? GetCharacterMovement()->GetCrouchedHalfHeight() : GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight());
+		: (MovementData.Stance == EVSStance::Crouching ? GetCharacterMovement()->GetCrouchedHalfHeight() : DefaultCapsule->GetUnscaledCapsuleHalfHeight());
 	
-	const float DeltaHalfHeightNSC = NewUnscaledHalfHeight - LastUnscaledHalfHeight;
-	
-	GetCharacter()->GetCapsuleComponent()->SetCapsuleHalfHeight(NewUnscaledHalfHeight);
-
 	/** The crouching state is handled by the character movement. */
-	if (GetStance() == EVSStance::Crouching || GetPrevStance() == EVSStance::Crouching)
+	if (GetStance() == EVSStance::Crouching || (GetStance() == EVSStance::Standing && GetPrevStance() == EVSStance::Crouching))
 	{
-		MovementData.RelativeOffsetToMeshZ = -NewUnscaledHalfHeight + GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
-		if (GetStance() == EVSStance::Crouching) return;
+		GetMovementCapsuleComponent()->SetCapsuleCenterOffsetZ(0.f);
+		GetCharacter()->GetCapsuleComponent()->SetCapsuleHalfHeight(NewUnscaledHalfHeight);
+		MovementData.CapsuleHalfHeightOffsetUSCZ = NewUnscaledHalfHeight - DefaultCapsule->GetUnscaledCapsuleHalfHeight();
+		return;
 	}
 	
-	if (!FMath::IsNearlyZero(DeltaHalfHeightNSC))
+	const float DeltaUnscaledHalfHeight = NewUnscaledHalfHeight - LastUnscaledHalfHeight;
+	if (!FMath::IsNearlyZero(DeltaUnscaledHalfHeight, 0.01f))
 	{
-		GetCharacter()->GetCapsuleComponent()->AddLocalOffset(FVector(0.0, 0.0, DeltaHalfHeightNSC * GetScale3D().Z));
-		GetCharacter()->GetMesh()->AddRelativeLocation(FVector(0.0, 0.0, -DeltaHalfHeightNSC * GetScale3D().Z));
-		if (GetPrevStance() != EVSStance::Crouching) { MovementData.RelativeOffsetToMeshZ -= DeltaHalfHeightNSC; };
+		GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(NewUnscaledHalfHeight);
+		MovementData.CapsuleHalfHeightOffsetUSCZ += DeltaUnscaledHalfHeight;
 	}
 }
 
@@ -244,7 +254,7 @@ void UVSChrMovFeature_WalkingMovement::RefreshMovementBaseSettings(const FGamepl
 	
 	if (RefreshMovementBaseSettingsQueries.Matches(GameplayTags, TagEvent))
 	{
-		MovementData.CurrentMovementBaseSettings = IsCrouching() ? DefaultCrouchedMovementBaseSettings : DefaultMovementBaseSettings;
+		MovementData.CurrentMovementBaseSettings = MovementData.Stance == EVSStance::Crouching ? DefaultCrouchedMovementBaseSettings : DefaultMovementBaseSettings;
 		for (auto& Settings : QueriedMovementBaseSettings)
 		{
 			if (Settings.Value.Matches(GameplayTags, TagEvent))

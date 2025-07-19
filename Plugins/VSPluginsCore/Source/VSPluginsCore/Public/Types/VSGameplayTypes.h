@@ -174,3 +174,72 @@ private:
 	KeyType Key = KeyType::None;
 	DataUnion Data;
 };
+
+
+/** If the local role is Authority, what will the locally-called method do with network. */
+UENUM(BlueprintType)
+namespace EVSNetAuthorityMethodExecPolicy
+{
+	enum Type : int32
+	{
+		/** Nothing will happen. */
+		None						= 0,
+		/** Execute locally without sending RPC to clients. */
+		Server						= 1 << 1,
+		/** Send RPC to the owing client only without executing locally. */
+		Client						= 1 << 2,
+		/** Execute locally and then send RPC to the owing client only. */
+		Simulated					= 1 << 3,
+		ServerAndClient				= Server + Client,
+		ServerAndSimulated			= Server + Simulated,
+		ClientAndSimulated			= Client + Simulated,
+		Multicast					= Server + Client + Simulated,
+	};
+}
+
+/** If the local role is Autonomous, what will the locally-called method do with network. */
+UENUM(BlueprintType)
+namespace EVSNetAutonomousMethodExecPolicy
+{
+	enum Type : uint8
+	{
+		/** Nothing will happen. */
+		None						= 0,
+		/** Execute locally without sending RPC to serever. */
+		Client						= 1 << 0,
+		/** Send RPC to server without executing locally. */
+		Server						= 1 << 1,
+		/** Execute locally and then send RPC to server. */
+		ClientAndServer				= Client + Server,
+	};
+}
+
+/**
+ * Defines how a locally-called method works with network under different local role.
+ * Notice that this only gives policies but doesn't handle them. Users need to manually process conditions.
+ * Sometimes your logic might only handle part of the policies.
+ */
+USTRUCT(BlueprintType)
+struct FVSNetMethodExecutionPolicies
+{
+	GENERATED_BODY()
+	
+	/** If the local role is Autonomous, what will the locally-called method do with network. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EVSNetAutonomousMethodExecPolicy::Type> AutonomousLocalPolicy = EVSNetAutonomousMethodExecPolicy::None;
+	
+	/** If the local role is Authority, what will the locally-called method do with network. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EVSNetAuthorityMethodExecPolicy::Type> AuthorityLocalPolicy = EVSNetAuthorityMethodExecPolicy::None;
+	
+	/** If the call is from an autonomous RPC, what will the server method do with network.*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EVSNetAuthorityMethodExecPolicy::Type> ServerRPCPolicy = EVSNetAuthorityMethodExecPolicy::None;
+	
+	/** If the local role is Simulated, whether to execute locally. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bSimulatedLocalExecution = false;
+
+	VSPLUGINSCORE_API static FVSNetMethodExecutionPolicies LocalExecution;
+	VSPLUGINSCORE_API static FVSNetMethodExecutionPolicies AutonomousPredictedMulticast;
+};

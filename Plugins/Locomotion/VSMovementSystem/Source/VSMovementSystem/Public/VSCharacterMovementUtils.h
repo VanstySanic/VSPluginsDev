@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Types/VSCharacterMovementTypes.h"
 #include "VSCharacterMovementUtils.generated.h"
 
 class UCharacterMovementComponent;

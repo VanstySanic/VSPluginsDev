@@ -59,7 +59,8 @@ bool UVSChrMovFeature_OrientationEvaluator_Common::EvaluateOrientation_Implement
 		const bool bDefaultParamsHasInput = DefaultNamedParams.VectorParams.Contains(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.MovementInput);
 		
 		const FVector& VelocityToProcess = bFuncParamsHasVelocity ? Params.NamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.Velocity)
-			: (bDefaultParamsHasVelocity ? DefaultNamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.Velocity) : GetVelocity());
+			: (bDefaultParamsHasVelocity ? DefaultNamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.Velocity)
+				: (Params.bMovementAgainstWallAdjustment2D ? GetVelocityWallAdjusted2D() : GetVelocity()));
 		
 		const FVector& InputToProcess = bFuncParamsHasInput ? Params.NamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.MovementInput)
 			: (bDefaultParamsHasInput ? DefaultNamedParams.VectorParams.FindRef(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.MovementInput) : GetMovementInput());
@@ -68,15 +69,13 @@ bool UVSChrMovFeature_OrientationEvaluator_Common::EvaluateOrientation_Implement
 		FVector InputGS = UKismetMathLibrary::Quat_RotateVector(UpDirectionToWorldRotation, InputToProcess);
 		if (Params.bReturnRotationInSpace2D) VelocityGS.Z = 0.f;
 		if (Params.bReturnRotationInSpace2D) InputGS.Z = 0.f;
-
-		FVector AdjustedVelocityDirectionDS = (Params.bMovementAgainstWallAdjustment2D && IsMovingAgainstWall2D()) ? InputGS : VelocityGS;
-
+		
 		if (VelocityGS.IsNearlyZero(0.01f) && InputGS.IsNearlyZero(0.01f)) return false;
 		
 		if (Params.Type == EVSOrientationEvaluateType::Velocity)
 		{
 			if (VelocityGS.IsNearlyZero(0.01f)) return false;
-			OutRotation = UKismetMathLibrary::ComposeRotators(AdjustedVelocityDirectionDS.Rotation(), UpDirectionToWorldRotation.Rotator());
+			OutRotation = UKismetMathLibrary::ComposeRotators(VelocityToProcess.Rotation(), UpDirectionToWorldRotation.Rotator());
 			return true;
 		}
 		if (Params.Type == EVSOrientationEvaluateType::Input)
@@ -86,7 +85,7 @@ bool UVSChrMovFeature_OrientationEvaluator_Common::EvaluateOrientation_Implement
 			return true;
 		}
 		
-		OutRotation = UKismetMathLibrary::ComposeRotators(AdjustedVelocityDirectionDS.IsNearlyZero(0.01f) ? InputGS.Rotation() : AdjustedVelocityDirectionDS.Rotation(), UpDirectionToWorldRotation.Rotator());
+		OutRotation = UKismetMathLibrary::ComposeRotators(VelocityToProcess.IsNearlyZero(0.01f) ? InputGS.Rotation() : VelocityToProcess.Rotation(), UpDirectionToWorldRotation.Rotator());
 		return true;
 	}
 

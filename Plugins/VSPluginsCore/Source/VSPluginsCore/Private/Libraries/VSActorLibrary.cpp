@@ -132,8 +132,9 @@ bool UVSActorLibrary::IsCharacterOnWalkableFloor(const ACharacter* Character, co
 	return Character->GetCharacterMovement()->IsWalkable(HitResult);
 }
 
-FVector UVSActorLibrary::GetCharacterRootLocation(const ACharacter* Character, const float VerticalOffset)
+FVector UVSActorLibrary::GetCharacterRootLocation(const ACharacter* Character, const float VerticalOffset, float UnscaledHalfHeightOverride)
 {
 	if (!Character) return FVector::ZeroVector;
-	return Character->GetActorLocation() - (Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() - VerticalOffset) * Character->GetActorUpVector();
+	const float UnscaledHalfHeightToUse = UnscaledHalfHeightOverride <= 0.f ? Character->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() : UnscaledHalfHeightOverride;
+	return Character->GetActorLocation() - (UnscaledHalfHeightToUse * Character->GetActorScale3D().Z - VerticalOffset) * Character->GetActorUpVector();
 }

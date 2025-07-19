@@ -52,16 +52,31 @@ void UVSChrMovFeature_FallingMovement::OnMovementTagEventNotified_Implementation
 	}
 }
 
-void UVSChrMovFeature_FallingMovement::LaunchCharacter(const FVector& NewVelocity, TEnumAsByte<EVSVectorAxes::Type> RelativeAxesToOverride, bool bReplicated)
+void UVSChrMovFeature_FallingMovement::LaunchCharacter(const FVector& NewVelocity, TEnumAsByte<EVSVectorAxes::Type> RelativeAxesToOverride, const FVSNetMethodExecutionPolicies& NetPolicies)
 {
 	if (RelativeAxesToOverride == EVSVectorAxes::None) return;
-	if (bReplicated && GetIsReplicated() && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	
+	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy)
 	{
-		LaunchCharacter_Server(NewVelocity, RelativeAxesToOverride);
+		if (NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
+		{
+			LaunchCharacterInternal(NewVelocity, RelativeAxesToOverride);
+		}
+		if (NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
+		{
+			LaunchCharacter_Server(NewVelocity, RelativeAxesToOverride, NetPolicies.ServerRPCPolicy);
+		}
 	}
-	else
+	else if (GetCharacter()->GetLocalRole() == ROLE_Authority)
 	{
-		LaunchCharacterInternal(NewVelocity, RelativeAxesToOverride);
+		LaunchCharacter_Server(NewVelocity, RelativeAxesToOverride, NetPolicies.ServerRPCPolicy);
+	}
+	else if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy)
+	{
+		if (NetPolicies.bSimulatedLocalExecution)
+		{
+			LaunchCharacterInternal(NewVelocity, RelativeAxesToOverride);
+		}
 	}
 }
 
@@ -71,12 +86,29 @@ void UVSChrMovFeature_FallingMovement::LaunchCharacterInternal(const FVector& Ne
 	GetCharacter()->LaunchCharacter(AxesedNewVelocity, true, true);
 }
 
-void UVSChrMovFeature_FallingMovement::LaunchCharacter_Server_Implementation(const FVector& NewVelocity, EVSVectorAxes::Type RelativeAxesToOverride)
+void UVSChrMovFeature_FallingMovement::LaunchCharacter_Server_Implementation(const FVector& NewVelocity, EVSVectorAxes::Type RelativeAxesToOverride, EVSNetAuthorityMethodExecPolicy::Type NetPolicy)
 {
-	LaunchCharacter_Multicast(NewVelocity, RelativeAxesToOverride);
+	if (NetPolicy & EVSNetAuthorityMethodExecPolicy::Server)
+	{
+		LaunchCharacterInternal(NewVelocity, RelativeAxesToOverride);
+	}
+	if (NetPolicy > EVSNetAuthorityMethodExecPolicy::Server)
+	{
+		LaunchCharacter_Multicast(NewVelocity, RelativeAxesToOverride, NetPolicy);
+	}
 }
 
-void UVSChrMovFeature_FallingMovement::LaunchCharacter_Multicast_Implementation(const FVector& NewVelocity, EVSVectorAxes::Type RelativeAxesToOverride)
+void UVSChrMovFeature_FallingMovement::LaunchCharacter_Multicast_Implementation(const FVector& NewVelocity, EVSVectorAxes::Type RelativeAxesToOverride, EVSNetAuthorityMethodExecPolicy::Type NetPolicy)
 {
-	LaunchCharacterInternal(NewVelocity, RelativeAxesToOverride);
+	bool bShouldExecute = true;
+
+	/** Authority already handled. */
+	if (GetCharacter()->HasAuthority()) { bShouldExecute = false; }
+	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy && !(NetPolicy & EVSNetAuthorityMethodExecPolicy::Client)) { bShouldExecute = false; }
+	if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy && !(NetPolicy & EVSNetAuthorityMethodExecPolicy::Simulated)) { bShouldExecute = false; }
+	
+	if (bShouldExecute)
+	{
+		LaunchCharacterInternal(NewVelocity, RelativeAxesToOverride);
+	}
 }

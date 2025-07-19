@@ -62,3 +62,33 @@ struct FVSMovementBaseSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bUseSeparateBrakingFriction = true;
 };
+
+USTRUCT(BlueprintType)
+struct FVSChrMovCapsuleHalfHeightAdjustParams
+{
+	GENERATED_BODY()
+
+	FVSChrMovCapsuleHalfHeightAdjustParams(const float CapsuleHalfHeight = 0.f, const bool bHalfHeightAsDelta = false, const bool bKeepRootPosition = true, const bool bKeepMeshPosition= true)
+		: HalfHeight(CapsuleHalfHeight), bHalfHeightAsDelta(bHalfHeightAsDelta), bKeepRootPosition(bKeepRootPosition), bKeepMeshPosition(bKeepMeshPosition)
+	{
+		
+	}
+	
+	/** Unscaled. Use default value if below zero and is not delta. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float HalfHeight = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bHalfHeightAsDelta = false;
+
+	/** If true, when adjusting the capsule half height, an offset will be added to the capsule so that the root location will be kept in world. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bKeepRootPosition = true;
+
+	/**
+	 * If true, when adjusting the capsule half height, an offset will be added to the mesh so that the mesh location will be kept in world.
+	 * Only works when bKeepRootPosition == true.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bKeepRootPosition"))
+	bool bKeepMeshPosition = true;
+};
