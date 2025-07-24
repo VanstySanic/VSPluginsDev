@@ -288,7 +288,10 @@ void UVSChrMovAnimFeature_WalkingMovement::UpdateIdleAnim(const FAnimUpdateConte
 	
 	if (UAnimSequence* NewAnim = CalcIdleAnim())
 	{
-		USequencePlayerLibrary::SetSequenceWithInertialBlending(Context, SequencePlayer, NewAnim, GetPossibleInertialBlendingTime());
+		if (USequencePlayerLibrary::GetSequencePure(SequencePlayer) != NewAnim)
+		{
+			USequencePlayerLibrary::SetSequenceWithInertialBlending(Context, SequencePlayer, NewAnim, GetPossibleInertialBlendingTime());
+		}
 	}
 }
 

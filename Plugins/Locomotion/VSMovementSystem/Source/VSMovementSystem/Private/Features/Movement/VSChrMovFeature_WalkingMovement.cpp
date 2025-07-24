@@ -81,20 +81,15 @@ void UVSChrMovFeature_WalkingMovement::OnMovementTagEventNotified_Implementation
 		}
 		else if (!IsWalkingMode() && IsPrevWalkingMode())
 		{
-			if (!FMath::IsNearlyZero(MovementData.CapsuleHalfHeightOffsetUSCZ, 0.01f))
+			if (GetStance() == EVSStance::Crouching)
 			{
-				if (GetStance() == EVSStance::Crouching && GetCharacterMovement()->bWantsToCrouch)
-				{
-					GetCharacter()->AddActorWorldOffset(-MovementData.CapsuleHalfHeightOffsetUSCZ * GetUpDirection());
-					GetMovementCapsuleComponent()->SetCapsuleCenterOffsetZ(MovementData.CapsuleHalfHeightOffsetUSCZ);
-					MovementData.CapsuleHalfHeightOffsetUSCZ = 0.f;
-				}
-				else
-				{
-					GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(GetMovementCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - MovementData.CapsuleHalfHeightOffsetUSCZ);
-					MovementData.CapsuleHalfHeightOffsetUSCZ = 0.f;
-				}
+				GetCharacterMovement()->UnCrouch();
 			}
+			else if (!FMath::IsNearlyZero(MovementData.CapsuleHalfHeightOffsetUSCZ, 0.01f))
+			{
+				GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(GetMovementCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - MovementData.CapsuleHalfHeightOffsetUSCZ);
+			}
+			MovementData.CapsuleHalfHeightOffsetUSCZ = 0.f;
 		}
 	}
 	else if (TagEvent == EVSMovementEvent::StateChange_Stance)
@@ -182,12 +177,6 @@ void UVSChrMovFeature_WalkingMovement::ListenToCrouchState()
 	const bool bIsOriginalCrouching = GetCharacterMovement()->IsCrouching();
 	if (MovementData.Stance == EVSStance::Crouching && (!bIsOriginalCrouching && !GetCharacterMovement()->bWantsToCrouch))
 	{
-		if (!FMath::IsNearlyZero(MovementData.CapsuleHalfHeightOffsetUSCZ, 0.01f))
-		{
-			// GetCharacter()->AddActorWorldOffset(-MovementData.CapsuleHalfHeightOffsetUSCZ * GetUpDirection());
-			// GetMovementCapsuleComponent()->SetCapsuleCenterOffsetZ(MovementData.CapsuleHalfHeightOffsetUSCZ);
-			// MovementData.CapsuleHalfHeightOffsetUSCZ = 0.f;
-		}
 		if (MovementData.DesiredUncrouchedStance != FGameplayTag::EmptyTag)
 		{
 			SetStanceInternal(MovementData.DesiredUncrouchedStance);

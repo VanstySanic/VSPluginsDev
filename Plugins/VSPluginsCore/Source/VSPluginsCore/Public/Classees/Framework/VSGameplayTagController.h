@@ -6,6 +6,7 @@
 #include "GameplayTagAssetInterface.h"
 #include "VSObjectFeature.h"
 #include "Interfaces/VSGameplayTagControllerInterface.h"
+#include "Types/VSGameplayTypes.h"
 #include "VSGameplayTagController.generated.h"
 
 class UAbilitySystemComponent;
@@ -74,12 +75,12 @@ public:
 	void RemoveReplicatedTags(const FGameplayTagContainer& GameplayTags);
 
 	/** Notify that the tags have been updated. */
-	UFUNCTION(BlueprintCallable, Category = "GameplayTags")
-	void NotifyTagsUpdated(bool bAllowCleanNotify = false, bool bMulticast = false);
+	UFUNCTION(BlueprintCallable, Category = "GameplayTags", meta = (AutoCreateRefTerm = "NetExecPolicies"))
+	void NotifyTagsUpdated(bool bAllowCleanNotify = false, const FVSNetMethodExecutionPolicies& NetExecPolicies = FVSNetMethodExecutionPolicies());
 
 	/** Trigger a gameplay tag event notify. */
-	UFUNCTION(BlueprintCallable, Category = "GameplayTags", meta = (AutoCreateRefTerm = "TagEvent"))
-	void NotifyTagEvent(const FGameplayTag& TagEvent, bool bMulticast = false);
+	UFUNCTION(BlueprintCallable, Category = "GameplayTags", meta = (AutoCreateRefTerm = "TagEvent, NetExecPolicies"))
+	void NotifyTagEvent(const FGameplayTag& TagEvent, const FVSNetMethodExecutionPolicies& NetExecPolicies = FVSNetMethodExecutionPolicies());
 	
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags")
 	bool IsDirty() const { return bTagsDirty; }
@@ -89,6 +90,8 @@ public:
 
 private:
 	UAbilitySystemComponent* GetAbilitySystemComponent() const;
+	void NotifyTagsUpdatedInternal(bool bAllowCleanNotify);
+	void NotifyTagEventInternal(const FGameplayTag& TagEvent);
 
 	UFUNCTION()
 	void OnAnyTagChange(const FGameplayTag Tag, int32 Count);
@@ -100,16 +103,16 @@ private:
 	void SetReplicatedTagsExist_Server(const FGameplayTagContainer& GameplayTags, bool bExists);
 
 	UFUNCTION(Server, Reliable)
-	void NotifyTagsUpdated_Server(bool bAllowCleanNotify);
+	void NotifyTagsUpdated_Server(bool bAllowCleanNotify, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void NotifyTagsUpdated_Multicast(bool bAllowCleanNotify, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 	
 	UFUNCTION(Server, Reliable)
-	void NotifyTagsUpdated_Multicast(bool bAllowCleanNotify);
+	void NotifyTagEvent_Server(const FGameplayTag& TagEvent, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 	
-	UFUNCTION(Server, Reliable)
-	void NotifyTagEvent_Server(const FGameplayTag& TagEvent);
-	
-	UFUNCTION(Server, Reliable)
-	void NotifyTagEvent_Multicast(const FGameplayTag& TagEvent);
+	UFUNCTION(NetMulticast, Reliable)
+	void NotifyTagEvent_Multicast(const FGameplayTag& TagEvent, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 
 public:
 	/** Broadcast when any tag count reaches 0 or move away from zero. */

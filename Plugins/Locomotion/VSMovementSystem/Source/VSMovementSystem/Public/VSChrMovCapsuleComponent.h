@@ -15,6 +15,10 @@ class VSMOVEMENTSYSTEM_API UVSChrMovCapsuleComponent : public UCapsuleComponent
 	GENERATED_UCLASS_BODY()
 
 public:
+	//~ Begin UObject Interface.
+	virtual void PostInitProperties() override;
+	//~ End UObject Interface.
+
 	//~ Begin USceneComponent Interface
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
 	//~ End USceneComponent Interface

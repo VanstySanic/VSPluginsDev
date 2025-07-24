@@ -31,8 +31,8 @@ public:
 	 * Try mantle or vault.
 	 * If you are controlling rotation using orientation control 2D feature, set the moving and idle evaluate type to Aim.Direction.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows, NetPolicies"))
-	void TryMantleVault(const TArray<FDataTableRowHandle>& SettingRows, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType = EVSMantleVaultMovementType::MantleOrVault, const FVSNetMethodExecutionPolicies& NetPolicies = FVSNetMethodExecutionPolicies());
+	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows, NetExecPolicies"))
+	void TryMantleVault(const TArray<FDataTableRowHandle>& SettingRows, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType = EVSMantleVaultMovementType::MantleOrVault, const FVSNetMethodExecutionPolicies& NetExecPolicies = FVSNetMethodExecutionPolicies());
 
 protected:
 	/** Stop the mantle / vault movement. This is not replicated. */
@@ -55,10 +55,10 @@ private:
 	bool CalcMantleVaultSnappedParams(FVSMantleVaultSnappedParams& OutSnappedParams, const FDataTableRowHandle& SettingsRow, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType) const;
 
 	UFUNCTION(Server, Reliable)
-	void TryMantleVault_Server(const TArray<FDataTableRowHandle>& SettingRows, EVSMantleVaultMovementType::Type SupportedMovementType, EVSNetAuthorityMethodExecPolicy::Type NetPolicy);
+	void TryMantleVault_Server(const TArray<FDataTableRowHandle>& SettingRows, EVSMantleVaultMovementType::Type SupportedMovementType, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MantleVault_Multicast(const FVSMantleVaultSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetPolicy);
+	void MantleVault_Multicast(const FVSMantleVaultSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (RowType = "/Script/VSMovementSystem.VSMantleVaultSettings"))

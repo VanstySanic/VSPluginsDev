@@ -64,19 +64,17 @@ private:
 	TWeakObjectPtr<UCharacterMovementComponent> CharacterMovementComponentPrivate;
 	TWeakObjectPtr<UVSGameplayTagController> GameplayTagControllerPrivate;
 	/** Capsule component that takes place of the character's capsule collision. */
-	TWeakObjectPtr<UVSChrMovCapsuleComponent> MovementCapsuleComponent;
+	TWeakObjectPtr<UVSChrMovCapsuleComponent> MovementCapsuleComponentPrivate;
 
 	
 	struct FMovementData
 	{
-		FMovementData()
-			:bIsMovingAgainstWall2D(false)
-		{
-		}
-		
-		FGameplayTag PrevMovementMode;
+		bool bIsMovingAgainstWall2D = false;
 		FVector RealAcceleration = FVector::ZeroVector;
-		uint8 bIsMovingAgainstWall2D : 1;
+
+		FGameplayTag PrevMovementMode;
 		FVector CachedVelocity = FVector::ZeroVector;
+		bool bCachedIsMoving2D = false;
+		bool bCachedHasMovementInput2D = false;
 	} MovementData;
 };

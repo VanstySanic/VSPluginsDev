@@ -72,7 +72,7 @@ UVSGameplayTagController* UVSCharacterMovementFeature::GetGameplayTagController(
 
 UVSChrMovCapsuleComponent* UVSCharacterMovementFeature::GetMovementCapsuleComponent() const
 {
-	return ChrMovFeatureAgentPrivate.IsValid() ? ChrMovFeatureAgentPrivate->MovementCapsuleComponent.Get() : nullptr;
+	return ChrMovFeatureAgentPrivate.IsValid() ? ChrMovFeatureAgentPrivate->MovementCapsuleComponentPrivate.Get() : nullptr;
 }
 
 FGameplayTag UVSCharacterMovementFeature::GetMovementMode() const

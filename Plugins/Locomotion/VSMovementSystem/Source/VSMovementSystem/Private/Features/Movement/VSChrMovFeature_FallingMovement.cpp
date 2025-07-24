@@ -22,9 +22,14 @@ void UVSChrMovFeature_FallingMovement::UpdateMovement_Implementation(float Delta
 {
 	Super::UpdateMovement_Implementation(DeltaTime);
 
-	if (MovementData.CachedJumpCount != GetCharacter()->JumpCurrentCount)
+	if (GetCharacter()->JumpCurrentCount > MovementData.CachedJumpCount)
 	{
-		GetGameplayTagController()->NotifyTagEvent(EVSMovementEvent::Action_Jump);
+		GetGameplayTagController()->NotifyTagEvent(EVSMovementEvent::Action_Jump,
+			FVSNetMethodExecutionPolicies(
+			EVSNetAutonomousMethodExecPolicy::Client,
+			EVSNetAuthorityMethodExecPolicy::ServerAndSimulated,
+			EVSNetAuthorityMethodExecPolicy::None,
+			false));
 		MovementData.CachedJumpCount = GetCharacter()->JumpCurrentCount;
 	}
 }
@@ -32,17 +37,20 @@ void UVSChrMovFeature_FallingMovement::UpdateMovement_Implementation(float Delta
 void UVSChrMovFeature_FallingMovement::OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent)
 {
 	Super::OnMovementTagEventNotified_Implementation(TagEvent);
-
+	
 	if (TagEvent == EVSMovementEvent::StateChange_MovementMode)
 	{
 		if (GetMovementMode() == EVSMovementMode::Falling)
 		{
-			if (GetCharacter()->bPressedJump
-				&& GetVelocityZ().Dot(GetCharacter()->GetActorUpVector()) > 0.9f
-				&& FMath::IsNearlyEqual(GetSpeedZ(), GetCharacterMovement()->JumpZVelocity, GetCharacterMovement()->JumpZVelocity * 0.01f))
+			if (GetCharacter()->bPressedJump && GetCharacter()->JumpCurrentCount > MovementData.CachedJumpCount)
 			{
-				GetGameplayTagController()->NotifyTagEvent(EVSMovementEvent::Action_Jump);
-				MovementData.CachedJumpCount = 1;
+				GetGameplayTagController()->NotifyTagEvent(EVSMovementEvent::Action_Jump,
+					FVSNetMethodExecutionPolicies(
+					EVSNetAutonomousMethodExecPolicy::Client,
+					EVSNetAuthorityMethodExecPolicy::ServerAndSimulated,
+					EVSNetAuthorityMethodExecPolicy::None,
+					false));
+				MovementData.CachedJumpCount = GetCharacter()->JumpCurrentCount;
 			}
 		}
 		else if (GetPrevMovementMode() == EVSMovementMode::Falling)
@@ -50,30 +58,35 @@ void UVSChrMovFeature_FallingMovement::OnMovementTagEventNotified_Implementation
 			MovementData.CachedJumpCount = 0;
 		}
 	}
+	if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy && TagEvent == EVSMovementEvent::Action_Jump)
+	{
+		MovementData.CachedJumpCount++;
+		GetCharacter()->JumpCurrentCount = MovementData.CachedJumpCount;
+	}
 }
 
-void UVSChrMovFeature_FallingMovement::LaunchCharacter(const FVector& NewVelocity, TEnumAsByte<EVSVectorAxes::Type> RelativeAxesToOverride, const FVSNetMethodExecutionPolicies& NetPolicies)
+void UVSChrMovFeature_FallingMovement::LaunchCharacter(const FVector& NewVelocity, TEnumAsByte<EVSVectorAxes::Type> RelativeAxesToOverride, const FVSNetMethodExecutionPolicies& NetExecPolicies)
 {
 	if (RelativeAxesToOverride == EVSVectorAxes::None) return;
 	
 	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy)
 	{
-		if (NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
+		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
 		{
 			LaunchCharacterInternal(NewVelocity, RelativeAxesToOverride);
 		}
-		if (NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
+		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
 		{
-			LaunchCharacter_Server(NewVelocity, RelativeAxesToOverride, NetPolicies.ServerRPCPolicy);
+			LaunchCharacter_Server(NewVelocity, RelativeAxesToOverride, NetExecPolicies.ServerRPCPolicy);
 		}
 	}
 	else if (GetCharacter()->GetLocalRole() == ROLE_Authority)
 	{
-		LaunchCharacter_Server(NewVelocity, RelativeAxesToOverride, NetPolicies.ServerRPCPolicy);
+		LaunchCharacter_Server(NewVelocity, RelativeAxesToOverride, NetExecPolicies.ServerRPCPolicy);
 	}
 	else if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy)
 	{
-		if (NetPolicies.bSimulatedLocalExecution)
+		if (NetExecPolicies.bSimulatedLocalExecution)
 		{
 			LaunchCharacterInternal(NewVelocity, RelativeAxesToOverride);
 		}
@@ -86,26 +99,26 @@ void UVSChrMovFeature_FallingMovement::LaunchCharacterInternal(const FVector& Ne
 	GetCharacter()->LaunchCharacter(AxesedNewVelocity, true, true);
 }
 
-void UVSChrMovFeature_FallingMovement::LaunchCharacter_Server_Implementation(const FVector& NewVelocity, EVSVectorAxes::Type RelativeAxesToOverride, EVSNetAuthorityMethodExecPolicy::Type NetPolicy)
+void UVSChrMovFeature_FallingMovement::LaunchCharacter_Server_Implementation(const FVector& NewVelocity, EVSVectorAxes::Type RelativeAxesToOverride, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
 {
-	if (NetPolicy & EVSNetAuthorityMethodExecPolicy::Server)
+	if (NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Server)
 	{
 		LaunchCharacterInternal(NewVelocity, RelativeAxesToOverride);
 	}
-	if (NetPolicy > EVSNetAuthorityMethodExecPolicy::Server)
+	if (NetExecPolicy > EVSNetAuthorityMethodExecPolicy::Server)
 	{
-		LaunchCharacter_Multicast(NewVelocity, RelativeAxesToOverride, NetPolicy);
+		LaunchCharacter_Multicast(NewVelocity, RelativeAxesToOverride, NetExecPolicy);
 	}
 }
 
-void UVSChrMovFeature_FallingMovement::LaunchCharacter_Multicast_Implementation(const FVector& NewVelocity, EVSVectorAxes::Type RelativeAxesToOverride, EVSNetAuthorityMethodExecPolicy::Type NetPolicy)
+void UVSChrMovFeature_FallingMovement::LaunchCharacter_Multicast_Implementation(const FVector& NewVelocity, EVSVectorAxes::Type RelativeAxesToOverride, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
 {
 	bool bShouldExecute = true;
 
 	/** Authority already handled. */
 	if (GetCharacter()->HasAuthority()) { bShouldExecute = false; }
-	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy && !(NetPolicy & EVSNetAuthorityMethodExecPolicy::Client)) { bShouldExecute = false; }
-	if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy && !(NetPolicy & EVSNetAuthorityMethodExecPolicy::Simulated)) { bShouldExecute = false; }
+	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy && !(NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Client)) { bShouldExecute = false; }
+	if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy && !(NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Simulated)) { bShouldExecute = false; }
 	
 	if (bShouldExecute)
 	{

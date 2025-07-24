@@ -216,59 +216,59 @@ bool UVSChrMovFeature_WallRunMovement::IsWallRunMode() const
 	return GameplayTagController ? (GameplayTagController->GetTagCount(EVSMovementMode::WallRunning) >= 1) : false;
 }
 
-void UVSChrMovFeature_WallRunMovement::TryWallRun(const TArray<FDataTableRowHandle>& SettingRows, const FVSNetMethodExecutionPolicies& NetPolicies)
+void UVSChrMovFeature_WallRunMovement::TryWallRun(const TArray<FDataTableRowHandle>& SettingRows, const FVSNetMethodExecutionPolicies& NetExecPolicies)
 {
 	if (SettingRows.IsEmpty() && DefaultSettingRows.IsEmpty()) return;
 	
 	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy)
 	{
-		if (NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
+		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
 		{
 			const bool bSucceeded = TryWallRunInternal(SettingRows);
-			if (bSucceeded && NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
+			if (bSucceeded && NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
 			{
 				/** Only send server RPC if local execution succeeded.  */
-				TryWallRun_Server(SettingRows, NetPolicies.ServerRPCPolicy);
+				TryWallRun_Server(SettingRows, NetExecPolicies.ServerRPCPolicy);
 			}
 		}
-		else if (NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
+		else if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
 		{
-			TryWallRun_Server(SettingRows, NetPolicies.ServerRPCPolicy);
+			TryWallRun_Server(SettingRows, NetExecPolicies.ServerRPCPolicy);
 		}
 	}
 	else if (GetCharacter()->GetLocalRole() == ROLE_Authority)
 	{
-		TryWallRun_Server(SettingRows, NetPolicies.AuthorityLocalPolicy);
+		TryWallRun_Server(SettingRows, NetExecPolicies.AuthorityLocalPolicy);
 	}
 	else if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy)
 	{
-		if (NetPolicies.bSimulatedLocalExecution)
+		if (NetExecPolicies.bSimulatedLocalExecution)
 		{
 			TryWallRunInternal(SettingRows);
 		}
 	}
 }
 
-void UVSChrMovFeature_WallRunMovement::EndWallRun(bool bTryEndMovement, const FVSNetMethodExecutionPolicies& NetPolicies)
+void UVSChrMovFeature_WallRunMovement::EndWallRun(bool bTryEndMovement, const FVSNetMethodExecutionPolicies& NetExecPolicies)
 {
 	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy)
 	{
-		if (NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
+		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
 		{
 			EndWallRunInternal(bTryEndMovement);
 		}
-		if (NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
+		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
 		{
-			EndWallRun_Server(bTryEndMovement, NetPolicies.ServerRPCPolicy);
+			EndWallRun_Server(bTryEndMovement, NetExecPolicies.ServerRPCPolicy);
 		}
 	}
 	else if (GetCharacter()->GetLocalRole() == ROLE_Authority)
 	{
-		EndWallRun_Server(bTryEndMovement, NetPolicies.AuthorityLocalPolicy);
+		EndWallRun_Server(bTryEndMovement, NetExecPolicies.AuthorityLocalPolicy);
 	}
 	else if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy)
 	{
-		if (NetPolicies.bSimulatedLocalExecution)
+		if (NetExecPolicies.bSimulatedLocalExecution)
 		{
 			EndWallRunInternal(bTryEndMovement);
 		}
@@ -674,27 +674,27 @@ bool UVSChrMovFeature_WallRunMovement::CalcWallRunSnappedParams(FVSWallRunSnappe
 	return true;
 }
 
-void UVSChrMovFeature_WallRunMovement::TryWallRun_Server_Implementation(const TArray<FDataTableRowHandle>& SettingRows, EVSNetAuthorityMethodExecPolicy::Type NetPolicy)
+void UVSChrMovFeature_WallRunMovement::TryWallRun_Server_Implementation(const TArray<FDataTableRowHandle>& SettingRows, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
 {
-	if (NetPolicy & EVSNetAuthorityMethodExecPolicy::Server)
+	if (NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Server)
 	{
 		TryWallRunInternal(SettingRows);
 	}
-	if (NetPolicy > EVSNetAuthorityMethodExecPolicy::Server)
+	if (NetExecPolicy > EVSNetAuthorityMethodExecPolicy::Server)
 	{
-		WallRun_Multicast(MovementData.SnappedParams, NetPolicy);
+		WallRun_Multicast(MovementData.SnappedParams, NetExecPolicy);
 	}
 }
 
-void UVSChrMovFeature_WallRunMovement::WallRun_Multicast_Implementation(const FVSWallRunSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetPolicy)
+void UVSChrMovFeature_WallRunMovement::WallRun_Multicast_Implementation(const FVSWallRunSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
 {
 	bool bShouldExecute = true;
 	if (SnappedParams.SettingsRow.IsNull()) { bShouldExecute = false; }
 
 	/** Authority already handled. */
 	if (GetCharacter()->HasAuthority()) { bShouldExecute = false; }
-	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy && !(NetPolicy & EVSNetAuthorityMethodExecPolicy::Client)) { bShouldExecute = false; }
-	if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy && !(NetPolicy & EVSNetAuthorityMethodExecPolicy::Simulated)) { bShouldExecute = false; }
+	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy && !(NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Client)) { bShouldExecute = false; }
+	if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy && !(NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Simulated)) { bShouldExecute = false; }
 	
 	if (bShouldExecute)
 	{

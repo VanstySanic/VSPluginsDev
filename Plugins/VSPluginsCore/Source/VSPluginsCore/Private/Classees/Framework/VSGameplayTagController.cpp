@@ -170,30 +170,55 @@ void UVSGameplayTagController::RemoveReplicatedTags(const FGameplayTagContainer&
 	}
 }
 
-void UVSGameplayTagController::NotifyTagsUpdated(bool bAllowCleanNotify, bool bMulticast)
+void UVSGameplayTagController::NotifyTagsUpdated(bool bAllowCleanNotify, const FVSNetMethodExecutionPolicies& NetExecPolicies)
 {
-	if (!bAllowCleanNotify && !IsDirty()) return;
-	if (bMulticast && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
+	if (GetOwnerActor()->GetLocalRole() == ROLE_AutonomousProxy)
 	{
-		NotifyTagsUpdated_Server(bAllowCleanNotify);
+		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
+		{
+			NotifyTagsUpdatedInternal(bAllowCleanNotify);
+		}
+		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
+		{
+			NotifyTagsUpdated_Server(bAllowCleanNotify, NetExecPolicies.ServerRPCPolicy);
+		}
 	}
-	else
+	else if (GetOwnerActor()->GetLocalRole() == ROLE_Authority)
 	{
-		bTagsDirty = false;
-		NotifyTagEvent(EVSGameplayTagControllerTags::Event_TagsUpdated);
-		OnTagsUpdated.Broadcast();
+		NotifyTagsUpdated_Server(bAllowCleanNotify, NetExecPolicies.AuthorityLocalPolicy);
+	}
+	else if (GetOwnerActor()->GetLocalRole() == ROLE_SimulatedProxy)
+	{
+		if (NetExecPolicies.bSimulatedLocalExecution)
+		{
+			NotifyTagsUpdatedInternal(bAllowCleanNotify);
+		}
 	}
 }
 
-void UVSGameplayTagController::NotifyTagEvent(const FGameplayTag& TagEvent, bool bMulticast)
+void UVSGameplayTagController::NotifyTagEvent(const FGameplayTag& TagEvent, const FVSNetMethodExecutionPolicies& NetExecPolicies)
 {
-	if (bMulticast && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
+	if (GetOwnerActor()->GetLocalRole() == ROLE_AutonomousProxy)
 	{
-		NotifyTagEvent(TagEvent);
+		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
+		{
+			NotifyTagEventInternal(TagEvent);
+		}
+		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
+		{
+			NotifyTagEvent_Server(TagEvent, NetExecPolicies.ServerRPCPolicy);
+		}
 	}
-	else
+	else if (GetOwnerActor()->GetLocalRole() == ROLE_Authority)
 	{
-		OnTagEventNotified.Broadcast(TagEvent);
+		NotifyTagEvent_Server(TagEvent, NetExecPolicies.AuthorityLocalPolicy);
+	}
+	else if (GetOwnerActor()->GetLocalRole() == ROLE_SimulatedProxy)
+	{
+		if (NetExecPolicies.bSimulatedLocalExecution)
+		{
+			NotifyTagEventInternal(TagEvent);
+		}
 	}
 }
 
@@ -244,22 +269,70 @@ void UVSGameplayTagController::SetReplicatedTagsExist_Server_Implementation(cons
 	}
 }
 
-void UVSGameplayTagController::NotifyTagsUpdated_Server_Implementation(bool bAllowCleanNotify)
+void UVSGameplayTagController::NotifyTagsUpdated_Server_Implementation(bool bAllowCleanNotify, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
 {
-	NotifyTagsUpdated_Multicast(bAllowCleanNotify);
+	if (NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Server)
+    {
+    	NotifyTagsUpdatedInternal(bAllowCleanNotify);
+    }
+    if (NetExecPolicy > EVSNetAuthorityMethodExecPolicy::Server)
+    {
+    	NotifyTagsUpdated_Multicast(bAllowCleanNotify, NetExecPolicy);
+    }
 }
 
-void UVSGameplayTagController::NotifyTagsUpdated_Multicast_Implementation(bool bAllowCleanNotify)
+void UVSGameplayTagController::NotifyTagsUpdated_Multicast_Implementation(bool bAllowCleanNotify, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
 {
-	NotifyTagsUpdated(bAllowCleanNotify);
+	bool bShouldExecute = true;
+
+	/** Authority already handled. */
+	if (GetOwnerActor()->HasAuthority()) { bShouldExecute = false; }
+	if (GetOwnerActor()->GetLocalRole() == ROLE_AutonomousProxy && !(NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Client)) { bShouldExecute = false; }
+	if (GetOwnerActor()->GetLocalRole() == ROLE_SimulatedProxy && !(NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Simulated)) { bShouldExecute = false; }
+
+	if (bShouldExecute)
+	{
+		NotifyTagsUpdatedInternal(bAllowCleanNotify);
+	}
 }
 
-void UVSGameplayTagController::NotifyTagEvent_Server_Implementation(const FGameplayTag& TagEvent)
+void UVSGameplayTagController::NotifyTagsUpdatedInternal(bool bAllowCleanNotify)
 {
-	NotifyTagEvent_Multicast(TagEvent);
+	if (!bAllowCleanNotify && !IsDirty()) return;
+	bTagsDirty = false;
+	NotifyTagEvent(EVSGameplayTagControllerTags::Event_TagsUpdated);
+	OnTagsUpdated.Broadcast();
 }
 
-void UVSGameplayTagController::NotifyTagEvent_Multicast_Implementation(const FGameplayTag& TagEvent)
+void UVSGameplayTagController::NotifyTagEventInternal(const FGameplayTag& TagEvent)
 {
-	NotifyTagEvent(TagEvent, false);
+	OnTagEventNotified.Broadcast(TagEvent);
 }
+
+void UVSGameplayTagController::NotifyTagEvent_Server_Implementation(const FGameplayTag& TagEvent, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
+{
+	if (NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Server)
+	{
+		NotifyTagEventInternal(TagEvent);
+	}
+	if (NetExecPolicy > EVSNetAuthorityMethodExecPolicy::Server)
+	{
+		NotifyTagEvent_Multicast(TagEvent, NetExecPolicy);
+	}
+}
+
+void UVSGameplayTagController::NotifyTagEvent_Multicast_Implementation(const FGameplayTag& TagEvent, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
+{
+	bool bShouldExecute = true;
+
+	/** Authority already handled. */
+	if (GetOwnerActor()->HasAuthority()) { bShouldExecute = false; }
+	if (GetOwnerActor()->GetLocalRole() == ROLE_AutonomousProxy && !(NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Client)) { bShouldExecute = false; }
+	if (GetOwnerActor()->GetLocalRole() == ROLE_SimulatedProxy && !(NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Simulated)) { bShouldExecute = false; }
+
+	if (bShouldExecute)
+	{
+		NotifyTagEventInternal(TagEvent);
+	}
+}
+

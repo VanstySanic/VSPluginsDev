@@ -101,7 +101,7 @@ bool UVSChrMovFeature_FixedPointLeap::IsFixedPointLeapMode() const
 	return GameplayTagController ? (GameplayTagController->GetTagCount(EVSMovementMode::FixedPointLeap) > 0) : false;
 }
 
-void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocation, USceneComponent* ComponentToFollow, const FVSNetMethodExecutionPolicies& NetPolicies)
+void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocation, USceneComponent* ComponentToFollow, const FVSNetMethodExecutionPolicies& NetExecPolicies)
 {
 	if (SettingRows.IsEmpty() && DefaultSettingRows.IsEmpty()) return;
 	const bool bIsReplicatedComponent = ComponentToFollow && ComponentToFollow->GetOwner()->GetIsReplicated() && ComponentToFollow->IsReadyForReplication();
@@ -109,27 +109,27 @@ void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap(const TArray<FDataTableR
 	
 	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy)
 	{
-		if (NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
+		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
 		{
 			const bool bSucceeded = TryFixedPointLeapInternal(SettingRows, TargetRootLocationUndefinedSpace, ComponentToFollow);
-			if (bSucceeded && NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
+			if (bSucceeded && NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
 			{
 				/** Only send server RPC if local execution succeeded.  */
-				TryFixedPointLeap_Server(SettingRows, TargetRootLocationUndefinedSpace, bIsReplicatedComponent ? ComponentToFollow : nullptr, NetPolicies.ServerRPCPolicy);
+				TryFixedPointLeap_Server(SettingRows, TargetRootLocationUndefinedSpace, bIsReplicatedComponent ? ComponentToFollow : nullptr, NetExecPolicies.ServerRPCPolicy);
 			}
 		}
-		else if (NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
+		else if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
 		{
-			TryFixedPointLeap_Server(SettingRows, TargetRootLocationUndefinedSpace, bIsReplicatedComponent ? ComponentToFollow : nullptr, NetPolicies.ServerRPCPolicy);
+			TryFixedPointLeap_Server(SettingRows, TargetRootLocationUndefinedSpace, bIsReplicatedComponent ? ComponentToFollow : nullptr, NetExecPolicies.ServerRPCPolicy);
 		}
 	}
 	else if (GetCharacter()->GetLocalRole() == ROLE_Authority)
 	{
-		TryFixedPointLeap_Server(SettingRows, TargetRootLocationUndefinedSpace, bIsReplicatedComponent ? ComponentToFollow : nullptr, NetPolicies.AuthorityLocalPolicy);
+		TryFixedPointLeap_Server(SettingRows, TargetRootLocationUndefinedSpace, bIsReplicatedComponent ? ComponentToFollow : nullptr, NetExecPolicies.AuthorityLocalPolicy);
 	}
 	else if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy)
 	{
-		if (NetPolicies.bSimulatedLocalExecution)
+		if (NetExecPolicies.bSimulatedLocalExecution)
 		{
 			TryFixedPointLeapInternal(SettingRows, TargetRootLocationUndefinedSpace, ComponentToFollow);
 		}
@@ -252,27 +252,27 @@ void UVSChrMovFeature_FixedPointLeap::FixedPointLeapBySnappedParams(const FVSFix
 }
 
 
-void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap_Server_Implementation(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, USceneComponent* ComponentToFollow, EVSNetAuthorityMethodExecPolicy::Type NetPolicy)
+void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap_Server_Implementation(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, USceneComponent* ComponentToFollow, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
 {
-	if (NetPolicy & EVSNetAuthorityMethodExecPolicy::Server)
+	if (NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Server)
 	{
 		const bool bSuccessful = TryFixedPointLeapInternal(SettingRows, TargetRootLocationUndefinedSpace, ComponentToFollow);
-		if (bSuccessful && NetPolicy > EVSNetAuthorityMethodExecPolicy::Server)
+		if (bSuccessful && NetExecPolicy > EVSNetAuthorityMethodExecPolicy::Server)
 		{
-			TryFixedPointLeap_Multicast(MovementData.SnappedParams, NetPolicy);
+			TryFixedPointLeap_Multicast(MovementData.SnappedParams, NetExecPolicy);
 		}
 	}
 }
 
-void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap_Multicast_Implementation(const FVSFixedPointLeapSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetPolicy)
+void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap_Multicast_Implementation(const FVSFixedPointLeapSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
 {
 	bool bShouldExecute = true;
 	if (SnappedParams.SettingsRow.IsNull() || SnappedParams.AnimRow.IsNull()) { bShouldExecute = false; }
 
 	/** Authority already handled. */
 	if (GetCharacter()->HasAuthority()) { bShouldExecute = false; }
-	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy && !(NetPolicy & EVSNetAuthorityMethodExecPolicy::Client)) { bShouldExecute = false; }
-	if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy && !(NetPolicy & EVSNetAuthorityMethodExecPolicy::Simulated)) { bShouldExecute = false; }
+	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy && !(NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Client)) { bShouldExecute = false; }
+	if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy && !(NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Simulated)) { bShouldExecute = false; }
 	
 	if (bShouldExecute)
 	{

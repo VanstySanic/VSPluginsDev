@@ -22,6 +22,9 @@ class VSPLUGINSCORE_API UVSGameplayLibrary : public UBlueprintFunctionLibrary
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Source"))
 	static bool IsInGame();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Source"))
+	static bool IsInBlueprintEditor(const UObject* Object);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Source"))
 	static float GetServerTimeSeconds(const UObject* WorldContext);

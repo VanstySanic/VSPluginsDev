@@ -30,15 +30,15 @@ public:
 	 * Try start wall run process from ground or in air.
 	 * If you are controlling rotation using orientation control 2D feature, set the moving and idle evaluate type to Aim.Direction.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows, NetPolicies"))
-	void TryWallRun(const TArray<FDataTableRowHandle>& SettingRows, const FVSNetMethodExecutionPolicies& NetPolicies = FVSNetMethodExecutionPolicies());
+	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows, NetExecPolicies"))
+	void TryWallRun(const TArray<FDataTableRowHandle>& SettingRows, const FVSNetMethodExecutionPolicies& NetExecPolicies = FVSNetMethodExecutionPolicies());
 	
 	/**
 	 * End the wall run movement.
 	 * @param bTryEndMovement Whether to process the ending movement and animation.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "NetPolicies"))
-	void EndWallRun(bool bTryEndMovement, const FVSNetMethodExecutionPolicies& NetPolicies = FVSNetMethodExecutionPolicies());
+	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "NetExecPolicies"))
+	void EndWallRun(bool bTryEndMovement, const FVSNetMethodExecutionPolicies& NetExecPolicies = FVSNetMethodExecutionPolicies());
 
 	/**
 	 * Suggest a launch velocity that allows user to start a new wall run process on the other side wall, without changing the Z axis location.
@@ -75,10 +75,10 @@ private:
 
 	
 	UFUNCTION(Server, Reliable)
-	void TryWallRun_Server(const TArray<FDataTableRowHandle>& SettingRows, EVSNetAuthorityMethodExecPolicy::Type NetPolicy);
+	void TryWallRun_Server(const TArray<FDataTableRowHandle>& SettingRows, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void WallRun_Multicast(const FVSWallRunSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetPolicy);
+	void WallRun_Multicast(const FVSWallRunSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 
 	UFUNCTION(Server, Reliable)
 	void EndWallRun_Server(bool bTryEndMovement, EVSNetAuthorityMethodExecPolicy::Type NetPolicy);

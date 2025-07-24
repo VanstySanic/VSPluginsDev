@@ -27,17 +27,17 @@ protected:
 	virtual void OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent) override;
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "NewVelocity, NetPolicies"))
-	void LaunchCharacter(const FVector& NewVelocity, TEnumAsByte<EVSVectorAxes::Type> RelativeAxesToOverride = EVSVectorAxes::XYZ, const FVSNetMethodExecutionPolicies& NetPolicies = FVSNetMethodExecutionPolicies());
+	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "NewVelocity, NetExecPolicies"))
+	void LaunchCharacter(const FVector& NewVelocity, TEnumAsByte<EVSVectorAxes::Type> RelativeAxesToOverride = EVSVectorAxes::XYZ, const FVSNetMethodExecutionPolicies& NetExecPolicies = FVSNetMethodExecutionPolicies());
 
 private:
 	void LaunchCharacterInternal(const FVector& NewVelocity, TEnumAsByte<EVSVectorAxes::Type> RelativeAxesToOverride = EVSVectorAxes::XYZ);
 	
 	UFUNCTION(Server, Reliable)
-	void LaunchCharacter_Server(const FVector& NewVelocity, EVSVectorAxes::Type RelativeAxesToOverride, EVSNetAuthorityMethodExecPolicy::Type NetPolicy);
+	void LaunchCharacter_Server(const FVector& NewVelocity, EVSVectorAxes::Type RelativeAxesToOverride, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 	
 	UFUNCTION(NetMulticast, Reliable)
-	void LaunchCharacter_Multicast(const FVector& NewVelocity, EVSVectorAxes::Type RelativeAxesToOverride, EVSNetAuthorityMethodExecPolicy::Type NetPolicy);
+	void LaunchCharacter_Multicast(const FVector& NewVelocity, EVSVectorAxes::Type RelativeAxesToOverride, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 
 private:
 	struct FMovementData

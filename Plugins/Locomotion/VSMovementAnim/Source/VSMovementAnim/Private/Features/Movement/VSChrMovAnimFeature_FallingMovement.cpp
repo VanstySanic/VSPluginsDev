@@ -437,21 +437,18 @@ void UVSChrMovAnimFeature_FallingMovement::UpdateMovementTagQueryStates(const FG
 		}
 	}
 	/** Refresh movement data when enter falling mode. */
-	else if (GetMovementMode() == EVSMovementMode::Falling)
+	if (GetMovementMode() == EVSMovementMode::Falling && (GetPrevMovementMode() != EVSMovementMode::Falling || ReassignAnimSettingsQuery.Matches(GameplayTags, TagEvent)))
 	{
 		FDataTableRowHandle SettingsRowToUse = DefaultSettingsRow;
-		if (ReassignAnimSettingsQuery.Matches(GameplayTags, TagEvent))
+		for (const FDataTableRowHandle& AnimSettingRow : AnimSettingRows)
 		{
-			for (const FDataTableRowHandle& AnimSettingRow : AnimSettingRows)
-			{
-				FVSFallingMovementAnimSettings* Settings = AnimSettingRow.GetRow<FVSFallingMovementAnimSettings>(nullptr);
-				if (!Settings || !Settings->IsValid()) continue;
-				if (!Settings->Limits.Matches(AnimFeatureAgent)) continue;
-				SettingsRowToUse = AnimSettingRow;
-				break;
-			}
+			FVSFallingMovementAnimSettings* Settings = AnimSettingRow.GetRow<FVSFallingMovementAnimSettings>(nullptr);
+			if (!Settings || !Settings->IsValid()) continue;
+			if (!Settings->Limits.Matches(AnimFeatureAgent)) continue;
+			SettingsRowToUse = AnimSettingRow;
+			break;
 		}
-		
+
 		AnimData.CurrentAnimSettingsPtr = SettingsRowToUse.GetRow<FVSFallingMovementAnimSettings>(nullptr);
 		if (AnimData.CurrentAnimSettingsPtr && AnimData.CurrentAnimSettingsPtr->IsValid())
 		{
@@ -464,7 +461,7 @@ void UVSChrMovAnimFeature_FallingMovement::UpdateMovementTagQueryStates(const FG
 				AnimData.StartAnimPlayedTime = Anim->GetSafePlayTimeRange().X;
 			}
 		}
-
+			
 		AnimData.AnimSettingsReassignedMark = true;
 		bMovementReassignedThisFrame = true;
 	}

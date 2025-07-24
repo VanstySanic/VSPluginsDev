@@ -50,8 +50,8 @@ void UVSCharacterMovementFeatureAgent::Initialize_Implementation()
 	CharacterPrivate->MovementModeChangedDelegate.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnCharacterMovementChanged);
 	if (CharacterPrivate->HasAuthority()) { ReplicatedControlRotation = CharacterPrivate->GetControlRotation(); }
 
-	MovementCapsuleComponent = Cast<UVSChrMovCapsuleComponent>(GetCharacter()->GetCapsuleComponent());
-	check(MovementCapsuleComponent.IsValid());
+	MovementCapsuleComponentPrivate = Cast<UVSChrMovCapsuleComponent>(GetCharacter()->GetCapsuleComponent());
+	check(MovementCapsuleComponentPrivate.IsValid());
 	
 	GetGameplayTagController()->OnTagsUpdated.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnMovementTagsUpdated);
 	GetGameplayTagController()->OnTagEventNotified.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnMovementTagEventNotified);
@@ -92,6 +92,22 @@ void UVSCharacterMovementFeatureAgent::UpdateMovement_Implementation(float Delta
 	
 	MovementData.RealAcceleration = (GetVelocity() - MovementData.CachedVelocity) / DeltaTime;
 	MovementData.CachedVelocity = GetVelocity();
+
+	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
+	if ((IsMoving2D() && !MovementData.bCachedIsMoving2D) || (!IsMoving2D() && MovementData.bCachedIsMoving2D))
+	{
+		GameplayTagController->SetTagCount(EVSMovementState::IsMoving2D, IsMoving2D() ? 1 : 0);
+		GameplayTagController->NotifyTagsUpdated();
+		GameplayTagController->NotifyTagEvent(EVSMovementEvent::StateChange_IsMoving2D);
+	}
+	if ((HasMovementInput2D() && !MovementData.bCachedHasMovementInput2D) || (!HasMovementInput2D() && MovementData.bCachedHasMovementInput2D))
+	{
+		GameplayTagController->SetTagCount(EVSMovementState::HasMovementInput2D, HasMovementInput2D() ? 1 : 0);
+		GameplayTagController->NotifyTagsUpdated();
+		GameplayTagController->NotifyTagEvent(EVSMovementEvent::StateChange_HasMovementInput2D);
+	}
+	MovementData.bCachedIsMoving2D = IsMoving2D();
+	MovementData.bCachedHasMovementInput2D = HasMovementInput2D();
 	
 	CheckMovingAgainstWall2D();
 

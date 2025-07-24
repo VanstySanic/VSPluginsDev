@@ -29,33 +29,33 @@ bool UVSChrMovFeature_MantleVaultMovement::IsMantlingOrVaultingMode() const
 	return GameplayTagController ? (GameplayTagController->GetTagCount(EVSMovementMode::MantlingOrVaulting) >= 1) : false;
 }
 
-void UVSChrMovFeature_MantleVaultMovement::TryMantleVault(const TArray<FDataTableRowHandle>& SettingRows, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType, const FVSNetMethodExecutionPolicies& NetPolicies)
+void UVSChrMovFeature_MantleVaultMovement::TryMantleVault(const TArray<FDataTableRowHandle>& SettingRows, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType, const FVSNetMethodExecutionPolicies& NetExecPolicies)
 {
 	if (SupportedMovementType == EVSMantleVaultMovementType::None || (SettingRows.IsEmpty() && DefaultSettingRows.IsEmpty())) return;
 	
 	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy)
 	{
-		if (NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
+		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
 		{
 			const bool bSucceeded = TryMantleVaultInternal(SettingRows, SupportedMovementType);
-			if (bSucceeded && NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
+			if (bSucceeded && NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
 			{
 				/** Only send server RPC if local execution succeeded.  */
-				TryMantleVault_Server(SettingRows, SupportedMovementType, NetPolicies.ServerRPCPolicy);
+				TryMantleVault_Server(SettingRows, SupportedMovementType, NetExecPolicies.ServerRPCPolicy);
 			}
 		}
-		if (NetPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
+		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
 		{
-			TryMantleVault_Server(SettingRows, SupportedMovementType, NetPolicies.ServerRPCPolicy);
+			TryMantleVault_Server(SettingRows, SupportedMovementType, NetExecPolicies.ServerRPCPolicy);
 		}
 	}
 	else if (GetCharacter()->GetLocalRole() == ROLE_Authority)
 	{
-		TryMantleVault_Server(SettingRows, SupportedMovementType, NetPolicies.AuthorityLocalPolicy);
+		TryMantleVault_Server(SettingRows, SupportedMovementType, NetExecPolicies.AuthorityLocalPolicy);
 	}
 	else if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy)
 	{
-		if (NetPolicies.bSimulatedLocalExecution)
+		if (NetExecPolicies.bSimulatedLocalExecution)
 		{
 			TryMantleVaultInternal(SettingRows, SupportedMovementType);
 		}
@@ -567,19 +567,19 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 	return false;
 }
 
-void UVSChrMovFeature_MantleVaultMovement::TryMantleVault_Server_Implementation(const TArray<FDataTableRowHandle>& SettingRows, EVSMantleVaultMovementType::Type SupportedMovementType, EVSNetAuthorityMethodExecPolicy::Type NetPolicy)
+void UVSChrMovFeature_MantleVaultMovement::TryMantleVault_Server_Implementation(const TArray<FDataTableRowHandle>& SettingRows, EVSMantleVaultMovementType::Type SupportedMovementType, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
 {
-	if (NetPolicy & EVSNetAuthorityMethodExecPolicy::Server)
+	if (NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Server)
 	{
 		const bool bSuccessful = TryMantleVaultInternal(SettingRows, SupportedMovementType);
-		if (bSuccessful && NetPolicy > EVSNetAuthorityMethodExecPolicy::Server)
+		if (bSuccessful && NetExecPolicy > EVSNetAuthorityMethodExecPolicy::Server)
 		{
-			MantleVault_Multicast(MovementData.SnappedParams, NetPolicy);
+			MantleVault_Multicast(MovementData.SnappedParams, NetExecPolicy);
 		}
 	}
 }
 
-void UVSChrMovFeature_MantleVaultMovement::MantleVault_Multicast_Implementation(const FVSMantleVaultSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetPolicy)
+void UVSChrMovFeature_MantleVaultMovement::MantleVault_Multicast_Implementation(const FVSMantleVaultSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
 {
 	bool bShouldExecute = true;
 	if (SnappedParams.SettingsRow.IsNull() || SnappedParams.AnimSettingsRow.IsNull()) { bShouldExecute = false; }
@@ -587,8 +587,8 @@ void UVSChrMovFeature_MantleVaultMovement::MantleVault_Multicast_Implementation(
 
 	/** Authority already handled. */
 	if (GetCharacter()->HasAuthority()) { bShouldExecute = false; }
-	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy && !(NetPolicy & EVSNetAuthorityMethodExecPolicy::Client)) { bShouldExecute = false; }
-	if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy && !(NetPolicy & EVSNetAuthorityMethodExecPolicy::Simulated)) { bShouldExecute = false; }
+	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy && !(NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Client)) { bShouldExecute = false; }
+	if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy && !(NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Simulated)) { bShouldExecute = false; }
 	
 	if (bShouldExecute)
 	{

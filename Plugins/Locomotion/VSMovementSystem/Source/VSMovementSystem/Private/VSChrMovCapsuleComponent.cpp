@@ -1,12 +1,65 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "VSChrMovCapsuleComponent.h"
+
+#include "VSPrivablic.h"
+#include "GameFramework/Character.h"
+#include "Libraries/VSGameplayLibrary.h"
 #include "PhysicsEngine/SphylElem.h"
 #include "PhysicsEngine/BodySetup.h"
+
+VS_DECLARE_PRIVABLIC_MEMBER(USceneComponent, AttachChildren, TArray<TObjectPtr<USceneComponent>>);
 
 UVSChrMovCapsuleComponent::UVSChrMovCapsuleComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+}
+
+void UVSChrMovCapsuleComponent::PostInitProperties()
+{
+	Super::PostInitProperties();
+
+#if WITH_EDITORONLY_DATA
+	/**
+	 * If you directly set the character's capsule component class to this,
+	 * the original capsule component object will still hold the former AttachChildren,
+	 * and this will cause an ensure message and package failure.
+	 * This will find the original root capsule component from the character and clear its AttachChildren.
+	 */
+	if (UVSGameplayLibrary::IsInBlueprintEditor(this))
+	{
+		if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
+		{
+			if (!GetAttachParent())
+			{
+				TArray<USceneComponent*> SceneComponents;
+				Character->GetComponents<USceneComponent>(SceneComponents);
+				for (USceneComponent* SceneComponent : SceneComponents)
+				{
+					if (SceneComponent == this) continue;
+					bool bHasFoundOriginalCapsule = false;
+					if (UCapsuleComponent* CapsuleComponent = Cast<UCapsuleComponent>(SceneComponent->GetAttachParent()))
+					{
+						if (!CapsuleComponent->GetAttachParent())
+						{
+							for (TObjectIterator<UCapsuleComponent> It; It; ++It)
+							{
+								UCapsuleComponent* Instance = *It;
+								if (Instance && Instance->GetAttachChildren().Contains(SceneComponent))
+								{
+									VS_PRIVABLIC_MEMBER(Instance, USceneComponent, AttachChildren).Empty();
+									bHasFoundOriginalCapsule = true;
+									break;
+								}
+							}
+						}
+					}
+					if (bHasFoundOriginalCapsule) break;
+				}
+			}
+		}
+	}
+#endif
 }
 
 FBoxSphereBounds UVSChrMovCapsuleComponent::CalcBounds(const FTransform& LocalToWorld) const
@@ -17,7 +70,7 @@ FBoxSphereBounds UVSChrMovCapsuleComponent::CalcBounds(const FTransform& LocalTo
 
 FPrimitiveSceneProxy* UVSChrMovCapsuleComponent::CreateSceneProxy()
 {
-	/** Represents a UCapsuleComponent to the scene manager. */
+	/** Represents a UVSChrMovCapsuleComponent to the scene manager. */
 	class FDrawCylinderSceneProxy final : public FPrimitiveSceneProxy
 	{
 	public:

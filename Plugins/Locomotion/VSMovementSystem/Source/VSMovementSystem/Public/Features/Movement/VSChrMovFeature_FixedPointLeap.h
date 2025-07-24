@@ -28,8 +28,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows"))
 	bool IsFixedPointLeapMode() const;
 	
-	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows, NetPolicies"))
-	void TryFixedPointLeap(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocation, USceneComponent* ComponentToFollow = nullptr, const FVSNetMethodExecutionPolicies& NetPolicies = FVSNetMethodExecutionPolicies());
+	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows, NetExecPolicies"))
+	void TryFixedPointLeap(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocation, USceneComponent* ComponentToFollow = nullptr, const FVSNetMethodExecutionPolicies& NetExecPolicies = FVSNetMethodExecutionPolicies());
 
 protected:
 	/** Stop the movement. This is not replicated. */
@@ -48,10 +48,10 @@ private:
 	void FixedPointLeapBySnappedParams(const FVSFixedPointLeapSnappedParams& SnappedParams);
 
 	UFUNCTION(Server, Reliable)
-	void TryFixedPointLeap_Server(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, USceneComponent* ComponentToFollow, EVSNetAuthorityMethodExecPolicy::Type NetPolicy);
+	void TryFixedPointLeap_Server(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, USceneComponent* ComponentToFollow, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void TryFixedPointLeap_Multicast(const FVSFixedPointLeapSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetPolicy);
+	void TryFixedPointLeap_Multicast(const FVSFixedPointLeapSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (RowType = "/Script/VSMovementSystem.VSFixedPointLeapSettings"))

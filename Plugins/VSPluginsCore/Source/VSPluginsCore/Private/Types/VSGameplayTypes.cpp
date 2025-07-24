@@ -77,18 +77,10 @@ FPlatformUserId FVSUserQueryParams::GetUserId() const
 }
 
 
-FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::LocalExecution
-{
-	.AutonomousLocalPolicy = EVSNetAutonomousMethodExecPolicy::Client,
-	.AuthorityLocalPolicy = EVSNetAuthorityMethodExecPolicy::Server,
-	.ServerRPCPolicy = EVSNetAuthorityMethodExecPolicy::None,
-	.bSimulatedLocalExecution = true
-};
+FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::LocalExecution = FVSNetMethodExecutionPolicies();
 
-FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::AutonomousPredictedMulticast
-{
-	.AutonomousLocalPolicy = EVSNetAutonomousMethodExecPolicy::ClientAndServer,
-	.AuthorityLocalPolicy = EVSNetAuthorityMethodExecPolicy::Multicast,
-	.ServerRPCPolicy = EVSNetAuthorityMethodExecPolicy::ServerAndSimulated,
-	.bSimulatedLocalExecution = false
-};
+FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::AutonomousPredictedMulticast = FVSNetMethodExecutionPolicies(
+	EVSNetAutonomousMethodExecPolicy::ClientAndServer,
+	EVSNetAuthorityMethodExecPolicy::Multicast,
+	EVSNetAuthorityMethodExecPolicy::ServerAndSimulated,
+	false);
