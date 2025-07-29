@@ -35,10 +35,10 @@ public:
 	
 	/**
 	 * End the wall run movement.
-	 * @param bTryEndMovement Whether to process the ending movement and animation.
+	 * @param bTryWithEndingMovement Whether to process the ending movement and animation.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "NetExecPolicies"))
-	void EndWallRun(bool bTryEndMovement, const FVSNetMethodExecutionPolicies& NetExecPolicies = FVSNetMethodExecutionPolicies());
+	void EndWallRun(bool bTryWithEndingMovement, const FVSNetMethodExecutionPolicies& NetExecPolicies = FVSNetMethodExecutionPolicies());
 
 	/**
 	 * Suggest a launch velocity that allows user to start a new wall run process on the other side wall, without changing the Z axis location.
@@ -123,5 +123,7 @@ private:
 		FGameplayTag WallRunState = FGameplayTag::EmptyTag;
 		float StartMovementElapsedTime = 0.f;
 		float EndMovementElapsedTime = 0.f;
+
+		float CapsuleHalfHeightOffsetUSCZ = 0.f;
 	} MovementData;
 };

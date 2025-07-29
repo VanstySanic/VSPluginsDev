@@ -89,9 +89,19 @@ struct FVSWallRunSettings : public FTableRowBase
 	/** The Z axis is especially for movement from ground. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FVector WallTraceOffset = FVector(128.0, 72.0, 72);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float RootFootHeightOffset = 16.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float RootHandHeightOffset = 108.f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float CycleDistanceToWall = 50.f;
+
+	/** Use default value if below 0.f. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float CapsuleHalfHeight = 0.f;
 	
 	/** Used in cycle. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

@@ -240,13 +240,13 @@ void UVSChrMovFeature_FixedPointLeap::FixedPointLeapBySnappedParams(const FVSFix
 	MovementData.CachedParams.ClientSideServerStartTime = UVSGameplayLibrary::GetServerTimeSeconds(this);
 	MovementData.CachedParams.ActionID = FMath::RandRange(0, INT16_MAX);
 	
-	const float TargetHalfHeightUSC = MovementData.SettingsPtr->CapsuleHalfHeight > 0.f ? (MovementData.SettingsPtr->CapsuleHalfHeight) : GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
 	
 	if (!IsFixedPointLeapMode())
 	{
 		SetMovementMode(EVSMovementMode::FixedPointLeap, false);
 	}
 	GetCharacterMovement()->StopMovementImmediately();
+	const float TargetHalfHeightUSC = MovementData.SettingsPtr->CapsuleHalfHeight > 0.f ? MovementData.SettingsPtr->CapsuleHalfHeight : GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
 	MovementData.CapsuleHalfHeightOffsetUSCZ = TargetHalfHeightUSC - GetCharacter()->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
 	GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(TargetHalfHeightUSC);
 }

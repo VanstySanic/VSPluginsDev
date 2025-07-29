@@ -27,9 +27,17 @@ void UVSChrMovFeature_TurnInPlace2D::Tick_Implementation(float DeltaTime)
 		MovementData.CachedParams.TriggerDelayedTime = 0.f;
 	}
 
+	MovementData.CachedParams.CheckBlockRemainedTime = FMath::Max(MovementData.CachedParams.CheckBlockRemainedTime - DeltaTime, 0.f);
 	if (GetOwnerActor()->HasAuthority())
 	{
-		TurnInPlaceCheck(DeltaTime);
+		if (MovementData.CachedParams.CheckBlockRemainedTime <= 0.f)
+		{
+			TurnInPlaceCheck(DeltaTime);
+		}
+		else
+		{
+			MovementData.CachedParams.TriggerDelayedTime = 0.f;
+		}
 	}
 }
 
@@ -138,7 +146,8 @@ void UVSChrMovFeature_TurnInPlace2D::TurnInPlaceCheck(float DeltaTime)
 	}
 	else
 	{
-		MovementData.CachedParams.TriggerDelayedTime = bDeclineTriggerDelayTime ? FMath::Max(MovementData.CachedParams.TriggerDelayedTime - DeltaTime, 0.f) : 0.f;
+		// MovementData.CachedParams.TriggerDelayedTime = bDeclineTriggerDelayTime ? FMath::Max(MovementData.CachedParams.TriggerDelayedTime - DeltaTime, 0.f) : 0.f;
+		MovementData.CachedParams.TriggerDelayedTime = 0.f;
 	}
 	if (MovementData.CachedParams.TriggerDelayedTime < TriggerDelayTime) return;
 
@@ -236,6 +245,15 @@ void UVSChrMovFeature_TurnInPlace2D::UpdateMovementTagQueryStates(const FGamepla
 		if (!MovementData.bMatchesEntranceTagQuery)
 		{
 			MovementData.CachedParams.TriggerDelayedTime = 0.f;
+		}
+		
+		for (const auto& QueriedCheckBlockTime : QueriedCheckBlockTimes)
+		{
+			if (QueriedCheckBlockTime.Value.Matches(GameplayTags, TagEvent))
+			{
+				MovementData.CachedParams.CheckBlockRemainedTime = QueriedCheckBlockTime.Key;
+				break;
+			}
 		}
 	}
 

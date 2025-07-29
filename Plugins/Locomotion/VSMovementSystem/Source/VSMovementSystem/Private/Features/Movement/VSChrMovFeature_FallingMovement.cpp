@@ -58,6 +58,7 @@ void UVSChrMovFeature_FallingMovement::OnMovementTagEventNotified_Implementation
 			MovementData.CachedJumpCount = 0;
 		}
 	}
+	/** TODO The jump count always late on simulated client. Need to repair this. */
 	if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy && TagEvent == EVSMovementEvent::Action_Jump)
 	{
 		MovementData.CachedJumpCount++;

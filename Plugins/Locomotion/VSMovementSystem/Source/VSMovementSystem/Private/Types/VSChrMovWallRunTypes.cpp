@@ -25,6 +25,7 @@ bool FVSWallRunSettings::IsValid() const
 	if (!Limits.IsValid()) return false;
 	if (!LeftAnims.CycleAnim) return false;
 	if (!RightAnims.CycleAnim) return false;
+	if (RootHandHeightOffset < 0.f || RootFootHeightOffset > RootHandHeightOffset) return false;
 	if (CycleDistanceToWall <= 0.f) return false;
 	if (CycleSpeed <= 0.f) return false;
 	

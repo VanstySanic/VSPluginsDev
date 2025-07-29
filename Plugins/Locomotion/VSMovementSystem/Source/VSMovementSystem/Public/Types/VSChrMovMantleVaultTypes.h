@@ -28,7 +28,7 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultAnimSettings : public FTableRowBase
 {
 	GENERATED_BODY()
 	
-	bool IsValid(const FName AnimReachTargetTimeMarkName = FName("ReachTarget"), const FName AnimGroundPivotTimeMarkName = FName("GroundPivot"), const FName AnimVaultOffPlatformTimeMarkName = FName("VaultOffPlatform")) const;
+	bool IsValid(const FName AnimScaleMovementToReachTargetTimeMarkName = FName("GroundPivot"), const FName AnimReachTargetTimeMarkName = FName("ReachTarget"), const FName AnimGroundPivotTimeMarkName = FName("GroundPivot"), const FName AnimVaultOffPlatformTimeMarkName = FName("VaultOffPlatform")) const;
 
 	/** Can be an anim sequence or a montage. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (RowType = "/Script/VSPluginsCore.VSAnimSequenceReference"))
@@ -41,20 +41,6 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultAnimSettings : public FTableRowBase
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector2D ReachTargetDistanceToWallRange = FVector2D(36.f, 36.f);
-	
-	/**
-	 * Whether to scale the movement from the start location to the evaluated reach target location.
-	 * If not, movement will be scaled after that.
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bScaleHorizontalMovementToReachTarget = true;
-	
-	/**
-	 * Whether to scale the movement from the start location to the evaluated reach target location.
-	 * If not, movement will be scaled after that.
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bScaleVerticalMovementToReachTarget = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<EVSMantleVaultMovementType::Type> MovementType = EVSMantleVaultMovementType::None;
@@ -196,6 +182,8 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultCachedParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector StartRootLocationRS = FVector::ZeroVector;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector ScaleMovementToReachTargetRootLocationRS = FVector::ZeroVector;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector ReachTargetRootLocationRS = FVector::ZeroVector;
@@ -203,6 +191,9 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultCachedParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector ReachTargetRootLocationScaledRS = FVector::ZeroVector;
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector2D AnimScaleMovementToReachTargetCurveValues = FVector2D::ZeroVector;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector2D AnimStartMovementCurveValues = FVector2D::ZeroVector;

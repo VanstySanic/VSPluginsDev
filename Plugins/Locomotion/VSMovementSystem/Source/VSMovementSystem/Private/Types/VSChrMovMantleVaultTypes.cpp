@@ -3,7 +3,7 @@
 #include "Types/VSChrMovMantleVaultTypes.h"
 #include "Kismet/KismetMathLibrary.h"
 
-bool FVSMantleVaultAnimSettings::IsValid(const FName AnimReachTargetTimeMarkName, const FName AnimGroundPivotTimeMarkName, const FName AnimVaultOffPlatformTimeMarkName) const
+bool FVSMantleVaultAnimSettings::IsValid(const FName AnimScaleMovementToReachTargetTimeMarkName, const FName AnimReachTargetTimeMarkName, const FName AnimGroundPivotTimeMarkName, const FName AnimVaultOffPlatformTimeMarkName) const
 {
 	FVSAnimSequenceReference* Anim = AnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 	if (!Anim || !Anim->IsValid()) return false;
@@ -13,6 +13,8 @@ bool FVSMantleVaultAnimSettings::IsValid(const FName AnimReachTargetTimeMarkName
 
 	if (!Anim->HasTimeMark(AnimReachTargetTimeMarkName)) return false;
 	if (!Anim->HasTimeMark(AnimGroundPivotTimeMarkName)) return false;
+
+	if (Anim->HasTimeMark(AnimScaleMovementToReachTargetTimeMarkName) && Anim->GetMarkTime(AnimScaleMovementToReachTargetTimeMarkName) > Anim->GetMarkTime(AnimReachTargetTimeMarkName)) return false;
 
 	const bool bSupportVault = MovementType & EVSMantleVaultMovementType::Vault;
 	if (bSupportVault && !Anim->HasTimeMark(AnimVaultOffPlatformTimeMarkName)) return false;

@@ -46,9 +46,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TurnInPlace")
 	FGameplayTag OrientationEvaluateType = EVSOrientationEvaluateType::Control;
 	
-	/** If true, the trigger delayed time will be declined instead of being reset to zero in some conditions. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TurnInPlace")
-	bool bDeclineTriggerDelayTime = false;
+	// /** If true, the trigger delayed time will be declined instead of being reset to zero in some conditions. */
+	// UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TurnInPlace")
+	// bool bDeclineTriggerDelayTime = false;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TurnInPlace", meta = (RowType = "/Script/VSMovementSystem.VSTurnInPlaceSettings2D"))
@@ -56,8 +56,8 @@ protected:
 
 	/** Auto selected by tags, if not overriden. */
 	UPROPERTY(EditAnywhere, Category = "TurnInPlace", meta = (ShowOnlyInnerProperties, RowType = "/Script/VSMovementSystem.VSTurnInPlaceSettings2D"))
-	TMap<FVSDataTableRowHandleWrap, FVSGameplayTagEventQuery> QueriedSettingRows;
-
+	TMap<FVSDataTableRowHandleWrap, FVSGameplayTagEventQueryContainer> QueriedSettingRows;
+	
 	UPROPERTY(EditAnywhere, Category = "TurnInPlace")
 	FVSGameplayTagEventQueryContainer RefreshSettingsRowQueries;
 	
@@ -68,6 +68,14 @@ protected:
 	/** Auto breaks when movement tags matches this. */
 	UPROPERTY(EditAnywhere, Category = "TurnInPlace")
 	FVSGameplayTagEventQueryContainer AutoBreakTagQueries;
+
+	/**
+	 * The turn in place check will be blocked for some time when query matches.
+	 * Notice that this will only block the check process but will not break current movement.
+	 * Always override the time instead of adding.
+	 */
+	UPROPERTY(EditAnywhere, Category = "TurnInPlace")
+	TMap<float, FVSGameplayTagEventQueryContainer> QueriedCheckBlockTimes;
 
 	
 	/** Anim time after that means the turn in place process enters the recovery state and can do another check. */
@@ -91,6 +99,7 @@ private:
 		FVSTurnInPlaceSnappedParams2D SnappedParams;
 		struct FMovementCachedParams
 		{
+			float CheckBlockRemainedTime = 0.f;
 			float TriggerDelayedTime = 0.f;
 			float AnimRotationAngle = 0.f;
 			float AnimPlayedTime = 0.f;

@@ -64,7 +64,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (RowType = "/Script/VSMovementSystem.VSMantleVaultSettings"))
 	TArray<FDataTableRowHandle> DefaultSettingRows;
 	
-	
+	/**
+	 * The time when the animation begins to scale its movement to the reach-target location.
+	 * If not assigned, use the start time.
+	 * If you don't want to scale the movement, set the time equal to GroundPivot.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+	FName AnimScaleMovementToReachTargetTimeMarkName = FName("ScaleMovementToReachTarget");
+
 	/** The time when the movement first reaches the target wall / ground. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	FName AnimReachTargetTimeMarkName = FName("ReachTarget");
@@ -83,6 +90,7 @@ protected:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	FName AnimVaultOffPlatformTimeMarkName = FName("VaultOffPlatform");
+
 	
 public:
 #if WITH_EDITORONLY_DATA

@@ -2,6 +2,7 @@
 
 #include "Features/Movement/VSChrMovFeature_WallRunMovement.h"
 #include "KismetTraceUtils.h"
+#include "VSChrMovCapsuleComponent.h"
 #include "VSMovementSystemSettings.h"
 #include "Classees/Framework/VSGameplayTagController.h"
 #include "Components/CapsuleComponent.h"
@@ -48,14 +49,14 @@ void UVSChrMovFeature_WallRunMovement::UpdateMovement_Implementation(float Delta
 	FCollisionQueryParams TraceQueryParams;
 	TraceQueryParams.AddIgnoredActor(GetCharacter());
 	
-	/** Trace side wall to adjust the movement direction. */
-	bool bShouldTraceForSideWallRoot = true;
+	/** Trace side wall root to adjust the movement direction. */
+	bool bShouldTraceForSideWall = true;
 	if (MovementData.WallRunState == EVSWallRunState::Starting)
 	{
 		const float StartReachTargetWallTime = MovementData.StartAnimPtr->HasTimeMark(AnimStartReachWallMarkName) ? MovementData.StartAnimPtr->GetMarkTime(AnimStartReachWallMarkName) : MovementData.StartAnimPtr->GetSafePlayTimeRange().Y;
 		if (MovementData.StartMovementElapsedTime <= StartReachTargetWallTime)
 		{
-			bShouldTraceForSideWallRoot = false;
+			bShouldTraceForSideWall = false;
 		}
 	}
 	else if (MovementData.WallRunState == EVSWallRunState::Ending)
@@ -63,32 +64,44 @@ void UVSChrMovFeature_WallRunMovement::UpdateMovement_Implementation(float Delta
 		const float EndLeaveWallWallTime = MovementData.EndAnimPtr->HasTimeMark(AnimStartReachWallMarkName) ? MovementData.EndAnimPtr->GetMarkTime(AnimEndLeaveWallMarkName) : MovementData.EndAnimPtr->GetSafePlayTimeRange().Y;
 		if (MovementData.EndMovementElapsedTime >= EndLeaveWallWallTime)
 		{
-			bShouldTraceForSideWallRoot = false;
+			bShouldTraceForSideWall = false;
 		}
 	}
-	FHitResult TraceSideWallHitResult;
-	if (bShouldTraceForSideWallRoot)
+	FHitResult TraceSideWallFootHitResult;
+	FHitResult TraceSideWallHandHitResult;
+	/** Foot. */
+	if (bShouldTraceForSideWall)
 	{
 		const float CapsuleRadiusSC = GetCharacter()->GetCapsuleComponent()->GetScaledCapsuleRadius();
-		const FVector& TraceSideWallStart = GetRootLocation() + CapsuleRadiusSC * GetUpDirection();
+		const FVector& TraceSideWallStart = GetRootLocation() + FMath::Min(CapsuleRadiusSC, MovementData.SettingsPtr->RootFootHeightOffset) * GetUpDirection();
 		const FVector& TraceSideWallEnd = TraceSideWallStart + ComponentTransformWS.TransformVectorNoScale(-MovementData.LastTracedWallNormalRS) * FMath::Max(MovementData.SettingsPtr->CycleDistanceToWall, MovementData.SettingsPtr->WallTraceOffset.Y) * GetScale3D().Y * 1.05f;
-		UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, TraceSideWallHitResult, TraceSideWallStart, TraceSideWallEnd, GetCharacter()->GetActorQuat(), FCollisionShape(), GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
+		UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, TraceSideWallFootHitResult, TraceSideWallStart, TraceSideWallEnd, GetCharacter()->GetActorQuat(), FCollisionShape(), GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
 #if WITH_EDITORONLY_DATA
-		if (bDrawDebugShapes) { DrawDebugLineTraceSingle(GetWorld(), TraceSideWallStart, TraceSideWallEnd, EDrawDebugTrace::ForOneFrame, TraceSideWallHitResult.bBlockingHit, TraceSideWallHitResult, FColor::Cyan, FColor::Magenta, 3.f); }
+		if (bDrawDebugShapes) { DrawDebugLineTraceSingle(GetWorld(), TraceSideWallStart, TraceSideWallEnd, EDrawDebugTrace::ForOneFrame, TraceSideWallFootHitResult.bBlockingHit, TraceSideWallFootHitResult, FColor::Cyan, FColor::Magenta, 3.f); }
 #endif
-		if (TraceSideWallHitResult.IsValidBlockingHit())
+		if (TraceSideWallFootHitResult.IsValidBlockingHit())
 		{
 			/** Consider component change. */
-			if (TraceSideWallHitResult.GetComponent() != MovementData.SnappedParams.Component)
+			if (TraceSideWallFootHitResult.GetComponent() != MovementData.SnappedParams.Component)
 			{
-				MovementData.SnappedParams.Component = TraceSideWallHitResult.GetComponent();
+				MovementData.SnappedParams.Component = TraceSideWallFootHitResult.GetComponent();
 				ComponentTransformWS = MovementData.SnappedParams.Component->GetComponentTransform();
 				UpVectorRS = UKismetMathLibrary::InverseTransformDirection(ComponentTransformWS, GetUpDirection());
 			}
 			
-			MovementData.LastTracedWallNormalRS = ComponentTransformWS.InverseTransformVectorNoScale(TraceSideWallHitResult.ImpactNormal);
-			MovementData.LastTracedWallPointRS = ComponentTransformWS.InverseTransformVectorNoScale(TraceSideWallHitResult.ImpactPoint);
+			MovementData.LastTracedWallNormalRS = ComponentTransformWS.InverseTransformVectorNoScale(TraceSideWallFootHitResult.ImpactNormal);
+			MovementData.LastTracedWallPointRS = ComponentTransformWS.InverseTransformVectorNoScale(TraceSideWallFootHitResult.ImpactPoint);
 		}
+	}
+	/** Hand. */
+	if (bShouldTraceForSideWall)
+	{
+		const FVector& TraceSideWallStart = GetRootLocation() + MovementData.SettingsPtr->RootHandHeightOffset * GetUpDirection();
+		const FVector& TraceSideWallEnd = TraceSideWallStart + ComponentTransformWS.TransformVectorNoScale(-MovementData.LastTracedWallNormalRS) * FMath::Max(MovementData.SettingsPtr->CycleDistanceToWall, MovementData.SettingsPtr->WallTraceOffset.Y) * GetScale3D().Y * 1.05f;
+		UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, TraceSideWallHandHitResult, TraceSideWallStart, TraceSideWallEnd, GetCharacter()->GetActorQuat(), FCollisionShape(), GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
+#if WITH_EDITORONLY_DATA
+		if (bDrawDebugShapes) { DrawDebugLineTraceSingle(GetWorld(), TraceSideWallStart, TraceSideWallEnd, EDrawDebugTrace::ForDuration, TraceSideWallHandHitResult.bBlockingHit, TraceSideWallHandHitResult, FColor::Orange, FColor::Purple, 3.f); }
+#endif
 	}
 	
 	FVector MovementDirectionWS = GetUpDirection().Cross(MovementData.LastTracedWallNormalRS).GetSafeNormal() * (!MovementData.SnappedParams.bLeftOrRight ? -1.f : 1.f);
@@ -145,7 +158,7 @@ void UVSChrMovFeature_WallRunMovement::UpdateMovement_Implementation(float Delta
 		// {
 		// 	SpeedSizeDelta = FMath::Clamp(SpeedSizeDelta - DeltaTime * MovementData.SettingsPtr->CycleAccelerationSize, 0.f, SpeedSizeDelta);
 		// }
-		GetCharacterMovement()->Velocity = MovementDirectionWS * (MovementData.SettingsPtr->CycleSpeed /*+ SpeedSizeDelta*/);
+		GetCharacterMovement()->Velocity = MovementDirectionWS * (MovementData.SettingsPtr->CycleSpeed /*+ SpeedSizeDelta */);
 		GetCharacterMovement()->SafeMoveUpdatedComponent(GetCharacterMovement()->Velocity * DeltaTime, GetCharacter()->GetActorQuat(), true, UpdateMovementHitResult);
 		MovementData.LastUpdatedRootLocationRS = ComponentTransformWS.InverseTransformPosition(GetCharacter()->GetActorLocation());
 	}
@@ -178,35 +191,35 @@ void UVSChrMovFeature_WallRunMovement::UpdateMovement_Implementation(float Delta
 	/** Trace for ground. */
 	FHitResult TraceGroundHitResult;
 
-	if (bShouldTraceForSideWallRoot)
+	if (bShouldTraceForSideWall)
 	{
 		const FVector& TraceGroundStart = GetRootLocation();
 		const FVector& TraceGroundEnd = TraceGroundStart - MovementData.SettingsPtr->Limits.RootHeightToGroundThresholdRange.X * GetScale3D().Z * GetUpDirection();
 		UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, TraceGroundHitResult, TraceGroundStart, TraceGroundEnd, GetCharacter()->GetActorQuat(), FCollisionShape(), GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
 #if WITH_EDITORONLY_DATA
-		if (bDrawDebugShapes) { DrawDebugLineTraceSingle(GetWorld(), TraceGroundStart, TraceGroundEnd, EDrawDebugTrace::ForOneFrame, TraceGroundHitResult.bBlockingHit, TraceGroundHitResult, FColor::Orange, FColor::Purple, 3.f); }
+		if (bDrawDebugShapes) { DrawDebugLineTraceSingle(GetWorld(), TraceGroundStart, TraceGroundEnd, EDrawDebugTrace::ForOneFrame, TraceGroundHitResult.bBlockingHit, TraceGroundHitResult, FColor::Turquoise, FColor::Silver, 3.f); }
 #endif
 	}
 
 	/** Adjust distance to wall. */
-	if (bShouldTraceForSideWallRoot && TraceSideWallHitResult.bBlockingHit)
+	if (bShouldTraceForSideWall && TraceSideWallFootHitResult.bBlockingHit)
 	{
-		const float DistanceToWall = (RootLocationWS - TraceSideWallHitResult.ImpactPoint).ProjectOnToNormal(-TraceSideWallHitResult.ImpactNormal).Size();
+		const float DistanceToWall = (RootLocationWS - TraceSideWallFootHitResult.ImpactPoint).ProjectOnToNormal(-TraceSideWallFootHitResult.ImpactNormal).Size();
 		const float DistanceDelta = DistanceToWall - MovementData.SettingsPtr->CycleDistanceToWall * GetScale3D().Y;
 		const float LaggedDistanceDelta = UVSMathLibrary::FloatInterpTo(DistanceDelta, 0.f, DeltaTime, 10.f);
-		GetCharacterMovement()->SafeMoveUpdatedComponent((DistanceDelta - LaggedDistanceDelta) * -TraceSideWallHitResult.ImpactNormal, GetCharacter()->GetActorQuat(), false, UpdateMovementHitResult);
+		GetCharacterMovement()->SafeMoveUpdatedComponent((DistanceDelta - LaggedDistanceDelta) * -TraceSideWallFootHitResult.ImpactNormal, GetCharacter()->GetActorQuat(), false, UpdateMovementHitResult);
 	}
 
 	/** Check for movement end. */
 	bool bShouldBreakMovement = false;
 	bool bBreakMovementWithEnd = false;
-	if (bShouldTraceForSideWallRoot && !TraceSideWallHitResult.bBlockingHit) { bShouldBreakMovement = true; }
-	if (bShouldTraceForSideWallRoot && TraceGroundHitResult.bBlockingHit && MovementData.WallRunState != EVSWallRunState::Ending) { bBreakMovementWithEnd = true; }
+	if (bShouldTraceForSideWall && (!TraceSideWallFootHitResult.bBlockingHit || !TraceSideWallFootHitResult.IsValidBlockingHit())) { bShouldBreakMovement = true; }
+	if (bShouldTraceForSideWall && TraceGroundHitResult.bBlockingHit && MovementData.WallRunState != EVSWallRunState::Ending) { bBreakMovementWithEnd = true; }
 	if (UpdateMovementHitResult.bBlockingHit) { bShouldBreakMovement = true; }
 	else if (MovementData.WallRunState == EVSWallRunState::Ending && MovementData.EndMovementElapsedTime >= MovementData.EndAnimPtr->GetSafePlayTimeRange().Y) { bShouldBreakMovement = true; }
 	if (bShouldBreakMovement)
 	{
-		EndWallRun(bBreakMovementWithEnd, FVSNetMethodExecutionPolicies::LocalExecution);
+		EndWallRun(bBreakMovementWithEnd);
 	}
 }
 
@@ -249,28 +262,28 @@ void UVSChrMovFeature_WallRunMovement::TryWallRun(const TArray<FDataTableRowHand
 	}
 }
 
-void UVSChrMovFeature_WallRunMovement::EndWallRun(bool bTryEndMovement, const FVSNetMethodExecutionPolicies& NetExecPolicies)
+void UVSChrMovFeature_WallRunMovement::EndWallRun(bool bTryWithEndingMovement, const FVSNetMethodExecutionPolicies& NetExecPolicies)
 {
 	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy)
 	{
 		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
 		{
-			EndWallRunInternal(bTryEndMovement);
+			EndWallRunInternal(bTryWithEndingMovement);
 		}
 		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
 		{
-			EndWallRun_Server(bTryEndMovement, NetExecPolicies.ServerRPCPolicy);
+			EndWallRun_Server(bTryWithEndingMovement, NetExecPolicies.ServerRPCPolicy);
 		}
 	}
 	else if (GetCharacter()->GetLocalRole() == ROLE_Authority)
 	{
-		EndWallRun_Server(bTryEndMovement, NetExecPolicies.AuthorityLocalPolicy);
+		EndWallRun_Server(bTryWithEndingMovement, NetExecPolicies.AuthorityLocalPolicy);
 	}
 	else if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy)
 	{
 		if (NetExecPolicies.bSimulatedLocalExecution)
 		{
-			EndWallRunInternal(bTryEndMovement);
+			EndWallRunInternal(bTryWithEndingMovement);
 		}
 	}
 }
@@ -302,15 +315,17 @@ bool UVSChrMovFeature_WallRunMovement::SuggestLaunchVelocityToOtherSideParallele
 	const FVector& CurrentWallPointWS = ComponentTransformWS.TransformPosition(MovementData.LastTracedWallPointRS);
 
 	/** Trace for other side wall. */
+	const float RadiusSC = GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetScaledCapsuleRadius();
+	const FCollisionShape& RadiusTraceShape = FCollisionShape::MakeSphere(RadiusSC);
 	FCollisionQueryParams TraceQueryParams;
 	TraceQueryParams.AddIgnoredActor(GetCharacter());
 	
 	FHitResult TraceOtherSideWallHitResult;
 	const FVector& TraceOtherSideWallStart = RootLocationWS + CapsuleRadiusSC * GetUpDirection();
 	const FVector& TraceOtherSideWallEnd = TraceOtherSideWallStart + CurrentWallNormalWS * WallDistanceRange.Y * GetScale3D().Y + VelocityX * MovementDuration;
-	UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, TraceOtherSideWallHitResult, TraceOtherSideWallStart, TraceOtherSideWallEnd, GetCharacter()->GetActorQuat(), FCollisionShape(), GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
+	UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, TraceOtherSideWallHitResult, TraceOtherSideWallStart, TraceOtherSideWallEnd, GetCharacter()->GetActorQuat(), RadiusTraceShape, GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
 #if WITH_EDITORONLY_DATA
-	if (bDrawDebugShapes) { DrawDebugLineTraceSingle(GetWorld(), TraceOtherSideWallStart, TraceOtherSideWallEnd, EDrawDebugTrace::ForDuration, TraceOtherSideWallHitResult.bBlockingHit, TraceOtherSideWallHitResult, FColor::Turquoise, FColor::Silver, 3.f); }
+	if (bDrawDebugShapes) { DrawDebugSphereTraceSingle(GetWorld(), TraceOtherSideWallStart, TraceOtherSideWallEnd, RadiusSC, EDrawDebugTrace::ForDuration, TraceOtherSideWallHitResult.bBlockingHit, TraceOtherSideWallHitResult, FColor::Turquoise, FColor::Silver, 3.f); }
 #endif
 	if (!TraceOtherSideWallHitResult.IsValidBlockingHit()) { return false; }
 
@@ -476,15 +491,14 @@ void UVSChrMovFeature_WallRunMovement::WallRunBySnappedParams(const FVSWallRunSn
 	MovementData.LastUpdatedRootLocationRS = StartRootLocationRS;
 	MovementData.LastTracedWallNormalRS = SnappedParams.StartWallNormal2DRS;
 	MovementData.LastTracedWallPointRS = SnappedParams.StartWallPointRS;
-
-	if (IConsoleVariable* ConsoleVariable = IConsoleManager::Get().FindConsoleVariable(*FString("p.NetEnableMoveCombining", false)))
-	{
-		ConsoleVariable->SetWithCurrentPriority(0);
-	}
+	
 	if (!IsWallRunMode())
 	{
 		SetMovementMode(EVSMovementMode::WallRunning, false);
 	}
+	const float TargetHalfHeightUSC = MovementData.SettingsPtr->CapsuleHalfHeight > 0.f ? MovementData.SettingsPtr->CapsuleHalfHeight : GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+	MovementData.CapsuleHalfHeightOffsetUSCZ = TargetHalfHeightUSC - GetMovementCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+	GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(TargetHalfHeightUSC);
 	GetCharacterMovement()->StopMovementImmediately();
 	SetWallRunState((SnappedParams.bFromGround && MovementData.StartAnimPtr) ? EVSWallRunState::Starting : EVSWallRunState::Cycling);
 }
@@ -514,6 +528,11 @@ void UVSChrMovFeature_WallRunMovement::EndWallRunInternal(bool bTryEndMovement)
 		{
 			Evaluator->DefaultNamedParams.VectorParams.Remove(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection);
 		}
+		if (!FMath::IsNearlyZero(MovementData.CapsuleHalfHeightOffsetUSCZ, 0.01f))
+		{
+			GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(GetMovementCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - MovementData.CapsuleHalfHeightOffsetUSCZ);
+			MovementData.CapsuleHalfHeightOffsetUSCZ = 0.f;
+		}
 		MovementData = FMovementData();
 		
 		if (IsWallRunMode())
@@ -539,11 +558,12 @@ bool UVSChrMovFeature_WallRunMovement::CalcWallRunSnappedParams(FVSWallRunSnappe
 
 	/** SC means scaled. */
 	const FVector& CharacterScaleWS = GetCharacter()->GetActorScale();
-	// const float HalfHeightSC = GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 	const FVector& RootLocationWS = GetRootLocation();
 	const float RadiusSC = GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetScaledCapsuleRadius();
+	const float TargetHalfHeightSC = Settings->CapsuleHalfHeight > 0.f ? (Settings->CapsuleHalfHeight * GetScale3D().Z) : GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 
-	// const FCollisionShape& RadiusTraceShape = FCollisionShape::MakeSphere(RadiusSC);
+	const FCollisionShape& RootFootRadiusTraceShape = FCollisionShape::MakeSphere(FMath::Min(RadiusSC, Settings->RootFootHeightOffset * GetScale3D().Z));
+	const FCollisionShape& CapsuleTraceShape = FCollisionShape::MakeCapsule(RadiusSC, TargetHalfHeightSC);
 	FCollisionQueryParams TraceQueryParams;
 	TraceQueryParams.AddIgnoredActor(GetCharacter());
 	
@@ -577,12 +597,12 @@ bool UVSChrMovFeature_WallRunMovement::CalcWallRunSnappedParams(FVSWallRunSnappe
 	}
 
 	/** Trace forward to find a possible wall. */
-	const FVector& WallForwardTraceStart = RootLocationWS + RadiusSC * GetUpDirection() + (bFromGround ? Settings->WallTraceOffset.Z * CharacterScaleWS.Z * GetCharacter()->GetActorUpVector() : FVector::ZeroVector);
+	const FVector& WallForwardTraceStart = RootLocationWS + Settings->RootFootHeightOffset * GetScale3D().Z + (bFromGround ? Settings->WallTraceOffset.Z * CharacterScaleWS.Z * GetCharacter()->GetActorUpVector() : FVector::ZeroVector);
 	const FVector& WallForwardTraceEnd = WallForwardTraceStart + Settings->WallTraceOffset.X * CharacterScaleWS.X * WallTraceDirection;
 	FHitResult WallForwardTraceHitResult;
-	UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, WallForwardTraceHitResult, WallForwardTraceStart, WallForwardTraceEnd, GetCharacter()->GetActorQuat(), FCollisionShape(), GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
+	UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, WallForwardTraceHitResult, WallForwardTraceStart, WallForwardTraceEnd, GetCharacter()->GetActorQuat(), RootFootRadiusTraceShape, GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
 #if WITH_EDITORONLY_DATA && ENABLE_DRAW_DEBUG
-	if (bDrawDebugShapes) DrawDebugLineTraceSingle(GetWorld(), WallForwardTraceStart, WallForwardTraceEnd, EDrawDebugTrace::ForOneFrame, WallForwardTraceHitResult.bBlockingHit, WallForwardTraceHitResult, FColor::Red, FColor::Green, 3.f);
+	if (bDrawDebugShapes) DrawDebugSphereTraceSingle(GetWorld(), WallForwardTraceStart, WallForwardTraceEnd, RadiusSC, EDrawDebugTrace::ForOneFrame, WallForwardTraceHitResult.bBlockingHit, WallForwardTraceHitResult, FColor::Red, FColor::Green, 3.f);
 #endif
 	if (WallForwardTraceHitResult.bBlockingHit && !WallForwardTraceHitResult.IsValidBlockingHit()) return false;
 
@@ -590,17 +610,16 @@ bool UVSChrMovFeature_WallRunMovement::CalcWallRunSnappedParams(FVSWallRunSnappe
 	FVector WallTraceAdjustedDirectionWS = !WallForwardTraceHitResult.bBlockingHit ? WallTraceDirection : GetUpDirection().Cross(WallForwardTraceHitResult.Normal).GetSafeNormal();
 	if (WallTraceAdjustedDirectionWS.Dot(WallTraceDirection) < 0.f) { WallTraceAdjustedDirectionWS *= -1.f; }
 	
-	/** Trace side to find a wall. */
+	/** Trace side to find a wall at the foot. */
 	/** Left side trace. */
 	const FVector& WallTraceLeftDirection = GetCharacter()->GetActorUpVector().Cross(WallTraceAdjustedDirectionWS).GetSafeNormal();
 	const FVector& WallTraceLeftSideStart = WallForwardTraceStart + WallTraceAdjustedDirectionWS * (bFromGround ? Settings->WallTraceOffset.X * CharacterScaleWS.X : RadiusSC);
 	const FVector& WallTraceLeftSideEnd = WallTraceLeftSideStart - Settings->WallTraceOffset.Y * CharacterScaleWS.Y * WallTraceLeftDirection;
 	FHitResult WallTraceLeftSideHitResult;
-	UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, WallTraceLeftSideHitResult, WallTraceLeftSideStart, WallTraceLeftSideEnd, GetCharacter()->GetActorQuat(), FCollisionShape(), GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
+	UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, WallTraceLeftSideHitResult, WallTraceLeftSideStart, WallTraceLeftSideEnd, GetCharacter()->GetActorQuat(), RootFootRadiusTraceShape, GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
 #if WITH_EDITORONLY_DATA && ENABLE_DRAW_DEBUG
-	if (bDrawDebugShapes) DrawDebugLineTraceSingle(GetWorld(), WallTraceLeftSideStart, WallTraceLeftSideEnd, EDrawDebugTrace::ForOneFrame, WallTraceLeftSideHitResult.bBlockingHit, WallTraceLeftSideHitResult, FColor::Blue, FColor::Yellow, 3.f);
+	if (bDrawDebugShapes) DrawDebugSphereTraceSingle(GetWorld(), WallTraceLeftSideStart, WallTraceLeftSideEnd, RadiusSC, EDrawDebugTrace::ForOneFrame, WallTraceLeftSideHitResult.bBlockingHit, WallTraceLeftSideHitResult, FColor::Blue, FColor::Yellow, 3.f);
 #endif
-
 	bool bValidWallLeftSide = true;
 	if (!WallTraceLeftSideHitResult.IsValidBlockingHit()) { bValidWallLeftSide = false; }
 	const FVector& MovementDirectionLeft = FVector::VectorPlaneProject(WallTraceLeftSideHitResult.ImpactNormal.Cross(GetUpDirection()), GetUpDirection()).GetSafeNormal();
@@ -617,7 +636,33 @@ bool UVSChrMovFeature_WallRunMovement::CalcWallRunSnappedParams(FVSWallRunSnappe
 	{	const float InputMovementAngle = (FMath::RadiansToDegrees(FQuat::FindBetweenVectors(MovementDirectionLeft, GetMovementInput2D()).GetAngle())) * (FMath::Sign(GetMovementInput2D().Dot(-WallTraceLeftSideHitResult.ImpactNormal)));
 		if (!UKismetMathLibrary::InRange_FloatFloat(InputMovementAngle, Settings->Limits.InputTowardsMovementAngleRange2D.X, Settings->Limits.InputTowardsMovementAngleRange2D.Y)) { bValidWallLeftSide = false; }
 	}
-
+	/** Check for block. */
+	if (bValidWallLeftSide)
+	{
+		const FVector& FinalRootLocation = WallTraceLeftSideHitResult.ImpactPoint - Settings->RootFootHeightOffset * GetScale3D().Z * GetUpDirection() + WallTraceLeftSideHitResult.ImpactNormal * FMath::Max(Settings->CycleDistanceToWall, RadiusSC);
+		const FVector& BlockCheckStart = RootLocationWS + TargetHalfHeightSC * GetUpDirection();
+		const FVector& BlockCheckEnd = FinalRootLocation + TargetHalfHeightSC * GetUpDirection();
+		FHitResult BlockHitResult;
+		UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, BlockHitResult, BlockCheckStart, BlockCheckEnd, GetCharacter()->GetActorQuat(), CapsuleTraceShape, GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
+#if WITH_EDITORONLY_DATA && ENABLE_DRAW_DEBUG
+		if (bDrawDebugShapes) DrawDebugCapsuleTraceSingle(GetWorld(), BlockCheckStart, BlockCheckEnd, RadiusSC, TargetHalfHeightSC, EDrawDebugTrace::ForOneFrame, BlockHitResult.bBlockingHit, BlockHitResult, FColor::Cyan, FColor::Magenta, 3.f);
+#endif
+		if (BlockHitResult.bBlockingHit) { bValidWallLeftSide = false; }
+	}
+	/** Check for hand position side. */
+	if (bValidWallLeftSide)
+	{
+		const FVector& FinalWallRootLocation = WallTraceLeftSideHitResult.ImpactPoint - Settings->RootFootHeightOffset * GetScale3D().Z * GetUpDirection();
+		const FVector& HandSideCheckStart = FinalWallRootLocation + Settings->RootHandHeightOffset * GetScale3D().Z * GetUpDirection() + WallTraceLeftSideHitResult.ImpactNormal;
+		const FVector& HandSideCheckEnd = HandSideCheckStart - 2.f * WallTraceLeftSideHitResult.ImpactNormal;
+		FHitResult HandSideHitResult;
+		UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, HandSideHitResult, HandSideCheckStart, HandSideCheckEnd, GetCharacter()->GetActorQuat(), FCollisionShape(), GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
+#if WITH_EDITORONLY_DATA && ENABLE_DRAW_DEBUG
+		if (bDrawDebugShapes) DrawDebugLineTraceSingle(GetWorld(), HandSideCheckStart, HandSideCheckEnd, EDrawDebugTrace::ForOneFrame, HandSideHitResult.bBlockingHit, HandSideHitResult, FColor::Orange, FColor::Purple, 3.f);
+#endif
+		if (!HandSideHitResult.IsValidBlockingHit()) { bValidWallLeftSide = false; }
+	}
+	
 	/** Right side trace. */
 	const FVector& WallTraceRightDirection = -WallTraceLeftDirection;
 	const FVector& WallTraceRightSideStart = WallTraceLeftSideStart;
@@ -645,7 +690,33 @@ bool UVSChrMovFeature_WallRunMovement::CalcWallRunSnappedParams(FVSWallRunSnappe
 		const float InputMovementAngle = (FMath::RadiansToDegrees(FQuat::FindBetweenVectors(MovementDirectionRight, GetMovementInput2D()).GetAngle())) * (FMath::Sign(GetMovementInput2D().Dot(-WallTraceRightSideHitResult.ImpactNormal)));
 		if (!UKismetMathLibrary::InRange_FloatFloat(InputMovementAngle, Settings->Limits.InputTowardsMovementAngleRange2D.X, Settings->Limits.InputTowardsMovementAngleRange2D.Y)) { bValidWallRightSide = false; }
 	}
-
+	/** Check for block. */
+	if (bValidWallRightSide)
+	{
+		const FVector& FinalRootLocation = WallTraceRightSideHitResult.ImpactPoint - Settings->RootFootHeightOffset * GetScale3D().Z * GetUpDirection() + WallTraceRightSideHitResult.ImpactNormal * FMath::Max(Settings->CycleDistanceToWall, RadiusSC);
+		const FVector& BlockCheckStart = RootLocationWS + TargetHalfHeightSC * GetUpDirection();
+		const FVector& BlockCheckEnd = FinalRootLocation + TargetHalfHeightSC * GetUpDirection();
+		FHitResult BlockHitResult;
+		UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, BlockHitResult, BlockCheckStart, BlockCheckEnd, GetCharacter()->GetActorQuat(), CapsuleTraceShape, GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
+#if WITH_EDITORONLY_DATA && ENABLE_DRAW_DEBUG
+		if (bDrawDebugShapes) DrawDebugCapsuleTraceSingle(GetWorld(), BlockCheckStart, BlockCheckEnd, RadiusSC, TargetHalfHeightSC, EDrawDebugTrace::ForDuration, BlockHitResult.bBlockingHit, BlockHitResult, FColor::Cyan, FColor::Magenta, 3.f);
+#endif
+		if (BlockHitResult.bBlockingHit) { bValidWallRightSide = false; }
+	}
+	/** Check for hand position side. */
+	if (bValidWallRightSide)
+	{
+		const FVector& FinalWallRootLocation = WallTraceRightSideHitResult.ImpactPoint - Settings->RootFootHeightOffset * GetScale3D().Z * GetUpDirection();
+		const FVector& HandSideCheckStart = FinalWallRootLocation + Settings->RootHandHeightOffset * GetScale3D().Z * GetUpDirection() + WallTraceRightSideHitResult.ImpactNormal;
+		const FVector& HandSideCheckEnd = HandSideCheckStart - 2.f * WallTraceRightSideHitResult.ImpactNormal;
+		FHitResult HandSideHitResult;
+		UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, HandSideHitResult, HandSideCheckStart, HandSideCheckEnd, GetCharacter()->GetActorQuat(), FCollisionShape(), GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceQueryParams);
+#if WITH_EDITORONLY_DATA && ENABLE_DRAW_DEBUG
+		if (bDrawDebugShapes) DrawDebugLineTraceSingle(GetWorld(), HandSideCheckStart, HandSideCheckEnd, EDrawDebugTrace::ForDuration, HandSideHitResult.bBlockingHit, HandSideHitResult, FColor::Orange, FColor::Purple, 3.f);
+#endif
+		if (!HandSideHitResult.IsValidBlockingHit()) { bValidWallRightSide = false; }
+	}
+	
 	/** No valid wall. */
 	if (!bValidWallLeftSide && !bValidWallRightSide) return false;
 	
@@ -665,7 +736,7 @@ bool UVSChrMovFeature_WallRunMovement::CalcWallRunSnappedParams(FVSWallRunSnappe
 	OutSnappedParams.StartComponentTransform = ComponentTransformWS;
 	OutSnappedParams.StartWallNormal2DRS = ComponentTransformWS.InverseTransformVectorNoScale(WallHitResult->ImpactNormal);
 	OutSnappedParams.StartWallPointRS = ComponentTransformWS.InverseTransformPosition(WallHitResult->ImpactPoint);
-	OutSnappedParams.StartWallRootPointRS = ComponentTransformWS.InverseTransformPosition(WallHitResult->ImpactPoint - RadiusSC * GetUpDirection());
+	OutSnappedParams.StartWallRootPointRS = ComponentTransformWS.InverseTransformPosition(WallHitResult->ImpactPoint - Settings->RootFootHeightOffset * GetUpDirection());
 	OutSnappedParams.StartMovementDirection2DRS = ComponentTransformWS.InverseTransformVectorNoScale(!bLeftOrRight ? MovementDirectionLeft : MovementDirectionRight);
 	OutSnappedParams.ServerSideServerStartTime = UVSGameplayLibrary::GetServerTimeSeconds(this);
 	OutSnappedParams.bLeftOrRight = bLeftOrRight;

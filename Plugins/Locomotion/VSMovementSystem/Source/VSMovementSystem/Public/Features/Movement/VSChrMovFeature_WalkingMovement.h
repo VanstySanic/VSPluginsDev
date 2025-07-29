@@ -118,19 +118,12 @@ protected:
 	FVSMovementBaseSettings DefaultCrouchedMovementBaseSettings;
 	
 	UPROPERTY(EditAnywhere, Category = "Movement")
-	TMap<FVSMovementBaseSettings, FVSGameplayTagEventQuery> QueriedMovementBaseSettings;
+	TMap<FVSMovementBaseSettings, FVSGameplayTagEventQueryContainer> QueriedMovementBaseSettings;
 
 	/** Works as an entry to define when to refresh the tagged movement base settings. */
 	UPROPERTY(EditAnywhere, Category = "Movement")
 	FVSGameplayTagEventQueryContainer RefreshMovementBaseSettingsQueries;
 
-public:
-	UPROPERTY(EditAnywhere, Category = "Movement")
-	float MovementInputDirectionInterpSpeed = 16;
-
-	UPROPERTY(EditAnywhere, Category = "Movement")
-	float MovementInputDirectionInterpMaxTimeStepping = 0.0166667;
-	
 private:
 	UPROPERTY(ReplicatedUsing = "OnRep_ReplicatedStance")
 	FGameplayTag ReplicatedStance;

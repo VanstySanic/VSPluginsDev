@@ -39,7 +39,7 @@ protected:
 	
 
 	UPROPERTY(EditAnywhere, Category = "Orientation")
-	TMap<FGameplayTag, FVSGameplayTagEventQuery> QueriedOrientationEvaluateTypes;
+	TMap<FGameplayTag, FVSGameplayTagEventQueryContainer> QueriedOrientationEvaluateTypes;
 
 	UPROPERTY(EditAnywhere, Category = "Orientation")
 	FVSGameplayTagEventQueryContainer RefreshQueriedOrientationEvaluateTypeQuery;

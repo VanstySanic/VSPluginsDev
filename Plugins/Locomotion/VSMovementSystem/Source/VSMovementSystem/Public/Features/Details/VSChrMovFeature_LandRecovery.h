@@ -40,15 +40,15 @@ private:
 	
 protected:
 	/** Used when no valid settings row is assigned. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Land Recovery", meta = (RowType = "/Script/VSLocomotionSystem.VSLandRecoverySettings"))
-	FVSDataTableRowHandleWrap DefaultSettingRows;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Land Recovery", meta = (RowType = "/Script/VSMovementSystem.VSLandRecoverySettings"))
+	FDataTableRowHandle DefaultSettingRows;
 
 	/**
 	 * Every reassigned row will only use once, until the character reaches ground.
 	 * Notice that reassignment will only occur when character enters walking mode.
 	 */
-	UPROPERTY(EditAnywhere, Category = "Land Recovery", meta = (ShowOnlyInnerProperties, RowType = "/Script/VSLocomotionSystem.VSLandRecoverySettings"))
-	TMap<FVSDataTableRowHandleWrap, FGameplayTagQuery> QueriedSettingRows;
+	UPROPERTY(EditAnywhere, Category = "Land Recovery", meta = (ShowOnlyInnerProperties, RowType = "/Script/VSMovementSystem.VSLandRecoverySettings"))
+	TMap<FVSDataTableRowHandleWrap, FVSGameplayTagEventQueryContainer> QueriedSettingRows;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	bool bEarlyOutWithInputWhenAdditive = false;

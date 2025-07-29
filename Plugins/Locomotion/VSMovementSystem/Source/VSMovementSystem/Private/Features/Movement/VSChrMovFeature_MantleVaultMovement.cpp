@@ -109,14 +109,45 @@ void UVSChrMovFeature_MantleVaultMovement::UpdateMovement_Implementation(float D
 	FVector TargetRootLocationRS = ComponentTransformWS.InverseTransformPosition(GetRootLocation());
 	if (MovementData.MovementElapsedTime <= MovementData.AnimPtr->GetMarkTime(AnimReachTargetTimeMarkName))
 	{
-		TargetRootLocationRS = MovementData.CachedParams.StartRootLocationRS;
-		if (!FMath::IsNearlyZero(MovementData.CachedParams.AnimReachTargetMovementValues.X - MovementData.CachedParams.AnimStartMovementCurveValues.X))
+		if (MovementData.AnimPtr->HasTimeMark(AnimScaleMovementToReachTargetTimeMarkName) && MovementData.AnimPtr->GetMarkTime(AnimScaleMovementToReachTargetTimeMarkName) >= MovementData.AnimPtr->GetMarkTime(AnimReachTargetTimeMarkName))
 		{
-			TargetRootLocationRS += (ForwardMovementCurveValue - MovementData.CachedParams.AnimStartMovementCurveValues.X) / (MovementData.CachedParams.AnimReachTargetMovementValues.X - MovementData.CachedParams.AnimStartMovementCurveValues.X) * UKismetMathLibrary::ProjectVectorOnToVector(MovementData.CachedParams.ReachTargetRootLocationRS - MovementData.CachedParams.StartRootLocationRS, MovementData.SnappedParams.MovementDirection2DRS);
+			if (MovementData.MovementElapsedTime <= MovementData.AnimPtr->GetMarkTime(AnimScaleMovementToReachTargetTimeMarkName))
+			{
+				TargetRootLocationRS = MovementData.CachedParams.StartRootLocationRS;
+				TargetRootLocationRS += (ForwardMovementCurveValue - MovementData.CachedParams.AnimStartMovementCurveValues.X) * MovementDirectionUnitRS;
+				TargetRootLocationRS += (UpMovementCurveValue - MovementData.CachedParams.AnimStartMovementCurveValues.Y) * UpVectorUnitRS;
+			}
+			else
+			{
+				TargetRootLocationRS = MovementData.CachedParams.ScaleMovementToReachTargetRootLocationRS;
+				if (!FMath::IsNearlyZero(MovementData.CachedParams.AnimReachTargetMovementValues.X - MovementData.CachedParams.ScaleMovementToReachTargetRootLocationRS.X))
+				{
+					TargetRootLocationRS += (ForwardMovementCurveValue - MovementData.CachedParams.ScaleMovementToReachTargetRootLocationRS.X) / (MovementData.CachedParams.AnimReachTargetMovementValues.X - MovementData.CachedParams.ScaleMovementToReachTargetRootLocationRS.X) * UKismetMathLibrary::ProjectVectorOnToVector(MovementData.CachedParams.ReachTargetRootLocationRS - MovementData.CachedParams.ScaleMovementToReachTargetRootLocationRS, MovementData.SnappedParams.MovementDirection2DRS);
+				}
+				if (!FMath::IsNearlyZero(MovementData.CachedParams.AnimReachTargetMovementValues.Y - MovementData.CachedParams.ScaleMovementToReachTargetRootLocationRS.Y))
+				{
+					TargetRootLocationRS += (UpMovementCurveValue - MovementData.CachedParams.ScaleMovementToReachTargetRootLocationRS.Y) / (MovementData.CachedParams.AnimReachTargetMovementValues.Y - MovementData.CachedParams.ScaleMovementToReachTargetRootLocationRS.Y) * UKismetMathLibrary::ProjectVectorOnToVector(MovementData.CachedParams.ReachTargetRootLocationRS - MovementData.CachedParams.ScaleMovementToReachTargetRootLocationRS, UpVectorRS);
+				}
+			}
+			
 		}
-		if (!FMath::IsNearlyZero(MovementData.CachedParams.AnimReachTargetMovementValues.Y - MovementData.CachedParams.AnimStartMovementCurveValues.Y))
+		else if (!MovementData.AnimPtr->HasTimeMark(AnimScaleMovementToReachTargetTimeMarkName))
 		{
-			TargetRootLocationRS += (UpMovementCurveValue - MovementData.CachedParams.AnimStartMovementCurveValues.Y) / (MovementData.CachedParams.AnimReachTargetMovementValues.Y - MovementData.CachedParams.AnimStartMovementCurveValues.Y) * UKismetMathLibrary::ProjectVectorOnToVector(MovementData.CachedParams.ReachTargetRootLocationRS - MovementData.CachedParams.StartRootLocationRS, UpVectorRS);
+			TargetRootLocationRS = MovementData.CachedParams.StartRootLocationRS;
+			if (!FMath::IsNearlyZero(MovementData.CachedParams.AnimReachTargetMovementValues.X - MovementData.CachedParams.AnimStartMovementCurveValues.X))
+			{
+				TargetRootLocationRS += (ForwardMovementCurveValue - MovementData.CachedParams.AnimStartMovementCurveValues.X) / (MovementData.CachedParams.AnimReachTargetMovementValues.X - MovementData.CachedParams.AnimStartMovementCurveValues.X) * UKismetMathLibrary::ProjectVectorOnToVector(MovementData.CachedParams.ReachTargetRootLocationRS - MovementData.CachedParams.StartRootLocationRS, MovementData.SnappedParams.MovementDirection2DRS);
+			}
+			if (!FMath::IsNearlyZero(MovementData.CachedParams.AnimReachTargetMovementValues.Y - MovementData.CachedParams.AnimStartMovementCurveValues.Y))
+			{
+				TargetRootLocationRS += (UpMovementCurveValue - MovementData.CachedParams.AnimStartMovementCurveValues.Y) / (MovementData.CachedParams.AnimReachTargetMovementValues.Y - MovementData.CachedParams.AnimStartMovementCurveValues.Y) * UKismetMathLibrary::ProjectVectorOnToVector(MovementData.CachedParams.ReachTargetRootLocationRS - MovementData.CachedParams.StartRootLocationRS, UpVectorRS);
+			}
+		}
+		else
+		{
+			TargetRootLocationRS = MovementData.CachedParams.StartRootLocationRS;
+			TargetRootLocationRS += (ForwardMovementCurveValue - MovementData.CachedParams.AnimStartMovementCurveValues.X) * MovementDirectionUnitRS;
+			TargetRootLocationRS += (UpMovementCurveValue - MovementData.CachedParams.AnimStartMovementCurveValues.Y) * UpVectorUnitRS;
 		}
 	}
 	else if (MovementData.MovementElapsedTime <= MovementData.AnimPtr->GetMarkTime(AnimGroundPivotTimeMarkName))
@@ -271,8 +302,6 @@ void UVSChrMovFeature_MantleVaultMovement::MantleVaultBySnappedParams(const FVSM
 	MovementData.CachedParams.AnimPlayRate = MovementData.AnimPtr->PlayRate;
 	MovementData.CachedParams.ActionID = FMath::RandRange(0, INT16_MAX);
 	
-	const float TargetCapsuleHalfHeightUSC = MovementData.SettingsPtr->CapsuleHalfHeight > 0.f ? MovementData.SettingsPtr->CapsuleHalfHeight : GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
-
 	const FVector& RootLocationWS = GetRootLocation();
 	const FTransform& ComponentTransformWS = MovementData.SnappedParams.Component->GetComponentTransform();
 	const FVector& UpVectorRS = ComponentTransformWS.InverseTransformVectorNoScale(GetUpDirection());
@@ -282,11 +311,17 @@ void UVSChrMovFeature_MantleVaultMovement::MantleVaultBySnappedParams(const FVSM
 	const FVector& StartRootLocationRS = UKismetMathLibrary::InverseTransformLocation(ComponentTransformWS, RootLocationWS);
 	const float DistanceToWall2DRS = (SnappedParams.FrontWallPointRS - StartRootLocationRS).ProjectOnToNormal(SnappedParams.MovementDirection2DRS).Size() / MovementDirectionUnitRS.Size();
 	const float PlatformHeightRS = (SnappedParams.GroundPivotPointRS - StartRootLocationRS).ProjectOnToNormal(UpVectorRS).Size();
-	
+	const bool bShouldScaleMovementToReachTarget = !MovementData.AnimPtr->HasTimeMark(AnimScaleMovementToReachTargetTimeMarkName) || MovementData.AnimPtr->GetMarkTime(AnimScaleMovementToReachTargetTimeMarkName) < MovementData.AnimPtr->GetMarkTime(AnimReachTargetTimeMarkName);
+
 	MovementData.CachedParams.StartRootLocationRS = StartRootLocationRS;
 	MovementData.CachedParams.ClientSideServerStartTime = UVSGameplayLibrary::GetServerTimeSeconds(this);
 	MovementData.CachedParams.AnimStartMovementCurveValues.X = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::X), MovementData.AnimPtr->GetSafePlayTimeRange().X);
 	MovementData.CachedParams.AnimStartMovementCurveValues.Y = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Z), MovementData.AnimPtr->GetSafePlayTimeRange().X);
+	if (bShouldScaleMovementToReachTarget && MovementData.AnimPtr->HasTimeMark(AnimScaleMovementToReachTargetTimeMarkName))
+	{
+		MovementData.CachedParams.AnimScaleMovementToReachTargetCurveValues.X = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::X), MovementData.AnimPtr->GetMarkTime(AnimScaleMovementToReachTargetTimeMarkName));
+		MovementData.CachedParams.AnimScaleMovementToReachTargetCurveValues.Y = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Z), MovementData.AnimPtr->GetMarkTime(AnimScaleMovementToReachTargetTimeMarkName));
+	}
 	MovementData.CachedParams.AnimReachTargetMovementValues.X = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::X), MovementData.AnimPtr->GetMarkTime(AnimReachTargetTimeMarkName));
 	MovementData.CachedParams.AnimReachTargetMovementValues.Y = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Z), MovementData.AnimPtr->GetMarkTime(AnimReachTargetTimeMarkName));
 	MovementData.CachedParams.AnimGroundPivotMovementValues.X = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::X), MovementData.AnimPtr->GetMarkTime(AnimGroundPivotTimeMarkName));
@@ -297,16 +332,23 @@ void UVSChrMovFeature_MantleVaultMovement::MantleVaultBySnappedParams(const FVSM
 		MovementData.CachedParams.AnimVaultOffPlatformMovementCurveValues.X = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::X), MovementData.AnimPtr->GetMarkTime(AnimVaultOffPlatformTimeMarkName));
 		MovementData.CachedParams.AnimVaultOffPlatformMovementCurveValues.Y = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Z), MovementData.AnimPtr->GetMarkTime(AnimVaultOffPlatformTimeMarkName));
 	}
+	
+	if (bShouldScaleMovementToReachTarget && MovementData.AnimPtr->HasTimeMark(AnimScaleMovementToReachTargetTimeMarkName))
+	{
+		MovementData.CachedParams.ScaleMovementToReachTargetRootLocationRS = StartRootLocationRS;
+		MovementData.CachedParams.ScaleMovementToReachTargetRootLocationRS += (MovementData.CachedParams.AnimScaleMovementToReachTargetCurveValues.X - MovementData.CachedParams.AnimStartMovementCurveValues.X) * MovementDirectionUnitRS;
+		MovementData.CachedParams.ScaleMovementToReachTargetRootLocationRS += (MovementData.CachedParams.AnimScaleMovementToReachTargetCurveValues.Y - MovementData.CachedParams.AnimStartMovementCurveValues.Y) * UpVectorUnitRS;
+	}
 
-	MovementData.CachedParams.ReachTargetRootLocationScaledRS = StartRootLocationRS;
-	MovementData.CachedParams.ReachTargetRootLocationScaledRS += (DistanceToWall2DRS - SnappedParams.AnimReachTargetDistanceToWall2D) * MovementDirectionUnitRS;
-	MovementData.CachedParams.ReachTargetRootLocationScaledRS += PlatformHeightRS * UpVectorRS - (MovementData.CachedParams.AnimGroundPivotMovementValues.Y - MovementData.CachedParams.AnimReachTargetMovementValues.Y) * UpVectorUnitRS;
+	// MovementData.CachedParams.ReachTargetRootLocationScaledRS = StartRootLocationRS;
+	// MovementData.CachedParams.ReachTargetRootLocationScaledRS += (DistanceToWall2DRS - SnappedParams.AnimReachTargetDistanceToWall2D) * MovementDirectionUnitRS;
+	// MovementData.CachedParams.ReachTargetRootLocationScaledRS += PlatformHeightRS * UpVectorRS - (MovementData.CachedParams.AnimGroundPivotMovementValues.Y - MovementData.CachedParams.AnimReachTargetMovementValues.Y) * UpVectorUnitRS;
 
 	MovementData.CachedParams.ReachTargetRootLocationRS = StartRootLocationRS;
-	MovementData.CachedParams.ReachTargetRootLocationRS += (MovementData.AnimSettingsPtr->bScaleHorizontalMovementToReachTarget)
+	MovementData.CachedParams.ReachTargetRootLocationRS += bShouldScaleMovementToReachTarget
 		? (DistanceToWall2DRS - MovementData.SnappedParams.AnimReachTargetDistanceToWall2D) * MovementDirectionUnitRS
 		: (MovementData.CachedParams.AnimReachTargetMovementValues.X - MovementData.CachedParams.AnimStartMovementCurveValues.X) * MovementDirectionUnitRS;
-	MovementData.CachedParams.ReachTargetRootLocationRS += (MovementData.AnimSettingsPtr->bScaleVerticalMovementToReachTarget)
+	MovementData.CachedParams.ReachTargetRootLocationRS += bShouldScaleMovementToReachTarget
 		? PlatformHeightRS * UpVectorRS - (MovementData.CachedParams.AnimGroundPivotMovementValues.Y - MovementData.CachedParams.AnimReachTargetMovementValues.Y) * UpVectorUnitRS
 		: (MovementData.CachedParams.AnimReachTargetMovementValues.Y - MovementData.CachedParams.AnimStartMovementCurveValues.Y) * UpVectorUnitRS;
 	
@@ -318,6 +360,7 @@ void UVSChrMovFeature_MantleVaultMovement::MantleVaultBySnappedParams(const FVSM
 		SetMovementMode(EVSMovementMode::MantlingOrVaulting, false);
 	}
 	GetCharacterMovement()->StopMovementImmediately();
+	const float TargetCapsuleHalfHeightUSC = MovementData.SettingsPtr->CapsuleHalfHeight > 0.f ? MovementData.SettingsPtr->CapsuleHalfHeight : GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
 	MovementData.CapsuleHalfHeightOffsetUSCZ = TargetCapsuleHalfHeightUSC - GetCharacter()->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
 	GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(TargetCapsuleHalfHeightUSC);
 }
@@ -336,7 +379,7 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 	for (const auto& AnimRow : SettingsPtr->AnimRows)
 	{
 		FVSMantleVaultAnimSettings* Anim = AnimRow.GetRow<FVSMantleVaultAnimSettings>(nullptr);
-		if (!Anim || !Anim->IsValid(AnimReachTargetTimeMarkName, AnimGroundPivotTimeMarkName, AnimVaultOffPlatformTimeMarkName)) continue;
+		if (!Anim || !Anim->IsValid(AnimScaleMovementToReachTargetTimeMarkName, AnimReachTargetTimeMarkName, AnimGroundPivotTimeMarkName, AnimVaultOffPlatformTimeMarkName)) continue;
 		AvailableAnimRows.Add(AnimRow);
 	}
 	if (AvailableAnimRows.IsEmpty()) return false;
@@ -440,8 +483,8 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 			AnimVaultOffPlatformMovementX = UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::X), Anim->GetMarkTime(AnimVaultOffPlatformTimeMarkName));
 			const float DistanceToWall2DWS = (FrontWallPointWS - RootLocationWS).ProjectOnToNormal(MovementDirection2DWS).Size();
 			const float AnimReachTargetDistanceToWall2DNoScaleWS = (AnimReachTargetWallMovementX - AnimStartMovementX) * CharacterScaleWS.X;
-			FVector ReachTargetWallRootLocationNotScaledXWS = RootLocationWS;
-			ReachTargetWallRootLocationNotScaledXWS += (AnimReachTargetWallMovementX - AnimStartMovementX) * MovementDirection2DWS * CharacterScaleWS.X;
+			// FVector ReachTargetWallRootLocationNotScaledXWS = RootLocationWS;
+			// ReachTargetWallRootLocationNotScaledXWS += (AnimReachTargetWallMovementX - AnimStartMovementX) * MovementDirection2DWS * CharacterScaleWS.X;
 			FVector ReachTargetWallRootLocationScaledFarthestXWS = RootLocationWS;
 			ReachTargetWallRootLocationScaledFarthestXWS += (DistanceToWall2DWS - AnimSettings->ReachTargetDistanceToWallRange.X * CharacterScaleWS.X) * MovementDirection2DWS;
 			FVector GroundPivotLocationFarthestXWS = ReachTargetWallRootLocationScaledFarthestXWS;
