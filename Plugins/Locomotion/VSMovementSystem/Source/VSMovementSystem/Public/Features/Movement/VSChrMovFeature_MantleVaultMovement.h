@@ -66,7 +66,7 @@ protected:
 	
 	/**
 	 * The time when the animation begins to scale its movement to the reach-target location.
-	 * If not assigned, use the start time.
+	 * If not assigned, use the start time as the scale begin (as most animation requires that).
 	 * If you don't want to scale the movement, set the time equal to GroundPivot.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
@@ -77,7 +77,7 @@ protected:
 	FName AnimReachTargetTimeMarkName = FName("ReachTarget");
 	
 	/**
-	 * The time when the mantle / vault start movement has solidly reached the ground / found a solid pivot.
+	 * The time when the mantle / vault-start movement has solidly reached the ground / found a solid pivot.
 	 * Also used as a possible early end for anim that support both mantle and vault.
 	 * Player can break the state with input after that time if mantling.
 	 */

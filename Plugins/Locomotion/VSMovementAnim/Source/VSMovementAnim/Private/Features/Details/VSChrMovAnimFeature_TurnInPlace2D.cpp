@@ -5,6 +5,7 @@
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "Features/Orientation/VSChrMovFeature_TurnInPlace2D.h"
 #include "Libraries/VSAnimationLibrary.h"
+#include "Types/Animation/VSAnimSequenceReference.h"
 
 UVSChrMovAnimFeature_TurnInPlace2D::UVSChrMovAnimFeature_TurnInPlace2D(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
