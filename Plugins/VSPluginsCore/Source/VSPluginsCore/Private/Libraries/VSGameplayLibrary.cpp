@@ -16,11 +16,6 @@ bool UVSGameplayLibrary::IsInGame()
 	return !GIsEditor || GIsPlayInEditorWorld || (GWorld && GWorld->HasBegunPlay());
 }
 
-bool UVSGameplayLibrary::IsInBlueprintEditor(const UObject* Object)
-{
-	return (GIsEditor && Object->GetPackage() && Object->GetPackage()->HasAnyPackageFlags(PKG_CompiledIn) == false);
-}
-
 float UVSGameplayLibrary::GetServerTimeSeconds(const UObject* WorldContext)
 {
 	AGameStateBase* GameState = UGameplayStatics::GetGameState(WorldContext);

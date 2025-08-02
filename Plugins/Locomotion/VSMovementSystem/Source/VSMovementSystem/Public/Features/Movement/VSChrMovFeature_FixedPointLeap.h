@@ -50,8 +50,11 @@ private:
 	UFUNCTION(Server, Reliable)
 	void TryFixedPointLeap_Server(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, USceneComponent* ComponentToFollow, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 
+	UFUNCTION(Server, Reliable)
+	void FixedPointLeap_Server(const FVSFixedPointLeapSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
+
 	UFUNCTION(NetMulticast, Reliable)
-	void TryFixedPointLeap_Multicast(const FVSFixedPointLeapSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
+	void FixedPointLeap_Multicast(const FVSFixedPointLeapSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (RowType = "/Script/VSMovementSystem.VSFixedPointLeapSettings"))

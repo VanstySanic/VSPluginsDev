@@ -26,7 +26,7 @@ void UVSChrMovCapsuleComponent::PostInitProperties()
 	 * and this will cause an ensure message and package failure.
 	 * This will find the original root capsule component from the character and clear its AttachChildren.
 	 */
-	if (UVSGameplayLibrary::IsInBlueprintEditor(this))
+	if (!UVSGameplayLibrary::IsInGame())
 	{
 		if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
 		{

@@ -2,7 +2,7 @@
 
 #include "Features/VSCharacterMovementAnimFeatureAgent.h"
 #include "VSMovementAnimUtils.h"
-#include "Classees/Framework/VSGameplayTagController.h"
+#include "Classes/Framework/VSGameplayTagController.h"
 #include "Features/VSCharacterMovementFeature.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "GameFramework/Character.h"

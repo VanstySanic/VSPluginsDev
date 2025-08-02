@@ -1,6 +1,6 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
-#include "Classees/Framework/VSTickableObject.h"
+#include "Classes/Framework/VSTickableObject.h"
 
 UVSTickableObject::UVSTickableObject(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

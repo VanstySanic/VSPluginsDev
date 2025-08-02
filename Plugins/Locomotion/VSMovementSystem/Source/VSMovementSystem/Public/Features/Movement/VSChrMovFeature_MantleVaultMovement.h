@@ -57,6 +57,9 @@ private:
 	UFUNCTION(Server, Reliable)
 	void TryMantleVault_Server(const TArray<FDataTableRowHandle>& SettingRows, EVSMantleVaultMovementType::Type SupportedMovementType, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 
+	UFUNCTION(Server, Reliable)
+	void MantleVault_Server(const FVSMantleVaultSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
+	
 	UFUNCTION(NetMulticast, Reliable)
 	void MantleVault_Multicast(const FVSMantleVaultSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 

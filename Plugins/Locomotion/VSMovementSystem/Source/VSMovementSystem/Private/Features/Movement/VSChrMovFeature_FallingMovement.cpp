@@ -1,7 +1,7 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Features/Movement/VSChrMovFeature_FallingMovement.h"
-#include "Classees/Framework/VSGameplayTagController.h"
+#include "Classes/Framework/VSGameplayTagController.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Libraries/VSActorLibrary.h"

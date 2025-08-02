@@ -5,7 +5,7 @@
 #include "VSChrMovCapsuleComponent.h"
 #include "VSMovementSystemSettings.h"
 #include "Algo/RandomShuffle.h"
-#include "Classees/Framework/VSGameplayTagController.h"
+#include "Classes/Framework/VSGameplayTagController.h"
 #include "Components/CapsuleComponent.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "Features/Orientation/VSChrMovFeature_OrientationEvaluator.h"
@@ -41,7 +41,7 @@ void UVSChrMovFeature_MantleVaultMovement::TryMantleVault(const TArray<FDataTabl
 			if (bSucceeded && NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
 			{
 				/** Only send server RPC if local execution succeeded.  */
-				TryMantleVault_Server(SettingRows, SupportedMovementType, NetExecPolicies.ServerRPCPolicy);
+				MantleVault_Server(MovementData.SnappedParams, NetExecPolicies.ServerRPCPolicy);
 			}
 		}
 		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
@@ -610,12 +610,25 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 	return false;
 }
 
+
 void UVSChrMovFeature_MantleVaultMovement::TryMantleVault_Server_Implementation(const TArray<FDataTableRowHandle>& SettingRows, EVSMantleVaultMovementType::Type SupportedMovementType, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
 {
 	if (NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Server)
 	{
 		const bool bSuccessful = TryMantleVaultInternal(SettingRows, SupportedMovementType);
 		if (bSuccessful && NetExecPolicy > EVSNetAuthorityMethodExecPolicy::Server)
+		{
+			MantleVault_Multicast(MovementData.SnappedParams, NetExecPolicy);
+		}
+	}
+}
+
+void UVSChrMovFeature_MantleVaultMovement::MantleVault_Server_Implementation(const FVSMantleVaultSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
+{
+	if (NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Server)
+	{
+		MantleVaultBySnappedParams(SnappedParams);
+		if (EVSNetAuthorityMethodExecPolicy::Server)
 		{
 			MantleVault_Multicast(MovementData.SnappedParams, NetExecPolicy);
 		}

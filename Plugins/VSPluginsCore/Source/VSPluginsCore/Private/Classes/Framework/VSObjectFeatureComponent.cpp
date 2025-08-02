@@ -1,7 +1,8 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
-#include "Classees/Framework/VSObjectFeatureComponent.h"
-#include "Classees/Framework/VSObjectFeature.h"
+
+#include "Classes/Framework/VSObjectFeatureComponent.h"
+#include "Classes/Framework/VSObjectFeature.h"
 
 UVSObjectFeatureComponent::UVSObjectFeatureComponent()
 {

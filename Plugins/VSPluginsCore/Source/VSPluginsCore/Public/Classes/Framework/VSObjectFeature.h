@@ -25,6 +25,7 @@ public:
 	virtual void BeginDestroy() override;
 	virtual int32 GetFunctionCallspace(UFunction* Function, FFrame* Stack) override;
 	virtual bool CallRemoteFunction(UFunction* Function, void* Parms, FOutParmRec* OutParms, FFrame* Stack) override;
+	virtual UWorld* GetWorld() const override;
 #if WITH_EDITOR
 	virtual bool Modify( bool bAlwaysMarkDirty = true) override;
 #endif

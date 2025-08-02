@@ -1,7 +1,7 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Features/Orientation/VSChrMovFeature_OrientationGravityAdjustment.h"
-#include "Classees/Framework/VSGameplayTagController.h"
+#include "Classes/Framework/VSGameplayTagController.h"
 #include "GameFramework/Character.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Libraries/VSMathLibrary.h"

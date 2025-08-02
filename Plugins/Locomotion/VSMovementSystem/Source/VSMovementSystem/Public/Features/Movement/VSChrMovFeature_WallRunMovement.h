@@ -77,6 +77,9 @@ private:
 	UFUNCTION(Server, Reliable)
 	void TryWallRun_Server(const TArray<FDataTableRowHandle>& SettingRows, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 
+	UFUNCTION(Server, Reliable)
+	void WallRun_Server(const FVSWallRunSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
+
 	UFUNCTION(NetMulticast, Reliable)
 	void WallRun_Multicast(const FVSWallRunSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 

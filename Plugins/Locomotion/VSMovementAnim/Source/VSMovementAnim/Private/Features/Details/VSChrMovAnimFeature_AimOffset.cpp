@@ -2,7 +2,7 @@
 
 #include "Features/Details/VSChrMovAnimFeature_AimOffset.h"
 #include "VSCharacterMovementUtils.h"
-#include "Classees/Framework/VSGameplayTagController.h"
+#include "Classes/Framework/VSGameplayTagController.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "GameFramework/Character.h"
 #include "Types/VSChrMovOrientationTypes.h"

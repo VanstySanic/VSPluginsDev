@@ -45,9 +45,11 @@ public:
 	FOnMovementModeChangedDelegate OnMovementModeChanged;
 
 protected:
+	/** This only works on server. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Networks")
 	FGameplayTagQuery NetworkIgnoreClientCorrectionQuery;
 
+	/** This only works with locally controlled owner. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Networks")
 	FGameplayTagQuery NetworkDisableMoveCombiningQuery;
 

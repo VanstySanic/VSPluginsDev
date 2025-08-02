@@ -5,7 +5,7 @@
 #include "VSCharacterMovementUtils.h"
 #include "VSChrMovCapsuleComponent.h"
 #include "VSMovementSystemSettings.h"
-#include "Classees/Framework/VSGameplayTagController.h"
+#include "Classes/Framework/VSGameplayTagController.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -123,30 +123,37 @@ void UVSCharacterMovementFeatureAgent::OnMovementTagsUpdated_Implementation()
 	Super::OnMovementTagsUpdated_Implementation();
 	
 	const FGameplayTagContainer& GameplayTags = GetGameplayTagController()->GetGameplayTags();
-	if (NetworkDisableMoveCombiningQuery.Matches(GameplayTags))
+	if (GetCharacter()->HasAuthority())
 	{
-		if (IConsoleVariable* ConsoleVariable = IConsoleManager::Get().FindConsoleVariable(*FString("p.NetEnableMoveCombining"), false))
+		if (NetworkIgnoreClientCorrectionQuery.Matches(GameplayTags))
 		{
-			ConsoleVariable->SetWithCurrentPriority(0);
-		}	
-	}
-	else
-	{
-		if (IConsoleVariable* ConsoleVariable = IConsoleManager::Get().FindConsoleVariable(*FString("p.NetEnableMoveCombining"), false))
+			GetCharacterMovement()->bIgnoreClientMovementErrorChecksAndCorrection = true;
+		}
+		else
 		{
-			ConsoleVariable->SetWithCurrentPriority(FCString::Atoi(*ConsoleVariable->GetDefaultValue()));
-		}	
+			const ACharacter* DefaultCharacter = GetCharacter()->GetClass()->GetDefaultObject<ACharacter>();
+			const UCharacterMovementComponent* DefaultCharacterMove = DefaultCharacter->GetCharacterMovement();
+			GetCharacterMovement()->bIgnoreClientMovementErrorChecksAndCorrection = DefaultCharacterMove->bIgnoreClientMovementErrorChecksAndCorrection;
+		}
 	}
-	if (NetworkIgnoreClientCorrectionQuery.Matches(GameplayTags))
+	if (GetCharacter()->IsLocallyControlled())
 	{
-		GetCharacterMovement()->bIgnoreClientMovementErrorChecksAndCorrection = true;
+		if (NetworkDisableMoveCombiningQuery.Matches(GameplayTags))
+		{
+			if (IConsoleVariable* ConsoleVariable = IConsoleManager::Get().FindConsoleVariable(*FString("p.NetEnableMoveCombining"), false))
+			{
+				ConsoleVariable->SetWithCurrentPriority(0);
+			}	
+		}
+		else
+		{
+			if (IConsoleVariable* ConsoleVariable = IConsoleManager::Get().FindConsoleVariable(*FString("p.NetEnableMoveCombining"), false))
+			{
+				ConsoleVariable->SetWithCurrentPriority(FCString::Atoi(*ConsoleVariable->GetDefaultValue()));
+			}	
+		}
 	}
-	else
-	{
-		const ACharacter* DefaultCharacter = GetCharacter()->GetClass()->GetDefaultObject<ACharacter>();
-		const UCharacterMovementComponent* DefaultCharacterMove = DefaultCharacter->GetCharacterMovement();
-		GetCharacterMovement()->bIgnoreClientMovementErrorChecksAndCorrection = DefaultCharacterMove->bIgnoreClientMovementErrorChecksAndCorrection;
-	}
+
 }
 
 void UVSCharacterMovementFeatureAgent::CheckMovingAgainstWall2D()

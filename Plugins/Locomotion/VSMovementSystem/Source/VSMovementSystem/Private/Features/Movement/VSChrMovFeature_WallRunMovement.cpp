@@ -4,7 +4,7 @@
 #include "KismetTraceUtils.h"
 #include "VSChrMovCapsuleComponent.h"
 #include "VSMovementSystemSettings.h"
-#include "Classees/Framework/VSGameplayTagController.h"
+#include "Classes/Framework/VSGameplayTagController.h"
 #include "Components/CapsuleComponent.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "Features/Orientation/VSChrMovFeature_OrientationEvaluator.h"
@@ -750,6 +750,18 @@ void UVSChrMovFeature_WallRunMovement::TryWallRun_Server_Implementation(const TA
 	if (NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Server)
 	{
 		TryWallRunInternal(SettingRows);
+	}
+	if (NetExecPolicy > EVSNetAuthorityMethodExecPolicy::Server)
+	{
+		WallRun_Multicast(MovementData.SnappedParams, NetExecPolicy);
+	}
+}
+
+void UVSChrMovFeature_WallRunMovement::WallRun_Server_Implementation(const FVSWallRunSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
+{
+	if (NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Server)
+	{
+		WallRunBySnappedParams(SnappedParams);
 	}
 	if (NetExecPolicy > EVSNetAuthorityMethodExecPolicy::Server)
 	{

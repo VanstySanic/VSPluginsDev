@@ -1,10 +1,10 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
-#include "Classees/Framework/VSObjectFeature.h"
+#include "Classes/Framework/VSObjectFeature.h"
 
+#include "Libraries/VSGameplayLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "Net/Core/PushModel/PushModel.h"
-#include "Net/Iris/ReplicationSystem/ReplicationSystemUtil.h"
 
 DEFINE_LOG_CATEGORY(LogObjectFeature);
 
@@ -21,7 +21,7 @@ void UVSObjectFeature::PostInitProperties()
 {
 	Super::PostInitProperties();
 
-	if (!HasAnyFlags(RF_ClassDefaultObject) && GetWorld() && !GetWorld()->IsGameWorld())
+	if (!IsBeingDestroyed() && !HasAnyFlags(RF_ClassDefaultObject) && GetWorld() && !GetWorld()->IsGameWorld())
 	{
 		RegisterFeature();
 	}
@@ -98,6 +98,17 @@ bool UVSObjectFeature::CallRemoteFunction(UFunction* Function, void* Parms, FOut
 	return bProcessed;
 }
 
+UWorld* UVSObjectFeature::GetWorld() const
+{
+	/** If we are a CDO, we must return nullptr instead of calling Outer->GetWorld() to fool UObject::ImplementsGetWorld. */
+	if (GetOuter() && !HasAnyFlags(RF_ClassDefaultObject))
+	{
+		return GetOuter()->GetWorld();
+	}
+
+	return nullptr;
+}
+
 #if WITH_EDITOR
 bool UVSObjectFeature::Modify(bool bAlwaysMarkDirty)
 {
@@ -165,12 +176,11 @@ void UVSObjectFeature::RegisterFeature()
 	
 	bIsRegistered = true;
 
-	
 	/**
 	 * If not in a game world register ticks now, otherwise defer until BeginPlay.
 	 * If no owner we won't trigger BeginPlay either so register now in that case as well.
 	 */
-	if (GetWorld() && !GetWorld()->IsGameWorld())
+	if (!UVSGameplayLibrary::IsInGame())
 	{
 		RegisterTickFunction();
 	}
@@ -207,7 +217,8 @@ void UVSObjectFeature::RegisterFeature()
 	}
 
 	/** Register sub features. */
-	for (TObjectPtr<UVSObjectFeature> SubFeature : SubFeatures)
+	TArray<TObjectPtr<UVSObjectFeature>> CurrentSubFeatures = SubFeatures;
+	for (UVSObjectFeature* SubFeature : CurrentSubFeatures)
 	{
 		if (SubFeature && !SubFeature->IsRegistered())
 		{

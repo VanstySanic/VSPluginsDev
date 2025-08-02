@@ -4,7 +4,7 @@
 #include "GameplayTagContainer.h"
 #include "VSChrMovCapsuleComponent.h"
 #include "VSMovementSystemSettings.h"
-#include "Classees/Framework/VSGameplayTagController.h"
+#include "Classes/Framework/VSGameplayTagController.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"

@@ -1,7 +1,7 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Types/VSChrMovInAirTypes.h"
-#include "Classees/Framework/VSGameplayTagController.h"
+#include "Classes/Framework/VSGameplayTagController.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "GameFramework/Character.h"
 #include "Kismet/KismetMathLibrary.h"

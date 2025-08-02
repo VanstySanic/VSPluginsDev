@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Classees/Framework/VSObjectFeature.h"
+#include "Classes/Framework/VSObjectFeature.h"
 #include "GameplayTags.h"
 #include "VSCharacterMovementInterface.h"
 #include "VSCharacterMovementFeature.generated.h"

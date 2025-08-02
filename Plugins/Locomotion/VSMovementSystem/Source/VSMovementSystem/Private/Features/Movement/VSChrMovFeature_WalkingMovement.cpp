@@ -3,7 +3,7 @@
 #include "Features/Movement/VSChrMovFeature_WalkingMovement.h"
 #include "VSCharacterMovementUtils.h"
 #include "VSChrMovCapsuleComponent.h"
-#include "Classees/Framework/VSGameplayTagController.h"
+#include "Classes/Framework/VSGameplayTagController.h"
 #include "Components/CapsuleComponent.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "GameFramework/Character.h"

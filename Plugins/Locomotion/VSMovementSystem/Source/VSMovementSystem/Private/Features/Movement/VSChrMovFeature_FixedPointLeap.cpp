@@ -4,7 +4,7 @@
 #include "VSChrMovCapsuleComponent.h"
 #include "VSMovementSystemSettings.h"
 #include "Algo/RandomShuffle.h"
-#include "Classees/Framework/VSGameplayTagController.h"
+#include "Classes/Framework/VSGameplayTagController.h"
 #include "Components/CapsuleComponent.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "Features/Orientation/VSChrMovFeature_OrientationEvaluator.h"
@@ -115,7 +115,7 @@ void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap(const TArray<FDataTableR
 			if (bSucceeded && NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
 			{
 				/** Only send server RPC if local execution succeeded.  */
-				TryFixedPointLeap_Server(SettingRows, TargetRootLocationUndefinedSpace, bIsReplicatedComponent ? ComponentToFollow : nullptr, NetExecPolicies.ServerRPCPolicy);
+				FixedPointLeap_Server(MovementData.SnappedParams, NetExecPolicies.ServerRPCPolicy);
 			}
 		}
 		else if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
@@ -251,7 +251,6 @@ void UVSChrMovFeature_FixedPointLeap::FixedPointLeapBySnappedParams(const FVSFix
 	GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(TargetHalfHeightUSC);
 }
 
-
 void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap_Server_Implementation(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, USceneComponent* ComponentToFollow, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
 {
 	if (NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Server)
@@ -259,12 +258,24 @@ void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap_Server_Implementation(co
 		const bool bSuccessful = TryFixedPointLeapInternal(SettingRows, TargetRootLocationUndefinedSpace, ComponentToFollow);
 		if (bSuccessful && NetExecPolicy > EVSNetAuthorityMethodExecPolicy::Server)
 		{
-			TryFixedPointLeap_Multicast(MovementData.SnappedParams, NetExecPolicy);
+			FixedPointLeap_Multicast(MovementData.SnappedParams, NetExecPolicy);
 		}
 	}
 }
 
-void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap_Multicast_Implementation(const FVSFixedPointLeapSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
+void UVSChrMovFeature_FixedPointLeap::FixedPointLeap_Server_Implementation(const FVSFixedPointLeapSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
+{
+	if (NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Server)
+	{
+		FixedPointLeapBySnappedParams(SnappedParams);
+		if (NetExecPolicy > EVSNetAuthorityMethodExecPolicy::Server)
+		{
+			FixedPointLeap_Multicast(MovementData.SnappedParams, NetExecPolicy);
+		}
+	}
+}
+
+void UVSChrMovFeature_FixedPointLeap::FixedPointLeap_Multicast_Implementation(const FVSFixedPointLeapSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
 {
 	bool bShouldExecute = true;
 	if (SnappedParams.SettingsRow.IsNull() || SnappedParams.AnimRow.IsNull()) { bShouldExecute = false; }

@@ -2,7 +2,7 @@
 
 #include "Features/Details/VSChrMovFeature_LandRecovery.h"
 #include "VSMovementSystemSettings.h"
-#include "Classees/Framework/VSGameplayTagController.h"
+#include "Classes/Framework/VSGameplayTagController.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"

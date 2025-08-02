@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "Classees/Framework/VSObjectFeature.h"
+#include "Classes/Framework/VSObjectFeature.h"
 #include "VSCharacterMovementAnimFeature.generated.h"
 
 class UVSGameplayTagController;

@@ -3,7 +3,7 @@
 #include "Features/Movement/VSChrMovAnimFeature_FallingMovement.h"
 #include "AnimDistanceMatchingLibrary.h"
 #include "SequenceEvaluatorLibrary.h"
-#include "Classees/Framework/VSGameplayTagController.h"
+#include "Classes/Framework/VSGameplayTagController.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"

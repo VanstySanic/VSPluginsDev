@@ -1,7 +1,7 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Features/Orientation/VSChrMovFeature_OrientationControl2D.h"
-#include "Classees/Framework/VSGameplayTagController.h"
+#include "Classes/Framework/VSGameplayTagController.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "Features/Orientation/VSChrMovFeature_OrientationEvaluator.h"
 #include "GameFramework/Character.h"

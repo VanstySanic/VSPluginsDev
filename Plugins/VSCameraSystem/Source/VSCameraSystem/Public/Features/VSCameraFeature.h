@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "VSCameraTypes.h"
-#include "Classees/Framework/VSObjectFeature.h"
+#include "Classes/Framework/VSObjectFeature.h"
 #include "VSCameraFeature.generated.h"
 
 class UCameraComponent;

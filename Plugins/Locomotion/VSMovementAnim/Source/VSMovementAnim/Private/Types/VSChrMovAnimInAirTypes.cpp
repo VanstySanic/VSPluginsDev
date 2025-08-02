@@ -2,7 +2,7 @@
 
 #include "Types/VSChrMovAnimInAirTypes.h"
 
-#include "Classees/Framework/VSGameplayTagController.h"
+#include "Classes/Framework/VSGameplayTagController.h"
 #include "Features/VSCharacterMovementAnimFeatureAgent.h"
 #include "GameFramework/Character.h"
 #include "Kismet/KismetMathLibrary.h"
