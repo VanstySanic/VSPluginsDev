@@ -97,11 +97,10 @@ void UVSChrMovFeature_MantleVaultMovement::UpdateMovement_Implementation(float D
 	const FTransform& ComponentTransformWS = MovementData.SnappedParams.Component->GetComponentTransform();
 
 	/** Update the movement by stage. */
-	const FVector& CharacterScaleWS = GetCharacter()->GetActorTransform().GetScale3D();
 	const FVector& UpVectorRS = ComponentTransformWS.InverseTransformVectorNoScale(GetUpDirection());
-	const FVector& UpVectorUnitRS = ComponentTransformWS.InverseTransformVector(GetUpDirection() * CharacterScaleWS.Z);
+	const FVector& UpVectorUnitRS = ComponentTransformWS.InverseTransformVector(GetUpDirection() * GetScale3D().Z);
 	const FVector& MovementDirectionWS = ComponentTransformWS.TransformVectorNoScale(MovementData.SnappedParams.MovementDirection2DRS);
-	const FVector& MovementDirectionUnitRS = ComponentTransformWS.InverseTransformVector(MovementDirectionWS * CharacterScaleWS.X);
+	const FVector& MovementDirectionUnitRS = ComponentTransformWS.InverseTransformVector(MovementDirectionWS * GetScale3D().X);
 	
 	const float ForwardMovementCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::X), MovementData.MovementElapsedTime);
 	const float UpMovementCurveValue = UVSAnimationLibrary::GetAnimationCurveValueAtTime(MovementData.AnimPtr->AnimSequence, UVSMovementSystemSettings::Get()->AnimMovementCurveNames.FindRef(EAxis::Z), MovementData.MovementElapsedTime);
@@ -417,7 +416,7 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 	
 	const FQuat& UpVectorToWorldRotation = FQuat::FindBetweenNormals(FVector::UpVector, GetUpDirection());
 	const FVector& InputDS = UKismetMathLibrary::Quat_RotateVector(UpVectorToWorldRotation, GetMovementInput2D());
-	const FVector& VelocityDS = UKismetMathLibrary::Quat_RotateVector(UpVectorToWorldRotation, GetVelocity2D());
+	const FVector& VelocityDS = UKismetMathLibrary::Quat_RotateVector(UpVectorToWorldRotation, GetVelocityWallAdjusted2D());
 	FVector FrontWallTraceDirection2D = GetCharacter()->GetActorForwardVector();
 	if (InputDS.Size2D() > 1.f)
 	{
@@ -425,7 +424,7 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 	}
 	else if (VelocityDS.Size2D() > 1.f)
 	{
-		FrontWallTraceDirection2D = GetVelocity2D().GetSafeNormal();
+		FrontWallTraceDirection2D = GetVelocityWallAdjusted2D().GetSafeNormal();
 	}
 
 	/** Do the trace process. This is splitted into multiple heights. */
@@ -455,7 +454,7 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 		if (!UKismetMathLibrary::InRange_FloatFloat(DistanceToWallSC, SettingsPtr->Limits.DistanceToWallRange2D.X, SettingsPtr->Limits.DistanceToWallRange2D.Y)) { bMeetTowardsMovementRequirementsByWall = false; }
 		if (!UKismetMathLibrary::InRange_FloatFloat(GetVelocity().ProjectOnToNormal(MovementDirection2DWS).Size() * CharacterScaleWS.X, SettingsPtr->Limits.SpeedTowardsMovementRange2D.X, SettingsPtr->Limits.SpeedTowardsMovementRange2D.Y)) { bMeetTowardsMovementRequirementsByWall = false; }
 		else if (GetCharacter()->GetActorForwardVector().Dot(-FrontWallNormal2DWS) < UKismetMathLibrary::DegCos(SettingsPtr->Limits.FacingMovementMaxAngle)) bMeetTowardsMovementRequirementsByWall = false;
-		else if (IsMoving2D() && !IsMovingAgainstWall2D() && (GetVelocity2D().GetSafeNormal()).Dot(-FrontWallNormal2DWS) < UKismetMathLibrary::DegCos(SettingsPtr->Limits.Velocity2DTowardsMovementMaxAngle)) { bMeetTowardsMovementRequirementsByWall = false; }
+		else if (IsMoving2D() && !IsMovingAgainstWall2D() && (GetVelocityWallAdjusted2D().GetSafeNormal()).Dot(-FrontWallNormal2DWS) < UKismetMathLibrary::DegCos(SettingsPtr->Limits.Velocity2DTowardsMovementMaxAngle)) { bMeetTowardsMovementRequirementsByWall = false; }
 		else if (IsMoving2D() && IsMovingAgainstWall2D() && (GetMovementInput2D().GetSafeNormal()).Dot(-FrontWallNormal2DWS) < UKismetMathLibrary::DegCos(SettingsPtr->Limits.Velocity2DTowardsMovementMaxAngle)) { bMeetTowardsMovementRequirementsByWall = false; }
 		else if (HasMovementInput2D() && (GetMovementInput2D().GetSafeNormal()).Dot(-FrontWallNormal2DWS) < UKismetMathLibrary::DegCos(SettingsPtr->Limits.Input2DTowardsMovementMaxAngle)) { bMeetTowardsMovementRequirementsByWall = false; }
 		if (!bMeetTowardsMovementRequirementsByWall) continue;
@@ -552,9 +551,9 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 
 			/** Check terrain object type here. */
 			bool bTerrainObjectTypeValid = true;
-			if (!SettingsPtr->Limits.TerrainObjectTypes.IsEmpty() && !SettingsPtr->Limits.TerrainObjectTypes.Contains(FrontWallTraceHitResult.Component->GetCollisionObjectType())) { bTerrainObjectTypeValid = false; }
-			else if (OtherSideWallHitResult.bBlockingHit && !SettingsPtr->Limits.TerrainObjectTypes.IsEmpty() && !SettingsPtr->Limits.TerrainObjectTypes.Contains(OtherSideWallHitResult.Component->GetCollisionObjectType())) { bTerrainObjectTypeValid = false; }
-			else if (!SettingsPtr->Limits.TerrainObjectTypes.IsEmpty() && !SettingsPtr->Limits.TerrainObjectTypes.Contains(GroundPivotVerticalTraceHitResult.Component->GetCollisionObjectType())) { bTerrainObjectTypeValid = false; }
+			if (!SettingsPtr->Limits.TerrainComponentQuery.Matches(FrontWallTraceHitResult.GetComponent())) { bTerrainObjectTypeValid = false; }
+			if (!SettingsPtr->Limits.TerrainComponentQuery.Matches(GroundPivotVerticalTraceHitResult.GetComponent())) { bTerrainObjectTypeValid = false; }
+			if (!SettingsPtr->Limits.TerrainComponentQuery.Matches(GroundPivotVerticalTraceHitResult.GetComponent())) { bTerrainObjectTypeValid = false; }
 			if (!bTerrainObjectTypeValid) continue;
 			
 			const float PlatformHeightSC = (GroundPivotVerticalTraceHitResult.ImpactPoint - RootLocationWS + VerticalCollisionOffset).ProjectOnToNormal(GetUpDirection()).Size() / CharacterScaleWS.Z;
@@ -628,7 +627,7 @@ void UVSChrMovFeature_MantleVaultMovement::MantleVault_Server_Implementation(con
 	if (NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Server)
 	{
 		MantleVaultBySnappedParams(SnappedParams);
-		if (EVSNetAuthorityMethodExecPolicy::Server)
+		if (NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Server)
 		{
 			MantleVault_Multicast(MovementData.SnappedParams, NetExecPolicy);
 		}

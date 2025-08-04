@@ -25,7 +25,7 @@ void UVSChrMovAnimFeature_AimOffset::UpdateAnimationThreadSafe_Implementation(fl
 {
 	Super::UpdateAnimationThreadSafe_Implementation(DeltaTime);
 
-	if (!AnimData.bMatchesTagQuery || !AnimData.CurrentAimOffsetBlendSpace)
+	if (!AnimData.bMatchesTagQuery)
 	{
 		AnimData.AimOffsetAngle = FVector2D::ZeroVector;
 	}

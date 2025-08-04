@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "VSCharacterMovementTypes.h"
+#include "Types/VSGameplayTypes.h"
 #include "UObject/Object.h"
 #include "VSChrMovWallRunTypes.generated.h"
 
@@ -17,8 +18,8 @@ struct FVSWallRunLimits
 
 	FVSWallRunLimits()
 	{
-		WallObjectTypes =
-			{
+		WallComponentQuery.ObjectTypes =
+		{
 			ObjectTypeQuery1,
 			ObjectTypeQuery2,
 		};
@@ -48,9 +49,8 @@ struct FVSWallRunLimits
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bRequireMovementInput2D = true;
 
-	/** Empty as all. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<TEnumAsByte<EObjectTypeQuery>> WallObjectTypes; 
+	FVSSceneComponentQuery WallComponentQuery;
 
 	/** Empty as pass. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

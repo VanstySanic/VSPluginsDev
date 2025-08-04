@@ -107,11 +107,11 @@ struct FVSOrientationControlSettings2D
 
 #pragma region TurnInPlace2D
 USTRUCT(BlueprintType)
-struct VSMOVEMENTSYSTEM_API FVSTurnInPlaceSettings2D : public FTableRowBase
+struct FVSTurnInPlaceSettings2D : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	bool IsValid() const;
+	VSMOVEMENTSYSTEM_API bool IsValid() const;
 
 	/** Turn in place is allowed when the target orientation is AngleThreshold delta from the character rotation. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

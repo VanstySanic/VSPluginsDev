@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Types/VSGameplayTypes.h"
 #include "Types/Animation/VSAnimSequenceReference.h"
 #include "UObject/Object.h"
 #include "VSChrMovMantleVaultTypes.generated.h"
@@ -24,11 +25,11 @@ namespace EVSMantleVaultMovementType
 
 /** Defines a mantle / vault animation. */
 USTRUCT(BlueprintType)
-struct VSMOVEMENTSYSTEM_API FVSMantleVaultAnimSettings : public FTableRowBase
+struct FVSMantleVaultAnimSettings : public FTableRowBase
 {
 	GENERATED_BODY()
 	
-	bool IsValid(const FName AnimScaleMovementToReachTargetTimeMarkName = FName("GroundPivot"), const FName AnimReachTargetTimeMarkName = FName("ReachTarget"), const FName AnimGroundPivotTimeMarkName = FName("GroundPivot"), const FName AnimVaultOffPlatformTimeMarkName = FName("VaultOffPlatform")) const;
+	VSMOVEMENTSYSTEM_API bool IsValid(const FName AnimScaleMovementToReachTargetTimeMarkName = FName("GroundPivot"), const FName AnimReachTargetTimeMarkName = FName("ReachTarget"), const FName AnimGroundPivotTimeMarkName = FName("GroundPivot"), const FName AnimVaultOffPlatformTimeMarkName = FName("VaultOffPlatform")) const;
 
 	/** Can be an anim sequence or a montage. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (RowType = "/Script/VSPluginsCore.VSAnimSequenceReference"))
@@ -47,20 +48,20 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultAnimSettings : public FTableRowBase
 };
 
 USTRUCT(BlueprintType)
-struct VSMOVEMENTSYSTEM_API FVSMantleVaultLimits
+struct FVSMantleVaultLimits
 {
 	GENERATED_BODY()
 
 	FVSMantleVaultLimits()
 	{
-		TerrainObjectTypes =
+		TerrainComponentQuery.ObjectTypes =
 			{
 				ObjectTypeQuery1,
 				ObjectTypeQuery2,
 			};
 	}
 	
-	bool IsValid() const;
+	VSMOVEMENTSYSTEM_API bool IsValid() const;
 
 	/** Defines how high the character can mantle / vault with the settings. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -87,9 +88,8 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultLimits
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bRequireMovementInput2D = true;
 
-	/** Empty as all. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<TEnumAsByte<EObjectTypeQuery>> TerrainObjectTypes; 
+	FVSSceneComponentQuery TerrainComponentQuery; 
 
 	/** Empty as pass. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -97,11 +97,11 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultLimits
 };
 
 USTRUCT(BlueprintInternalUseOnly)
-struct VSMOVEMENTSYSTEM_API FVSMantleVaultSettings : public FTableRowBase
+struct FVSMantleVaultSettings : public FTableRowBase
 {
 	GENERATED_BODY()
 	
-	bool IsValid() const;
+	VSMOVEMENTSYSTEM_API bool IsValid() const;
 	
 	/** The mantle animations in the settings. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (RowType = "/Script/VSMovementSystem.VSMantleVaultAnimSettings"))
@@ -167,7 +167,7 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultSnappedParams
 };
 
 USTRUCT(BlueprintType)
-struct VSMOVEMENTSYSTEM_API FVSMantleVaultCachedParams
+struct FVSMantleVaultCachedParams
 {
 	GENERATED_BODY();
 

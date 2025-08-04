@@ -224,13 +224,13 @@ void UVSChrMovFeature_WalkingMovement::ApplyMovementBaseSettings(const FVSMoveme
 {
 	if (!IsWalkingMode()) return;
 	
-	GetCharacterMovement()->MaxWalkSpeed = Settings.MaxSpeed;
-	GetCharacterMovement()->MaxWalkSpeedCrouched = Settings.MaxSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = Settings.MaxSpeed * GetScale3D().X;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = Settings.MaxSpeed * GetScale3D().X;
 		
-	GetCharacterMovement()->MaxAcceleration = Settings.MaxAcceleration;
-	GetCharacterMovement()->BrakingDecelerationWalking = Settings.BrakingDeceleration;
+	GetCharacterMovement()->MaxAcceleration = Settings.MaxAcceleration * GetScale3D().X;
+	GetCharacterMovement()->BrakingDecelerationWalking = Settings.BrakingDeceleration * GetScale3D().X;
 		
-	GetCharacterMovement()->BrakingFriction = Settings.BrakingFriction;
+	GetCharacterMovement()->BrakingFriction = Settings.BrakingFriction * GetScale3D().X;
 	GetCharacterMovement()->bUseSeparateBrakingFriction = Settings.bUseSeparateBrakingFriction;
 	GetCharacterMovement()->BrakingFrictionFactor = Settings.BrakingFrictionFactor;
 }

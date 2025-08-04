@@ -79,6 +79,9 @@ void UVSCharacterMovementFeatureAgent::BeginPlay_Implementation()
 		ConsoleVariable->SetWithCurrentPriority(ConsoleVariable->GetInt());
 		ConsoleVariable->Set(ConsoleVariable->GetInt(), ECVF_SetByCode);
 	}
+
+	UVSCharacterMovementUtils::ApplyCharacterMovementScaleDelta(GetCharacter(), GetCharacter()->GetActorScale3D(), FVector(1));
+	GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(GetMovementCapsuleComponent()->GetUnscaledCapsuleHalfHeight());
 }
 
 void UVSCharacterMovementFeatureAgent::EndPlay_Implementation()
@@ -188,18 +191,15 @@ void UVSCharacterMovementFeatureAgent::OnCharacterMovementChanged(ACharacter* Ch
 	const FGameplayTag& PrevMovementModeTag = UVSMovementSystemSettings::GetTagFromMovementMode(PrevMovementMode, PreviousCustomMode);
 	MovementData.PrevMovementMode = PrevMovementModeTag;
 
-	/** Reset capsule halfheight. */
 	const ACharacter* DefaultCharacter = GetCharacter()->GetClass()->GetDefaultObject<ACharacter>();
-	// GetCharacter()->GetCapsuleComponent()->SetCapsuleHalfHeight(DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight());
 	
 	/** Reset movement base settings to default. */
 	const UCharacterMovementComponent* DefaultCharacterMove = DefaultCharacter->GetCharacterMovement();
-	GetCharacterMovement()->MaxWalkSpeed = DefaultCharacterMove->MaxWalkSpeed;
-	GetCharacterMovement()->MaxAcceleration = DefaultCharacterMove->MaxAcceleration;
-	// GetCharacterMovement()->BrakingDecelerationWalking = DefaultCharacterMove->BrakingDecelerationWalking;
-	GetCharacterMovement()->BrakingFriction = DefaultCharacterMove->BrakingFriction;
-	GetCharacterMovement()->bUseSeparateBrakingFriction = DefaultCharacterMove->bUseSeparateBrakingFriction;
-	GetCharacterMovement()->BrakingFrictionFactor = DefaultCharacterMove->BrakingFrictionFactor;
+	GetCharacterMovement()->MaxWalkSpeed = DefaultCharacterMove->MaxWalkSpeed * GetScale3D().X;
+	GetCharacterMovement()->MaxAcceleration = DefaultCharacterMove->MaxAcceleration* GetScale3D().X;
+	GetCharacterMovement()->BrakingFriction = DefaultCharacterMove->BrakingFriction* GetScale3D().X;
+	GetCharacterMovement()->bUseSeparateBrakingFriction = DefaultCharacterMove->bUseSeparateBrakingFriction* GetScale3D().X;
+	GetCharacterMovement()->BrakingFrictionFactor = DefaultCharacterMove->BrakingFrictionFactor* GetScale3D().X;
 	
 	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
 	GameplayTagController->SetTagCount(PrevMovementModeTag, 0);

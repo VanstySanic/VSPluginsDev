@@ -15,8 +15,8 @@ struct FVSFixedPointLeapLimits : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	bool IsValid() const;
-	bool Matches(const UVSCharacterMovementFeatureAgent* Agent) const;
+	VSMOVEMENTSYSTEM_API bool IsValid() const;
+	VSMOVEMENTSYSTEM_API bool Matches(const UVSCharacterMovementFeatureAgent* Agent) const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector2D SpeedRange2D = FVector2D(0, 65536.f);
@@ -40,7 +40,7 @@ struct FVSFixedPointLeapSettings : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	bool IsValid() const;
+	VSMOVEMENTSYSTEM_API bool IsValid() const;
 
 	/** Randomized. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (RowType = "/Script/VSPluginsCore.VSAnimSequenceReference"))

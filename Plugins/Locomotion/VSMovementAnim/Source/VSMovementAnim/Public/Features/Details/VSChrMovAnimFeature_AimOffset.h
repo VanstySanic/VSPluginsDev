@@ -18,6 +18,7 @@ class VSMOVEMENTANIM_API UVSChrMovAnimFeature_AimOffset : public UVSCharacterMov
 {
 	GENERATED_UCLASS_BODY()
 
+	/** Get current aim offset blend space. This is optionally used. */
 	UFUNCTION(BlueprintCallable, Category = "Orientation")
 	UAimOffsetBlendSpace* GetAimOffsetBlendSpace() const { return AnimData.CurrentAimOffsetBlendSpace; }
 	

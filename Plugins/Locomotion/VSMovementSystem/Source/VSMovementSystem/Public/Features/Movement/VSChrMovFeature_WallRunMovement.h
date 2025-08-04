@@ -43,6 +43,7 @@ public:
 	/**
 	 * Suggest a launch velocity that allows user to start a new wall run process on the other side wall, without changing the Z axis location.
 	 * This only works when the character is on the wall, and the other side wall should be paralleled with the current.
+	 * Notice that this will not judge the wall validation.
 	 * @WallDistanceRange The distance range between the current wall and other side wall.
 	 * @SettingRow If null, will get from current settings.
 	 * @MovementDuration The movement duration in air, from the current wall to other side wall.
