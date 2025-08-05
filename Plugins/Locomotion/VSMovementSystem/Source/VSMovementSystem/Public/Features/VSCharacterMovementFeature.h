@@ -6,6 +6,7 @@
 #include "Classes/Framework/VSObjectFeature.h"
 #include "GameplayTags.h"
 #include "VSCharacterMovementInterface.h"
+#include "Types/VSCharacterMovementTypes.h"
 #include "VSCharacterMovementFeature.generated.h"
 
 class UVSCharacterMovementComponent;
@@ -118,6 +119,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	FVector GetRootLocation() const;
+
+
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	FRotator EvaluateOrientation(const FVSMovementOrientationEvaluateParams& Params);
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "Camera")

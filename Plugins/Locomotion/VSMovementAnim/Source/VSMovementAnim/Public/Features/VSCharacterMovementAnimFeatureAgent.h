@@ -9,7 +9,6 @@
 
 class UVSGameplayTagController;
 class UCharacterMovementComponent;
-class UVSCharacterMovementFeatureAgent;
 
 /**
  * 

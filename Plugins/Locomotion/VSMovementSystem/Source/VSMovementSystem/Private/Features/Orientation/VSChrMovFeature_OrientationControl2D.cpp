@@ -3,7 +3,6 @@
 #include "Features/Orientation/VSChrMovFeature_OrientationControl2D.h"
 #include "Classes/Framework/VSGameplayTagController.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
-#include "Features/Orientation/VSChrMovFeature_OrientationEvaluator.h"
 #include "GameFramework/Character.h"
 #include "Libraries/VSMathLibrary.h"
 #include "Types/VSChrMovOrientationTypes.h"
@@ -27,39 +26,21 @@ void UVSChrMovFeature_OrientationControl2D::UpdateMovement_Implementation(float 
 	const FRotator& CurrentRotationWS = GetCharacter()->GetActorRotation();
 	const FRotator& WorldToUpRotation = FQuat::FindBetweenNormals(FVector::UpVector, GetUpDirection()).Rotator();
 	FRotator EvaluatedRotation = GetCharacter()->GetActorRotation();
-
-	bool bEvaluatedRotation = false;
+	
 	if (MovementData.bMatchesTagQuery)
 	{
 		if (IsMoving2D() && (!MovementData.CurrentSettings.bMovingRequireInput || HasMovementInput2D()))
 		{
-			for (UVSChrMovFeature_OrientationEvaluator* FindSubFeaturesByClass : GetMovementFeatureAgent()->FindSubFeaturesByClass<UVSChrMovFeature_OrientationEvaluator>())
-			{
-				if (FindSubFeaturesByClass->EvaluateOrientation(EvaluatedRotation, FVSOrientationEvaluateParams(MovementData.CurrentSettings.MovingEvaluateType)))
-				{
-					bEvaluatedRotation = true;
-					break;
-				}
-			}
+			EvaluatedRotation = GetMovementFeatureAgent()->EvaluateOrientation(FVSMovementOrientationEvaluateParams(MovementData.CurrentSettings.MovingEvaluateType));
 		}
 		else if (!IsMoving2D())
 		{
-			for (UVSChrMovFeature_OrientationEvaluator* FindSubFeaturesByClass :GetMovementFeatureAgent()->FindSubFeaturesByClass<UVSChrMovFeature_OrientationEvaluator>())
-			{
-				if (FindSubFeaturesByClass->EvaluateOrientation(EvaluatedRotation, FVSOrientationEvaluateParams(MovementData.CurrentSettings.IdleEvaluateType)))
-				{
-					bEvaluatedRotation = true;
-					break;
-				}
-			}
+			EvaluatedRotation = GetMovementFeatureAgent()->EvaluateOrientation(FVSMovementOrientationEvaluateParams(MovementData.CurrentSettings.IdleEvaluateType));
 		}
 
-		if (bEvaluatedRotation)
-		{
-			const FRotator& LaggedRotationWS = UVSMathLibrary::RotatorInterpTo(CurrentRotationWS, EvaluatedRotation, DeltaTime, FRotator(MovementData.CurrentSettings.OrientationLagSpeed), false, MovementData.CurrentSettings.OrientationLagMaxTimeSubstepping, WorldToUpRotation);
-			const FRotator& AxesedRotation = UVSMathLibrary::RotatorApplyAxes(LaggedRotationWS, LaggedRotationWS, EVSRotatorAxes::PitchYaw, WorldToUpRotation);
-			GetCharacter()->SetActorRotation(AxesedRotation);
-		}
+		const FRotator& LaggedRotationWS = UVSMathLibrary::RotatorInterpTo(CurrentRotationWS, EvaluatedRotation, DeltaTime, FRotator(MovementData.CurrentSettings.OrientationLagSpeed), false, MovementData.CurrentSettings.OrientationLagMaxTimeSubstepping, WorldToUpRotation);
+		const FRotator& AxesedRotation = UVSMathLibrary::RotatorApplyAxes(LaggedRotationWS, LaggedRotationWS, EVSRotatorAxes::PitchYaw, WorldToUpRotation);
+		GetCharacter()->SetActorRotation(AxesedRotation);
 	}
 }
 

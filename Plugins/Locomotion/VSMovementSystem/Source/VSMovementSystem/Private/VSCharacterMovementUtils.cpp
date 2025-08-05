@@ -2,9 +2,7 @@
 
 #include "VSCharacterMovementUtils.h"
 #include "VSCharacterMovementInterface.h"
-#include "Components/CapsuleComponent.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
-#include "Features/Orientation/VSChrMovFeature_OrientationEvaluator.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Libraries/VSActorLibrary.h"
@@ -14,17 +12,22 @@ UVSCharacterMovementUtils::UVSCharacterMovementUtils(const FObjectInitializer& O
 {
 }
 
-bool UVSCharacterMovementUtils::EvaluateCharacterMovementOrientation(const ACharacter* Character, FRotator& OutRotation, const FVSOrientationEvaluateParams& Params)
+UVSCharacterMovementFeatureAgent* UVSCharacterMovementUtils::GetCharacterMovementFeatureAgentFromActor(AActor* Actor)
 {
-	if (!Character || !Character->GetClass()->ImplementsInterface(UVSCharacterMovementInterface::StaticClass())) return false;
-	
-	for (UVSChrMovFeature_OrientationEvaluator* Evaluator : IVSCharacterMovementInterface::Execute_GetMovementAgentFeature(Character)->FindSubFeaturesByClass<UVSChrMovFeature_OrientationEvaluator>())
+	if (!Actor) return nullptr;
+	UVSCharacterMovementFeatureAgent* FeatureAgent = nullptr;
+	if (!FeatureAgent)
 	{
-		if (Evaluator && Evaluator->EvaluateOrientation(OutRotation, Params)) return true;
+		if (Actor->GetClass()->ImplementsInterface(UVSCharacterMovementInterface::StaticClass()))
+		{
+			FeatureAgent = IVSCharacterMovementInterface::Execute_GetMovementAgentFeature(Actor);
+		}
 	}
-	
-	UVSChrMovFeature_OrientationEvaluator::StaticClass()->GetDefaultObject<UVSChrMovFeature_OrientationEvaluator>()->EvaluateOrientation(OutRotation, Params);
-	return false;
+	if (!FeatureAgent)
+	{
+		FeatureAgent = UVSActorLibrary::FindFeatureByClassFromActor<UVSCharacterMovementFeatureAgent>(Actor);
+	}
+	return FeatureAgent;
 }
 
 void UVSCharacterMovementUtils::SetCharacterMovementScale(ACharacter* Character, const FVector& NewScale)
@@ -74,8 +77,8 @@ void UVSCharacterMovementUtils::ApplyCharacterMovementScaleDelta(ACharacter* Cha
 	CharacterMovement->MaxFlySpeed *= ScaleDeltaG;
 	CharacterMovement->MaxCustomMovementSpeed *= ScaleDeltaG;
 	CharacterMovement->AvoidanceConsiderationRadius *= ScaleDeltaG;
-	CharacterMovement->SetFixedBrakingDistance(CharacterMovement->GetNavMovementProperties()->FixedPathBrakingDistance * ScaleDeltaG);
 	CharacterMovement->AvoidanceConsiderationRadius *= ScaleDeltaG;
-	
+	CharacterMovement->SetFixedBrakingDistance(CharacterMovement->GetNavMovementProperties()->FixedPathBrakingDistance * ScaleDeltaG);
+
 	CharacterMovement->GravityScale *= ScaleDeltaZ;
 }

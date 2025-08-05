@@ -44,7 +44,7 @@ private:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TurnInPlace")
-	FGameplayTag OrientationEvaluateType = EVSOrientationEvaluateType::Control;
+	FVSMovementOrientationEvaluateType OrientationEvaluateType = FVSMovementOrientationEvaluateType(EVSMovementRelatedOrientationType::Control);
 	
 	// /** If true, the trigger delayed time will be declined instead of being reset to zero in some conditions. */
 	// UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "TurnInPlace")

@@ -26,6 +26,7 @@ class VSMOVEMENTSYSTEM_API UVSCharacterMovementFeatureAgent : public UVSCharacte
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+
 protected:
 	virtual void Initialize_Implementation() override;
 	virtual void Uninitialize_Implementation() override;
@@ -53,6 +54,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Networks")
 	FGameplayTagQuery NetworkDisableMoveCombiningQuery;
 
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orientation")
+	FVSMovementOrientationAimData OrientationAimData;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orientation")
+	FRotator CustomEvaluateRotation = FRotator::ZeroRotator;
 
 private:
 	UPROPERTY(Replicated)

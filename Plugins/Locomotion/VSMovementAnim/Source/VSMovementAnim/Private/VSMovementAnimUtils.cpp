@@ -1,8 +1,11 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "VSMovementAnimUtils.h"
+#include "VSCharacterMovementAnimInterface.h"
 #include "Features/VSCharacterMovementAnimFeature.h"
+#include "Features/VSCharacterMovementAnimFeatureAgent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Libraries/VSActorLibrary.h"
 #include "Types/VSMovementAnimTypes.h"
 #include "Types/VSMovementAnimTags.h"
 
@@ -11,15 +14,33 @@ UVSMovementAnimUtils::UVSMovementAnimUtils(const FObjectInitializer& ObjectIniti
 {
 }
 
+UVSCharacterMovementAnimFeatureAgent* UVSMovementAnimUtils::GetCharacterMovementAnimFeatureAgentFromActor(AActor* Actor)
+{
+	if (!Actor) return nullptr;
+	UVSCharacterMovementAnimFeatureAgent* FeatureAgent = nullptr;
+	if (!FeatureAgent)
+	{
+		if (Actor->GetClass()->ImplementsInterface(UVSCharacterMovementAnimInterface::StaticClass()))
+		{
+			FeatureAgent = IVSCharacterMovementAnimInterface::Execute_GetCharacterMovementAnimFeatureAgent(Actor);
+		}
+	}
+	if (!FeatureAgent)
+	{
+		FeatureAgent = UVSActorLibrary::FindFeatureByClassFromActor<UVSCharacterMovementAnimFeatureAgent>(Actor);
+	}
+	return FeatureAgent;
+}
+
 FGameplayTag UVSMovementAnimUtils::CalcAnimDirectionByAngle2D(const float Angle, const float BufferAngle, const FGameplayTag& PrevDirection)
 {
 	static TArray<FGameplayTag> DirectionOrder = TArray<FGameplayTag>
-{
-	EVSAnimDirection::BL, EVSAnimDirection::XL,
-	EVSAnimDirection::FL, EVSAnimDirection::FX,
-	EVSAnimDirection::FR, EVSAnimDirection::XR,
-	EVSAnimDirection::BR, EVSAnimDirection::BX,
-};
+	{
+		EVSAnimDirection::BL, EVSAnimDirection::XL,
+		EVSAnimDirection::FL, EVSAnimDirection::FX,
+		EVSAnimDirection::FR, EVSAnimDirection::XR,
+		EVSAnimDirection::BR, EVSAnimDirection::BX,
+	};
 	static float RangeAngle = 45.f;
 	static float HalfRangeAngle = 22.5f;
 

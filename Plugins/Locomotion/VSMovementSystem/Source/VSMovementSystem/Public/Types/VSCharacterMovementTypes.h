@@ -8,6 +8,138 @@
 
 class UCharacterMovementComponent;
 
+UENUM(BlueprintType)
+namespace EVSMovementRelatedOrientationType
+{
+	enum Type 
+	{
+		None				UMETA(Hidden),
+		Self,
+		Velocity,
+		Input,
+		Control,
+		Aim,
+		Custom,
+	};
+}
+
+UENUM(BlueprintType)
+namespace EVSMovementOrientationAimTargetType
+{
+	enum Type
+	{
+		None				UMETA(Hidden),
+		Point,
+		Direction,
+		Actor,
+		Component,
+		Socket
+	};
+}
+
+USTRUCT(BlueprintType)
+struct FVSMovementOrientationDynamicData
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FRotator SelfRotation = FRotator::ZeroRotator;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Velocity = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector MovementInput = FVector::ZeroVector;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FRotator ControlRotation = FRotator::ZeroRotator;
+};
+
+USTRUCT(BlueprintType)
+struct FVSMovementOrientationAimData
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Point = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Direction = FVector::ForwardVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TWeakObjectPtr<AActor> Actor = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TWeakObjectPtr<USceneComponent> Component = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TWeakObjectPtr<USceneComponent> SocketComponent = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName SocketName = NAME_None;
+};
+
+USTRUCT(BlueprintType)
+struct FVSMovementOrientationEvaluateType
+{
+	GENERATED_BODY()
+
+	FVSMovementOrientationEvaluateType(EVSMovementRelatedOrientationType::Type OrientationType = EVSMovementRelatedOrientationType::None, EVSMovementOrientationAimTargetType::Type AimTargetType = EVSMovementOrientationAimTargetType::None)
+		: OrientationType(OrientationType)
+		, AimTargetType(AimTargetType)
+	{
+	}
+
+	friend uint32 GetTypeHash(const FVSMovementOrientationEvaluateType& Type)
+	{
+		return HashCombine(GetTypeHash(Type.OrientationType), GetTypeHash(Type.AimTargetType));
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EVSMovementRelatedOrientationType::Type> OrientationType = EVSMovementRelatedOrientationType::None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EVSMovementOrientationAimTargetType::Type> AimTargetType = EVSMovementOrientationAimTargetType::None;
+};
+
+USTRUCT(BlueprintType)
+struct FVSMovementOrientationEvaluateParams
+{
+	GENERATED_BODY()
+
+	FVSMovementOrientationEvaluateParams(const FVSMovementOrientationEvaluateType& EvaluateTypes = FVSMovementOrientationEvaluateType())
+		: EvaluateType(EvaluateTypes)
+	{
+	}
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVSMovementOrientationEvaluateType EvaluateType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TEnumAsByte<EVSMovementRelatedOrientationType::Type>> OverridenRotationTypes;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVSMovementOrientationDynamicData DynamicDataOverride;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TEnumAsByte<EVSMovementOrientationAimTargetType::Type>> OverridenAimTargetTypes;
+	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVSMovementOrientationAimData AimDataOverride;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FRotator CustomRotation = FRotator::ZeroRotator;
+
+	/** If true, the movement will be adjusted if moving against wall. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bMovementAgainstWallAdjustment2D = true;
+	
+	/** If true, return the gravity space 2d rotation instead of the 3d rotation. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bReturnRotationInSpace2D = true;
+};
+
 USTRUCT(BlueprintType)
 struct FVSMovementBaseSettings
 {

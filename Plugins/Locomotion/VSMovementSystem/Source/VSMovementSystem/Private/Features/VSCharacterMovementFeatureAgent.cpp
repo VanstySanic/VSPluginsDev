@@ -9,10 +9,6 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/GameStateBase.h"
-#include "GameFramework/PlayerState.h"
-#include "Interfaces/VSGameplayTagControllerInterface.h"
-#include "Kismet/GameplayStatics.h"
 #include "Libraries/VSActorLibrary.h"
 #include "Libraries/VSGameplayLibrary.h"
 #include "VSPrivablic.h"
@@ -38,20 +34,19 @@ void UVSCharacterMovementFeatureAgent::Initialize_Implementation()
 {
 	ChrMovFeatureAgentPrivate = Cast<UVSCharacterMovementFeatureAgent>(this);
 
-	CharacterPrivate = GetTypedOuter<ACharacter>();
-	check(CharacterPrivate.IsValid() && CharacterPrivate->Implements<UVSGameplayTagControllerInterface>());
+	CharacterPrivate = Cast<ACharacter>(UVSGameplayLibrary::GetPawnFromSubObject(this));
+	check(CharacterPrivate.IsValid());
 	
 	CharacterMovementComponentPrivate = CharacterPrivate->GetCharacterMovement();
 	check(CharacterMovementComponentPrivate.IsValid() );
 	
-	GameplayTagControllerPrivate = IVSGameplayTagControllerInterface::Execute_GetGameplayTagController(CharacterPrivate.Get());
+	GameplayTagControllerPrivate = UVSActorLibrary::GetGameplayTagControllerFromActor(CharacterPrivate.Get());
 	check(GameplayTagControllerPrivate.IsValid());
 	
-	CharacterPrivate->MovementModeChangedDelegate.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnCharacterMovementChanged);
-	if (CharacterPrivate->HasAuthority()) { ReplicatedControlRotation = CharacterPrivate->GetControlRotation(); }
-
 	MovementCapsuleComponentPrivate = Cast<UVSChrMovCapsuleComponent>(GetCharacter()->GetCapsuleComponent());
 	check(MovementCapsuleComponentPrivate.IsValid());
+	
+	CharacterPrivate->MovementModeChangedDelegate.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnCharacterMovementChanged);
 	
 	GetGameplayTagController()->OnTagsUpdated.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnMovementTagsUpdated);
 	GetGameplayTagController()->OnTagEventNotified.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnMovementTagEventNotified);
@@ -70,6 +65,8 @@ void UVSCharacterMovementFeatureAgent::Uninitialize_Implementation()
 void UVSCharacterMovementFeatureAgent::BeginPlay_Implementation()
 {
 	Super::BeginPlay_Implementation();
+
+	if (CharacterPrivate->HasAuthority()) { ReplicatedControlRotation = CharacterPrivate->GetControlRotation(); }
 	
 	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
 	GameplayTagController->SetTagCount(GetMovementMode(), 1);

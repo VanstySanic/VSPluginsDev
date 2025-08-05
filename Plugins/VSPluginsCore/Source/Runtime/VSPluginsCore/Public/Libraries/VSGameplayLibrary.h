@@ -11,6 +11,7 @@ struct FVSGameplayTagEventQueryContainer;
 struct FGameplayTag;
 struct FGameplayTagContainer;
 struct FVSGameplayTagEventQuery;
+struct FVSSceneComponentQuery;
 
 /**
  * 
@@ -32,12 +33,19 @@ class VSPLUGINSCORE_API UVSGameplayLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (AutoCreateRefTerm = "Query, GameplayTags, TagEvent"))
 	static bool MatchesGameplayTagEventQueries(const FVSGameplayTagEventQueryContainer& Queries, const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent = FGameplayTag());
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Query"))
+	static bool MatchesSceneComponentQuery(const USceneComponent* SceneComponent, const FVSSceneComponentQuery& Query);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Query"))
+	static APawn* GetPawnFromSubObject(UObject* Object);
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Projectile")
+	static FVector SuggestVelocityForProjectileMovementByTime(const FVector& StartLocation, const FVector& EndLocation, const float MovementTime = 1.f, const FVector& GravityDirection = FVector(0.0, 0.0, -1.0), float GravitySize = 980.f);
+
+
+	
 	/**
 	 * @return Whether the sweep has been blocked.
 	 */
 	static bool SweepSingleByShapeAndChannels(const UObject* WorldContext, FHitResult& OutHit, const FVector& Start, const FVector& End, const FQuat& Rotation, const FCollisionShape& Shape, const FCollisionResponseContainer& Channels, const FCollisionQueryParams& QueryParams = FCollisionQueryParams::DefaultQueryParam, FCollisionResponseParams ResponseParams = FCollisionResponseParams::DefaultResponseParam);
-
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Projectile")
-	static FVector SuggestVelocityForProjectileMovementByTime(const FVector& StartLocation, const FVector& EndLocation, const float MovementTime = 1.f, const FVector& GravityDirection = FVector(0.0, 0.0, -1.0), float GravitySize = 980.f);
 };

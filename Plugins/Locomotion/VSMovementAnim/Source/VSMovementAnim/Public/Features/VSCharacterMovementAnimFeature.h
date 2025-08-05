@@ -8,7 +8,6 @@
 #include "VSCharacterMovementAnimFeature.generated.h"
 
 class UVSGameplayTagController;
-class UVSCharacterMovementAnimFeatureAgent;
 class UVSCharacterMovementFeatureAgent;
 class UCharacterMovementComponent;
 

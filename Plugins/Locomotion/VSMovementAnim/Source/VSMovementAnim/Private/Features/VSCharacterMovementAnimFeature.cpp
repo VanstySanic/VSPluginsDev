@@ -2,11 +2,15 @@
 
 #include "Features/VSCharacterMovementAnimFeature.h"
 
+#include "VSCharacterMovementAnimInterface.h"
+#include "VSMovementAnimUtils.h"
 #include "Classes/Framework/VSGameplayTagController.h"
+#include "Classes/Framework/VSObjectFeatureComponent.h"
 #include "Features/VSCharacterMovementAnimFeatureAgent.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Libraries/VSActorLibrary.h"
 #include "Types/VSMovementAnimTags.h"
 
 UVSCharacterMovementAnimFeature::UVSCharacterMovementAnimFeature(const FObjectInitializer& ObjectInitializer)
@@ -21,8 +25,14 @@ void UVSCharacterMovementAnimFeature::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
 
-	if (IsA<UVSCharacterMovementAnimFeatureAgent>()) { AnimFeatureAgentPrivate = Cast<UVSCharacterMovementAnimFeatureAgent>(this); }
-	else { AnimFeatureAgentPrivate = GetTypedOuter<UVSCharacterMovementAnimFeatureAgent>(); }
+	AnimFeatureAgentPrivate = Cast<UVSCharacterMovementAnimFeatureAgent>(this);
+	if (!AnimFeatureAgentPrivate.IsValid())
+	{
+		if (AActor* Actor = GetTypedOuter<AActor>())
+		{
+			AnimFeatureAgentPrivate = UVSMovementAnimUtils::GetCharacterMovementAnimFeatureAgentFromActor(Actor);
+		}
+	}
 	check(AnimFeatureAgentPrivate.IsValid());
 
 	GetGameplayTagController()->OnTagsUpdated.AddDynamic(this, &UVSCharacterMovementAnimFeatureAgent::OnMovementTagsUpdated);

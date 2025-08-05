@@ -31,10 +31,9 @@ void UVSChrMovAnimFeature_AimOffset::UpdateAnimationThreadSafe_Implementation(fl
 	}
 	else
 	{
-		FVSOrientationEvaluateParams EvaluateParams(AnimData.CurrentOrientationEvaluateType);
-		EvaluateParams.bReturnRotationInSpace2D = false;
-		FRotator EvaluatedRotation = GetCharacter()->GetActorRotation();
-		UVSCharacterMovementUtils::EvaluateCharacterMovementOrientation(GetCharacter(), EvaluatedRotation, EvaluateParams);
+		FVSMovementOrientationEvaluateParams OrientationEvaluateParams(AnimData.CurrentOrientationEvaluateType);
+		OrientationEvaluateParams.bReturnRotationInSpace2D = false;
+		FRotator EvaluatedRotation = GetMovementFeatureAgent()->EvaluateOrientation(OrientationEvaluateParams);
 		const FRotator& RotationRS = GetCharacter()->GetActorTransform().InverseTransformRotation(EvaluatedRotation.Quaternion()).Rotator();
 		AnimData.AimOffsetAngle.X = RotationRS.Yaw;
 		AnimData.AimOffsetAngle.Y = RotationRS.Pitch;

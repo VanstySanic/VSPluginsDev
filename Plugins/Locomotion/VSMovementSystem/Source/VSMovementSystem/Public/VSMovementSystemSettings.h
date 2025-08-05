@@ -45,7 +45,4 @@ public:
 		{ EAxis::Y, FName("Movement_Right") },
 		{ EAxis::Z, FName("Movement_Up") },
 	};
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Name", Config)
-	FVSOrientationEvaluateCommonParamNames OrientationEvaluateCommonParamNames;
 };

@@ -5,76 +5,11 @@
 #include "CoreMinimal.h"
 #include "VSCharacterMovementTags.h"
 #include "Types/VSGameplayTypes.h"
+#include "Types/VSCharacterMovementTypes.h"
 #include "UObject/Object.h"
 #include "VSChrMovOrientationTypes.generated.h"
 
 struct FGameplayTag;
-
-#pragma region Evaluator
-USTRUCT(BlueprintType)
-struct FVSOrientationEvaluateCommonParamNames
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName Velocity = FName("Velocity");
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName MovementInput = FName("Input");
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName UpDirection = FName("DownDirection");
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName AimTargetComponent = FName("AimTargetComponent");
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName AimTargetPoint = FName("AimTargetPoint");
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName AimTargetDirection = FName("AimTargetDirection");
-};
-
-USTRUCT(BlueprintType)
-struct FVSOrientationEvaluateNamedParams
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<FName, FVector> VectorParams;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<FName, FRotator> RotatorParams;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TMap<FName, USceneComponent*> ComponentParams;
-};
-
-USTRUCT(BlueprintType)
-struct FVSOrientationEvaluateParams
-{
-	GENERATED_BODY()
-
-	FVSOrientationEvaluateParams(const FGameplayTag& Type = FGameplayTag::EmptyTag)
-		: Type(Type)
-	{
-	}
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTag Type = EVSOrientationEvaluateType::None;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVSOrientationEvaluateNamedParams NamedParams;
-
-	/** If true, the movement will be adjusted if moving against wall. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bMovementAgainstWallAdjustment2D = true;
-	
-	/** If true, return the gravity space 2d rotation instead of the 3d rotation. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bReturnRotationInSpace2D = true;
-};
-#pragma endregion
 
 USTRUCT(BlueprintType)
 struct FVSOrientationControlSettings2D
@@ -89,10 +24,10 @@ struct FVSOrientationControlSettings2D
 	}
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayTag MovingEvaluateType = EVSOrientationEvaluateType::Control;
+	FVSMovementOrientationEvaluateType MovingEvaluateType = FVSMovementOrientationEvaluateType(EVSMovementRelatedOrientationType::Control);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayTag IdleEvaluateType = EVSOrientationEvaluateType::None;
+	FVSMovementOrientationEvaluateType IdleEvaluateType;
 	
 	/** Lag the moving orientation 2D to the desired. 0.f means no lag. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

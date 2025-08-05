@@ -94,12 +94,10 @@ float UVSChrMovAnimFeature_WalkingMovement::GetLeanAlpha() const
 FRotator UVSChrMovAnimFeature_WalkingMovement::EvaluateTargetOrientationForInput() const
 {
 	if (!GetCharacter() || !ChrMovFeature_OrientationControl2D.IsValid()) return FRotator::ZeroRotator;
-	FVSOrientationEvaluateParams EvaluateParams;
-	EvaluateParams.Type = ChrMovFeature_OrientationControl2D->GetOrientationControlSettings2D().MovingEvaluateType;
-	EvaluateParams.NamedParams.VectorParams.Emplace(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.Velocity, GetMovementInput2D());
-	EvaluateParams.NamedParams.VectorParams.Emplace(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.MovementInput, GetMovementInput2D());
-	FRotator Rotation = GetCharacter()->GetActorRotation();
-	UVSCharacterMovementUtils::EvaluateCharacterMovementOrientation(GetCharacter(), Rotation, EvaluateParams);
+	FVSMovementOrientationEvaluateParams EvaluateParams(ChrMovFeature_OrientationControl2D->GetOrientationControlSettings2D().MovingEvaluateType);
+	EvaluateParams.OverridenRotationTypes.Emplace(EVSMovementRelatedOrientationType::Velocity);
+	EvaluateParams.DynamicDataOverride.Velocity = GetMovementInput2D();
+	FRotator Rotation = GetMovementFeatureAgent()->EvaluateOrientation(EvaluateParams);
 	return Rotation;
 }
 

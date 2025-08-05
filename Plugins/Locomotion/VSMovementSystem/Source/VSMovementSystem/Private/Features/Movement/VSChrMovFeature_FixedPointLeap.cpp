@@ -7,7 +7,6 @@
 #include "Classes/Framework/VSGameplayTagController.h"
 #include "Components/CapsuleComponent.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
-#include "Features/Orientation/VSChrMovFeature_OrientationEvaluator.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -55,10 +54,7 @@ void UVSChrMovFeature_FixedPointLeap::UpdateMovement_Implementation(float DeltaT
 		GetCharacterMovement()->Velocity = SuggestedVelocity;
 		GetCharacterMovement()->SafeMoveUpdatedComponent(SuggestedVelocity * DeltaTime, GetCharacter()->GetActorRotation(), true, UpdateMovementHit);
 		
-		if (UVSChrMovFeature_OrientationEvaluator* Evaluator = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationEvaluator>())
-		{
-			Evaluator->DefaultNamedParams.VectorParams.Emplace(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection, FVector::VectorPlaneProject(TargetRootPointWS - RootLocationWS, GetUpDirection()).GetSafeNormal());
-		}
+		GetMovementFeatureAgent()->OrientationAimData.Direction = FVector::VectorPlaneProject(TargetRootPointWS - RootLocationWS, GetUpDirection()).GetSafeNormal();
 		
 		if (UpdateMovementHit.bBlockingHit)
 		{
@@ -138,10 +134,6 @@ void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap(const TArray<FDataTableR
 
 void UVSChrMovFeature_FixedPointLeap::StopFixPointLeap()
 {
-	if (UVSChrMovFeature_OrientationEvaluator* Evaluator = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationEvaluator>())
-	{
-		Evaluator->DefaultNamedParams.VectorParams.Remove(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection);
-	}
 	if (!FMath::IsNearlyZero(MovementData.CapsuleHalfHeightOffsetUSCZ, 0.01f))
 	{
 		GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(GetMovementCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - MovementData.CapsuleHalfHeightOffsetUSCZ);

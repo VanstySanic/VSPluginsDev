@@ -1,12 +1,13 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Features/VSCharacterMovementAnimFeatureAgent.h"
+#include "VSCharacterMovementUtils.h"
 #include "VSMovementAnimUtils.h"
 #include "Classes/Framework/VSGameplayTagController.h"
-#include "Features/VSCharacterMovementFeature.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "GameFramework/Character.h"
-#include "Interfaces/VSGameplayTagControllerInterface.h"
+#include "Libraries/VSActorLibrary.h"
+#include "Libraries/VSGameplayLibrary.h"
 
 
 UVSCharacterMovementAnimFeatureAgent::UVSCharacterMovementAnimFeatureAgent(const FObjectInitializer& ObjectInitializer)
@@ -18,13 +19,13 @@ void UVSCharacterMovementAnimFeatureAgent::Initialize_Implementation()
 {
 	AnimFeatureAgentPrivate = Cast<UVSCharacterMovementAnimFeatureAgent>(this);
 
-	CharacterPrivate = GetTypedOuter<ACharacter>();
-	check(CharacterPrivate.IsValid() && CharacterPrivate->Implements<UVSCharacterMovementInterface>() && CharacterPrivate->Implements<UVSGameplayTagControllerInterface>());
+	CharacterPrivate = Cast<ACharacter>(UVSGameplayLibrary::GetPawnFromSubObject(this));
+	check(CharacterPrivate.IsValid() && CharacterPrivate->Implements<UVSGameplayTagControllerInterface>());
 
-	ChrMovAgentFeaturePrivate = IVSCharacterMovementInterface::Execute_GetMovementAgentFeature(CharacterPrivate.Get());
+	ChrMovAgentFeaturePrivate = UVSCharacterMovementUtils::GetCharacterMovementFeatureAgentFromActor(CharacterPrivate.Get());
 	check(ChrMovAgentFeaturePrivate.IsValid());
 
-	GameplayTagControllerPrivate = IVSGameplayTagControllerInterface::Execute_GetGameplayTagController(CharacterPrivate.Get());
+	GameplayTagControllerPrivate = UVSActorLibrary::GetGameplayTagControllerFromActor(CharacterPrivate.Get());
 	check(GameplayTagControllerPrivate.IsValid());
 
 	GetGameplayTagController()->OnTagsUpdated.AddDynamic(this, &UVSCharacterMovementAnimFeatureAgent::OnMovementTagsUpdated);

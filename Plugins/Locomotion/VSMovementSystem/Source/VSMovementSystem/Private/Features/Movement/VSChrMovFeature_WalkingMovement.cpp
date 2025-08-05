@@ -44,16 +44,11 @@ void UVSChrMovFeature_WalkingMovement::BeginPlay_Implementation()
 {
 	Super::BeginPlay_Implementation();
 
-	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
-	MovementData.Stance = DefaultStance;
 	MovementData.Gaits = DefaultGaits;
-	MovementData.CurrentMovementBaseSettings = MovementData.Stance == EVSStance::Crouching ? DefaultCrouchedMovementBaseSettings : DefaultMovementBaseSettings;
+
+	SetStance(DefaultStance);
 	ReplicatedStance = DefaultStance;
-	GameplayTagController->SetTagCount(DefaultStance, 1);
-	GameplayTagController->SetTagCount(GetGait(DefaultStance), 1);
-	RefreshHalfHeight();
-	ApplyMovementBaseSettings(MovementData.CurrentMovementBaseSettings);
-	RefreshMovementBaseSettings(EVSMovementEvent::StateChange_Stance);
+	MovementData.CurrentMovementBaseSettings = MovementData.Stance == EVSStance::Crouching ? DefaultCrouchedMovementBaseSettings : DefaultMovementBaseSettings;
 }
 
 void UVSChrMovFeature_WalkingMovement::Tick_Implementation(float DeltaTime)

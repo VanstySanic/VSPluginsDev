@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Features/VSCharacterMovementAnimFeature.h"
 #include "Types/VSCharacterMovementTags.h"
+#include "Types/VSCharacterMovementTypes.h"
 #include "Types/VSGameplayTypes.h"
 #include "VSChrMovAnimFeature_AimOffset.generated.h"
 
@@ -36,11 +37,11 @@ private:
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
-	FGameplayTag DefaultOrientationEvaluateType = EVSOrientationEvaluateType::Control;
+	FVSMovementOrientationEvaluateType DefaultOrientationEvaluateType = FVSMovementOrientationEvaluateType(EVSMovementRelatedOrientationType::Control);
 	
 
 	UPROPERTY(EditAnywhere, Category = "Orientation")
-	TMap<FGameplayTag, FVSGameplayTagEventQueryContainer> QueriedOrientationEvaluateTypes;
+	TMap<FVSMovementOrientationEvaluateType, FVSGameplayTagEventQueryContainer> QueriedOrientationEvaluateTypes;
 
 	UPROPERTY(EditAnywhere, Category = "Orientation")
 	FVSGameplayTagEventQueryContainer RefreshQueriedOrientationEvaluateTypeQuery;
@@ -55,7 +56,7 @@ protected:
 private:
 	struct FAnimData
 	{
-		FGameplayTag CurrentOrientationEvaluateType = EVSOrientationEvaluateType::None;
+		FVSMovementOrientationEvaluateType CurrentOrientationEvaluateType = FVSMovementOrientationEvaluateType(EVSMovementRelatedOrientationType::None);
 
 		/** [Yaw, Pitch] */
 		FVector2D AimOffsetAngle = FVector2D::ZeroVector;

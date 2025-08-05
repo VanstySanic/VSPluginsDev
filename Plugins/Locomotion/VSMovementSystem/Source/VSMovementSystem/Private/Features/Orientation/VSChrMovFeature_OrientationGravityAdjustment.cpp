@@ -27,16 +27,7 @@ bool UVSChrMovFeature_OrientationGravityAdjustment::CanUpdateMovement_Implementa
 void UVSChrMovFeature_OrientationGravityAdjustment::UpdateMovement_Implementation(float DeltaTime)
 {
 	const FRotator& DeltaRotation = FQuat::FindBetweenNormals(-GetUpDirection(), (bIsAntiGravity ? -1.f : 1.f) * GetGravityDirection()).Rotator();
-	// FRotator LaggedDeltaRotation = UVSMathLibrary::RotatorInterpTo(FRotator::ZeroRotator, DeltaRotation, DeltaTime, FRotator(OrientationLagSpeed), false, LagMaxTimeSubstepping);
-	// if (LaggedDeltaRotation.Equals(DeltaRotation, 0.01f)) { LaggedDeltaRotation = DeltaRotation; }
 	GetCharacter()->AddActorWorldRotation(DeltaRotation);
-	
-	// if (bAdjustControlRotation && GetCharacter()->GetController())
-	// {
-	// 	const FRotator ControlRotation = GetController()->GetControlRotation();
-	// 	const FRotator& NewControlRotation = UKismetMathLibrary::ComposeRotators(ControlRotation, DeltaRotation);
-	// 	GetController()->SetControlRotation(NewControlRotation);
-	// }
 }
 
 void UVSChrMovFeature_OrientationGravityAdjustment::OnMovementTagEventNotified_Implementation( const FGameplayTag& TagEvent)

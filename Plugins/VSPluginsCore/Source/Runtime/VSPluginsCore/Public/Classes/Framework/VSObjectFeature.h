@@ -194,7 +194,7 @@ private:
 template <typename T>
 T* UVSObjectFeature::FindSubFeatureByClass(TSubclassOf<T> Class, bool bRecursive) const
 {
-	static_assert(TIsDerivedFrom<T, UObject>::IsDerived, "Class must derive from UVSObjectFeature.");
+	static_assert(TIsDerivedFrom<T, UVSObjectFeature>::IsDerived, "Class must derive from UVSObjectFeature.");
 	return static_cast<T*>(GetSubFeatureByClass(Class, bRecursive));
 }
 

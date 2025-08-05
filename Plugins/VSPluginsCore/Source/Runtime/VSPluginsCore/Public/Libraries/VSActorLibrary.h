@@ -6,8 +6,10 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "VSActorLibrary.generated.h"
 
+class UVSGameplayTagController;
 class UAbilitySystemComponent;
 class UCameraComponent;
+class UVSObjectFeature;
 
 /**
  * 
@@ -26,6 +28,16 @@ class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
 	static UCameraComponent* GetActiveCameraFromActor(const AActor* Actor);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
+	static UVSGameplayTagController* GetGameplayTagControllerFromActor(AActor* Actor);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Object", DeterminesOutputType = "Feature"))
+	static UVSObjectFeature* GetFeatureByClassFromActor(AActor* Object, TSubclassOf<UVSObjectFeature> Class);
+	template <typename T>
+	static T* FindFeatureByClassFromActor(AActor* Actor, TSubclassOf<T> Class = T::StaticClass());
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
+	UVSObjectFeature* GetFeatureByNameFromActor(AActor* Actor, FName Name);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
 	static UAbilitySystemComponent* GetAbilitySystemComponentFormActor(AActor* Actor);
@@ -41,3 +53,10 @@ class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Character")
 	static FVector GetCharacterRootLocation(const ACharacter* Character, const float VerticalOffset = 0.f /** 2.f */, float UnscaledHalfHeightOverride = 0.f);
 };
+
+template <typename T>
+T* UVSActorLibrary::FindFeatureByClassFromActor(AActor* Actor, TSubclassOf<T> Class)
+{
+	static_assert(TIsDerivedFrom<T, UVSObjectFeature>::IsDerived, "Class must derive from UVSObjectFeature.");
+	return static_cast<T*>(GetFeatureByClassFromActor(Actor, Class));
+}

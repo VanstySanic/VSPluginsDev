@@ -15,5 +15,5 @@ Content/__ExternalActors__
 Content/__ExternalObjects__
 Content/Dev/
 Plugins/Developer/
-Plugins/GameJam/
-Plugins/Locomotion/VSMovementData
+Plugins/Locomotion/VSMovementData/
+Plugins/VSGameBasePresets/

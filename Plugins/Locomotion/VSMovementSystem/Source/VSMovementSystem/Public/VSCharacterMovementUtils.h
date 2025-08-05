@@ -7,6 +7,7 @@
 #include "Types/VSCharacterMovementTypes.h"
 #include "VSCharacterMovementUtils.generated.h"
 
+class UVSCharacterMovementFeatureAgent;
 class UCharacterMovementComponent;
 struct FVSOrientationEvaluateParams;
 
@@ -19,12 +20,12 @@ class VSMOVEMENTSYSTEM_API UVSCharacterMovementUtils : public UBlueprintFunction
 	GENERATED_UCLASS_BODY()
 
 public:
-	UFUNCTION(Blueprintable, Category = "Movement", meta = (DefaultToSelf = "Character", AutoCreateRefTerm = "Params"))
-	static bool EvaluateCharacterMovementOrientation(const ACharacter* Character, FRotator& OutRotation, const FVSOrientationEvaluateParams& Params);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Animation")
+	static UVSCharacterMovementFeatureAgent* GetCharacterMovementFeatureAgentFromActor(AActor* Actor);
 
 	UFUNCTION(Blueprintable, Category = "Movement", meta = (DefaultToSelf = "Character", AutoCreateRefTerm = "NewScale"))
 	static void SetCharacterMovementScale(ACharacter* Character, const FVector& NewScale);
 
-	UFUNCTION(Blueprintable, Category = "Movement", meta = (DefaultToSelf = "Character", AutoCreateRefTerm = "NewScale"))
+	UFUNCTION(Blueprintable, Category = "Movement", meta = (DefaultToSelf = "Character", AutoCreateRefTerm = "NewScale, PrevScale"))
 	static void ApplyCharacterMovementScaleDelta(ACharacter* Character, const FVector& NewScale, const FVector& PrevScale);
 };

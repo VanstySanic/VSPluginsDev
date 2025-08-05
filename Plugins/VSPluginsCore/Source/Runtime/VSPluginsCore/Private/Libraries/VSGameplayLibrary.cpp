@@ -33,6 +33,46 @@ bool UVSGameplayLibrary::MatchesGameplayTagEventQueries(const FVSGameplayTagEven
 	return Queries.Matches(GameplayTags, TagEvent);
 }
 
+bool UVSGameplayLibrary::MatchesSceneComponentQuery(const USceneComponent* SceneComponent, const FVSSceneComponentQuery& Query)
+{
+	return Query.Matches(SceneComponent);
+}
+
+APawn* UVSGameplayLibrary::GetPawnFromSubObject(UObject* Object)
+{
+	if (!Object) return nullptr;
+	if (APawn* Pawn = Cast<APawn>(Object))
+	{
+		return Pawn;
+	}
+	if (AController* Controller = Cast<AController>(Object))
+	{
+		return Controller->GetPawn();
+	}
+	if (APlayerState* PlayerState = Cast<APlayerState>(Object))
+	{
+		return PlayerState->GetPawn();
+	}
+
+	return GetPawnFromSubObject(Object->GetOuter());
+}
+
+FVector UVSGameplayLibrary::SuggestVelocityForProjectileMovementByTime(const FVector& StartLocation, const FVector& EndLocation, const float MovementTime, const FVector& GravityDirection, float GravitySize)
+{
+	if (MovementTime <= 0.f) return FVector::ZeroVector;
+
+	const FVector& NegativeGravityNormal = GravityDirection.GetSafeNormal();
+	
+	const FVector& DeltaLocation2D = FVector::VectorPlaneProject((EndLocation - StartLocation), NegativeGravityNormal);
+	const FVector& DeltaLocationZ = (EndLocation - StartLocation).ProjectOnToNormal(NegativeGravityNormal);
+
+	FVector AnsVelocity = FVector::ZeroVector;
+	AnsVelocity += DeltaLocation2D / MovementTime;
+	AnsVelocity += DeltaLocationZ / MovementTime - 0.5f * GravitySize * NegativeGravityNormal * MovementTime;
+
+	return AnsVelocity;
+}
+
 bool UVSGameplayLibrary::SweepSingleByShapeAndChannels(const UObject* WorldContext, FHitResult& OutHit, const FVector& Start, const FVector& End, const FQuat& Rotation, const FCollisionShape& Shape, const FCollisionResponseContainer& Channels, const FCollisionQueryParams& QueryParams, FCollisionResponseParams ResponseParams)
 {
 	if (!WorldContext || !WorldContext->GetWorld()) return false;
@@ -56,20 +96,4 @@ bool UVSGameplayLibrary::SweepSingleByShapeAndChannels(const UObject* WorldConte
 	}
 	
 	return false;
-}
-
-FVector UVSGameplayLibrary::SuggestVelocityForProjectileMovementByTime(const FVector& StartLocation, const FVector& EndLocation, const float MovementTime, const FVector& GravityDirection, float GravitySize)
-{
-	if (MovementTime <= 0.f) return FVector::ZeroVector;
-
-	const FVector& NegativeGravityNormal = GravityDirection.GetSafeNormal();
-	
-	const FVector& DeltaLocation2D = FVector::VectorPlaneProject((EndLocation - StartLocation), NegativeGravityNormal);
-	const FVector& DeltaLocationZ = (EndLocation - StartLocation).ProjectOnToNormal(NegativeGravityNormal);
-
-	FVector AnsVelocity = FVector::ZeroVector;
-	AnsVelocity += DeltaLocation2D / MovementTime;
-	AnsVelocity += DeltaLocationZ / MovementTime - 0.5f * GravitySize * NegativeGravityNormal * MovementTime;
-
-	return AnsVelocity;
 }

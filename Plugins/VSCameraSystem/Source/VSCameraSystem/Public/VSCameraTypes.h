@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Types/VSMathTypes.h"
-#include "UObject/Object.h"
 #include "VSCameraTypes.generated.h"
 
 UENUM(BlueprintType)
@@ -29,8 +28,8 @@ namespace EVSCameraRelatedTransformType
 		DataView,
 		
 		AttachedActor,
-		
 		AttachedComponent,
+		AttachedSocket,
 
 		/** Assign a custom space by your self. */
 		Custom

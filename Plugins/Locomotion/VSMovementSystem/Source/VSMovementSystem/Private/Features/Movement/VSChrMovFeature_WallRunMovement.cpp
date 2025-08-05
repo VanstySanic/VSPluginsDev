@@ -7,7 +7,6 @@
 #include "Classes/Framework/VSGameplayTagController.h"
 #include "Components/CapsuleComponent.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
-#include "Features/Orientation/VSChrMovFeature_OrientationEvaluator.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -183,10 +182,7 @@ void UVSChrMovFeature_WallRunMovement::UpdateMovement_Implementation(float Delta
 		MovementData.EndMovementElapsedTime = FMath::Clamp(MovementData.EndMovementElapsedTime + DeltaTime * MovementData.EndAnimPtr->PlayRate, 0.f, MovementData.EndAnimPtr->GetSafePlayTimeRange().Y);
 	}
 	
-	if (UVSChrMovFeature_OrientationEvaluator* Evaluator = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationEvaluator>())
-	{
-		Evaluator->DefaultNamedParams.VectorParams.Emplace(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection, MovementDirectionWS);
-	}
+	GetMovementFeatureAgent()->OrientationAimData.Direction = MovementDirectionWS;
 
 	/** Trace for ground. */
 	FHitResult TraceGroundHitResult;
@@ -523,10 +519,6 @@ void UVSChrMovFeature_WallRunMovement::EndWallRunInternal(bool bTryEndMovement)
 		if (UVSActorLibrary::IsCharacterOnWalkableFloor(GetCharacter()))
 		{
 			GetCharacterMovement()->StopMovementImmediately();
-		}
-		if (UVSChrMovFeature_OrientationEvaluator* Evaluator = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationEvaluator>())
-		{
-			Evaluator->DefaultNamedParams.VectorParams.Remove(UVSMovementSystemSettings::Get()->OrientationEvaluateCommonParamNames.AimTargetDirection);
 		}
 		if (!FMath::IsNearlyZero(MovementData.CapsuleHalfHeightOffsetUSCZ, 0.01f))
 		{

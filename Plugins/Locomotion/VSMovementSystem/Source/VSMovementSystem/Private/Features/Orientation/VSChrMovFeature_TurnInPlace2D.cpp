@@ -56,7 +56,7 @@ void UVSChrMovFeature_TurnInPlace2D::BeginPlay_Implementation()
 	Super::BeginPlay_Implementation();
 
 	MovementData.CurrentSettingsRow = DefaultSettingsRow;
-	UpdateMovementTagQueryStates(EVSMovementEvent::StateChange_Stance);
+	UpdateMovementTagQueryStates(EVSMovementEvent::StateChange_MovementMode);
 }
 
 bool UVSChrMovFeature_TurnInPlace2D::CanUpdateMovement_Implementation() const
@@ -125,12 +125,7 @@ void UVSChrMovFeature_TurnInPlace2D::TurnInPlaceCheck(float DeltaTime)
 	}
 
 	/** Evaluate target rotation. */
-	FRotator EvaluatedRotation = GetCharacter()->GetActorRotation();
-	if (!UVSCharacterMovementUtils::EvaluateCharacterMovementOrientation(GetCharacter(), EvaluatedRotation, FVSOrientationEvaluateParams(OrientationEvaluateType)))
-	{
-		MovementData.CachedParams.TriggerDelayedTime = 0.f;
-		return;
-	}
+	FRotator EvaluatedRotation = GetMovementFeatureAgent()->EvaluateOrientation(FVSMovementOrientationEvaluateParams(OrientationEvaluateType));
 
 	/** Calculate the delta yaw between the evaluated and the current. */
 	const FQuat& WorldToUpRotation = FQuat::FindBetweenNormals(FVector::UpVector, GetUpDirection());
@@ -251,6 +246,7 @@ void UVSChrMovFeature_TurnInPlace2D::UpdateMovementTagQueryStates(const FGamepla
 		{
 			if (QueriedCheckBlockTime.Value.Matches(GameplayTags, TagEvent))
 			{
+				MovementData.CachedParams.TriggerDelayedTime = 0.f;
 				MovementData.CachedParams.CheckBlockRemainedTime = QueriedCheckBlockTime.Key;
 				break;
 			}
