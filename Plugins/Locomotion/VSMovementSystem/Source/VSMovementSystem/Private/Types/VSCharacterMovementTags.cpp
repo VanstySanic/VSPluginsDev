@@ -16,19 +16,6 @@ namespace EVSMovementMode
 	UE_DEFINE_GAMEPLAY_TAG(FixedPointLeap, "VSMovementSystem.State.MovementMode.FixedPointLeap");
 }
 
-namespace EVSOrientationEvaluateType
-{
-	UE_DEFINE_GAMEPLAY_TAG(None, "VSMovementSystem.Orientation.EvaluateType.None");
-	UE_DEFINE_GAMEPLAY_TAG(Self, "VSMovementSystem.Orientation.EvaluateType.Self");
-	UE_DEFINE_GAMEPLAY_TAG(Velocity, "VSMovementSystem.Orientation.EvaluateType.Velocity");
-	UE_DEFINE_GAMEPLAY_TAG(Input, "VSMovementSystem.Orientation.EvaluateType.Input");
-	UE_DEFINE_GAMEPLAY_TAG(Movement, "VSMovementSystem.Orientation.EvaluateType.Movement")
-	UE_DEFINE_GAMEPLAY_TAG(Control, "VSMovementSystem.Orientation.EvaluateType.Control");
-	UE_DEFINE_GAMEPLAY_TAG(Aim_Component, "VSMovementSystem.Orientation.EvaluateType.Aim.Component");
-	UE_DEFINE_GAMEPLAY_TAG(Aim_Point, "VSMovementSystem.Orientation.EvaluateType.Aim.Point");
-	UE_DEFINE_GAMEPLAY_TAG(Aim_Direction, "VSMovementSystem.Orientation.EvaluateType.Aim.Direction");
-}
-
 namespace EVSStance
 {
 	UE_DEFINE_GAMEPLAY_TAG(Standing, "VSMovementSystem.State.Stance.Standing");
@@ -50,8 +37,7 @@ namespace EVSMovementState
 {
 	UE_DEFINE_GAMEPLAY_TAG(IsMoving2D, "VSMovementSystem.State.IsMoving2D");
 	UE_DEFINE_GAMEPLAY_TAG(HasMovementInput2D, "VSMovementSystem.State.HasMovementInput2D");
-
-
+	
 	UE_DEFINE_GAMEPLAY_TAG(TurnInPlace, "VSMovementSystem.State.TurnInPlace");
 	UE_DEFINE_GAMEPLAY_TAG(LandRecovery, "VSMovementSystem.State.LandRecovery");
 }

@@ -140,7 +140,11 @@ struct VSMOVEMENTSYSTEM_API FVSMantleVaultSnappedParams
 
 	/** This might be lost because of non-replication. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TWeakObjectPtr<UPrimitiveComponent> Component;
+	TWeakObjectPtr<AActor> Actor;
+
+	/** This might be lost because of non-replication. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName ComponentName = NAME_None;
 
 	/** Safe during replication. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -178,6 +182,8 @@ struct FVSMantleVaultCachedParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float PlatformHeight = 0.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TWeakObjectPtr<UPrimitiveComponent> Component;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector StartRootLocationRS = FVector::ZeroVector;

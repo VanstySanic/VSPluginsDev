@@ -82,7 +82,11 @@ FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::AutonomousPredicted
 	EVSNetAuthorityMethodExecPolicy::Multicast,
 	EVSNetAuthorityMethodExecPolicy::ServerAndSimulated,
 	false);
-
+FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::AuthorityMulticast = FVSNetMethodExecutionPolicies(
+	EVSNetAutonomousMethodExecPolicy::Server,
+	EVSNetAuthorityMethodExecPolicy::Multicast,
+	EVSNetAuthorityMethodExecPolicy::Client,
+	false);
 
 bool FVSSceneComponentQuery::Matches(const USceneComponent* Component) const
 {

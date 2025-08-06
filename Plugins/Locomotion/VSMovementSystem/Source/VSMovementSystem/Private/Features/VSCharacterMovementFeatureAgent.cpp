@@ -32,7 +32,9 @@ void UVSCharacterMovementFeatureAgent::GetLifetimeReplicatedProps(TArray<class F
 
 void UVSCharacterMovementFeatureAgent::Initialize_Implementation()
 {
-	ChrMovFeatureAgentPrivate = Cast<UVSCharacterMovementFeatureAgent>(this);
+	Super::Super::Initialize_Implementation();
+	
+	ChrMovFeatureAgentPrivate = this;
 
 	CharacterPrivate = Cast<ACharacter>(UVSGameplayLibrary::GetPawnFromSubObject(this));
 	check(CharacterPrivate.IsValid());

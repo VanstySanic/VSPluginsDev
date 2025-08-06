@@ -126,8 +126,12 @@ struct FVSWallRunSnappedParams
 	
 	/** This might be lost because of non-replication. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TWeakObjectPtr<UPrimitiveComponent> Component;
+	TWeakObjectPtr<AActor> Actor;
 
+	/** This might be lost because of non-replication. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName ComponentName = NAME_None;
+	
 	/** Safe during replication. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FTransform StartComponentTransform = FTransform::Identity;
@@ -159,6 +163,10 @@ USTRUCT(BlueprintType)
 struct FVSWallRunCachedParams
 {
 	GENERATED_BODY()
+
+	/** This might be lost because of non-replication. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TWeakObjectPtr<UPrimitiveComponent> Component;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float ClientSideServerStartTime = 0.f;

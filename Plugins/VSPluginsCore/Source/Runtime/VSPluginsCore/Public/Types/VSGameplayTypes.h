@@ -217,6 +217,7 @@ struct FVSNetMethodExecutionPolicies
 
 	VSPLUGINSCORE_API static FVSNetMethodExecutionPolicies LocalExecution;
 	VSPLUGINSCORE_API static FVSNetMethodExecutionPolicies AutonomousPredictedMulticast;
+	VSPLUGINSCORE_API static FVSNetMethodExecutionPolicies AuthorityMulticast;
 };
 
 USTRUCT(BlueprintType)

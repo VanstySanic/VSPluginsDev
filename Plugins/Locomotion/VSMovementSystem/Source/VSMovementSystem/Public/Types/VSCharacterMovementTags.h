@@ -20,33 +20,6 @@ namespace EVSMovementMode
 	VSMOVEMENTSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(FixedPointLeap);
 }
 
-namespace EVSOrientationEvaluateType
-{
-	VSMOVEMENTSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(None);
-
-	/** Just returns the pawn's rotation. */
-	VSMOVEMENTSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Self);
-
-	/** If zero, return the character rotation. */
-	VSMOVEMENTSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Velocity);
-
-	/** If zero, return the character rotation. */
-	VSMOVEMENTSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input);
-		
-	/** Including velocity and input. Velocity takes higher priority. */
-	VSMOVEMENTSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Movement);
-	
-	/** Returns the pawn's control rotation. */
-	VSMOVEMENTSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Control);
-	
-	/** Returns the pawn's view rotation, */
-	VSMOVEMENTSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(View);
-
-	VSMOVEMENTSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Aim_Component);
-	VSMOVEMENTSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Aim_Point);
-	VSMOVEMENTSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Aim_Direction);
-}
-
 namespace EVSStance
 {
 	VSMOVEMENTSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Standing);

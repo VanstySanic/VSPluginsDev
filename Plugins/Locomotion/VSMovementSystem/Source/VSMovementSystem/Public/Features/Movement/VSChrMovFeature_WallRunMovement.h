@@ -18,6 +18,7 @@ class VSMOVEMENTSYSTEM_API UVSChrMovFeature_WallRunMovement : public UVSCharacte
 	GENERATED_UCLASS_BODY()
 	
 protected:
+	virtual void EndPlay_Implementation() override;
 	virtual bool CanUpdateMovement_Implementation() const override;
 	virtual void UpdateMovement_Implementation(float DeltaTime) override;
 	virtual void OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent) override;
@@ -38,7 +39,7 @@ public:
 	 * @param bTryWithEndingMovement Whether to process the ending movement and animation.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "NetExecPolicies"))
-	void EndWallRun(bool bTryWithEndingMovement, const FVSNetMethodExecutionPolicies& NetExecPolicies = FVSNetMethodExecutionPolicies());
+	void StopWallRun(bool bTryWithEndingMovement, const FVSNetMethodExecutionPolicies& NetExecPolicies = FVSNetMethodExecutionPolicies());
 
 	/**
 	 * Suggest a launch velocity that allows user to start a new wall run process on the other side wall, without changing the Z axis location.
@@ -68,7 +69,7 @@ protected:
 	
 private:
 	bool TryWallRunInternal(const TArray<FDataTableRowHandle>& SettingRows);
-	void EndWallRunInternal(bool bTryEndMovement);
+	void StopWallRunInternal(bool bTryEndMovement);
 	void WallRunBySnappedParams(const FVSWallRunSnappedParams& SnappedParams);
 	
 	/** Get the first snapped entry that meets with the requirements. */
@@ -85,10 +86,10 @@ private:
 	void WallRun_Multicast(const FVSWallRunSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 
 	UFUNCTION(Server, Reliable)
-	void EndWallRun_Server(bool bTryEndMovement, EVSNetAuthorityMethodExecPolicy::Type NetPolicy);
+	void StopWallRun_Server(bool bTryEndMovement, EVSNetAuthorityMethodExecPolicy::Type NetPolicy);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void EndWallRun_Multicast(bool bTryEndMovement, EVSNetAuthorityMethodExecPolicy::Type NetPolicy);
+	void StopWallRun_Multicast(bool bTryEndMovement, EVSNetAuthorityMethodExecPolicy::Type NetPolicy);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (RowType = "/Script/VSMovementSystem.VSWallRunSettings"))

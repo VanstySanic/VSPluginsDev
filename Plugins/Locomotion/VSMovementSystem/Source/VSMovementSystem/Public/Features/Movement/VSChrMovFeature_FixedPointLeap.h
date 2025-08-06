@@ -19,6 +19,7 @@ class VSMOVEMENTSYSTEM_API UVSChrMovFeature_FixedPointLeap : public UVSCharacter
 	GENERATED_UCLASS_BODY()
 
 protected:
+	virtual void EndPlay_Implementation() override;
 	virtual bool CanUpdateMovement_Implementation() const override;
 	virtual void UpdateMovement_Implementation(float DeltaTime) override;
 
@@ -29,7 +30,7 @@ public:
 	bool IsFixedPointLeapMode() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows, NetExecPolicies"))
-	void TryFixedPointLeap(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocation, USceneComponent* ComponentToFollow = nullptr, const FVSNetMethodExecutionPolicies& NetExecPolicies = FVSNetMethodExecutionPolicies());
+	void TryFixedPointLeap(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocation, AActor* ActorToFollow = nullptr, FName ComponentName = NAME_None, const FVSNetMethodExecutionPolicies& NetExecPolicies = FVSNetMethodExecutionPolicies());
 
 protected:
 	/** Stop the movement. This is not replicated. */
@@ -44,11 +45,11 @@ public:
 	FVSFixedPointLeapCachedParams GetFixedPointLeapCachedParams() const { return MovementData.CachedParams; }
 	
 private:
-	bool TryFixedPointLeapInternal(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, USceneComponent* ComponentToFollow);
+	bool TryFixedPointLeapInternal(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, AActor* ActorToFollow, FName ComponentName);
 	void FixedPointLeapBySnappedParams(const FVSFixedPointLeapSnappedParams& SnappedParams);
 
 	UFUNCTION(Server, Reliable)
-	void TryFixedPointLeap_Server(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, USceneComponent* ComponentToFollow, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
+	void TryFixedPointLeap_Server(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, AActor* ActorToFollow, FName ComponentName, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 
 	UFUNCTION(Server, Reliable)
 	void FixedPointLeap_Server(const FVSFixedPointLeapSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);

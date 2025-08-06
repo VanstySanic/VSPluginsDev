@@ -22,6 +22,16 @@ UVSChrMovFeature_FixedPointLeap::UVSChrMovFeature_FixedPointLeap(const FObjectIn
 	
 }
 
+void UVSChrMovFeature_FixedPointLeap::EndPlay_Implementation()
+{
+	if (IsFixedPointLeapMode())
+	{
+		StopFixPointLeap();
+	}
+	
+	Super::EndPlay_Implementation();
+}
+
 bool UVSChrMovFeature_FixedPointLeap::CanUpdateMovement_Implementation() const
 {
 	return Super::CanUpdateMovement_Implementation() && IsFixedPointLeapMode() && !MovementData.SnappedParams.SettingsRow.IsNull();
@@ -37,10 +47,10 @@ void UVSChrMovFeature_FixedPointLeap::UpdateMovement_Implementation(float DeltaT
 	if (UKismetMathLibrary::InRange_FloatFloat(MovementData.MovementElapsedTime, MovementData.AnimPtr->GetMarkTime(AnimMovementStartTimeMarkName), MovementData.AnimPtr->GetMarkTime(AnimMovementEndTimeMarkName)))
 	{
 		FVector TargetRootPointWS = MovementData.SnappedParams.OriginalTargetRootPointWS;
-		if (MovementData.SnappedParams.Component.IsValid())
+		if (MovementData.CachedParams.Component.IsValid())
 		{
 			const FVector& OriginalTargetRootPointRS = MovementData.SnappedParams.StartComponentTransformWS.InverseTransformPosition(MovementData.SnappedParams.OriginalTargetRootPointWS);
-			TargetRootPointWS = MovementData.SnappedParams.Component->GetComponentTransform().TransformPosition(OriginalTargetRootPointRS);
+			TargetRootPointWS = MovementData.CachedParams.Component->GetComponentTransform().TransformPosition(OriginalTargetRootPointRS);
 		}
 		
 		const FVector& SuggestedVelocity = UVSGameplayLibrary::SuggestVelocityForProjectileMovementByTime(
@@ -97,9 +107,10 @@ bool UVSChrMovFeature_FixedPointLeap::IsFixedPointLeapMode() const
 	return GameplayTagController ? (GameplayTagController->GetTagCount(EVSMovementMode::FixedPointLeap) > 0) : false;
 }
 
-void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocation, USceneComponent* ComponentToFollow, const FVSNetMethodExecutionPolicies& NetExecPolicies)
+void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocation, AActor* ActorToFollow, FName ComponentName, const FVSNetMethodExecutionPolicies& NetExecPolicies)
 {
 	if (SettingRows.IsEmpty() && DefaultSettingRows.IsEmpty()) return;
+	USceneComponent* ComponentToFollow = ActorToFollow ? Cast<USceneComponent>(UVSActorLibrary::GetActorComponentByName(ActorToFollow, ComponentName)) : nullptr;
 	const bool bIsReplicatedComponent = ComponentToFollow && ComponentToFollow->GetOwner()->GetIsReplicated() && ComponentToFollow->IsReadyForReplication();
 	const FVector& TargetRootLocationUndefinedSpace = bIsReplicatedComponent ? ComponentToFollow->GetComponentTransform().InverseTransformPosition(TargetRootLocation) : TargetRootLocation;
 	
@@ -107,7 +118,7 @@ void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap(const TArray<FDataTableR
 	{
 		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
 		{
-			const bool bSucceeded = TryFixedPointLeapInternal(SettingRows, TargetRootLocationUndefinedSpace, ComponentToFollow);
+			const bool bSucceeded = TryFixedPointLeapInternal(SettingRows, TargetRootLocationUndefinedSpace, ActorToFollow, ComponentName);
 			if (bSucceeded && NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
 			{
 				/** Only send server RPC if local execution succeeded.  */
@@ -116,18 +127,18 @@ void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap(const TArray<FDataTableR
 		}
 		else if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
 		{
-			TryFixedPointLeap_Server(SettingRows, TargetRootLocationUndefinedSpace, bIsReplicatedComponent ? ComponentToFollow : nullptr, NetExecPolicies.ServerRPCPolicy);
+			TryFixedPointLeap_Server(SettingRows, TargetRootLocationUndefinedSpace, ActorToFollow, ComponentName, NetExecPolicies.ServerRPCPolicy);
 		}
 	}
 	else if (GetCharacter()->GetLocalRole() == ROLE_Authority)
 	{
-		TryFixedPointLeap_Server(SettingRows, TargetRootLocationUndefinedSpace, bIsReplicatedComponent ? ComponentToFollow : nullptr, NetExecPolicies.AuthorityLocalPolicy);
+		TryFixedPointLeap_Server(SettingRows, TargetRootLocationUndefinedSpace, ActorToFollow, ComponentName, NetExecPolicies.AuthorityLocalPolicy);
 	}
 	else if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy)
 	{
 		if (NetExecPolicies.bSimulatedLocalExecution)
 		{
-			TryFixedPointLeapInternal(SettingRows, TargetRootLocationUndefinedSpace, ComponentToFollow);
+			TryFixedPointLeapInternal(SettingRows, TargetRootLocationUndefinedSpace, ActorToFollow, ComponentName);
 		}
 	}
 }
@@ -150,11 +161,12 @@ void UVSChrMovFeature_FixedPointLeap::StopFixPointLeap()
 	}
 }
 
-bool UVSChrMovFeature_FixedPointLeap::TryFixedPointLeapInternal(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, USceneComponent* ComponentToFollow)
+bool UVSChrMovFeature_FixedPointLeap::TryFixedPointLeapInternal(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, AActor* ActorToFollow, FName ComponentName)
 {
 	if (SettingRows.IsEmpty() && DefaultSettingRows.IsEmpty()) return false;
 	TArray<FDataTableRowHandle> SettingRowsToUse = !SettingRows.IsEmpty() ? SettingRows : DefaultSettingRows;
 
+	USceneComponent* ComponentToFollow = ActorToFollow ? Cast<USceneComponent>(UVSActorLibrary::GetActorComponentByName(ActorToFollow, ComponentName)) : nullptr;
 	const FVector& TargetRootLocationWS = ComponentToFollow ? ComponentToFollow->GetComponentTransform().TransformPosition(TargetRootLocationUndefinedSpace) : TargetRootLocationUndefinedSpace;
 
 	FPredictProjectilePathParams PredictProjectilePathParams;
@@ -203,14 +215,18 @@ bool UVSChrMovFeature_FixedPointLeap::TryFixedPointLeapInternal(const TArray<FDa
 			
 			/** This is a valid process. */
 			MovementData.MovementElapsedTime = 0.f;
-			
-			MovementData.SnappedParams.Component = ComponentToFollow;
+
 			MovementData.SnappedParams.SettingsRow = SettingRow;
 			MovementData.SnappedParams.AnimRow = AnimRow;
 			MovementData.SnappedParams.OriginalTargetRootPointWS = TargetRootLocationWS;
-			MovementData.SnappedParams.StartComponentTransformWS = ComponentToFollow ? ComponentToFollow->GetComponentTransform() : FTransform::Identity;
 			MovementData.SnappedParams.ServerSideServerStartTime = UVSGameplayLibrary::GetServerTimeSeconds(this);
-
+			if (ComponentToFollow)
+			{
+				MovementData.SnappedParams.Actor = ComponentToFollow->GetOwner();
+				MovementData.SnappedParams.ComponentName = ComponentToFollow->GetFName();
+				MovementData.SnappedParams.StartComponentTransformWS = ComponentToFollow->GetComponentTransform();
+			}
+			
 			FixedPointLeapBySnappedParams(MovementData.SnappedParams);
 			return true;
 		}
@@ -243,11 +259,11 @@ void UVSChrMovFeature_FixedPointLeap::FixedPointLeapBySnappedParams(const FVSFix
 	GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(TargetHalfHeightUSC);
 }
 
-void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap_Server_Implementation(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, USceneComponent* ComponentToFollow, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
+void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap_Server_Implementation(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocationUndefinedSpace, AActor* ActorToFollow, FName ComponentName, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
 {
 	if (NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Server)
 	{
-		const bool bSuccessful = TryFixedPointLeapInternal(SettingRows, TargetRootLocationUndefinedSpace, ComponentToFollow);
+		const bool bSuccessful = TryFixedPointLeapInternal(SettingRows, TargetRootLocationUndefinedSpace, ActorToFollow, ComponentName);
 		if (bSuccessful && NetExecPolicy > EVSNetAuthorityMethodExecPolicy::Server)
 		{
 			FixedPointLeap_Multicast(MovementData.SnappedParams, NetExecPolicy);

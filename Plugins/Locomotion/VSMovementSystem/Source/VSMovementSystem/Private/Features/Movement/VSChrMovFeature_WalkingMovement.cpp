@@ -47,7 +47,6 @@ void UVSChrMovFeature_WalkingMovement::BeginPlay_Implementation()
 	MovementData.Gaits = DefaultGaits;
 
 	SetStance(DefaultStance);
-	ReplicatedStance = DefaultStance;
 	MovementData.CurrentMovementBaseSettings = MovementData.Stance == EVSStance::Crouching ? DefaultCrouchedMovementBaseSettings : DefaultMovementBaseSettings;
 }
 

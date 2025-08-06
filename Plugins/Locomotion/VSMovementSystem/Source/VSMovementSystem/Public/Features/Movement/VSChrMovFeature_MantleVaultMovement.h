@@ -16,9 +16,9 @@ class VSMOVEMENTSYSTEM_API UVSChrMovFeature_MantleVaultMovement : public UVSChar
 {
 	GENERATED_UCLASS_BODY()
 
-public:
 
 protected:
+	virtual void EndPlay_Implementation() override;
 	virtual bool CanUpdateMovement_Implementation() const override;
 	virtual void UpdateMovement_Implementation(float DeltaTime) override;
 	virtual void OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent) override;
@@ -30,9 +30,10 @@ public:
 	/**
 	 * Try mantle or vault.
 	 * If you are controlling rotation using orientation control 2D feature, set the moving and idle evaluate type to Aim.Direction.
+	 * @param WallTraceDirection The direction to trace wall. If Left zero, will use the default algorithm.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows, NetExecPolicies"))
-	void TryMantleVault(const TArray<FDataTableRowHandle>& SettingRows, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType = EVSMantleVaultMovementType::MantleOrVault, const FVSNetMethodExecutionPolicies& NetExecPolicies = FVSNetMethodExecutionPolicies());
+	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "SettingRows, WallTraceDirection, NetExecPolicies"))
+	void TryMantleVault(const TArray<FDataTableRowHandle>& SettingRows, const FVector& WallTraceDirection = FVector::ZeroVector, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType = EVSMantleVaultMovementType::MantleOrVault, const FVSNetMethodExecutionPolicies& NetExecPolicies = FVSNetMethodExecutionPolicies());
 
 protected:
 	/** Stop the mantle / vault movement. This is not replicated. */
@@ -48,14 +49,14 @@ public:
 
 
 private:
-	bool TryMantleVaultInternal(const TArray<FDataTableRowHandle>& SettingRows, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType) ;
+	bool TryMantleVaultInternal(const TArray<FDataTableRowHandle>& SettingRows, const FVector& WallTraceDirection, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType) ;
 	void MantleVaultBySnappedParams(const FVSMantleVaultSnappedParams& SnappedParams);
 
 	/** Get the first snapped entry that meets with the requirements. */
-	bool CalcMantleVaultSnappedParams(FVSMantleVaultSnappedParams& OutSnappedParams, const FDataTableRowHandle& SettingsRow, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType) const;
+	bool CalcMantleVaultSnappedParams(FVSMantleVaultSnappedParams& OutSnappedParams, const FDataTableRowHandle& SettingsRow, const FVector& WallTraceDirection, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType) const;
 
 	UFUNCTION(Server, Reliable)
-	void TryMantleVault_Server(const TArray<FDataTableRowHandle>& SettingRows, EVSMantleVaultMovementType::Type SupportedMovementType, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
+	void TryMantleVault_Server(const TArray<FDataTableRowHandle>& SettingRows, const FVector& WallTraceDirection, EVSMantleVaultMovementType::Type SupportedMovementType, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
 
 	UFUNCTION(Server, Reliable)
 	void MantleVault_Server(const FVSMantleVaultSnappedParams& SnappedParams, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);

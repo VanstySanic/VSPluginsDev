@@ -28,7 +28,7 @@ bool UVSChrMovFeature_MantleVaultMovement::IsMantlingOrVaultingMode() const
 	return GameplayTagController ? (GameplayTagController->GetTagCount(EVSMovementMode::MantlingOrVaulting) >= 1) : false;
 }
 
-void UVSChrMovFeature_MantleVaultMovement::TryMantleVault(const TArray<FDataTableRowHandle>& SettingRows, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType, const FVSNetMethodExecutionPolicies& NetExecPolicies)
+void UVSChrMovFeature_MantleVaultMovement::TryMantleVault(const TArray<FDataTableRowHandle>& SettingRows, const FVector& WallTraceDirection, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType, const FVSNetMethodExecutionPolicies& NetExecPolicies)
 {
 	if (SupportedMovementType == EVSMantleVaultMovementType::None || (SettingRows.IsEmpty() && DefaultSettingRows.IsEmpty())) return;
 	
@@ -36,7 +36,7 @@ void UVSChrMovFeature_MantleVaultMovement::TryMantleVault(const TArray<FDataTabl
 	{
 		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Client)
 		{
-			const bool bSucceeded = TryMantleVaultInternal(SettingRows, SupportedMovementType);
+			const bool bSucceeded = TryMantleVaultInternal(SettingRows, WallTraceDirection, SupportedMovementType);
 			if (bSucceeded && NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
 			{
 				/** Only send server RPC if local execution succeeded.  */
@@ -45,18 +45,18 @@ void UVSChrMovFeature_MantleVaultMovement::TryMantleVault(const TArray<FDataTabl
 		}
 		if (NetExecPolicies.AutonomousLocalPolicy & EVSNetAutonomousMethodExecPolicy::Server)
 		{
-			TryMantleVault_Server(SettingRows, SupportedMovementType, NetExecPolicies.ServerRPCPolicy);
+			TryMantleVault_Server(SettingRows, WallTraceDirection, SupportedMovementType, NetExecPolicies.ServerRPCPolicy);
 		}
 	}
 	else if (GetCharacter()->GetLocalRole() == ROLE_Authority)
 	{
-		TryMantleVault_Server(SettingRows, SupportedMovementType, NetExecPolicies.AuthorityLocalPolicy);
+		TryMantleVault_Server(SettingRows, WallTraceDirection, SupportedMovementType, NetExecPolicies.AuthorityLocalPolicy);
 	}
 	else if (GetCharacter()->GetLocalRole() == ROLE_SimulatedProxy)
 	{
 		if (NetExecPolicies.bSimulatedLocalExecution)
 		{
-			TryMantleVaultInternal(SettingRows, SupportedMovementType);
+			TryMantleVaultInternal(SettingRows, WallTraceDirection, SupportedMovementType);
 		}
 	}
 }
@@ -80,6 +80,16 @@ void UVSChrMovFeature_MantleVaultMovement::StopMantleVault()
 	}
 }
 
+void UVSChrMovFeature_MantleVaultMovement::EndPlay_Implementation()
+{
+	if (IsMantlingOrVaultingMode())
+	{
+		StopMantleVault();
+	}
+	
+	Super::EndPlay_Implementation();
+}
+
 bool UVSChrMovFeature_MantleVaultMovement::CanUpdateMovement_Implementation() const
 {
 	return Super::CanUpdateMovement_Implementation() && IsMantlingOrVaultingMode() && MovementData.SnappedParams.MovementType != EVSMantleVaultMovementType::None;
@@ -89,7 +99,7 @@ void UVSChrMovFeature_MantleVaultMovement::UpdateMovement_Implementation(float D
 {
 	Super::UpdateMovement_Implementation(DeltaTime);
 	
-	const FTransform& ComponentTransformWS = MovementData.SnappedParams.Component->GetComponentTransform();
+	const FTransform& ComponentTransformWS = MovementData.CachedParams.Component->GetComponentTransform();
 
 	/** Update the movement by stage. */
 	const FVector& UpVectorRS = ComponentTransformWS.InverseTransformVectorNoScale(GetUpDirection());
@@ -246,7 +256,7 @@ void UVSChrMovFeature_MantleVaultMovement::OnMovementTagEventNotified_Implementa
 	}
 }
 
-bool UVSChrMovFeature_MantleVaultMovement::TryMantleVaultInternal(const TArray<FDataTableRowHandle>& SettingRows, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType)
+bool UVSChrMovFeature_MantleVaultMovement::TryMantleVaultInternal(const TArray<FDataTableRowHandle>& SettingRows, const FVector& WallTraceDirection, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType)
 {
 	if (SupportedMovementType == EVSMantleVaultMovementType::None || (SettingRows.IsEmpty() && DefaultSettingRows.IsEmpty())) return false;
 	
@@ -254,7 +264,7 @@ bool UVSChrMovFeature_MantleVaultMovement::TryMantleVaultInternal(const TArray<F
 	FVSMantleVaultSnappedParams SnappedParams = FVSMantleVaultSnappedParams();
 	for (const FDataTableRowHandle& SettingsRowToUse : SettingRowsToUse)
 	{
-		if (CalcMantleVaultSnappedParams(SnappedParams, SettingsRowToUse, SupportedMovementType))
+		if (CalcMantleVaultSnappedParams(SnappedParams, SettingsRowToUse, WallTraceDirection, SupportedMovementType))
 		{
 			MantleVaultBySnappedParams(SnappedParams);
 			return true;
@@ -273,7 +283,8 @@ void UVSChrMovFeature_MantleVaultMovement::MantleVaultBySnappedParams(const FVSM
 	MovementData.AnimSettingsPtr = MovementData.SnappedParams.AnimSettingsRow.GetRow<FVSMantleVaultAnimSettings>(nullptr);
 	MovementData.AnimPtr = MovementData.AnimSettingsPtr->AnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 
-	if (!SnappedParams.Component.IsValid())
+	UPrimitiveComponent* Component = SnappedParams.Actor.IsValid() ? Cast<UPrimitiveComponent>(UVSActorLibrary::GetActorComponentByName(SnappedParams.Actor.Get(), SnappedParams.ComponentName)) : nullptr;
+	if (!Component)
 	{
 		/** Retrace the component. */
 		const FCollisionShape& SphereTraceShape = FCollisionShape::MakeSphere(1.f);
@@ -284,17 +295,19 @@ void UVSChrMovFeature_MantleVaultMovement::MantleVaultBySnappedParams(const FVSM
 		UVSGameplayLibrary::SweepSingleByShapeAndChannels(this, ComponentTraceHit, StartFrontWallPointWS, StartFrontWallPointWS - GetUpDirection() * 16.f, FQuat::Identity,
 			SphereTraceShape, GetCharacter()->GetCapsuleComponent()->GetCollisionResponseToChannels(), TraceParams);
 		if (!ComponentTraceHit.bBlockingHit) return;
-		MovementData.SnappedParams.Component = ComponentTraceHit.Component;
+		MovementData.SnappedParams.Actor = ComponentTraceHit.GetActor();
+		MovementData.SnappedParams.ComponentName = ComponentTraceHit.GetComponent()->GetFName();
+		MovementData.CachedParams.Component = ComponentTraceHit.Component;
 	}
 	else
 	{
-		MovementData.SnappedParams.Component = SnappedParams.Component;
+		MovementData.CachedParams.Component = Component;
 	}
 	MovementData.CachedParams.AnimPlayRate = MovementData.AnimPtr->PlayRate;
 	MovementData.CachedParams.ActionID = FMath::RandRange(0, INT16_MAX);
 	
 	const FVector& RootLocationWS = GetRootLocation();
-	const FTransform& ComponentTransformWS = MovementData.SnappedParams.Component->GetComponentTransform();
+	const FTransform& ComponentTransformWS = MovementData.CachedParams.Component->GetComponentTransform();
 	const FVector& UpVectorRS = ComponentTransformWS.InverseTransformVectorNoScale(GetUpDirection());
 	const FVector& UpVectorUnitRS = ComponentTransformWS.InverseTransformVector(GetUpDirection() * GetScale3D().Z);
 	const FVector& MovementDirectionWS = ComponentTransformWS.TransformVectorNoScale(SnappedParams.MovementDirection2DRS);
@@ -356,7 +369,7 @@ void UVSChrMovFeature_MantleVaultMovement::MantleVaultBySnappedParams(const FVSM
 	GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(TargetCapsuleHalfHeightUSC);
 }
 
-bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantleVaultSnappedParams& OutSnappedParams, const FDataTableRowHandle& SettingsRow, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType) const
+bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantleVaultSnappedParams& OutSnappedParams, const FDataTableRowHandle& SettingsRow, const FVector& WallTraceDirection, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType) const
 {
 	FVSMantleVaultSettings* SettingsPtr = SettingsRow.GetRow<FVSMantleVaultSettings>(nullptr);
 	if (!SettingsPtr || !SettingsPtr->IsValid()) return false;
@@ -409,14 +422,18 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 	const FQuat& UpVectorToWorldRotation = FQuat::FindBetweenNormals(FVector::UpVector, GetUpDirection());
 	const FVector& InputDS = UKismetMathLibrary::Quat_RotateVector(UpVectorToWorldRotation, GetMovementInput2D());
 	const FVector& VelocityDS = UKismetMathLibrary::Quat_RotateVector(UpVectorToWorldRotation, GetVelocityWallAdjusted2D());
-	FVector FrontWallTraceDirection2D = GetCharacter()->GetActorForwardVector();
-	if (InputDS.Size2D() > 1.f)
+	FVector FrontWallTraceDirection2D = WallTraceDirection;
+	if (WallTraceDirection.IsNearlyZero())
 	{
-		FrontWallTraceDirection2D = GetMovementInput2D().GetSafeNormal();
-	}
-	else if (VelocityDS.Size2D() > 1.f)
-	{
-		FrontWallTraceDirection2D = GetVelocityWallAdjusted2D().GetSafeNormal();
+		FrontWallTraceDirection2D = GetCharacter()->GetActorForwardVector();
+		if (InputDS.Size2D() > 1.f)
+		{
+			FrontWallTraceDirection2D = GetMovementInput2D().GetSafeNormal();
+		}
+		else if (VelocityDS.Size2D() > 1.f)
+		{
+			FrontWallTraceDirection2D = GetVelocityWallAdjusted2D().GetSafeNormal();
+		}
 	}
 
 	/** Do the trace process. This is splitted into multiple heights. */
@@ -580,7 +597,8 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 			
 			OutSnappedParams.SettingsRow = SettingsRow;
 			OutSnappedParams.AnimSettingsRow = AvailableAnimRow;
-			OutSnappedParams.Component = GroundPivotVerticalTraceHitResult.GetComponent();
+			OutSnappedParams.Actor = GroundPivotVerticalTraceHitResult.GetActor();
+			OutSnappedParams.ComponentName = GroundPivotVerticalTraceHitResult.GetComponent()->GetFName();
 			OutSnappedParams.StartComponentTransform = ComponentTransformWS;
 			OutSnappedParams.MovementDirection2DRS = ComponentTransformWS.InverseTransformVectorNoScale(MovementDirection2DWS);
 			OutSnappedParams.FrontWallPointRS = ComponentTransformWS.InverseTransformPosition(FrontWallPointWS);
@@ -602,11 +620,11 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 }
 
 
-void UVSChrMovFeature_MantleVaultMovement::TryMantleVault_Server_Implementation(const TArray<FDataTableRowHandle>& SettingRows, EVSMantleVaultMovementType::Type SupportedMovementType, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
+void UVSChrMovFeature_MantleVaultMovement::TryMantleVault_Server_Implementation(const TArray<FDataTableRowHandle>& SettingRows, const FVector& WallTraceDirection, EVSMantleVaultMovementType::Type SupportedMovementType, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy)
 {
 	if (NetExecPolicy & EVSNetAuthorityMethodExecPolicy::Server)
 	{
-		const bool bSuccessful = TryMantleVaultInternal(SettingRows, SupportedMovementType);
+		const bool bSuccessful = TryMantleVaultInternal(SettingRows, WallTraceDirection, SupportedMovementType);
 		if (bSuccessful && NetExecPolicy > EVSNetAuthorityMethodExecPolicy::Server)
 		{
 			MantleVault_Multicast(MovementData.SnappedParams, NetExecPolicy);

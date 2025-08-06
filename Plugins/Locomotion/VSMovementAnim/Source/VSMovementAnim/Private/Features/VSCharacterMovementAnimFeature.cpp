@@ -28,10 +28,7 @@ void UVSCharacterMovementAnimFeature::Initialize_Implementation()
 	AnimFeatureAgentPrivate = Cast<UVSCharacterMovementAnimFeatureAgent>(this);
 	if (!AnimFeatureAgentPrivate.IsValid())
 	{
-		if (AActor* Actor = GetTypedOuter<AActor>())
-		{
-			AnimFeatureAgentPrivate = UVSMovementAnimUtils::GetCharacterMovementAnimFeatureAgentFromActor(Actor);
-		}
+		AnimFeatureAgentPrivate = UVSMovementAnimUtils::GetCharacterMovementAnimFeatureAgentFromActor(GetOwnerActor());
 	}
 	check(AnimFeatureAgentPrivate.IsValid());
 

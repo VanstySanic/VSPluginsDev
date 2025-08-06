@@ -59,6 +59,14 @@ struct FVSFixedPointLeapSnappedParams
 {
 	GENERATED_BODY()
 
+	/** This might be lost because of non-replication. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TWeakObjectPtr<AActor> Actor;
+	
+	/** This might be lost because of non-replication. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName ComponentName = NAME_None;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FDataTableRowHandle SettingsRow;
 
@@ -67,10 +75,6 @@ struct FVSFixedPointLeapSnappedParams
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector OriginalTargetRootPointWS = FVector::ZeroVector;
-
-	/** This might be lost because of non-replication. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TWeakObjectPtr<USceneComponent> Component;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FTransform StartComponentTransformWS = FTransform::Identity;
@@ -83,6 +87,10 @@ USTRUCT(BlueprintType)
 struct FVSFixedPointLeapCachedParams
 {
 	GENERATED_BODY()
+	
+	/** This might be lost because of non-replication. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TWeakObjectPtr<USceneComponent> Component;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float ClientSideServerStartTime = 0.f;
