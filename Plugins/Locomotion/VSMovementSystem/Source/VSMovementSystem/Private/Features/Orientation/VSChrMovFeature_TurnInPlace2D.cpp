@@ -236,7 +236,7 @@ void UVSChrMovFeature_TurnInPlace2D::UpdateMovementTagQueryStates(const FGamepla
 		}
 		
 		/** Check time and state. */
-		MovementData.bMatchesEntranceTagQuery = EntranceTagQueries.Matches(GameplayTags, TagEvent);
+		MovementData.bMatchesEntranceTagQuery = EntranceTagQueries.IsEmpty() || EntranceTagQueries.Matches(GameplayTags);
 		if (!MovementData.bMatchesEntranceTagQuery)
 		{
 			MovementData.CachedParams.TriggerDelayedTime = 0.f;

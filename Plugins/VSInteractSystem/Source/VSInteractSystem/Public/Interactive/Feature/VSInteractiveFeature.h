@@ -29,6 +29,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Interactive")
 	bool IsInteractedBySource(UVSInteractFeatureAgent* SourceAgent) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Interactive")
+	float GetInteractionTime(UVSInteractFeatureAgent* SourceAgent) const;
 	
 private:
 	TWeakObjectPtr<UVSInteractiveFeatureAgent> InteractiveFeatureAgentPrivate;

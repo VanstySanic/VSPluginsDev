@@ -19,8 +19,16 @@ class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_UCLASS_BODY()
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Source"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Source"))
+	static bool IsActorLocal(AActor* Actor);
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Source"))
 	static bool IsActorLocalRoleAuthorityOrAutonomous(AActor* Actor);
+
+	UFUNCTION(BlueprintCallable, Category = "Actor")
+	static AActor* DuplicateActor(AActor* Actor, const FTransform& SpawnTransform = FTransform());
+	template<typename T>
+	static T* DuplicateActor(T* Actor, const FTransform& SpawnTransform = FTransform::Identity);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
 	static UActorComponent* GetActorComponentByName(const AActor* Actor, FName ComponentName);
@@ -37,7 +45,7 @@ class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
 	static T* FindFeatureByClassFromActor(AActor* Actor, TSubclassOf<T> Class = T::StaticClass());
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
-	UVSObjectFeature* GetFeatureByNameFromActor(AActor* Actor, FName Name);
+	static UVSObjectFeature* GetFeatureByNameFromActor(AActor* Actor, FName Name);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
 	static UAbilitySystemComponent* GetAbilitySystemComponentFormActor(AActor* Actor);
@@ -53,6 +61,23 @@ class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Character")
 	static FVector GetCharacterRootLocation(const ACharacter* Character, const float VerticalOffset = 0.f /** 2.f */, float UnscaledHalfHeightOverride = 0.f);
 };
+
+template <typename T>
+T* UVSActorLibrary::DuplicateActor(T* Actor, const FTransform& SpawnTransform)
+{
+	if (!Actor) return nullptr;
+
+	UWorld* World = Actor->GetWorld();
+	if (!World) return nullptr;
+
+	FActorSpawnParameters Params;
+	Params.Template = Actor;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	Params.Name = MakeUniqueObjectName(World, T::StaticClass(), Actor->GetFName());
+	
+	T* NewActor = World->SpawnActor<T>(Actor->GetClass(), SpawnTransform, Params);
+	return NewActor;
+}
 
 template <typename T>
 T* UVSActorLibrary::FindFeatureByClassFromActor(AActor* Actor, TSubclassOf<T> Class)

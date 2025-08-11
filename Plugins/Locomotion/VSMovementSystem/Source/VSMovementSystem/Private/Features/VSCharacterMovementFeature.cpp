@@ -34,10 +34,10 @@ void UVSCharacterMovementFeature::Initialize_Implementation()
 
 void UVSCharacterMovementFeature::Uninitialize_Implementation()
 {
-	if (GetGameplayTagController())
+	if (UVSGameplayTagController* GameplayTagController = GetGameplayTagController())
 	{
-		GetGameplayTagController()->OnTagsUpdated.RemoveDynamic(this, &UVSCharacterMovementFeature::OnMovementTagsUpdated);
-		GetGameplayTagController()->OnTagEventNotified.RemoveDynamic(this, &UVSCharacterMovementFeature::OnMovementTagEventNotified);
+		GameplayTagController->OnTagsUpdated.RemoveDynamic(this, &UVSCharacterMovementFeature::OnMovementTagsUpdated);
+		GameplayTagController->OnTagEventNotified.RemoveDynamic(this, &UVSCharacterMovementFeature::OnMovementTagEventNotified);
 	}
 	
 	Super::Uninitialize_Implementation();

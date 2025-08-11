@@ -1,6 +1,11 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Libraries/VSGameplayLibrary.h"
+
+#include <rapidjson/reader.h>
+
+#include "EngineUtils.h"
+#include "Components/BrushComponent.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
@@ -57,6 +62,25 @@ APawn* UVSGameplayLibrary::GetPawnFromSubObject(UObject* Object)
 	return GetPawnFromSubObject(Object->GetOuter());
 }
 
+AController* UVSGameplayLibrary::GetControllerFromSubObject(UObject* Object)
+{
+	if (!Object) return nullptr;
+	if (AController* Controller = Cast<AController>(Object))
+	{
+		return Controller;
+	}
+	if (APawn* Pawn = Cast<APawn>(Object))
+	{
+		return Pawn->GetController();
+	}
+	if (APlayerState* PlayerState = Cast<APlayerState>(Object))
+	{
+		return PlayerState->GetOwningController();
+	}
+
+	return GetControllerFromSubObject(Object->GetOuter());
+}
+
 FVector UVSGameplayLibrary::SuggestVelocityForProjectileMovementByTime(const FVector& StartLocation, const FVector& EndLocation, const float MovementTime, const FVector& GravityDirection, float GravitySize)
 {
 	if (MovementTime <= 0.f) return FVector::ZeroVector;
@@ -71,6 +95,40 @@ FVector UVSGameplayLibrary::SuggestVelocityForProjectileMovementByTime(const FVe
 	AnsVelocity += DeltaLocationZ / MovementTime - 0.5f * GravitySize * NegativeGravityNormal * MovementTime;
 
 	return AnsVelocity;
+}
+
+APostProcessVolume* UVSGameplayLibrary::GetPostProcessVolumeAtLocation(UObject* WorldContext, const FVector& Location)
+{
+	if (!WorldContext) return nullptr;
+	UWorld* World = WorldContext->GetWorld();
+	if (!World) return nullptr;
+	
+	APostProcessVolume* BestVolume = nullptr;
+	float BestPriority = -FLT_MAX;
+
+	for (TActorIterator<APostProcessVolume> It(World); It; ++It)
+	{
+		APostProcessVolume* PPVolume = *It;
+		if (!PPVolume || PPVolume->Priority < BestPriority) continue;
+
+		bool bContainsPoint = false;
+		if (PPVolume->bUnbound)
+		{
+			bContainsPoint = true;
+		}
+		else if (PPVolume->GetBrushComponent()->Bounds.GetBox().IsInside(Location))
+		{
+			bContainsPoint = true;
+		}
+
+		if (bContainsPoint)
+		{
+			BestPriority = PPVolume->Priority;
+			BestVolume = PPVolume;
+		}
+	}
+
+	return BestVolume;
 }
 
 bool UVSGameplayLibrary::SweepSingleByShapeAndChannels(const UObject* WorldContext, FHitResult& OutHit, const FVector& Start, const FVector& End, const FQuat& Rotation, const FCollisionShape& Shape, const FCollisionResponseContainer& Channels, const FCollisionQueryParams& QueryParams, FCollisionResponseParams ResponseParams)
