@@ -11,7 +11,7 @@ class UVSInteractiveFeature;
 /**
  * 
  */
-UCLASS(DisplayName = "Feature.Interac.Agent")
+UCLASS(DisplayName = "Feature.Interact.Agent")
 class VSINTERACTSYSTEM_API UVSInteractFeatureAgent : public UVSInteractFeature
 {
 	GENERATED_UCLASS_BODY()
@@ -22,7 +22,9 @@ class VSINTERACTSYSTEM_API UVSInteractFeatureAgent : public UVSInteractFeature
 	
 protected:
 	virtual void Initialize_Implementation() override;
+	virtual void BeginPlay_Implementation() override;
 	virtual void EndPlay_Implementation() override;
+	virtual void OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent) override;
 
 public:
 	/** Inspect target interactive object. This normally only works on local clients to help show tip widgets. */
@@ -32,6 +34,9 @@ public:
 	/** End the inspection on target. */
 	UFUNCTION(BlueprintCallable, Category = "Interact")
 	void StopInspectionOnTarget(UVSInteractiveFeatureAgent* TargetAgent);
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	void StopAllInspections();
 	
 	/**
 	 * Interact with target interactive object and use the specified action.
@@ -51,6 +56,7 @@ public:
 
 	
 private:
+	void UpdateTagQueryStates(const FGameplayTag& TagEvent = FGameplayTag::EmptyTag);
 	bool TryInteractWithTargetInternal(UVSInteractiveFeatureAgent* TargetAgent, const FName ActionFeatureName);
 	void InteractWithTargetInternal(UVSInteractiveFeatureAgent* TargetAgent, const FName ActionFeatureName);
 	void StopInteractWithTargetInternal(UVSInteractiveFeatureAgent* TargetAgent, const FName ActionFeatureName);
@@ -83,14 +89,32 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FOnInteractSignature OnInteractionEnd;
+
+protected:
+	/** Empty as pass. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interact")
+	FGameplayTagQuery InspectionEntryTagQuery;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interact")
+	FVSGameplayTagEventQueryContainer BreakInspectionTagQueries;
+
+	/** Empty as pass. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interact")
+	FGameplayTagQuery InteractionEntryTagQuery;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interact")
+	FVSGameplayTagEventQueryContainer BreakInteractionTagQueries;
 	
 private:
 	TWeakObjectPtr<UVSGameplayTagController> GameplayTagControllerPrivate;
 
 	/** The target witch the agent is current inspecting. */
-	TWeakObjectPtr<UVSInteractiveFeatureAgent> CurrentInspectivePrivate;
+	TArray<TWeakObjectPtr<UVSInteractiveFeatureAgent>> CurrentInspectiveAgentsPrivate;
 
 	/** The target witch the agent is current interacting. */
-	TWeakObjectPtr<UVSInteractiveFeatureAgent> CurrentInteractivePrivate;
+	TWeakObjectPtr<UVSInteractiveFeatureAgent> CurrentInteractiveAgentPrivate;
 	FName CurrentInteractiveActionFeatureName = NAME_None;
+
+	uint8 bMatchesInspectionEntryTagQuery : 1;
+	uint8 bMatchesInteractionEntryTagQuery : 1;
 };

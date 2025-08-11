@@ -18,6 +18,8 @@ class VSPLUGINSCORE_API UVSObjectFeatureComponent : public UActorComponent
 
 public:
 	UVSObjectFeatureComponent();
+	virtual void OnRegister() override;
+	virtual void OnUnregister() override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void DestroyComponent(bool bPromoteChildren) override;

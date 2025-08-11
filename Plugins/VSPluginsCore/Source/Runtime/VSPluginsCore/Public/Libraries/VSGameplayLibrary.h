@@ -21,10 +21,10 @@ class VSPLUGINSCORE_API UVSGameplayLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_UCLASS_BODY()
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Source"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay")
 	static bool IsInGame();
 	
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Source"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (WorldContext = "WorldContext"))
 	static float GetServerTimeSeconds(const UObject* WorldContext);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (AutoCreateRefTerm = "Query, GameplayTags, TagEvent"))
@@ -36,13 +36,18 @@ class VSPLUGINSCORE_API UVSGameplayLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Query"))
 	static bool MatchesSceneComponentQuery(const USceneComponent* SceneComponent, const FVSSceneComponentQuery& Query);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Query"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Object"))
 	static APawn* GetPawnFromSubObject(UObject* Object);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Object"))
+	static AController* GetControllerFromSubObject(UObject* Object);
 	
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Projectile")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Projectile", meta = (AutoCreateRefTerm = "StartLocation, EndLocation, GravityDirection"))
 	static FVector SuggestVelocityForProjectileMovementByTime(const FVector& StartLocation, const FVector& EndLocation, const float MovementTime = 1.f, const FVector& GravityDirection = FVector(0.0, 0.0, -1.0), float GravitySize = 980.f);
 
-
+	/** Get the post process volume of the highest priority that contains the location point. */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Post Process", meta = (WorldContext = "WorldContext", AutoCreateRefTerm = "Location"))
+	static APostProcessVolume* GetPostProcessVolumeAtLocation(UObject* WorldContext, const FVector& Location);
 	
 	/**
 	 * @return Whether the sweep has been blocked.

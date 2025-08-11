@@ -529,10 +529,6 @@ void UVSChrMovFeature_WallRunMovement::StopWallRunInternal(bool bTryEndMovement)
 	
 	if (!bCanDoEndMovement)
 	{
-		if (UVSActorLibrary::IsCharacterOnWalkableFloor(GetCharacter()))
-		{
-			GetCharacterMovement()->StopMovementImmediately();
-		}
 		if (!FMath::IsNearlyZero(MovementData.CapsuleHalfHeightOffsetUSCZ, 0.01f))
 		{
 			GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(GetMovementCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - MovementData.CapsuleHalfHeightOffsetUSCZ);

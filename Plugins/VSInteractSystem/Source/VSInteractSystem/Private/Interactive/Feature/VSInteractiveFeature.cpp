@@ -4,6 +4,7 @@
 #include "VSInteractSystemUtils.h"
 #include "Interact/Feature/VSInteractFeatureAgent.h"
 #include "Interactive/Feature/VSInteractiveFeatureAgent.h"
+#include "Interactive/Feature/Action/VSInteractiveActionFeature.h"
 
 UVSInteractiveFeature::UVSInteractiveFeature(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -32,4 +33,15 @@ bool UVSInteractiveFeature::IsInteractedBySource(UVSInteractFeatureAgent* Source
 {
 	if (!SourceAgent || !InteractiveFeatureAgentPrivate.IsValid()) return false;
 	return InteractiveFeatureAgentPrivate->InteractingSourceActionMap.Contains(SourceAgent);
+}
+
+float UVSInteractiveFeature::GetInteractionTime(UVSInteractFeatureAgent* SourceAgent) const
+{
+	if (!SourceAgent || !InteractiveFeatureAgentPrivate.IsValid() || !IsInteractedBySource(SourceAgent)) return false;
+	FName ActionFeatureName = InteractiveFeatureAgentPrivate->InteractingSourceActionMap.FindRef(SourceAgent);
+	if (UVSInteractiveActionFeature* ActionFeature = InteractiveFeatureAgentPrivate->GetActionFeatureByName(ActionFeatureName))
+	{
+		return ActionFeature->GetActionInteractedTime(SourceAgent);
+	}
+	return 0.f;	
 }

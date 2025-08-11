@@ -61,9 +61,12 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "TurnInPlace")
 	FVSGameplayTagEventQueryContainer RefreshSettingsRowQueries;
 	
-	/** Turn in place can be checked and processed only if the movement states match the query. */
+	/**
+	 * Turn in place can be checked and processed only if the movement states match the query.
+	 * Empty as pass.
+	 */
 	UPROPERTY(EditAnywhere, Category = "TurnInPlace")
-	FVSGameplayTagEventQueryContainer EntranceTagQueries;
+	FGameplayTagQuery EntranceTagQueries;
 
 	/** Auto breaks when movement tags matches this. */
 	UPROPERTY(EditAnywhere, Category = "TurnInPlace")

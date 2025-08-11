@@ -7,7 +7,6 @@
 UVSInteractiveActionFeature::UVSInteractiveActionFeature(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	BreakInteractionSourceTagQueries.bQueriesEmptyAsPass = false;
 }
 
 bool UVSInteractiveActionFeature::IsAvailableForSource_Implementation(UVSInteractFeatureAgent* SourceAgent) const
@@ -18,11 +17,7 @@ bool UVSInteractiveActionFeature::IsAvailableForSource_Implementation(UVSInterac
 	if (MaxInteractionCount > 0 && CurrentInteractionCount >= MaxInteractionCount) return false;
 	if (MaxInteractionCountForSource > 0 && SourceInteractionCountMap.FindRef(SourceAgent) >= MaxInteractionCountForSource) return false;
 	if (MaxSimultaneousInteractionNum > 0 && InteractingSourceTimeMap.Num() >= MaxSimultaneousInteractionNum) return false;
-	
-	FGameplayTagContainer SourceTags = SourceAgent->GetGameplayTagController()->GetGameplayTags();
-	if (!AvailableEntrySourceTagQuery.IsEmpty() && !AvailableEntrySourceTagQuery.Matches(SourceTags)) return false;
-	if (AvailableBlockSourceTagQuery.Matches(SourceTags)) return false;
-	
+
 	return true;
 }
 
@@ -78,6 +73,11 @@ void UVSInteractiveActionFeature::EndInteraction(UVSInteractFeatureAgent* Source
 		RemainedInteractionCoolDown = InteractionCoolDown;
 		InteractingSourceRemainedCoolDownMap.Emplace(SourceAgent, InteractionCoolDown);
 	}
+}
+
+float UVSInteractiveActionFeature::GetActionInteractedTime_Implementation(UVSInteractFeatureAgent* SourceAgent) const
+{
+	return InteractingSourceTimeMap.FindRef(SourceAgent);
 }
 
 void UVSInteractiveActionFeature::OnStartInteraction_Implementation(UVSInteractFeatureAgent* SourceAgent)

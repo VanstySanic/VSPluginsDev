@@ -24,7 +24,7 @@ void UVSInteractiveFeatureAgent::EndPlay_Implementation()
 	const TArray<TWeakObjectPtr<UVSInteractFeatureAgent>> CopiedInspectingSources = InspectingSources;
 	for (TWeakObjectPtr<UVSInteractFeatureAgent> InteractFeatureAgent : CopiedInspectingSources)
 	{
-		if (InteractFeatureAgent.IsValid() && InteractFeatureAgent->IsInspecting() && InteractFeatureAgent->GetCurrentInspectiveFeatureAgent() == this)
+		if (InteractFeatureAgent.IsValid() && InteractFeatureAgent->IsInspectingOnTarget(this))
 		{
 			InteractFeatureAgent->StopInspectionOnTarget(this);
 		}
@@ -42,9 +42,9 @@ void UVSInteractiveFeatureAgent::EndPlay_Implementation()
 	Super::EndPlay_Implementation();
 }
 
-UVSInteractiveActionFeature* UVSInteractiveFeatureAgent::GetActionFeatureByName(const FName ActionName) const
+UVSInteractiveActionFeature* UVSInteractiveFeatureAgent::GetActionFeatureByName(const FName ActionFeatureName) const
 {
-	return Cast<UVSInteractiveActionFeature>(GetSubFeatureByName(ActionName));
+	return Cast<UVSInteractiveActionFeature>(GetSubFeatureByName(ActionFeatureName));
 }
 
 TArray<UVSInteractiveActionFeature*> UVSInteractiveFeatureAgent::GetAvailableActionFeatures(UVSInteractFeatureAgent* SourceAgent) const
@@ -65,6 +65,7 @@ bool UVSInteractiveFeatureAgent::IsInspectable(UVSInteractFeatureAgent* SourceAg
 {
 	if (!bAllowInspection || !SourceAgent || SourceAgent->IsInteracting()) return false;
 	if (InspectRequireInteractivity && !IsInteractable(SourceAgent)) return false;
+	FGameplayTagContainer SourceTags = SourceAgent->GetGameplayTagController()->GetGameplayTags();
 	return true;
 }
 
@@ -72,8 +73,6 @@ bool UVSInteractiveFeatureAgent::IsInteractable(UVSInteractFeatureAgent* SourceA
 {
 	if (!bAllowInteraction || !SourceAgent || GetAvailableActionFeatures(SourceAgent).IsEmpty()) return false;
 	FGameplayTagContainer SourceTags = SourceAgent->GetGameplayTagController()->GetGameplayTags();
-	if (!InteractionEntrySourceTagQuery.IsEmpty() && !InteractionEntrySourceTagQuery.Matches(SourceTags)) return false;
-	if (InteractionBlockSourceTagQuery.Matches(SourceTags)) return false;
 	return true;
 }
 

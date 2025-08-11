@@ -11,6 +11,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "Interfaces/VSGameplayTagControllerInterface.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Libraries/VSGameplayLibrary.h"
 
@@ -19,10 +20,38 @@ UVSActorLibrary::UVSActorLibrary(const FObjectInitializer& ObjectInitializer)
 {
 }
 
+bool UVSActorLibrary::IsActorLocal(AActor* Actor)
+{
+	if (!Actor) return false;
+	const ENetMode NetMode = Actor->GetNetMode();
+
+	if (NetMode == NM_Standalone) return true;
+	if (NetMode == NM_Client && Actor->GetLocalRole() == ROLE_AutonomousProxy) return true;
+	if (Actor->GetRemoteRole() != ROLE_AutonomousProxy && Actor->GetLocalRole() == ROLE_Authority) return true;
+
+	return false;
+}
+
 bool UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(AActor* Actor)
 {
 	if (!Actor) return false;
 	return (Actor->HasAuthority() || Actor->GetLocalRole() == ROLE_AutonomousProxy);
+}
+
+AActor* UVSActorLibrary::DuplicateActor(AActor* Actor, const FTransform& SpawnTransform)
+{
+	if (!Actor) return nullptr;
+	UWorld* World = Actor->GetWorld();
+	if (!World) return nullptr;
+
+	FActorSpawnParameters Params;
+	Params.Template = Actor;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	Params.Name = MakeUniqueObjectName(World, Actor->GetClass(), Actor->GetFName());
+
+	AActor* NewActor = World->SpawnActor<AActor>(Actor->GetClass(), Actor->GetActorTransform(), Params);
+    
+	return NewActor;
 }
 
 UActorComponent* UVSActorLibrary::GetActorComponentByName(const AActor* Actor, FName ComponentName)
@@ -99,7 +128,7 @@ UVSObjectFeature* UVSActorLibrary::GetFeatureByClassFromActor(AActor* Actor, TSu
 {
 	if (!Actor || !Class) return nullptr;
 	TArray<UActorComponent*> Components;
-	Actor->GetComponents(UVSObjectFeature::StaticClass(), Components);
+	Actor->GetComponents(UVSObjectFeatureComponent::StaticClass(), Components);
 	for (UActorComponent* Component : Components)
 	{
 		if (UVSObjectFeatureComponent* FeatureComponent = Cast<UVSObjectFeatureComponent>(Component))

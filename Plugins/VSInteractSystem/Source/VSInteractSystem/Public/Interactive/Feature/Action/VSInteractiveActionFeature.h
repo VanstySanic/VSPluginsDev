@@ -27,6 +27,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Interactive")
 	void EndInteraction(UVSInteractFeatureAgent* SourceAgent, bool bIsLocalBreak);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactive")
+	float GetActionInteractedTime(UVSInteractFeatureAgent* SourceAgent) const;
 	
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "Interactive")
@@ -80,15 +83,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactive")
 	bool bCoolDownAtInteractionStart = false;
 
-	/** Empty as pass. */
+	/**
+	 * When source agent breaks the interaction, whether to break locally.
+	 * If false, will use the net execution policy. 
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactive")
-	FGameplayTagQuery AvailableEntrySourceTagQuery;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactive")
-	FGameplayTagQuery AvailableBlockSourceTagQuery;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactive")
-	FVSGameplayTagEventQueryContainer BreakInteractionSourceTagQueries;
+	bool bBreakInteractionNetLocal = false;
 	
 	/** Defines how the action is executed with network. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactive")

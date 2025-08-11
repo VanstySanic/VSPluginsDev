@@ -9,8 +9,8 @@
 
 UVSInteractFeatureAgent::UVSInteractFeatureAgent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, bMatchesInspectionEntryTagQuery(false), bMatchesInteractionEntryTagQuery(false)
 {
-	
 }
 
 void UVSInteractFeatureAgent::Initialize_Implementation()
@@ -23,32 +23,39 @@ void UVSInteractFeatureAgent::Initialize_Implementation()
 	check(GameplayTagControllerPrivate.IsValid());
 }
 
+void UVSInteractFeatureAgent::BeginPlay_Implementation()
+{
+	Super::BeginPlay_Implementation();
+
+	UpdateTagQueryStates(EVSGameplayTagControllerTags::Event_TagsUpdated);
+}
+
 void UVSInteractFeatureAgent::EndPlay_Implementation()
 {
-	if (IsInspecting() && CurrentInspectivePrivate.IsValid())
-	{
-		StopInspectionOnTarget(CurrentInspectivePrivate.Get());
-	}
+	StopAllInspections();
 
-	if (IsInteracting() && CurrentInteractivePrivate.IsValid())
+	if (IsInteracting() && CurrentInteractiveAgentPrivate.IsValid())
 	{
-		StopInteractionWithTarget(CurrentInteractivePrivate.Get(), CurrentInteractiveActionFeatureName);
+		StopInteractionWithTarget(CurrentInteractiveAgentPrivate.Get(), CurrentInteractiveActionFeatureName);
 	}
 	
 	Super::EndPlay_Implementation();
 }
 
+void UVSInteractFeatureAgent::OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent)
+{
+	Super::OnMovementTagEventNotified_Implementation(TagEvent);
+
+	UpdateTagQueryStates(TagEvent);
+}
+
 void UVSInteractFeatureAgent::TryInspectTarget(UVSInteractiveFeatureAgent* TargetAgent)
 {
+	if (!bMatchesInspectionEntryTagQuery) return;
 	if (!TargetAgent || !TargetAgent->IsInteractable(this) || IsInteracting()) return;
-	if (IsInspecting() && CurrentInspectivePrivate == TargetAgent) return;
-
-	if (IsInspecting() && CurrentInspectivePrivate.IsValid())
-	{
-		StopInspectionOnTarget(CurrentInspectivePrivate.Get());
-	}
+	if (IsInspectingOnTarget(TargetAgent)) return;
 	
-	CurrentInspectivePrivate = TargetAgent;
+	CurrentInspectiveAgentsPrivate.Add(TargetAgent);
 	TargetAgent->OnInspectBySource(this);
 
 	OnInspectionStart.Broadcast(TargetAgent);
@@ -56,17 +63,27 @@ void UVSInteractFeatureAgent::TryInspectTarget(UVSInteractiveFeatureAgent* Targe
 
 void UVSInteractFeatureAgent::StopInspectionOnTarget(UVSInteractiveFeatureAgent* TargetAgent)
 {
-	if (!TargetAgent || !TargetAgent->IsInspectedBySource(this)) return;
-	if (CurrentInspectivePrivate == TargetAgent)
-	{
-		CurrentInspectivePrivate.Reset();
-	}
+	if (!TargetAgent || !IsInspectingOnTarget(TargetAgent)) return;
+	CurrentInspectiveAgentsPrivate.RemoveSingle(TargetAgent);
 	TargetAgent->OnStopInspectBySource(this);
 	OnInspectionEnd.Broadcast(TargetAgent);
 }
 
+void UVSInteractFeatureAgent::StopAllInspections()
+{
+	TArray<TWeakObjectPtr<UVSInteractiveFeatureAgent>> CopiedInspectiveAgentsPrivate;
+	for (TWeakObjectPtr<UVSInteractiveFeatureAgent> InteractiveFeatureAgent : CopiedInspectiveAgentsPrivate)
+	{
+		if (InteractiveFeatureAgent.IsValid())
+		{
+			StopInspectionOnTarget(InteractiveFeatureAgent.Get());
+		}
+	}
+}
+
 void UVSInteractFeatureAgent::TryInteractWithTarget(UVSInteractiveFeatureAgent* TargetAgent, const FName ActionFeatureName)
 {
+	if (!bMatchesInteractionEntryTagQuery) return;
 	if (!TargetAgent || !TargetAgent->IsInteractable(this)) return;
 	UVSInteractiveActionFeature* ActionFeature = !ActionFeatureName.IsNone()
 		? TargetAgent->GetActionFeatureByName(ActionFeatureName)
@@ -142,6 +159,36 @@ void UVSInteractFeatureAgent::StopInteractionWithTarget(UVSInteractiveFeatureAge
 	}
 }
 
+void UVSInteractFeatureAgent::UpdateTagQueryStates(const FGameplayTag& TagEvent)
+{
+	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
+	const FGameplayTagContainer& GameplayTags = GameplayTagController->GetGameplayTags();
+	if (TagEvent == EVSGameplayTagControllerTags::Event_TagsUpdated)
+	{
+		bMatchesInspectionEntryTagQuery = InspectionEntryTagQuery.IsEmpty() || InspectionEntryTagQuery.Matches(GameplayTags);
+		bMatchesInteractionEntryTagQuery = InteractionEntryTagQuery.IsEmpty() || InteractionEntryTagQuery.Matches(GameplayTags);
+	}
+
+	if (BreakInspectionTagQueries.Matches(GameplayTags))
+	{
+		TArray<TWeakObjectPtr<UVSInteractiveFeatureAgent>> CopiedInspectiveAgentsPrivate;
+		for (TWeakObjectPtr<UVSInteractiveFeatureAgent> InteractiveFeatureAgent : CopiedInspectiveAgentsPrivate)
+		{
+			if (InteractiveFeatureAgent.IsValid())
+			{
+				StopInspectionOnTarget(InteractiveFeatureAgent.Get());
+			}
+		}
+	}
+	if (IsInteracting() && BreakInteractionTagQueries.Matches(GameplayTags))
+	{
+		if (UVSInteractiveActionFeature* ActionFeature = GetCurrentInteractiveActionFeature())
+		{
+			StopInteractionWithTarget(CurrentInteractiveAgentPrivate.Get(), CurrentInteractiveActionFeatureName, ActionFeature->bBreakInteractionNetLocal);
+		}
+	}
+}
+
 bool UVSInteractFeatureAgent::TryInteractWithTargetInternal(UVSInteractiveFeatureAgent* TargetAgent, const FName ActionFeatureName)
 {
 	if (!TargetAgent || !TargetAgent->IsInteractable(this)) return false;
@@ -156,13 +203,10 @@ void UVSInteractFeatureAgent::InteractWithTargetInternal(UVSInteractiveFeatureAg
 {
 	if (!TargetAgent) return;
 
-	/** End inspection when interacting with target.. */
-	if (IsInspecting() && CurrentInspectivePrivate.IsValid())
-	{
-		StopInspectionOnTarget(CurrentInspectivePrivate.Get());
-	}
+	/** End inspection when interacting with target. */
+	StopAllInspections();
 	
-	CurrentInteractivePrivate = TargetAgent;
+	CurrentInteractiveAgentPrivate = TargetAgent;
 	CurrentInteractiveActionFeatureName = ActionFeatureName;
 	TargetAgent->OnInteractBySource(this, ActionFeatureName);
 
@@ -183,9 +227,9 @@ void UVSInteractFeatureAgent::InteractWithTargetInternal(UVSInteractiveFeatureAg
 void UVSInteractFeatureAgent::StopInteractWithTargetInternal(UVSInteractiveFeatureAgent* TargetAgent, const FName ActionFeatureName)
 {
 	if (!TargetAgent) return;
-	if (TargetAgent == CurrentInteractivePrivate.Get())
+	if (TargetAgent == CurrentInteractiveAgentPrivate.Get())
 	{
-		CurrentInteractivePrivate.Reset();
+		CurrentInteractiveAgentPrivate.Reset();
 		if (CurrentInteractiveActionFeatureName == ActionFeatureName)
 		{
 			CurrentInteractiveActionFeatureName = NAME_None;

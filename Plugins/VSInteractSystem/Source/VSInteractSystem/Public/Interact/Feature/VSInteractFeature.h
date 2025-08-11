@@ -23,6 +23,7 @@ class VSINTERACTSYSTEM_API UVSInteractFeature : public UVSObjectFeature
 	
 protected:
 	virtual void Initialize_Implementation() override;
+	virtual void Uninitialize_Implementation() override;
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Interact")
@@ -31,9 +32,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interact")
 	UVSGameplayTagController* GetGameplayTagController() const;
 
-	/** Get the target witch the agent is currently inspecting. */
+	/** Get the targets witch the agent is currently inspecting. */
 	UFUNCTION(BlueprintCallable, Category = "Interact")
-	UVSInteractiveFeatureAgent* GetCurrentInspectiveFeatureAgent() const;
+	TArray<UVSInteractiveFeatureAgent*> GetCurrentInspectiveFeatureAgents() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	UVSInteractiveFeatureAgent* GetClosestInspectiveFeatureAgent() const;
 	
 	/** Get the target witch the agent is currently interacting. */
 	UFUNCTION(BlueprintCallable, Category = "Interact")
@@ -48,18 +52,20 @@ public:
 	UVSInteractiveActionFeature* GetCurrentInteractiveActionFeature() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Interact")
-	bool IsInspecting() const;
+	bool IsInspectingOnTarget(UVSInteractiveFeatureAgent* TargetAgent) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Interact")
 	bool IsInteracting() const;
 
-protected:
-	/** Empty as pass. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactive")
-	FGameplayTagQuery AvailableEntrySourceTagQuery;
+	UFUNCTION(BlueprintCallable, Category = "Interact")
+	float GetInteractionTime() const;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactive")
-	FGameplayTagQuery AvailableBlockSourceTagQuery;
+protected:
+	UFUNCTION(BlueprintNativeEvent, Category = "Interact")
+	void OnMovementTagsUpdated();
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Interact")
+	void OnMovementTagEventNotified(const FGameplayTag& TagEvent);
 	
 private:
 	TWeakObjectPtr<UVSInteractFeatureAgent> InteractFeatureAgentPrivate;

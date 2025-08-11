@@ -269,12 +269,21 @@ struct FVSSceneComponentQuery
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TSubclassOf<USceneComponent>> ComponentClasses;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FName> ComponentTags;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FName> ActorTags;
-	
 
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bInverseObjectTypes = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bInverseClassAllowance = false;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bInverseComponentTagAllowance = false;
 
@@ -283,7 +292,10 @@ struct FVSSceneComponentQuery
 
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool ObjectTypesEmptyAsPass = true;
+	bool bComponentClassesEmptyAsPass = true;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bObjectTypesEmptyAsPass = true;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bComponentTagsEmptyAsPass = true;

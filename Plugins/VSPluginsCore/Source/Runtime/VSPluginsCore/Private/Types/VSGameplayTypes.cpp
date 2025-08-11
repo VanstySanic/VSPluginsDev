@@ -91,8 +91,10 @@ FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::AuthorityMulticast 
 bool FVSSceneComponentQuery::Matches(const USceneComponent* Component) const
 {
 	if (!Component) return false;
-	if (ObjectTypes.IsEmpty() && !ObjectTypesEmptyAsPass) return false;
-	if (!ObjectTypes.IsEmpty() && !ObjectTypes.Contains(Component->GetCollisionObjectType())) return false;
+	if (ComponentClasses.IsEmpty() && !bComponentClassesEmptyAsPass) return false;
+	if (!ComponentClasses.IsEmpty() && !(ComponentClasses.Contains(Component->GetClass()) && !bInverseClassAllowance)) return false;
+	if (ObjectTypes.IsEmpty() && !bObjectTypesEmptyAsPass) return false;
+	if (!ObjectTypes.IsEmpty() && !(ObjectTypes.Contains(Component->GetCollisionObjectType()) && !bInverseObjectTypes)) return false;
 	if (ComponentTags.IsEmpty() && !bComponentTagsEmptyAsPass) return false;
 	if (!ComponentTags.IsEmpty())
 	{

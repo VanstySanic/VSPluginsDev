@@ -3,6 +3,7 @@
 
 #include "Classes/Framework/VSObjectFeatureComponent.h"
 #include "Classes/Framework/VSObjectFeature.h"
+#include "Libraries/VSGameplayLibrary.h"
 
 UVSObjectFeatureComponent::UVSObjectFeatureComponent()
 {
@@ -12,10 +13,29 @@ UVSObjectFeatureComponent::UVSObjectFeatureComponent()
 	RootFeature = CreateDefaultSubobject<UVSObjectFeature>(TEXT("RootFeature"));
 }
 
+void UVSObjectFeatureComponent::OnRegister()
+{
+	Super::OnRegister();
+	
+	if (!UVSGameplayLibrary::IsInGame())
+	{
+		if (RootFeature) { RootFeature->RegisterFeature(); }
+	}
+}
+
+void UVSObjectFeatureComponent::OnUnregister()
+{
+	if (!UVSGameplayLibrary::IsInGame())
+	{
+		if (RootFeature) { RootFeature->UnregisterFeature(); }
+	}
+	
+	Super::OnUnregister();
+}
+
 void UVSObjectFeatureComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
 	if (RootFeature) { RootFeature->RegisterFeature(); }
 }
 

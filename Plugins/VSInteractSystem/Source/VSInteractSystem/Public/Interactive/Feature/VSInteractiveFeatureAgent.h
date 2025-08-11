@@ -30,7 +30,7 @@ protected:
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Interactive")
-	UVSInteractiveActionFeature* GetActionFeatureByName(const FName ActionName) const;
+	UVSInteractiveActionFeature* GetActionFeatureByName(const FName ActionFeatureName) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Interactive")
 	TArray<UVSInteractiveActionFeature*> GetAvailableActionFeatures(UVSInteractFeatureAgent* SourceAgent) const;
@@ -66,17 +66,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactive")
 	bool InspectRequireInteractivity = true;
-	
+
 	/** Works as an internal switch. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactive")
 	bool bAllowInteraction = true;
 
-	/** Empty as pass. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactive")
-	FGameplayTagQuery InteractionEntrySourceTagQuery;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactive")
-	FGameplayTagQuery InteractionBlockSourceTagQuery;
 	
 protected:
 	virtual void Initialize_Implementation() override;

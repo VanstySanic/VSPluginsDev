@@ -1,6 +1,8 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Libraries/VSMathLibrary.h"
+
+#include "Kismet/KismetArrayLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 
 UVSMathLibrary::UVSMathLibrary(const FObjectInitializer& ObjectInitializer)
