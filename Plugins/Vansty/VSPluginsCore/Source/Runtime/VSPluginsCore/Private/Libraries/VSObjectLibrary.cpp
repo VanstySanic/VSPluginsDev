@@ -12,7 +12,7 @@ UVSObjectLibrary::UVSObjectLibrary(const FObjectInitializer& ObjectInitializer)
 bool UVSObjectLibrary::IsObjectWorldRelated(const UObject* InObject)
 {
 	if (!InObject) return false;
-	if (InObject->IsA<AActor>() || InObject->IsA<UActorComponent>() || InObject->IsA<UWorldSubsystem>()) return false;
+	if (InObject->IsA<AActor>() || InObject->IsA<UActorComponent>() || InObject->IsA<UWorldSubsystem>()) return true;
 	
 	return IsObjectWorldRelated(InObject->GetOuter());
 }

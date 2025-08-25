@@ -1,6 +1,8 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Types/VSObjectTickFunction.h"
+
+#include "Libraries/VSGameplayLibrary.h"
 #include "Libraries/VSObjectLibrary.h"
 
 FVSObjectTickFunction::~FVSObjectTickFunction()
@@ -100,7 +102,7 @@ void FVSObjectTickFunction::RegisterAndSetup(UObject* InTargetObject)
 	if (!bCanEverTick || IsTickFunctionRegistered()) return;
 	if (!InTargetObject || InTargetObject->IsUnreachable() || InTargetObject->IsTemplate()) return;
 
-	if (!bShouldTickCrossWorld && bTickCrossWorldIfPossible && !UVSObjectLibrary::IsObjectWorldRelated(InTargetObject))
+	if (!bShouldTickCrossWorld && bTickCrossWorldIfPossible && !UVSObjectLibrary::IsObjectWorldRelated(InTargetObject) && UVSGameplayLibrary::IsInGame())
 	{
 		bShouldTickCrossWorld = true;
 		OnWorldInitializeDelegateHandle = FWorldDelegates::OnPostWorldInitialization.AddLambda([&] (UWorld* InWorld, FWorldInitializationValues)
