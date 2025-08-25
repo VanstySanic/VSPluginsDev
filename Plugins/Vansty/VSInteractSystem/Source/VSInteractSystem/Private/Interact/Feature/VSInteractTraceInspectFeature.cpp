@@ -20,15 +20,15 @@ void UVSInteractTraceInspectFeature::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
 
-	if (UVSActorLibrary::IsActorLocal(GetOwnerActor()))
+	if (UVSActorLibrary::IsActorNetLocal(GetOwnerActor()))
 	{
-		Controller = UVSGameplayLibrary::GetControllerFromSubObject(this);
+		Controller = UVSGameplayLibrary::GetControllerFromObject(this);
 	}
 }
 
 bool UVSInteractTraceInspectFeature::CanTick_Implementation() const
 {
-	return Super::CanTick_Implementation() && UVSActorLibrary::IsActorLocal(GetOwnerActor());
+	return Super::CanTick_Implementation() && UVSActorLibrary::IsActorNetLocal(GetOwnerActor());
 }
 
 void UVSInteractTraceInspectFeature::Tick_Implementation(float DeltaTime)

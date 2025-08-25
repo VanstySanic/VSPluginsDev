@@ -36,7 +36,7 @@ void UVSCharacterMovementFeatureAgent::Initialize_Implementation()
 	
 	ChrMovFeatureAgentPrivate = this;
 
-	CharacterPrivate = Cast<ACharacter>(UVSGameplayLibrary::GetPawnFromSubObject(this));
+	CharacterPrivate = Cast<ACharacter>(UVSGameplayLibrary::GetPawnFromObject(this));
 	check(CharacterPrivate.IsValid());
 	
 	CharacterMovementComponentPrivate = CharacterPrivate->GetCharacterMovement();

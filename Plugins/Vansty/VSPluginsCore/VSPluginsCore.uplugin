@@ -46,6 +46,10 @@
 			"Enabled": true
 		},
 		{
+			"Name": "EnhancedInput",
+			"Enabled": true
+		},
+		{
 			"Name": "AnimationWarping",
 			"Enabled": true
 		}

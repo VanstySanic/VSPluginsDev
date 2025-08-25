@@ -21,7 +21,7 @@ void UVSCharacterMovementAnimFeatureAgent::Initialize_Implementation()
 	
 	AnimFeatureAgentPrivate = this;
 
-	CharacterPrivate = Cast<ACharacter>(UVSGameplayLibrary::GetPawnFromSubObject(this));
+	CharacterPrivate = Cast<ACharacter>(UVSGameplayLibrary::GetPawnFromObject(this));
 	check(CharacterPrivate.IsValid() && CharacterPrivate->Implements<UVSGameplayTagControllerInterface>());
 
 	ChrMovAgentFeaturePrivate = UVSCharacterMovementUtils::GetCharacterMovementFeatureAgentFromActor(CharacterPrivate.Get());

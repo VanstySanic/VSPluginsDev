@@ -19,19 +19,19 @@ UVSActorLibrary::UVSActorLibrary(const FObjectInitializer& ObjectInitializer)
 {
 }
 
-bool UVSActorLibrary::IsActorLocal(AActor* Actor)
+bool UVSActorLibrary::IsActorNetLocal(AActor* Actor)
 {
 	if (!Actor) return false;
-	const ENetMode NetMode = Actor->GetNetMode();
 
-	if (NetMode == NM_Standalone) return true;
-	if (NetMode == NM_Client && Actor->GetLocalRole() == ROLE_AutonomousProxy) return true;
-	if (Actor->GetRemoteRole() != ROLE_AutonomousProxy && Actor->GetLocalRole() == ROLE_Authority) return true;
-
-	return false;
+	if (Actor->IsA<APawn>() || Actor->IsA<AController>())
+	{
+		return Actor->HasLocalNetOwner();
+	}
+	
+	return !Actor->GetIsReplicated() || Actor->GetLocalRole() == ROLE_SimulatedProxy;
 }
 
-bool UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(AActor* Actor)
+bool UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(AActor* Actor)
 {
 	if (!Actor) return false;
 	return (Actor->HasAuthority() || Actor->GetLocalRole() == ROLE_AutonomousProxy);

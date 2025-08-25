@@ -16,10 +16,12 @@ void UVSAutoContextActionFeature::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
 
+	if (!UVSActorLibrary::IsActorNetLocal(GetOwnerActor())) return;
+	
 	GameplayTagControllerPrivate = UVSActorLibrary::GetGameplayTagControllerFromActor(GetOwnerActor());
 	check(GameplayTagControllerPrivate.IsValid());
 
-	PlayerControllerPrivate = Cast<APlayerController>(UVSGameplayLibrary::GetControllerFromSubObject(this));
+	PlayerControllerPrivate = Cast<APlayerController>(UVSGameplayLibrary::GetControllerFromObject(this));
 	check(PlayerControllerPrivate.IsValid());
 
 	EnhancedInputComponentPrivate = Cast<UEnhancedInputComponent>(PlayerControllerPrivate->InputComponent);
@@ -47,6 +49,8 @@ void UVSAutoContextActionFeature::Uninitialize_Implementation()
 void UVSAutoContextActionFeature::BeginPlay_Implementation()
 {
 	Super::BeginPlay_Implementation();
+	
+	if (!UVSActorLibrary::IsActorNetLocal(GetOwnerActor())) return;
 
 	/** Add initial contexts. */
 	for (const auto& QueriedContext : QueriedContexts)
@@ -65,6 +69,8 @@ void UVSAutoContextActionFeature::BeginPlay_Implementation()
 
 void UVSAutoContextActionFeature::OnGameplayTagEventNotified(const FGameplayTag& TagEvent)
 {
+	if (!UVSActorLibrary::IsActorNetLocal(GetOwnerActor())) return;
+
 	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
 	const FGameplayTagContainer& GameplayTags = GameplayTagController->GetGameplayTags();
 	

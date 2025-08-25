@@ -25,7 +25,7 @@ void UVSCameraFeature_UseControlRotation::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
 
-	Controller = UVSGameplayLibrary::GetControllerFromSubObject(this);
+	Controller = UVSGameplayLibrary::GetControllerFromObject(this);
 }
 
 bool UVSCameraFeature_UseControlRotation::CanUpdateCamera_Implementation() const

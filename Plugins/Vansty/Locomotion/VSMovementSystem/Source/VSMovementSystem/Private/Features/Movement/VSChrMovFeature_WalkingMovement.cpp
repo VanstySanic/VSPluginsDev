@@ -50,6 +50,16 @@ void UVSChrMovFeature_WalkingMovement::BeginPlay_Implementation()
 	MovementData.CurrentMovementBaseSettings = MovementData.Stance == EVSStance::Crouching ? DefaultCrouchedMovementBaseSettings : DefaultMovementBaseSettings;
 }
 
+void UVSChrMovFeature_WalkingMovement::EndPlay_Implementation()
+{
+	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
+	GameplayTagController->SetTagCount(MovementData.PrevStance, 0);
+	GameplayTagController->SetTagCount(GetGait(MovementData.PrevStance), 0);
+	GameplayTagController->NotifyTagsUpdated();
+
+	Super::EndPlay_Implementation();
+}
+
 void UVSChrMovFeature_WalkingMovement::Tick_Implementation(float DeltaTime)
 {
 	Super::Tick_Implementation(DeltaTime);
@@ -128,7 +138,7 @@ FGameplayTag UVSChrMovFeature_WalkingMovement::GetPrevGait(const FGameplayTag& I
 
 void UVSChrMovFeature_WalkingMovement::SetStance(const FGameplayTag& InStance, bool bReplicated)
 {
-	if (bReplicated && GetIsReplicated() && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	if (bReplicated && GetIsReplicated() && UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
 	{
 		SetStance_Server(InStance);
 	}
@@ -150,7 +160,7 @@ void UVSChrMovFeature_WalkingMovement::SetStance_Server_Implementation(const FGa
 
 void UVSChrMovFeature_WalkingMovement::SetGait(const FGameplayTag& InGait, const FGameplayTag& InStance, bool bReplicated)
 {
-	if (bReplicated && GetIsReplicated() && UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	if (bReplicated && GetIsReplicated() && UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
 	{
 		SetGait_Server(InGait, InStance);
 	}

@@ -120,7 +120,7 @@ void UVSGameplayTagController::SetTagCount(const FGameplayTag& GameplayTag, int3
 void UVSGameplayTagController::AddReplicatedTag(const FGameplayTag& GameplayTag)
 {
 	if (!AbilitySystemComponentPrivate.IsValid()) { return; }
-	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
+	if (UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
 	{
 		SetReplicatedTagExists_Server(GameplayTag, true);
 	}
@@ -133,7 +133,7 @@ void UVSGameplayTagController::AddReplicatedTag(const FGameplayTag& GameplayTag)
 void UVSGameplayTagController::AddReplicatedTags(const FGameplayTagContainer& GameplayTags)
 {
 	if (!AbilitySystemComponentPrivate.IsValid()) { return; }
-	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
+	if (UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
 	{
 		SetReplicatedTagsExist_Server(GameplayTags, true);
 	}
@@ -146,7 +146,7 @@ void UVSGameplayTagController::AddReplicatedTags(const FGameplayTagContainer& Ga
 void UVSGameplayTagController::RemoveReplicatedTag(const FGameplayTag& GameplayTag)
 {
 	if (!AbilitySystemComponentPrivate.IsValid()) { return; }
-	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
+	if (UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
 	{
 		SetReplicatedTagExists_Server(GameplayTag, false);
 	}
@@ -159,7 +159,7 @@ void UVSGameplayTagController::RemoveReplicatedTag(const FGameplayTag& GameplayT
 void UVSGameplayTagController::RemoveReplicatedTags(const FGameplayTagContainer& GameplayTags)
 {
 	if (!AbilitySystemComponentPrivate.IsValid()) { return; }
-	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
+	if (UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated())
 	{
 		SetReplicatedTagsExist_Server(GameplayTags, false);
 	}

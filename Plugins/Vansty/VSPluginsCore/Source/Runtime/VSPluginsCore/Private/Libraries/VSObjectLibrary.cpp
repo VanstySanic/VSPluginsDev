@@ -9,6 +9,14 @@ UVSObjectLibrary::UVSObjectLibrary(const FObjectInitializer& ObjectInitializer)
 {
 }
 
+bool UVSObjectLibrary::IsObjectWorldRelated(const UObject* InObject)
+{
+	if (!InObject) return false;
+	if (InObject->IsA<AActor>() || InObject->IsA<UActorComponent>() || InObject->IsA<UWorldSubsystem>()) return false;
+	
+	return IsObjectWorldRelated(InObject->GetOuter());
+}
+
 bool UVSObjectLibrary::IsValidThreadSafe(const UObject* Object)
 {
 	return IsValid(Object);

@@ -149,7 +149,7 @@ void UVSInteractiveTipWidgetFeature::HideTipWidgetImmediately()
 
 void UVSInteractiveTipWidgetFeature::OnInspectionStart(UVSInteractFeatureAgent* SourceAgent)
 {
-	if (SourceAgent && UVSActorLibrary::IsActorLocal(SourceAgent->GetOwnerActor()))
+	if (SourceAgent && UVSActorLibrary::IsActorNetLocal(SourceAgent->GetOwnerActor()))
 	{
 		SetShouldShowTipWidget(true);
 	}
@@ -157,7 +157,7 @@ void UVSInteractiveTipWidgetFeature::OnInspectionStart(UVSInteractFeatureAgent* 
 
 void UVSInteractiveTipWidgetFeature::OnInspectionEnd(UVSInteractFeatureAgent* SourceAgent)
 {
-	if (SourceAgent && UVSActorLibrary::IsActorLocal(SourceAgent->GetOwnerActor()))
+	if (SourceAgent && UVSActorLibrary::IsActorNetLocal(SourceAgent->GetOwnerActor()))
 	{
 		if (!SourceAgent->IsInteracting() || SourceAgent->GetCurrentInteractiveFeatureAgent() != GetInteractiveFeatureAgent())
 		{
@@ -168,7 +168,7 @@ void UVSInteractiveTipWidgetFeature::OnInspectionEnd(UVSInteractFeatureAgent* So
 
 void UVSInteractiveTipWidgetFeature::OnInteractionStart(UVSInteractFeatureAgent* SourceAgent, FName ActionFeatureName)
 {
-	if (SourceAgent && UVSActorLibrary::IsActorLocal(SourceAgent->GetOwnerActor()))
+	if (SourceAgent && UVSActorLibrary::IsActorNetLocal(SourceAgent->GetOwnerActor()))
 	{
 		if (SourceAgent->GetCurrentInteractiveFeatureAgent() == GetInteractiveFeatureAgent())
 		{

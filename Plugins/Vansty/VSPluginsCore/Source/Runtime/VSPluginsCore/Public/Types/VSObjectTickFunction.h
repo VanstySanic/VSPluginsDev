@@ -16,6 +16,12 @@ struct VSPLUGINSCORE_API FVSObjectTickFunction : public FTickFunction
 	DECLARE_DELEGATE_ThreeParams(FObjectTickExecuteDelegate, float /*DeltaTime*/, ELevelTick /*TickType*/, FVSObjectTickFunction* /*ThisTickFunction*/);
 	DECLARE_DELEGATE_RetVal(bool, FObjectTickAbilityDelegate);
 
+	FVSObjectTickFunction()
+		: bTickCrossWorldIfPossible(true),
+	      bShouldTickCrossWorld(false)
+	{
+	}
+
 	virtual ~FVSObjectTickFunction() override;
 	
 	/** 
@@ -43,10 +49,17 @@ public:
 
 	/** Execute when ticked. */
 	FObjectTickExecuteDelegate OnExecuteTick;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Tick", AdvancedDisplay)
+	uint8 bTickCrossWorldIfPossible : 1;
 	
 private:
 	TWeakObjectPtr<UObject> Target;
 	TUnion<TWeakObjectPtr<UObject>, TWeakObjectPtr<UActorComponent>, TWeakObjectPtr<AActor>> TypedOuter;
+
+	uint8 bShouldTickCrossWorld : 1;
+	FDelegateHandle OnWorldInitializeDelegateHandle;
+	FDelegateHandle OnWorldTearDownDelegateHandle;
 };
 
 template<>

@@ -43,7 +43,7 @@ bool UVSGameplayLibrary::MatchesSceneComponentQuery(const USceneComponent* Scene
 	return Query.Matches(SceneComponent);
 }
 
-APawn* UVSGameplayLibrary::GetPawnFromSubObject(UObject* Object)
+APawn* UVSGameplayLibrary::GetPawnFromObject(UObject* Object)
 {
 	if (!Object) return nullptr;
 	if (APawn* Pawn = Cast<APawn>(Object))
@@ -59,10 +59,10 @@ APawn* UVSGameplayLibrary::GetPawnFromSubObject(UObject* Object)
 		return PlayerState->GetPawn();
 	}
 
-	return GetPawnFromSubObject(Object->GetOuter());
+	return GetPawnFromObject(Object->GetOuter());
 }
 
-AController* UVSGameplayLibrary::GetControllerFromSubObject(UObject* Object)
+AController* UVSGameplayLibrary::GetControllerFromObject(UObject* Object)
 {
 	if (!Object) return nullptr;
 	if (AController* Controller = Cast<AController>(Object))
@@ -78,7 +78,7 @@ AController* UVSGameplayLibrary::GetControllerFromSubObject(UObject* Object)
 		return PlayerState->GetOwningController();
 	}
 
-	return GetControllerFromSubObject(Object->GetOuter());
+	return GetControllerFromObject(Object->GetOuter());
 }
 
 bool UVSGameplayLibrary::GetScreenViewportSize(APlayerController* PlayerController, FVector2D& OutPosition)

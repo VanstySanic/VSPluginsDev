@@ -24,6 +24,7 @@ public:
 
 protected:
 	virtual void BeginPlay_Implementation() override;
+	virtual void EndPlay_Implementation() override;
 	virtual void Tick_Implementation(float DeltaTime) override;
 	virtual void OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent) override;
 

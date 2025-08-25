@@ -186,7 +186,7 @@ void UVSInteractiveOutlineFeature::HideOutlineImmediately()
 
 void UVSInteractiveOutlineFeature::OnInspectionStart(UVSInteractFeatureAgent* SourceAgent)
 {
-	if (SourceAgent && UVSActorLibrary::IsActorLocal(SourceAgent->GetOwnerActor()))
+	if (SourceAgent && UVSActorLibrary::IsActorNetLocal(SourceAgent->GetOwnerActor()))
 	{
 		SetShouldShowOutline(true);
 	}
@@ -194,7 +194,7 @@ void UVSInteractiveOutlineFeature::OnInspectionStart(UVSInteractFeatureAgent* So
 
 void UVSInteractiveOutlineFeature::OnInspectionEnd(UVSInteractFeatureAgent* SourceAgent)
 {
-	if (SourceAgent && UVSActorLibrary::IsActorLocal(SourceAgent->GetOwnerActor()))
+	if (SourceAgent && UVSActorLibrary::IsActorNetLocal(SourceAgent->GetOwnerActor()))
 	{
 		// if (!SourceAgent->IsInteracting() || SourceAgent->GetCurrentInteractiveFeatureAgent() != GetInteractiveFeatureAgent())
 		{

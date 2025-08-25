@@ -14,6 +14,9 @@ class VSPLUGINSCORE_API UVSObjectLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_UCLASS_BODY()
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay")
+	static bool IsObjectWorldRelated(const UObject* InObject);
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Object", meta = (BlueprintThreadSafe, DefaultToSelf = "Source"))
 	static bool IsValidThreadSafe(const UObject* Object);
 

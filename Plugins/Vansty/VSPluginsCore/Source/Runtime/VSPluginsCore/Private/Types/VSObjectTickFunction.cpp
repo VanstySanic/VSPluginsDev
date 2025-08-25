@@ -1,9 +1,24 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Types/VSObjectTickFunction.h"
+#include "Libraries/VSObjectLibrary.h"
 
 FVSObjectTickFunction::~FVSObjectTickFunction()
 {
+	if (IsTickFunctionRegistered())
+	{
+		UnregisterAndCleanup();
+	}
+	
+	if (OnWorldInitializeDelegateHandle.IsValid())
+	{
+		FWorldDelegates::OnPostWorldInitialization.Remove(OnWorldInitializeDelegateHandle);
+	}
+	if (OnWorldTearDownDelegateHandle.IsValid())
+	{
+		FWorldDelegates::OnWorldBeginTearDown.Remove(OnWorldTearDownDelegateHandle);
+	}
+	
 	Target.Reset();
 	TypedOuter.Reset();
 
@@ -83,10 +98,32 @@ FName FVSObjectTickFunction::DiagnosticContext(bool bDetailed)
 void FVSObjectTickFunction::RegisterAndSetup(UObject* InTargetObject)
 {
 	if (!bCanEverTick || IsTickFunctionRegistered()) return;
-
-	/** Check the InTargetObject's validation. */
 	if (!InTargetObject || InTargetObject->IsUnreachable() || InTargetObject->IsTemplate()) return;
+
+	if (!bShouldTickCrossWorld && bTickCrossWorldIfPossible && !UVSObjectLibrary::IsObjectWorldRelated(InTargetObject))
+	{
+		bShouldTickCrossWorld = true;
+		OnWorldInitializeDelegateHandle = FWorldDelegates::OnPostWorldInitialization.AddLambda([&] (UWorld* InWorld, FWorldInitializationValues)
+		{
+			if (!InWorld) return;
+			RegisterTickFunction(InWorld->GetCurrentLevel());
+		});
+
+		OnWorldTearDownDelegateHandle = FWorldDelegates::OnWorldBeginTearDown.AddLambda([&] (UWorld* InWorld)
+		{
+			UnRegisterTickFunction();
+		});
+	}
+	
+	/** Check the InTargetObject's validation. */
 	UWorld* World = InTargetObject->GetWorld();
+	if (!World)
+	{
+		if (IsInGameThread())
+		{
+			World = GWorld->GetWorld();
+		}
+	}
 	if (!World) return;
 
 	Target = InTargetObject;
@@ -104,7 +141,7 @@ void FVSObjectTickFunction::RegisterAndSetup(UObject* InTargetObject)
 	{
 		TypedOuter.SetSubtype<TWeakObjectPtr<UObject>>(InTargetObject);
 	}
-	
+
 	SetTickFunctionEnable(bStartWithTickEnabled || IsTickFunctionEnabled());
 	RegisterTickFunction(World->GetCurrentLevel());
 }
@@ -118,4 +155,17 @@ void FVSObjectTickFunction::UnregisterAndCleanup()
 
 	Target.Reset();
 	TypedOuter.Reset();
+
+	if (OnWorldInitializeDelegateHandle.IsValid())
+	{
+		FWorldDelegates::OnPostWorldInitialization.Remove(OnWorldInitializeDelegateHandle);
+	}
+	if (OnWorldTearDownDelegateHandle.IsValid())
+	{
+		FWorldDelegates::OnWorldBeginTearDown.Remove(OnWorldTearDownDelegateHandle);
+	}
+
+	bShouldTickCrossWorld = false;
+	
+	SetTickFunctionEnable(false);
 }

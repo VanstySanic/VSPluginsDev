@@ -38,10 +38,10 @@ class VSPLUGINSCORE_API UVSGameplayLibrary : public UBlueprintFunctionLibrary
 	static bool MatchesSceneComponentQuery(const USceneComponent* SceneComponent, const FVSSceneComponentQuery& Query);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Object"))
-	static APawn* GetPawnFromSubObject(UObject* Object);
+	static APawn* GetPawnFromObject(UObject* Object);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Object"))
-	static AController* GetControllerFromSubObject(UObject* Object);
+	static AController* GetControllerFromObject(UObject* Object);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay")
 	static bool GetScreenViewportSize(APlayerController* PlayerController, FVector2D& OutPosition);

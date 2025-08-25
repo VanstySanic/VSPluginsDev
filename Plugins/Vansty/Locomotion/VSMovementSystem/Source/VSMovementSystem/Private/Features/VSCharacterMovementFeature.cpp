@@ -91,7 +91,7 @@ FGameplayTag UVSCharacterMovementFeature::GetPrevMovementMode() const
 
 void UVSCharacterMovementFeature::SetMovementMode(const FGameplayTag& InMovementMode, bool bReplicated)
 {
-	if (UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated() && bReplicated)
+	if (UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && GetIsReplicated() && bReplicated)
 	{
 		SetMovementMode_Server(InMovementMode);
 	}
@@ -142,7 +142,7 @@ float UVSCharacterMovementFeature::GetSpeedZ() const
 FVector UVSCharacterMovementFeature::GetMovementInput() const
 {
 	if (!GetCharacterMovement()) return FVector::ZeroVector;
-	if (!UVSActorLibrary::IsActorLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && ChrMovFeatureAgentPrivate.IsValid())
+	if (!UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && ChrMovFeatureAgentPrivate.IsValid())
 	{
 		return ChrMovFeatureAgentPrivate->ReplicatedMovementInput;
 	}

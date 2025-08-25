@@ -20,10 +20,10 @@ class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
 	GENERATED_UCLASS_BODY()
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Source"))
-	static bool IsActorLocal(AActor* Actor);
+	static bool IsActorNetLocal(AActor* Actor);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Source"))
-	static bool IsActorLocalRoleAuthorityOrAutonomous(AActor* Actor);
+	static bool IsActorNetLocalRoleAuthorityOrAutonomous(AActor* Actor);
 
 	UFUNCTION(BlueprintCallable, Category = "Actor")
 	static AActor* DuplicateActor(AActor* Actor, const FTransform& SpawnTransform = FTransform());
