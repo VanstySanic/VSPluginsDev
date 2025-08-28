@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class VSCommonWidgets : ModuleRules
+public class VSGenericPresets : ModuleRules
 {
-	public VSCommonWidgets(ReadOnlyTargetRules Target) : base(Target)
+	public VSGenericPresets(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
@@ -27,6 +27,7 @@ public class VSCommonWidgets : ModuleRules
 			{
 				"Core",
 				// ... add other public dependencies that you statically link with here ...
+				"VSPluginsCore"
 			}
 			);
 			

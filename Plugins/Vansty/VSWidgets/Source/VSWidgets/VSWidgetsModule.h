@@ -4,7 +4,7 @@
 
 #include "Modules/ModuleManager.h"
 
-class FVSCommonWidgetsModule : public IModuleInterface
+class FVSWidgetsModule : public IModuleInterface
 {
 public:
 

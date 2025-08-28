@@ -19,21 +19,21 @@ class VSSETTINGSYSTEM_API UVSSettingSystemUtils : public UBlueprintFunctionLibra
 {
 	GENERATED_UCLASS_BODY()
 
-	UFUNCTION(BlueprintCallable, Category = "Settings")
-	TArray<UVSSettingItemBase*> GetSettingItems() const;
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Settings")
+	static TArray<UVSSettingItemBase*> GetSettingItems();
 
-	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "IdentifyTag"))
-	UVSSettingItemBase* GetSettingItemByIdentifyTag(const FGameplayTag& IdentifyTag) const;
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Settings", meta = (AutoCreateRefTerm = "IdentityTag"))
+	static UVSSettingItemBase* GetSettingItemByIdentityTag(const FGameplayTag& IdentityTag);
 
-	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "CategoryTag"))
-	TArray<UVSSettingItemBase*> GetSettingItemsByCategoryTag(const FGameplayTag& CategoryTag) const;
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Settings", meta = (AutoCreateRefTerm = "CategoryTag"))
+	static TArray<UVSSettingItemBase*> GetSettingItemsByCategoryTag(const FGameplayTag& CategoryTag);
 
-	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "TagQuery"))
-	TArray<UVSSettingItemBase*> GetSettingItemsByTagQuery(const FGameplayTagQuery& TagQuery) const;
+	UFUNCTION(BlueprintCallable,BlueprintPure,  Category = "Settings", meta = (AutoCreateRefTerm = "TagQuery"))
+	static TArray<UVSSettingItemBase*> GetSettingItemsByTagQuery(const FGameplayTagQuery& TagQuery);
 
 	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "SettingItems, Actions"))
-	void ExecuteActionForSettingItems(const TArray<UVSSettingItemBase*>& SettingItems, const TEnumAsByte<EVSSettingItemAction::Type> Action);
+	static void ExecuteActionForSettingItems(const TArray<UVSSettingItemBase*>& SettingItems, const TEnumAsByte<EVSSettingItemAction::Type> Action);
 	
 	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "SettingItems, Actions"))
-	void ExecuteActionsForSettingItems(const TArray<UVSSettingItemBase*>& SettingItems, const TArray<TEnumAsByte<EVSSettingItemAction::Type>>& Actions);
+	static void ExecuteActionsForSettingItems(const TArray<UVSSettingItemBase*>& SettingItems, const TArray<TEnumAsByte<EVSSettingItemAction::Type>>& Actions);
 };

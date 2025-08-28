@@ -9,7 +9,7 @@ UVSSettingSystemUtils::UVSSettingSystemUtils(const FObjectInitializer& ObjectIni
 {
 }
 
-TArray<UVSSettingItemBase*> UVSSettingSystemUtils::GetSettingItems() const
+TArray<UVSSettingItemBase*> UVSSettingSystemUtils::GetSettingItems()
 {
 	if (UVSSettingSubsystem* Subsystem = UVSSettingSubsystem::Get())
 	{
@@ -18,13 +18,13 @@ TArray<UVSSettingItemBase*> UVSSettingSystemUtils::GetSettingItems() const
 	return TArray<UVSSettingItemBase*>();
 }
 
-UVSSettingItemBase* UVSSettingSystemUtils::GetSettingItemByIdentifyTag(const FGameplayTag& IdentifyTag) const
+UVSSettingItemBase* UVSSettingSystemUtils::GetSettingItemByIdentityTag(const FGameplayTag& IdentityTag)
 {
 	const TArray<UVSSettingItemBase*>& Items = GetSettingItems();
 
 	for (UVSSettingItemBase* Item : Items)
 	{
-		if (Item->IdentityTag == IdentifyTag)
+		if (Item->IdentityTag == IdentityTag)
 		{
 			return Item;
 		}
@@ -33,7 +33,7 @@ UVSSettingItemBase* UVSSettingSystemUtils::GetSettingItemByIdentifyTag(const FGa
 	return nullptr;
 }
 
-TArray<UVSSettingItemBase*> UVSSettingSystemUtils::GetSettingItemsByCategoryTag(const FGameplayTag& CategoryTag) const
+TArray<UVSSettingItemBase*> UVSSettingSystemUtils::GetSettingItemsByCategoryTag(const FGameplayTag& CategoryTag)
 {
 	const TArray<UVSSettingItemBase*>& Items = GetSettingItems();
 	TArray<UVSSettingItemBase*> OutItems = GetSettingItems();
@@ -49,7 +49,7 @@ TArray<UVSSettingItemBase*> UVSSettingSystemUtils::GetSettingItemsByCategoryTag(
 	return OutItems;
 }
 
-TArray<UVSSettingItemBase*> UVSSettingSystemUtils::GetSettingItemsByTagQuery(const FGameplayTagQuery& TagQuery) const
+TArray<UVSSettingItemBase*> UVSSettingSystemUtils::GetSettingItemsByTagQuery(const FGameplayTagQuery& TagQuery)
 {
 	const TArray<UVSSettingItemBase*>& Items = GetSettingItems();
 	TArray<UVSSettingItemBase*> OutItems = GetSettingItems();
@@ -78,11 +78,14 @@ void UVSSettingSystemUtils::ExecuteActionForSettingItems(const TArray<UVSSetting
 
 void UVSSettingSystemUtils::ExecuteActionsForSettingItems(const TArray<UVSSettingItemBase*>& SettingItems, const TArray<TEnumAsByte<EVSSettingItemAction::Type>>& Actions)
 {
-	for (UVSSettingItemBase* SettingItem : SettingItems)
+	for (TEnumAsByte<EVSSettingItemAction::Type> Action : Actions)
 	{
-		if (SettingItem)
+		for (UVSSettingItemBase* SettingItem : SettingItems)
 		{
-			SettingItem->ExecuteActions(Actions);
+			if (SettingItem)
+			{
+				SettingItem->ExecuteAction(Action);
+			}
 		}
 	}
 }

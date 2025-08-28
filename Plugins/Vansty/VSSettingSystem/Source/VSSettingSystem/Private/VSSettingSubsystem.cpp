@@ -2,6 +2,7 @@
 
 #include "VSSettingSystem/Public/VSSettingSubsystem.h"
 #include "VSSettingSystemConfig.h"
+#include "VSSettingSystemUtils.h"
 #include "Items/VSSettingItemBase.h"
 #include "Items/VSSettingItemSet.h"
 
@@ -51,8 +52,17 @@ void UVSSettingSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 	for (TWeakObjectPtr<UVSSettingItemBase> SettingItem : SettingItems)
 	{
-		SettingItem->RegisterFeature();
+		SettingItem->Initialize();
 	}
+
+	UVSSettingSystemUtils::ExecuteActionsForSettingItems(GetSettingItems(), TArray<TEnumAsByte<EVSSettingItemAction::Type>>
+		{
+			EVSSettingItemAction::SetToCurrent,
+			EVSSettingItemAction::Load,
+			EVSSettingItemAction::Validate,
+			EVSSettingItemAction::Apply,
+			EVSSettingItemAction::Confirm,
+		});
 }
 
 void UVSSettingSubsystem::Deinitialize()
@@ -61,7 +71,7 @@ void UVSSettingSubsystem::Deinitialize()
 	{
 		if (SettingItem.IsValid())
 		{
-			SettingItem->DestroyFeature();
+			SettingItem->Uninitialize();
 		}
 	}
 

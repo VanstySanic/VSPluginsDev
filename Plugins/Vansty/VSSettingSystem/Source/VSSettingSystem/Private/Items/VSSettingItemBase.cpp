@@ -6,22 +6,16 @@
 UVSSettingItemBase::UVSSettingItemBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	PrimaryObjectTick.bTickCrossWorldIfPossible = false;
 }
 
 void UVSSettingItemBase::Initialize_Implementation()
 {
-	Super::Initialize_Implementation();
 
-	ExecuteActions(
-		TArray<TEnumAsByte<EVSSettingItemAction::Type>>
-		{
-			EVSSettingItemAction::SetToCurrent,
-			EVSSettingItemAction::Load,
-			EVSSettingItemAction::Validate,
-			EVSSettingItemAction::Apply,
-			EVSSettingItemAction::Confirm,
-		});
+}
+
+void UVSSettingItemBase::Uninitialize_Implementation()
+{
+	
 }
 
 FGameplayTagContainer UVSSettingItemBase::GetSettingItemTags()
@@ -43,22 +37,31 @@ void UVSSettingItemBase::ExecuteAction(TEnumAsByte<EVSSettingItemAction::Type> A
 		break;
 		
 	case EVSSettingItemAction::SetToDefault:
-		SetToDefault();
+		if (EqualsToByValueType(EVSSettingItemValueType::Default)) return;
+		SetToByValueType(EVSSettingItemValueType::Default);
 		break;
 		
 	case EVSSettingItemAction::SetToCurrent:
-		SetToCurrent();
+		if (EqualsToByValueType(EVSSettingItemValueType::Current)) return;
+		SetToByValueType(EVSSettingItemValueType::Current);
 		break;
 		
+	case EVSSettingItemAction::SetToLastConfirmed:
+		if (EqualsToByValueType(EVSSettingItemValueType::LastConfirmed)) return;
+		SetToByValueType(EVSSettingItemValueType::LastConfirmed);
+		break;
+
 	case EVSSettingItemAction::Validate:
 		Validate();
 		break;
 		
 	case EVSSettingItemAction::Apply:
+		if (!IsDirty()) return;
 		Apply();
 		break;
 		
 	case EVSSettingItemAction::Confirm:
+		if (!IsUnconfirmed()) return;
 		Confirm();
 		break;
 		
@@ -79,6 +82,7 @@ void UVSSettingItemBase::ExecuteAction(TEnumAsByte<EVSSettingItemAction::Type> A
 	case EVSSettingItemAction::Load:
 	case EVSSettingItemAction::SetToDefault:
 	case EVSSettingItemAction::SetToCurrent:
+	case EVSSettingItemAction::SetToLastConfirmed:
 	case EVSSettingItemAction::Validate:
 	case EVSSettingItemAction::Confirm:
 		NotifyUpdate();
@@ -105,12 +109,7 @@ void UVSSettingItemBase::NotifyUpdate()
 	}
 }
 
-void UVSSettingItemBase::SetToDefault_Implementation()
-{
-	
-}
-
-void UVSSettingItemBase::SetToCurrent_Implementation()
+void UVSSettingItemBase::SetToByValueType_Implementation(const EVSSettingItemValueType::Type ValueType)
 {
 	
 }
@@ -127,15 +126,30 @@ void UVSSettingItemBase::Apply_Implementation()
 {
 }
 
-void UVSSettingItemBase::Save_Implementation()
-{
-}
-
 void UVSSettingItemBase::Confirm_Implementation()
 {
 }
 
-bool UVSSettingItemBase::IsDirty_Implementation() const
+void UVSSettingItemBase::Save_Implementation()
+{
+}
+
+bool UVSSettingItemBase::EqualsToByValueType_Implementation(const EVSSettingItemValueType::Type ValueType) const
 {
 	return false;
+}
+
+bool UVSSettingItemBase::IsDirty() const
+{
+	return EqualsToByValueType(EVSSettingItemValueType::Settings) != EqualsToByValueType(EVSSettingItemValueType::Current);
+}
+
+bool UVSSettingItemBase::IsDefault() const
+{
+	return EqualsToByValueType(EVSSettingItemValueType::Settings) == EqualsToByValueType(EVSSettingItemValueType::Default);
+}
+
+bool UVSSettingItemBase::IsUnconfirmed() const
+{
+	return EqualsToByValueType(EVSSettingItemValueType::Settings) != EqualsToByValueType(EVSSettingItemValueType::LastConfirmed);
 }

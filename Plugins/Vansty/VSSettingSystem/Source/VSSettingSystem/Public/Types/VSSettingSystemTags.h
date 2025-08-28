@@ -6,7 +6,7 @@
 #include "NativeGameplayTags.h"
 #include "UObject/Object.h"
 
-namespace VSSettingItem
+namespace EVSSettingItem
 {
 	VSSETTINGSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Internationalization_LanguageAndLocale);
 	VSSETTINGSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Internationalization_AssetGroupCultures);
@@ -34,7 +34,7 @@ namespace VSSettingItem
 	VSSETTINGSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Audio_SoundMixClassVolume_Music);
 }
 
-namespace VSSettingItemCategory
+namespace EVSSettingItemCategory
 {
 	VSSETTINGSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Internationalization);
 	VSSETTINGSYSTEM_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Scalability);

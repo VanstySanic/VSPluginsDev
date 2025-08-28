@@ -2,7 +2,7 @@
 
 #include "Types/VSSettingSystemTags.h"
 
-namespace VSSettingItem
+namespace EVSSettingItem
 {
 	UE_DEFINE_GAMEPLAY_TAG(Internationalization_LanguageAndLocale, "VSSettingSystem.SettingItem.Internationalization.LanguageAndLocale");
 	UE_DEFINE_GAMEPLAY_TAG(Internationalization_AssetGroupCultures, "VSSettingSystem.SettingItem.Internationalization.AssetGroupCultures");
@@ -30,7 +30,7 @@ namespace VSSettingItem
 	UE_DEFINE_GAMEPLAY_TAG(Audio_SoundMixClassVolume_Music, "VSSettingSystem.SettingItem.Audio.SoundMixClassVolume.Music");
 }
 
-namespace VSSettingItemCategory
+namespace EVSSettingItemCategory
 {
 	UE_DEFINE_GAMEPLAY_TAG(Internationalization, "VSSettingSystem.ItemCategory.Internationalization");
 	UE_DEFINE_GAMEPLAY_TAG(Scalability, "VSSettingSystem.ItemCategory.Scalability");
