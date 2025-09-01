@@ -2,6 +2,7 @@
 
 #include "VSSettingSystem/Public/Items/VSSettingItemBase.h"
 #include "VSSettingSubsystem.h"
+#include "Components/TextBlock.h"
 
 UVSSettingItemBase::UVSSettingItemBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -10,20 +11,27 @@ UVSSettingItemBase::UVSSettingItemBase(const FObjectInitializer& ObjectInitializ
 
 void UVSSettingItemBase::Initialize_Implementation()
 {
+	check(!bHasBeenInitialized);
+	bHasBeenInitialized = true;
 
+	ItemInfo.ItemTags.AddTag(ItemInfo.SpecifyTag);
+	ItemInfo.ItemTags.AddTag(ItemInfo.CategoryTag);
 }
 
 void UVSSettingItemBase::Uninitialize_Implementation()
 {
-	
+	check(bHasBeenInitialized);
+	bHasBeenInitialized = false;
 }
 
-FGameplayTagContainer UVSSettingItemBase::GetSettingItemTags()
+void UVSSettingItemBase::BeginDestroy()
 {
-	FGameplayTagContainer ComposedTags = ItemTags;
-	ComposedTags.AddTag(IdentityTag);
-	ComposedTags.AddTag(CategoryTag);
-	return ComposedTags;
+	if (bHasBeenInitialized)
+	{
+		Uninitialize();
+	}
+	
+	UObject::BeginDestroy();
 }
 
 void UVSSettingItemBase::ExecuteAction(TEnumAsByte<EVSSettingItemAction::Type> Action)
@@ -37,18 +45,18 @@ void UVSSettingItemBase::ExecuteAction(TEnumAsByte<EVSSettingItemAction::Type> A
 		break;
 		
 	case EVSSettingItemAction::SetToDefault:
-		if (EqualsToByValueType(EVSSettingItemValueType::Default)) return;
-		SetToByValueType(EVSSettingItemValueType::Default);
+		if (EqualsToBySource(EVSSettingItemValueSource::Default)) return;
+		SetToBySource(EVSSettingItemValueSource::Default);
 		break;
 		
 	case EVSSettingItemAction::SetToCurrent:
-		if (EqualsToByValueType(EVSSettingItemValueType::Current)) return;
-		SetToByValueType(EVSSettingItemValueType::Current);
+		if (EqualsToBySource(EVSSettingItemValueSource::Current)) return;
+		SetToBySource(EVSSettingItemValueSource::Current);
 		break;
 		
 	case EVSSettingItemAction::SetToLastConfirmed:
-		if (EqualsToByValueType(EVSSettingItemValueType::LastConfirmed)) return;
-		SetToByValueType(EVSSettingItemValueType::LastConfirmed);
+		if (EqualsToBySource(EVSSettingItemValueSource::LastConfirmed)) return;
+		SetToBySource(EVSSettingItemValueSource::LastConfirmed);
 		break;
 
 	case EVSSettingItemAction::Validate:
@@ -109,9 +117,20 @@ void UVSSettingItemBase::NotifyUpdate()
 	}
 }
 
-void UVSSettingItemBase::SetToByValueType_Implementation(const EVSSettingItemValueType::Type ValueType)
+void UVSSettingItemBase::BindWidget(UWidget* Widget, FName TypeID)
 {
-	
+	if (TypeID == FName("Name"))
+	{
+		if (UTextBlock* TextBlock = Cast<UTextBlock>(Widget))
+		{
+			TextBlock->SetText(ItemInfo.DisplayName);
+		}
+	}
+}
+
+void UVSSettingItemBase::UnbindWidget(UWidget* Widget, FName TypeID)
+{
+
 }
 
 void UVSSettingItemBase::Load_Implementation()
@@ -132,24 +151,30 @@ void UVSSettingItemBase::Confirm_Implementation()
 
 void UVSSettingItemBase::Save_Implementation()
 {
+	
 }
 
-bool UVSSettingItemBase::EqualsToByValueType_Implementation(const EVSSettingItemValueType::Type ValueType) const
+void UVSSettingItemBase::SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource)
+{
+	
+}
+
+bool UVSSettingItemBase::EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
 {
 	return false;
 }
 
 bool UVSSettingItemBase::IsDirty() const
 {
-	return EqualsToByValueType(EVSSettingItemValueType::Settings) != EqualsToByValueType(EVSSettingItemValueType::Current);
+	return EqualsToBySource(EVSSettingItemValueSource::Settings) != EqualsToBySource(EVSSettingItemValueSource::Current);
 }
 
 bool UVSSettingItemBase::IsDefault() const
 {
-	return EqualsToByValueType(EVSSettingItemValueType::Settings) == EqualsToByValueType(EVSSettingItemValueType::Default);
+	return EqualsToBySource(EVSSettingItemValueSource::Settings) == EqualsToBySource(EVSSettingItemValueSource::Default);
 }
 
 bool UVSSettingItemBase::IsUnconfirmed() const
 {
-	return EqualsToByValueType(EVSSettingItemValueType::Settings) != EqualsToByValueType(EVSSettingItemValueType::LastConfirmed);
+	return EqualsToBySource(EVSSettingItemValueSource::Settings) != EqualsToBySource(EVSSettingItemValueSource::LastConfirmed);
 }

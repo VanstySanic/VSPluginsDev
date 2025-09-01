@@ -7,3 +7,10 @@ UVSSettingSystemConfig::UVSSettingSystemConfig(const FObjectInitializer& ObjectI
 	: Super(ObjectInitializer)
 {
 }
+
+#if WITH_EDITOR
+FText UVSSettingSystemConfig::GetSectionText() const
+{
+	return FText::FromString("VSSettingSystem");
+}
+#endif

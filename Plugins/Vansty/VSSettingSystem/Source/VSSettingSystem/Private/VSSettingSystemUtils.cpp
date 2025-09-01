@@ -18,13 +18,13 @@ TArray<UVSSettingItemBase*> UVSSettingSystemUtils::GetSettingItems()
 	return TArray<UVSSettingItemBase*>();
 }
 
-UVSSettingItemBase* UVSSettingSystemUtils::GetSettingItemByIdentityTag(const FGameplayTag& IdentityTag)
+UVSSettingItemBase* UVSSettingSystemUtils::GetSettingItemBySpecifyTag(const FGameplayTag& SpecifyTag)
 {
 	const TArray<UVSSettingItemBase*>& Items = GetSettingItems();
 
 	for (UVSSettingItemBase* Item : Items)
 	{
-		if (Item->IdentityTag == IdentityTag)
+		if (Item->GetItemInfo().SpecifyTag == SpecifyTag)
 		{
 			return Item;
 		}
@@ -33,14 +33,14 @@ UVSSettingItemBase* UVSSettingSystemUtils::GetSettingItemByIdentityTag(const FGa
 	return nullptr;
 }
 
-TArray<UVSSettingItemBase*> UVSSettingSystemUtils::GetSettingItemsByCategoryTag(const FGameplayTag& CategoryTag)
+TArray<UVSSettingItemBase*> UVSSettingSystemUtils::GetSettingItemsByCategoryTag(const FGameplayTag& CategoryTag, bool bExact)
 {
 	const TArray<UVSSettingItemBase*>& Items = GetSettingItems();
 	TArray<UVSSettingItemBase*> OutItems = GetSettingItems();
 
 	for (UVSSettingItemBase* Item : Items)
 	{
-		if (Item->CategoryTag == CategoryTag)
+		if (Item->GetItemInfo().CategoryTag == CategoryTag || (!bExact && Item->GetItemInfo().CategoryTag.MatchesTag(Item->GetItemInfo().CategoryTag)))
 		{
 			OutItems.Add(Item);
 		}
@@ -56,7 +56,7 @@ TArray<UVSSettingItemBase*> UVSSettingSystemUtils::GetSettingItemsByTagQuery(con
 
 	for (UVSSettingItemBase* Item : Items)
 	{
-		if (TagQuery.Matches(Item->ItemTags))
+		if (TagQuery.Matches(Item->GetItemInfo().ItemTags))
 		{
 			OutItems.Add(Item);
 		}

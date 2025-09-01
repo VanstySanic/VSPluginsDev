@@ -3,6 +3,7 @@
 #include "VSSettingSystem/Public/VSSettingSubsystem.h"
 #include "VSSettingSystemConfig.h"
 #include "VSSettingSystemUtils.h"
+#include "GameFramework/GameUserSettings.h"
 #include "Items/VSSettingItemBase.h"
 #include "Items/VSSettingItemSet.h"
 
@@ -24,13 +25,21 @@ TArray<UVSSettingItemBase*> UVSSettingSubsystem::GetSettingItems() const
 	return OutSettingItems;
 }
 
+UVSSettingSubsystem::UVSSettingSubsystem()
+{
+	
+}
+
 void UVSSettingSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
+	check(GEngine);
+	GEngine->GameUserSettingsClass = GEngine->GameUserSettingsClassName.TryLoadClass<UGameUserSettings>();
+
 	for (const FSoftClassPath& SettingItemSetClass : UVSSettingSystemConfig::Get()->SettingItemSetClasses)
 	{
-		if (UClass* Class = SettingItemSetClass.ResolveClass())
+		if (UClass* Class = SettingItemSetClass.TryLoadClass<UVSSettingItemSet>())
 		{
 			if (UVSSettingItemSet* Set = NewObject<UVSSettingItemSet>(this, Class))
 			{
@@ -52,7 +61,10 @@ void UVSSettingSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 	for (TWeakObjectPtr<UVSSettingItemBase> SettingItem : SettingItems)
 	{
-		SettingItem->Initialize();
+		if (SettingItem.IsValid() && !SettingItem->HasBeenInitialized())
+		{
+			SettingItem->Initialize();
+		}
 	}
 
 	UVSSettingSystemUtils::ExecuteActionsForSettingItems(GetSettingItems(), TArray<TEnumAsByte<EVSSettingItemAction::Type>>
@@ -63,13 +75,15 @@ void UVSSettingSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 			EVSSettingItemAction::Apply,
 			EVSSettingItemAction::Confirm,
 		});
+
+	GEngine->GetGameUserSettings()->ApplySettings(false);
 }
 
 void UVSSettingSubsystem::Deinitialize()
 {
 	for (TWeakObjectPtr<UVSSettingItemBase> SettingItem : SettingItems)
 	{
-		if (SettingItem.IsValid())
+		if (SettingItem.IsValid() && SettingItem->HasBeenInitialized())
 		{
 			SettingItem->Uninitialize();
 		}

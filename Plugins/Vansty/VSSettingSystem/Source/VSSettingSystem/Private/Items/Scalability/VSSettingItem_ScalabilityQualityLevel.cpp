@@ -7,12 +7,54 @@
 UVSSettingItem_ScalabilityQualityLevel::UVSSettingItem_ScalabilityQualityLevel(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	ItemInfo.SpecifyTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Scalability_QualityLevel_ViewDistance);
+	QualityLevelNames = TMap<int32, FText>
+		{
+			{ 0, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.0", "Low") },
+			{ 1, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.1", "Medium") },
+			{ 2, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.2", "High") },
+			{ 3, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.3", "Epic") },
+			{ 4, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.4", "Cinematic") },
+		};
 }
 
-void UVSSettingItem_ScalabilityQualityLevel::SetToByValueType_Implementation(const EVSSettingItemValueType::Type ValueType)
+#if WITH_EDITOR
+void UVSSettingItem_ScalabilityQualityLevel::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
-	SetQualityLevel(GetQualityLevel(ValueType));
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItem_ScalabilityQualityLevel, ItemInfo))
+	{
+		if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(FVSSettingItemInfo, SpecifyTag))
+		{
+			bool bShouldUpdateDefaultName = ItemInfo.DisplayName.IsEmpty() || FName(ItemInfo.DisplayName.ToString()).IsNone();
+			if (!bShouldUpdateDefaultName)
+			{
+				for (const auto& DefaultScalabilityQualityLevelText : GetDefaultScalabilityQualityLevelNames())
+				{
+					if (DefaultScalabilityQualityLevelText.Value.EqualTo(ItemInfo.DisplayName))
+					{
+						bShouldUpdateDefaultName = true;
+						break;
+					}
+				}
+			}
+			
+			if (bShouldUpdateDefaultName)
+			{
+				if (GetDefaultScalabilityQualityLevelNames().Contains(ItemInfo.SpecifyTag))
+				{
+					ItemInfo.DisplayName = GetDefaultScalabilityQualityLevelNames().FindRef(ItemInfo.SpecifyTag);
+				}
+				else
+				{
+					ItemInfo.DisplayName = FText::FromString("None");
+				}
+			}
+		}
+	}
+	
+	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
+#endif
 
 void UVSSettingItem_ScalabilityQualityLevel::Apply_Implementation()
 {
@@ -23,7 +65,7 @@ void UVSSettingItem_ScalabilityQualityLevel::Apply_Implementation()
 
 void UVSSettingItem_ScalabilityQualityLevel::Confirm_Implementation()
 {
-	LastConfirmedQualityLevel = GetQualityLevel(EVSSettingItemValueType::Current);
+	LastConfirmedQualityLevel = GetQualityLevel(EVSSettingItemValueSource::Current);
 }
 
 void UVSSettingItem_ScalabilityQualityLevel::Save_Implementation()
@@ -31,55 +73,60 @@ void UVSSettingItem_ScalabilityQualityLevel::Save_Implementation()
 	Scalability::SaveState(GIsEditor ? GEditorSettingsIni : GGameUserSettingsIni);
 }
 
-bool UVSSettingItem_ScalabilityQualityLevel::EqualsToByValueType_Implementation(const EVSSettingItemValueType::Type ValueType) const
+void UVSSettingItem_ScalabilityQualityLevel::SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource)
 {
-	return GetQualityLevel(EVSSettingItemValueType::Settings) != GetQualityLevel(ValueType);
+	SetQualityLevel(GetQualityLevel(ValueSource));
+}
+
+bool UVSSettingItem_ScalabilityQualityLevel::EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
+{
+	return GetQualityLevel(EVSSettingItemValueSource::Settings) != GetQualityLevel(ValueSource);
 }
 
 void UVSSettingItem_ScalabilityQualityLevel::SetQualityLevel(int32 InQualityLevel)
 {
-	if (InQualityLevel == GetQualityLevel(EVSSettingItemValueType::Settings)) return;
+	if (InQualityLevel == GetQualityLevel(EVSSettingItemValueSource::Settings)) return;
 	
 	if (!GEngine) return;
 	UGameUserSettings* GameUserSettings = GEngine->GetGameUserSettings();
 
-	if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_ViewDistance)
+	if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_ViewDistance)
 	{
 		GameUserSettings->SetViewDistanceQuality(InQualityLevel);
 	}
-	else if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_AntiAliasing)
+	else if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_AntiAliasing)
 	{
 		GameUserSettings->SetAntiAliasingQuality(InQualityLevel);
 	}
-	else if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_Shadow)
+	else if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_Shadow)
 	{
 		GameUserSettings->SetShadowQuality(InQualityLevel);
 	}
-	else if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_GlobalIllumination)
+	else if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_GlobalIllumination)
 	{
 		GameUserSettings->SetGlobalIlluminationQuality(InQualityLevel);
 	}
-	else if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_Reflection)
+	else if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_Reflection)
 	{
 		GameUserSettings->SetReflectionQuality(InQualityLevel);
 	}
-	else if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_PostProcess)
+	else if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_PostProcess)
 	{
 		GameUserSettings->SetPostProcessingQuality(InQualityLevel);
 	}
-	else if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_Texture)
+	else if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_Texture)
 	{
 		GameUserSettings->SetTextureQuality(InQualityLevel);
 	}
-	else if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_Effects)
+	else if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_Effects)
 	{
 		GameUserSettings->SetVisualEffectQuality(InQualityLevel);
 	}
-	else if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_Foliage)
+	else if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_Foliage)
 	{
 		GameUserSettings->SetFoliageQuality(InQualityLevel);
 	}
-	else if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_Shading)
+	else if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_Shading)
 	{
 		GameUserSettings->SetShadingQuality(InQualityLevel);
 	}
@@ -87,10 +134,10 @@ void UVSSettingItem_ScalabilityQualityLevel::SetQualityLevel(int32 InQualityLeve
 	NotifyUpdate();
 }
 
-int32 UVSSettingItem_ScalabilityQualityLevel::GetQualityLevel(const EVSSettingItemValueType::Type ValueType) const
+int32 UVSSettingItem_ScalabilityQualityLevel::GetQualityLevel(const EVSSettingItemValueSource::Type ValueSource) const
 {
-	if (!GEngine || ValueType == EVSSettingItemValueType::None) return 0;
-	if (ValueType == EVSSettingItemValueType::LastConfirmed) return LastConfirmedQualityLevel;
+	if (!GEngine || ValueSource == EVSSettingItemValueSource::None) return 0;
+	if (ValueSource == EVSSettingItemValueSource::LastConfirmed) return LastConfirmedQualityLevel;
 	
 	UGameUserSettings* GameUserSettings = GEngine->GetGameUserSettings();
 
@@ -99,170 +146,170 @@ int32 UVSSettingItem_ScalabilityQualityLevel::GetQualityLevel(const EVSSettingIt
 	Scalability::FQualityLevels DefaultQualityLevels = CurrentQualityLevels;
 	DefaultQualityLevels.SetDefaults();
 	
-	if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_ViewDistance)
+	if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_ViewDistance)
 	{
-		switch (ValueType)
+		switch (ValueSource)
 		{
-		case EVSSettingItemValueType::Default:
+		case EVSSettingItemValueSource::Default:
 			return DefaultQualityLevels.ViewDistanceQuality;
 			
-		case EVSSettingItemValueType::Current:
+		case EVSSettingItemValueSource::Current:
 			return CurrentQualityLevels.ViewDistanceQuality;
 			
-		case EVSSettingItemValueType::Settings:
+		case EVSSettingItemValueSource::Settings:
 			return SettingsQualityLevels.ViewDistanceQuality;
 			
 		default:
 			return 0;
 		}
 	}
-	if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_AntiAliasing)
+	if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_AntiAliasing)
 	{
-		switch (ValueType)
+		switch (ValueSource)
 		{
-		case EVSSettingItemValueType::Default:
+		case EVSSettingItemValueSource::Default:
 			return DefaultQualityLevels.AntiAliasingQuality;
 			
-		case EVSSettingItemValueType::Current:
+		case EVSSettingItemValueSource::Current:
 			return CurrentQualityLevels.AntiAliasingQuality;
 			
-		case EVSSettingItemValueType::Settings:
+		case EVSSettingItemValueSource::Settings:
 			return SettingsQualityLevels.AntiAliasingQuality;
 			
 		default:
 			return 0;
 		}
 	}
-	if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_Shadow)
+	if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_Shadow)
 	{
-		switch (ValueType)
+		switch (ValueSource)
 		{
-		case EVSSettingItemValueType::Default:
+		case EVSSettingItemValueSource::Default:
 			return DefaultQualityLevels.ShadowQuality;
 			
-		case EVSSettingItemValueType::Current:
+		case EVSSettingItemValueSource::Current:
 			return CurrentQualityLevels.ShadowQuality;
 			
-		case EVSSettingItemValueType::Settings:
+		case EVSSettingItemValueSource::Settings:
 			return SettingsQualityLevels.ShadowQuality;
 			
 		default:
 			return 0;
 		}
 	}
-	if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_GlobalIllumination)
+	if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_GlobalIllumination)
 	{
-		switch (ValueType)
+		switch (ValueSource)
 		{
-		case EVSSettingItemValueType::Default:
+		case EVSSettingItemValueSource::Default:
 			return DefaultQualityLevels.GlobalIlluminationQuality;
 			
-		case EVSSettingItemValueType::Current:
+		case EVSSettingItemValueSource::Current:
 			return CurrentQualityLevels.GlobalIlluminationQuality;
 			
-		case EVSSettingItemValueType::Settings:
+		case EVSSettingItemValueSource::Settings:
 			return SettingsQualityLevels.GlobalIlluminationQuality;
 			
 		default:
 			return 0;
 		}
 	}
-	if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_Reflection)
+	if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_Reflection)
 	{
-		switch (ValueType)
+		switch (ValueSource)
 		{
-		case EVSSettingItemValueType::Default:
+		case EVSSettingItemValueSource::Default:
 			return DefaultQualityLevels.ReflectionQuality;
 			
-		case EVSSettingItemValueType::Current:
+		case EVSSettingItemValueSource::Current:
 			return CurrentQualityLevels.ReflectionQuality;
 			
-		case EVSSettingItemValueType::Settings:
+		case EVSSettingItemValueSource::Settings:
 			return SettingsQualityLevels.ReflectionQuality;
 			
 		default:
 			return 0;
 		}
 	}
-	if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_PostProcess)
+	if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_PostProcess)
 	{
-		switch (ValueType)
+		switch (ValueSource)
 		{
-		case EVSSettingItemValueType::Default:
+		case EVSSettingItemValueSource::Default:
 			return DefaultQualityLevels.PostProcessQuality;
 			
-		case EVSSettingItemValueType::Current:
+		case EVSSettingItemValueSource::Current:
 			return CurrentQualityLevels.PostProcessQuality;
 			
-		case EVSSettingItemValueType::Settings:
+		case EVSSettingItemValueSource::Settings:
 			return SettingsQualityLevels.PostProcessQuality;
 			
 		default:
 			return 0;
 		}
 	}
-	if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_Texture)
+	if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_Texture)
 	{
-		switch (ValueType)
+		switch (ValueSource)
 		{
-		case EVSSettingItemValueType::Default:
+		case EVSSettingItemValueSource::Default:
 			return DefaultQualityLevels.TextureQuality;
 			
-		case EVSSettingItemValueType::Current:
+		case EVSSettingItemValueSource::Current:
 			return CurrentQualityLevels.TextureQuality;
 			
-		case EVSSettingItemValueType::Settings:
+		case EVSSettingItemValueSource::Settings:
 			return SettingsQualityLevels.TextureQuality;
 			
 		default:
 			return 0;
 		}
 	}
-	if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_Effects)
+	if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_Effects)
 	{
-		switch (ValueType)
+		switch (ValueSource)
 		{
-		case EVSSettingItemValueType::Default:
+		case EVSSettingItemValueSource::Default:
 			return DefaultQualityLevels.EffectsQuality;
 			
-		case EVSSettingItemValueType::Current:
+		case EVSSettingItemValueSource::Current:
 			return CurrentQualityLevels.EffectsQuality;
 			
-		case EVSSettingItemValueType::Settings:
+		case EVSSettingItemValueSource::Settings:
 			return SettingsQualityLevels.EffectsQuality;
 			
 		default:
 			return 0;
 		}
 	}
-	if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_Foliage)
+	if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_Foliage)
 	{
-		switch (ValueType)
+		switch (ValueSource)
 		{
-		case EVSSettingItemValueType::Default:
+		case EVSSettingItemValueSource::Default:
 			return DefaultQualityLevels.FoliageQuality;
 			
-		case EVSSettingItemValueType::Current:
+		case EVSSettingItemValueSource::Current:
 			return CurrentQualityLevels.FoliageQuality;
 			
-		case EVSSettingItemValueType::Settings:
+		case EVSSettingItemValueSource::Settings:
 			return SettingsQualityLevels.FoliageQuality;
 			
 		default:
 			return 0;
 		}
 	}
-	if (IdentityTag == EVSSettingItem::Scalability_QualityLevel_Shading)
+	if (ItemInfo.SpecifyTag == EVSSettingItem::Scalability_QualityLevel_Shading)
 	{
-		switch (ValueType)
+		switch (ValueSource)
 		{
-		case EVSSettingItemValueType::Default:
+		case EVSSettingItemValueSource::Default:
 			return DefaultQualityLevels.ShadingQuality;
 			
-		case EVSSettingItemValueType::Current:
+		case EVSSettingItemValueSource::Current:
 			return CurrentQualityLevels.ShadingQuality;
 			
-		case EVSSettingItemValueType::Settings:
+		case EVSSettingItemValueSource::Settings:
 			return SettingsQualityLevels.ShadingQuality;
 			
 		default:
@@ -271,4 +318,23 @@ int32 UVSSettingItem_ScalabilityQualityLevel::GetQualityLevel(const EVSSettingIt
 	}
 
 	return 0;
+}
+
+const TMap<FGameplayTag, FText>& UVSSettingItem_ScalabilityQualityLevel::GetDefaultScalabilityQualityLevelNames()
+{
+	static TMap<FGameplayTag, FText> ScalabilityQualityLevel = TMap<FGameplayTag, FText>
+	{
+		{ EVSSettingItem::Scalability_QualityLevel_ViewDistance, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.ViewDistance", "View Distance") },
+		{ EVSSettingItem::Scalability_QualityLevel_AntiAliasing, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.AntiAliasing", "Anti-Aliasing") },
+		{ EVSSettingItem::Scalability_QualityLevel_Shadow, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.Shadow", "Shadow") },
+		{ EVSSettingItem::Scalability_QualityLevel_GlobalIllumination, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.GlobalIllumination", "Global Illumination") },
+		{ EVSSettingItem::Scalability_QualityLevel_Reflection, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.Reflection", "Reflection") },
+		{ EVSSettingItem::Scalability_QualityLevel_PostProcess, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.PostProcess", "Post-Process") },
+		{ EVSSettingItem::Scalability_QualityLevel_Texture, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.Texture", "Texture") },
+		{ EVSSettingItem::Scalability_QualityLevel_Effects, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.PostProcess", "Post-Process") },
+		{ EVSSettingItem::Scalability_QualityLevel_Foliage, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.Effects", "Effects") },
+		{ EVSSettingItem::Scalability_QualityLevel_Shading, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.Shading", "Shading") }
+	};
+
+	return ScalabilityQualityLevel;
 }

@@ -22,11 +22,11 @@ class VSSETTINGSYSTEM_API UVSSettingSystemUtils : public UBlueprintFunctionLibra
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Settings")
 	static TArray<UVSSettingItemBase*> GetSettingItems();
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Settings", meta = (AutoCreateRefTerm = "IdentityTag"))
-	static UVSSettingItemBase* GetSettingItemByIdentityTag(const FGameplayTag& IdentityTag);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Settings", meta = (AutoCreateRefTerm = "SpecifyTag"))
+	static UVSSettingItemBase* GetSettingItemBySpecifyTag(const FGameplayTag& SpecifyTag);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Settings", meta = (AutoCreateRefTerm = "CategoryTag"))
-	static TArray<UVSSettingItemBase*> GetSettingItemsByCategoryTag(const FGameplayTag& CategoryTag);
+	static TArray<UVSSettingItemBase*> GetSettingItemsByCategoryTag(const FGameplayTag& CategoryTag, bool bExact = false);
 
 	UFUNCTION(BlueprintCallable,BlueprintPure,  Category = "Settings", meta = (AutoCreateRefTerm = "TagQuery"))
 	static TArray<UVSSettingItemBase*> GetSettingItemsByTagQuery(const FGameplayTagQuery& TagQuery);

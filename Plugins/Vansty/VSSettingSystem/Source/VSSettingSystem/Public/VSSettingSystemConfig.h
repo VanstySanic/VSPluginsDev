@@ -7,6 +7,8 @@
 #include "Types/VSSettingSystemTypes.h"
 #include "VSSettingSystemConfig.generated.h"
 
+struct FGameplayTag;
+
 /**
  * 
  */
@@ -16,8 +18,13 @@ class VSSETTINGSYSTEM_API UVSSettingSystemConfig : public UDeveloperSettings
 	GENERATED_UCLASS_BODY()
 
 	static const UVSSettingSystemConfig* Get() { return GetDefault<UVSSettingSystemConfig>(); }
-	static UVSSettingSystemConfig* GetMutable() { return const_cast<UVSSettingSystemConfig*>(Get()); }
+	// static UVSSettingSystemConfig* GetMutable() { return const_cast<UVSSettingSystemConfig*>(Get()); }
 
+public:
+#if WITH_EDITOR
+	virtual FText GetSectionText() const override;
+#endif
+	
 	UPROPERTY(EditAnywhere, Config, Category = "Settings", meta = (MetaClass = "/Script/VSSettingSystem.VSSettingItemSet", ConfigRestartRequired = "true"))
 	TArray<FSoftClassPath> SettingItemSetClasses;
 };

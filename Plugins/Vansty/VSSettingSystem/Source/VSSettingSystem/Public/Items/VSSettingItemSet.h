@@ -17,8 +17,9 @@ class VSSETTINGSYSTEM_API UVSSettingItemSet : public UObject
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Settings")
-	TArray<UVSSettingItemBase*> GetSettingItems() const;
-	
-	UPROPERTY(EditAnywhere, Category = "Settings")
-	TArray<FVSSettingItemGroup> SettingItemGroups;
+	TArray<UVSSettingItemBase*> GetSettingItems() const { return SettingItems; }
+
+protected:
+	UPROPERTY(EditAnywhere, Instanced, Category = "Settings")
+	TArray<TObjectPtr<UVSSettingItemBase>> SettingItems;
 };

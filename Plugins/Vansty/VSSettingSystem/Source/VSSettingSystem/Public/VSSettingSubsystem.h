@@ -8,6 +8,7 @@
 #include "VSSettingSubsystem.generated.h"
 
 class UVSSettingItemSet;
+
 /**
  * 
  */
@@ -19,6 +20,9 @@ class VSSETTINGSYSTEM_API UVSSettingSubsystem : public UEngineSubsystem
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSettingItemUpdateSignature, UVSSettingItemBase*, SettingItem);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSettingItemActionSignature, UVSSettingItemBase*, SettingItem, EVSSettingItemAction::Type, Action);
 
+public:
+	UVSSettingSubsystem();
+	
 protected:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
@@ -39,6 +43,5 @@ public:
 private:
 	UPROPERTY()
 	TArray<TObjectPtr<UVSSettingItemSet>> SettingItemSets;
-	
 	TArray<TWeakObjectPtr<UVSSettingItemBase>> SettingItems;
 };

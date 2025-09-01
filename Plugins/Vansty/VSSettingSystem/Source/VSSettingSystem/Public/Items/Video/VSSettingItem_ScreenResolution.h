@@ -4,20 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Items/VSSettingItemBase.h"
-#include "VSSettingItem_ResolutionScale.generated.h"
+#include "VSSettingItem_ScreenResolution.generated.h"
 
 /**
  * 
  */
-UCLASS(DisplayName = "Settings.Item.Scalability.ResolutionScale")
-class VSSETTINGSYSTEM_API UVSSettingItem_ResolutionScale : public UVSSettingItemBase
+UCLASS(DisplayName = "Settings.Item.ScreenResolution")
+class VSSETTINGSYSTEM_API UVSSettingItem_ScreenResolution : public UVSSettingItemBase
 {
 	GENERATED_UCLASS_BODY()
 
 protected:
-	virtual void Load_Implementation() override;
 	virtual void Apply_Implementation() override;
-	virtual void Validate_Implementation() override;
 	virtual void Confirm_Implementation() override;
 	virtual void Save_Implementation() override;
 	virtual void SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) override;
@@ -25,12 +23,8 @@ protected:
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Settings")
-	void SetResolutionScale(float InResolutionScale);
+	void SetScreenResolution(const FIntPoint& Resolution);
 
 	UFUNCTION(BlueprintCallable, Category = "Settings")
-	float GetResolutionScale(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::Settings) const;
-
-private:
-	float ResolutionScale = 100.f;
-	float LastConfirmedResolutionScale = 100.f;
+	FIntPoint GetScreenResolution(EVSSettingItemValueSource::Type ValueSource) const;
 };

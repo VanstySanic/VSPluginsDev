@@ -17,7 +17,7 @@ namespace EVSSettingItem
 	UE_DEFINE_GAMEPLAY_TAG(Scalability_QualityLevel_AntiAliasing, "VSSettingSystem.SettingItem.Scalability.QualityLevel.AntiAliasing");
 	UE_DEFINE_GAMEPLAY_TAG(Scalability_QualityLevel_Shadow, "VSSettingSystem.SettingItem.Scalability.QualityLevel.Shadow");
 	UE_DEFINE_GAMEPLAY_TAG(Scalability_QualityLevel_GlobalIllumination, "VSSettingSystem.SettingItem.Scalability.QualityLevel.GlobalIllumination");
-	UE_DEFINE_GAMEPLAY_TAG(Scalability_QualityLevel_Reflection, "VSSettingSystem.SettingItem.Scalability.Quality.Reflection");
+	UE_DEFINE_GAMEPLAY_TAG(Scalability_QualityLevel_Reflection, "VSSettingSystem.SettingItem.Scalability.QualityLevel.Reflection");
 	UE_DEFINE_GAMEPLAY_TAG(Scalability_QualityLevel_PostProcess, "VSSettingSystem.SettingItem.Scalability.QualityLevel.PostProcess");
 	UE_DEFINE_GAMEPLAY_TAG(Scalability_QualityLevel_Texture, "VSSettingSystem.SettingItem.Scalability.QualityLevel.Texture");
 	UE_DEFINE_GAMEPLAY_TAG(Scalability_QualityLevel_Effects, "VSSettingSystem.SettingItem.Scalability.QualityLevel.Effects");

@@ -4,24 +4,26 @@
 #include "VSPrivablic.h"
 #include "Engine/GameEngine.h"
 #include "GameFramework/GameUserSettings.h"
+#include "Types/VSSettingSystemTags.h"
 
 VS_DECLARE_PRIVABLIC_MEMBER(UGameUserSettings, LastConfirmedFullscreenMode, int32);
 
 UVSSettingItem_WindowMode::UVSSettingItem_WindowMode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-}
+	ItemInfo.SpecifyTag = EVSSettingItem::Video_WindowMode;
+	ItemInfo.DisplayName = NSLOCTEXT("VSSettingSystem", "SettingItem.WindowMode", "Window Mode");
 
-void UVSSettingItem_WindowMode::SetToByValueType_Implementation(const EVSSettingItemValueType::Type ValueType)
-{
-	SetWindowMode(GetWindowMode(ValueType));
+	WindowModeNames.Emplace(EWindowMode::WindowedFullscreen, NSLOCTEXT("VSSettingSystem", "SettingItem.WindowMode.WindowedFullscreen", "Windowed-Fullscreen"));
+	WindowModeNames.Emplace(EWindowMode::Fullscreen, NSLOCTEXT("VSSettingSystem", "SettingItem.WindowMode.Fullscreen", "Fullscreen"));
+	WindowModeNames.Emplace(EWindowMode::Windowed, NSLOCTEXT("VSSettingSystem", "SettingItem.WindowMode.Windowed", "Windowed"));
 }
 
 void UVSSettingItem_WindowMode::Apply_Implementation()
 {
 #if !UE_SERVER
 	if (FPlatformProperties::HasFixedResolution()) return;
-	EWindowMode::Type WindowModeToApply = GetWindowMode(EVSSettingItemValueType::Settings);
+	EWindowMode::Type WindowModeToApply = GetWindowMode(EVSSettingItemValueSource::Settings);
 	UGameEngine::ConditionallyOverrideSettings(GSystemResolution.ResX, GSystemResolution.ResY, WindowModeToApply);
 	FSystemResolution::RequestResolutionChange(GSystemResolution.ResX, GSystemResolution.ResY, WindowModeToApply);
 #endif
@@ -31,45 +33,51 @@ void UVSSettingItem_WindowMode::Confirm_Implementation()
 {
 	if (!GEngine) return;
 	UGameUserSettings* GameUserSettings = GEngine->GetGameUserSettings();
-	VS_PRIVABLIC_MEMBER(GameUserSettings, UGameUserSettings, LastConfirmedFullscreenMode) = GetWindowMode(EVSSettingItemValueType::Current);
+	VS_PRIVABLIC_MEMBER(GameUserSettings, UGameUserSettings, LastConfirmedFullscreenMode) = GetWindowMode(EVSSettingItemValueSource::Current);
 }
 
 void UVSSettingItem_WindowMode::Save_Implementation()
 {
-	GConfig->SetInt(TEXT("Video"), TEXT("WindowMode"), GetWindowMode(EVSSettingItemValueType::Settings), GGameUserSettingsIni);
+	GConfig->SetInt(TEXT("/Script/Engine.GameUserSettings"), TEXT("FullscreenMode"), GetWindowMode(EVSSettingItemValueSource::Settings), GGameUserSettingsIni);
 	GConfig->Flush(false, GGameUserSettingsIni);
 }
 
-bool UVSSettingItem_WindowMode::EqualsToByValueType_Implementation(const EVSSettingItemValueType::Type ValueType) const
+void UVSSettingItem_WindowMode::SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource)
 {
-	return GetWindowMode(EVSSettingItemValueType::Settings) != GetWindowMode(ValueType);
+	SetWindowMode(GetWindowMode(ValueSource));
+}
+
+bool UVSSettingItem_WindowMode::EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
+{
+	return GetWindowMode(EVSSettingItemValueSource::Settings) != GetWindowMode(ValueSource);
 }
 
 void UVSSettingItem_WindowMode::SetWindowMode(EWindowMode::Type InWindowMode)
 {
-	if (InWindowMode == GetWindowMode(EVSSettingItemValueType::Settings)) return;
+	if (InWindowMode == GetWindowMode(EVSSettingItemValueSource::Settings)) return;
 	if (!GEngine) return;
 	UGameUserSettings* GameUserSettings = GEngine->GetGameUserSettings();
 	GameUserSettings->SetFullscreenMode(InWindowMode);
+	NotifyUpdate();
 }
 
-EWindowMode::Type UVSSettingItem_WindowMode::GetWindowMode(EVSSettingItemValueType::Type ValueType) const
+EWindowMode::Type UVSSettingItem_WindowMode::GetWindowMode(EVSSettingItemValueSource::Type ValueSource) const
 {
 	if (!GEngine) return EWindowMode::NumWindowModes;
 	UGameUserSettings* GameUserSettings = GEngine->GetGameUserSettings();
 	
-	switch (ValueType)
+	switch (ValueSource)
 	{
-	case EVSSettingItemValueType::Default:
+	case EVSSettingItemValueSource::Default:
 		return GameUserSettings->GetDefaultWindowMode();
 			
-	case EVSSettingItemValueType::Current:
+	case EVSSettingItemValueSource::Current:
 		return GSystemResolution.WindowMode;
 			
-	case EVSSettingItemValueType::Settings:
+	case EVSSettingItemValueSource::Settings:
 		return GameUserSettings->GetFullscreenMode();
 
-	case EVSSettingItemValueType::LastConfirmed:
+	case EVSSettingItemValueSource::LastConfirmed:
 		return GameUserSettings->GetLastConfirmedFullscreenMode();
 		
 	default:

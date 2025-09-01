@@ -28,6 +28,7 @@ public class VSSettingSystem : ModuleRules
 				"Core",
 				"GameplayTags",
 				"DeveloperSettings",
+				"UMG",
 				// ... add other public dependencies that you statically link with here ...
 				"VSPluginsCore"
 			}

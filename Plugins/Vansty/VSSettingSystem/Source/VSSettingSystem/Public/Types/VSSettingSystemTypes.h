@@ -4,9 +4,28 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
+#include "GameplayTagContainer.h"
 #include "VSSettingSystemTypes.generated.h"
 
 class UVSSettingItemBase;
+
+USTRUCT(BlueprintType)
+struct FVSSettingItemInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText DisplayName = FText::FromString("None");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTag SpecifyTag;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTag CategoryTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTagContainer ItemTags;
+};
 
 UENUM(BlueprintType)
 namespace EVSSettingItemAction
@@ -26,7 +45,7 @@ namespace EVSSettingItemAction
 }
 
 UENUM(BlueprintType)
-namespace EVSSettingItemValueType
+namespace EVSSettingItemValueSource
 {
 	enum Type
 	{
@@ -43,18 +62,3 @@ namespace EVSSettingItemValueType
 		LastConfirmed
 	};
 }
-
-USTRUCT(BlueprintType)
-struct FVSSettingItemGroup
-{
-	GENERATED_BODY()
-
-#if WITH_EDITORONLY_DATA
-	/** Only exist in editor do distinguish between groups. */
-	UPROPERTY(EditAnywhere)
-	FName Name;
-#endif
-	
-	UPROPERTY(EditAnywhere, Instanced)
-	TArray<TObjectPtr<UVSSettingItemBase>> SettingItems;
-};

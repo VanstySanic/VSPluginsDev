@@ -66,7 +66,7 @@ void UVSChrMovAnimFeature_MantleVaultMovement::UpdateMantleVaultAnim(const FAnim
 	FVSAnimSequenceReference* Anim = AnimSettings->AnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
 	if (!Anim) return;
 
-	/** Check for new mantle process. */
+	/** Check for new mantle / vault process. */
 	if (AnimData.LastActionID != ChrMovFeature_MantleVaultMovement->GetMantleVaultCachedParams().ActionID && ChrMovFeature_MantleVaultMovement->GetMantleVaultCachedParams().ActionID != INDEX_NONE && ChrMovFeature_MantleVaultMovement->IsMantlingOrVaultingMode())
 	{
 		if (UAnimSequenceBase* NewAnim = Anim->AnimSequence)
