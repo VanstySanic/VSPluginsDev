@@ -39,10 +39,19 @@ public:
 	void ExecuteActions(const TArray<TEnumAsByte<EVSSettingItemAction::Type>>& Actions);
 	
 	UFUNCTION(BlueprintCallable, Category = "Settings")
-	void NotifyUpdate();
+	void NotifyValueUpdate();
+
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	bool IsDirty() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	bool IsDefault() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	bool IsUnconfirmed() const;
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "Feature")
+	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FVSSettingItemInfo GetItemInfo() const { return ItemInfo; }
 
 	/**
@@ -51,14 +60,27 @@ public:
 	 *		It could be:
 	 *		Item (The composed widget that handles the item),
 	 *		Name (The widget is normally TextBlock), Content (The widget is normally TextBlock or RichTextBlock, etc.),
-	 *		Core (The widget is normally checkbox, combobox or rotator, etc.)
+	 *		Value (The widget is normally CheckBox, ComboBox or Slider, etc.)
 	 *		or any custom type id that you'll need to handle manually.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Feature")
+	UFUNCTION(BlueprintCallable, Category = "Widget")
 	void BindWidget(UWidget* Widget, FName TypeID = NAME_None);
+
+	UFUNCTION(BlueprintCallable, Category = "Widget")
+	void RebindWidget(UWidget* Widget, FName TypeID = NAME_None);
 	
-	UFUNCTION(BlueprintCallable, Category = "Feature")
+	/** This is possibly unused. */
+	UFUNCTION(BlueprintCallable, Category = "Widget")
 	void UnbindWidget(UWidget* Widget, FName TypeID);
+
+	UFUNCTION(BlueprintCallable, Category = "Widget")
+	bool IsWidgetBound(UWidget* Widget) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Widget")
+	FName GetWidgetBoundTypeID(UWidget* Widget) const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Widget")
+	TArray<UWidget*> GetBoundWidgetsOfType(FName TypeName) const;
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
@@ -75,26 +97,39 @@ protected:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	void Save();
-	
-	UFUNCTION(BlueprintCallable, Category = "Settings")
-	bool IsDirty() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Settings")
-	bool IsDefault() const;
-	
-	UFUNCTION(BlueprintCallable, Category = "Settings")
-	bool IsUnconfirmed() const;
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	void SetToBySource(const EVSSettingItemValueSource::Type ValueSource);
-
+	
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	bool EqualsToBySource(const EVSSettingItemValueSource::Type ValueSource) const;
 
+protected:
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
+	void OnItemValueUpdated();
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
+	void OnCultureChanged();
 	
+	/**
+	 * Bind a widget of specified type id to the setting item. A widget can only be bound once.
+	 * @param TypeName Widget type.
+	 *		It could be:
+	 *		Item (The composed widget that handles the item),
+	 *		Name (The widget is normally TextBlock), Content (The widget is normally TextBlock or RichTextBlock, etc.),
+	 *		Value (The widget is normally CheckBox, ComboBox or Slider, etc.)
+	 *		or any custom type id that you'll need to handle manually.
+	 */
+	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
+	void BindWidgetInternal(UWidget* Widget, FName TypeName = NAME_None);
+
+	/** This is possibly unused. */
+	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
+	void UnbindWidgetInternal(UWidget* Widget, FName TypeName);
+
 public:
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
-	FSettingItemUpdateSignature OnUpdated;
+	FSettingItemUpdateSignature OnValueUpdated;
 	
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FSettingItemActionSignature OnActionExecuted;
@@ -103,6 +138,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	FVSSettingItemInfo ItemInfo;
 
+	/** Executed when the value is updated. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+	TArray<TEnumAsByte<EVSSettingItemAction::Type>> ValueUpdatedActions;
+
 private:
 	bool bHasBeenInitialized = false;
+	TMultiMap<TWeakObjectPtr<UWidget>, FName> TypedBoundWidgetMap;
+	TMultiMap<FName, TWeakObjectPtr<UWidget>> TypedBoundWidgetMultimap;
+	FDelegateHandle OnCultureChangedDelegateHandle;
+	FDelegateHandle OnWorldBeginTearDownDelegateHandle;
 };

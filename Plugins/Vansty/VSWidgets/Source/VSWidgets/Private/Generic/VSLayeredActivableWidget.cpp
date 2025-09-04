@@ -1,7 +1,9 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Generic/VSLayeredActivableWidget.h"
+#include "VSWidgetUtils.h"
 #include "Components/WidgetSwitcher.h"
+#include "Input/CommonUIActionRouterBase.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
 
 UVSLayeredActivableWidget::UVSLayeredActivableWidget(const FObjectInitializer& ObjectInitializer)
@@ -9,14 +11,14 @@ UVSLayeredActivableWidget::UVSLayeredActivableWidget(const FObjectInitializer& O
 {
 }
 
-bool UVSLayeredActivableWidget::Initialize()
+void UVSLayeredActivableWidget::NativeDestruct()
 {
-	if (!Super::Initialize()) return false;
-	if (!WidgetSwitcher) return false;
-	if (Panel && !WidgetSwitcher->HasChild(Panel)) return false;
-	if (WidgetStack && !WidgetSwitcher->HasChild(WidgetStack)) return false;
-
-	return true;
+	if (IsActivated())
+	{
+		DeactivateWidget();
+	}
+	
+	Super::NativeDestruct();
 }
 
 void UVSLayeredActivableWidget::SwitchToPanel()
@@ -33,4 +35,25 @@ void UVSLayeredActivableWidget::SwitchToWidgetStack()
 	{
 		WidgetSwitcher->SetActiveWidget(WidgetStack);
 	}
+}
+
+void UVSLayeredActivableWidget::NativeOnActivated()
+{
+	/** Cache the ui input config befor set to new. */
+	if (bRestoreActiveUIInputConfig)
+	{
+		CachedUIInputConfig = UVSWidgetUtils::GetCurrentUIInputConfig(GetOwningPlayer());
+	}
+
+	Super::NativeOnActivated();
+}
+
+void UVSLayeredActivableWidget::NativeOnDeactivated()
+{
+	if (bRestoreActiveUIInputConfig)
+	{
+		UVSWidgetUtils::SetCurrentUIInputConfig(GetOwningPlayer(), CachedUIInputConfig);
+	}
+	
+	Super::NativeOnDeactivated();
 }

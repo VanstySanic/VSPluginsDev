@@ -57,7 +57,7 @@ namespace VS
 	namespace Privablic
 	{
 		template <class StructClass>
-	struct FMember
+		struct FMember
 		{
 			static typename StructClass::Type Value;
 		};

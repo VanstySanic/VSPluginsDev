@@ -7,6 +7,7 @@ public class VSSettingSystem : ModuleRules
 	public VSSettingSystem(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+		bUseUnity = false;
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
@@ -29,8 +30,10 @@ public class VSSettingSystem : ModuleRules
 				"GameplayTags",
 				"DeveloperSettings",
 				"UMG",
+				"CommonUI",
 				// ... add other public dependencies that you statically link with here ...
-				"VSPluginsCore"
+				"VSPluginsCore",
+				"VSPluginsCoreCPP"
 			}
 			);
 			

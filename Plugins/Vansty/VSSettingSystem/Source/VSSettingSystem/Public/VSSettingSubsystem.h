@@ -7,7 +7,7 @@
 #include "Types/VSSettingSystemTypes.h"
 #include "VSSettingSubsystem.generated.h"
 
-class UVSSettingItemSet;
+class UVSSettingItemConfig;
 
 /**
  * 
@@ -24,8 +24,10 @@ public:
 	UVSSettingSubsystem();
 	
 protected:
+	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
+	
 	
 public:
 	static UVSSettingSubsystem* Get();
@@ -42,6 +44,5 @@ public:
 
 private:
 	UPROPERTY()
-	TArray<TObjectPtr<UVSSettingItemSet>> SettingItemSets;
-	TArray<TWeakObjectPtr<UVSSettingItemBase>> SettingItems;
+	TArray<TObjectPtr<UVSSettingItemBase>> SettingItems;
 };

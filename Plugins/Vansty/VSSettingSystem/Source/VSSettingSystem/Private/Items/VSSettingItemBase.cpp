@@ -2,6 +2,8 @@
 
 #include "VSSettingSystem/Public/Items/VSSettingItemBase.h"
 #include "VSSettingSubsystem.h"
+#include "Components/ComboBoxKey.h"
+#include "Components/ComboBoxString.h"
 #include "Components/TextBlock.h"
 
 UVSSettingItemBase::UVSSettingItemBase(const FObjectInitializer& ObjectInitializer)
@@ -16,12 +18,46 @@ void UVSSettingItemBase::Initialize_Implementation()
 
 	ItemInfo.ItemTags.AddTag(ItemInfo.SpecifyTag);
 	ItemInfo.ItemTags.AddTag(ItemInfo.CategoryTag);
+
+	OnCultureChangedDelegateHandle = FInternationalization::Get().OnCultureChanged().AddUObject(this, &ThisClass::OnCultureChanged);
+	OnWorldBeginTearDownDelegateHandle = FWorldDelegates::OnWorldBeginTearDown.AddLambda([&] (UWorld*)
+	{
+		const TMultiMap<TWeakObjectPtr<UWidget>, FName> CopiedTypedBoundWidgetMap;
+		for (const TPair<TWeakObjectPtr<UWidget>, FName>& BoundWidgetMap : CopiedTypedBoundWidgetMap)
+		{
+			if (BoundWidgetMap.Key.IsValid())
+			{
+				UnbindWidget(BoundWidgetMap.Key.Get(), BoundWidgetMap.Value);
+			}
+		}
+
+		TypedBoundWidgetMap.Empty();
+		TypedBoundWidgetMultimap.Empty();
+	});
 }
 
 void UVSSettingItemBase::Uninitialize_Implementation()
 {
 	check(bHasBeenInitialized);
 	bHasBeenInitialized = false;
+
+	if (OnWorldBeginTearDownDelegateHandle.IsValid())
+	{
+		FWorldDelegates::OnWorldBeginTearDown.Remove(OnWorldBeginTearDownDelegateHandle);
+	}
+	if (OnCultureChangedDelegateHandle.IsValid())
+	{
+		FInternationalization::Get().OnCultureChanged().Remove(OnCultureChangedDelegateHandle);
+	}
+
+	const TMultiMap<TWeakObjectPtr<UWidget>, FName> CopiedTypedBoundWidgetMap;
+	for (const TPair<TWeakObjectPtr<UWidget>, FName>& BoundWidgetMap : CopiedTypedBoundWidgetMap)
+	{
+		if (BoundWidgetMap.Key.IsValid())
+		{
+			UnbindWidget(BoundWidgetMap.Key.Get(), BoundWidgetMap.Value);
+		}
+	}
 }
 
 void UVSSettingItemBase::BeginDestroy()
@@ -93,7 +129,7 @@ void UVSSettingItemBase::ExecuteAction(TEnumAsByte<EVSSettingItemAction::Type> A
 	case EVSSettingItemAction::SetToLastConfirmed:
 	case EVSSettingItemAction::Validate:
 	case EVSSettingItemAction::Confirm:
-		NotifyUpdate();
+		NotifyValueUpdate();
 		break;
 
 	default: ;
@@ -108,18 +144,113 @@ void UVSSettingItemBase::ExecuteActions(const TArray<TEnumAsByte<EVSSettingItemA
 	}
 }
 
-void UVSSettingItemBase::NotifyUpdate()
+void UVSSettingItemBase::NotifyValueUpdate()
 {
-	OnUpdated.Broadcast();
+	OnItemValueUpdated();
+	OnValueUpdated.Broadcast();
 	if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
 	{
 		SettingSubsystem->OnSettingItemUpdated.Broadcast(this);
 	}
+	ExecuteActions(ValueUpdatedActions);
+}
+
+bool UVSSettingItemBase::IsDirty() const
+{
+	return EqualsToBySource(EVSSettingItemValueSource::Settings) != EqualsToBySource(EVSSettingItemValueSource::Current);
+}
+
+bool UVSSettingItemBase::IsDefault() const
+{
+	return EqualsToBySource(EVSSettingItemValueSource::Settings) == EqualsToBySource(EVSSettingItemValueSource::Default);
+}
+
+bool UVSSettingItemBase::IsUnconfirmed() const
+{
+	return EqualsToBySource(EVSSettingItemValueSource::Settings) != EqualsToBySource(EVSSettingItemValueSource::LastConfirmed);
 }
 
 void UVSSettingItemBase::BindWidget(UWidget* Widget, FName TypeID)
 {
-	if (TypeID == FName("Name"))
+	if (!Widget || !IsValid(Widget)) return;
+	if (TypedBoundWidgetMap.Contains(Widget))
+	{
+		UnbindWidget(Widget, TypedBoundWidgetMap.FindRef(Widget));
+	}
+
+	TypedBoundWidgetMap.Emplace(Widget, TypeID);
+	TypedBoundWidgetMultimap.Add(TypeID, Widget);
+
+	BindWidgetInternal(Widget, TypeID);
+}
+
+void UVSSettingItemBase::RebindWidget(UWidget* Widget, FName TypeID)
+{
+	UnbindWidget(Widget, TypeID);
+	BindWidgetInternal(Widget, TypeID);
+}
+
+void UVSSettingItemBase::UnbindWidget(UWidget* Widget, FName TypeID)
+{
+	if (!TypedBoundWidgetMap.Contains(Widget)) return;
+	if (!TypedBoundWidgetMultimap.Contains(TypeID)) return;
+	
+	TArray<TWeakObjectPtr<UWidget>> FoundWidgets;
+	TypedBoundWidgetMultimap.MultiFind(TypeID, FoundWidgets);
+	if (!FoundWidgets.Contains(Widget)) return;
+
+	TypedBoundWidgetMap.Remove(Widget);
+	TypedBoundWidgetMultimap.Remove(TypeID, Widget);
+
+	UnbindWidgetInternal(Widget, TypeID);
+}
+
+bool UVSSettingItemBase::IsWidgetBound(UWidget* Widget) const
+{
+	return TypedBoundWidgetMap.Contains(Widget);
+}
+
+FName UVSSettingItemBase::GetWidgetBoundTypeID(UWidget* Widget) const
+{
+	return IsWidgetBound(Widget) ? TypedBoundWidgetMap.FindRef(Widget) : NAME_None;
+}
+
+TArray<UWidget*> UVSSettingItemBase::GetBoundWidgetsOfType(FName TypeName) const
+{
+	if (!TypedBoundWidgetMultimap.Contains(TypeName)) return TArray<UWidget*>();
+	TArray<TWeakObjectPtr<UWidget>> FoundWidgets;
+	TypedBoundWidgetMultimap.MultiFind(TypeName, FoundWidgets);
+
+	TArray<UWidget*> Widgets;
+	for (TWeakObjectPtr<UWidget> FoundWidget : FoundWidgets)
+	{
+		if (FoundWidget.IsValid())
+		{
+			Widgets.Add(FoundWidget.Get());
+		}
+	}
+
+	return Widgets;
+}
+
+void UVSSettingItemBase::OnCultureChanged_Implementation()
+{
+	/** Rebind the ComboBoxes to refresh the texts. */
+	TArray<TWeakObjectPtr<UWidget>> Widgets;
+	TypedBoundWidgetMap.GetKeys(Widgets);
+	for (TWeakObjectPtr<UWidget> Widget : Widgets)
+	{
+		if (!Widget.IsValid()) continue;
+		if (Widget->IsA<UComboBoxString>() || Widget->IsA<UComboBoxKey>())
+		{
+			RebindWidget(Widget.Get());
+		}
+	}
+}
+
+void UVSSettingItemBase::BindWidgetInternal_Implementation(UWidget* Widget, FName TypeName)
+{
+	if (TypeName == FName("Name"))
 	{
 		if (UTextBlock* TextBlock = Cast<UTextBlock>(Widget))
 		{
@@ -128,7 +259,7 @@ void UVSSettingItemBase::BindWidget(UWidget* Widget, FName TypeID)
 	}
 }
 
-void UVSSettingItemBase::UnbindWidget(UWidget* Widget, FName TypeID)
+void UVSSettingItemBase::UnbindWidgetInternal_Implementation(UWidget* Widget, FName TypeName)
 {
 
 }
@@ -164,17 +295,7 @@ bool UVSSettingItemBase::EqualsToBySource_Implementation(const EVSSettingItemVal
 	return false;
 }
 
-bool UVSSettingItemBase::IsDirty() const
+void UVSSettingItemBase::OnItemValueUpdated_Implementation()
 {
-	return EqualsToBySource(EVSSettingItemValueSource::Settings) != EqualsToBySource(EVSSettingItemValueSource::Current);
-}
-
-bool UVSSettingItemBase::IsDefault() const
-{
-	return EqualsToBySource(EVSSettingItemValueSource::Settings) == EqualsToBySource(EVSSettingItemValueSource::Default);
-}
-
-bool UVSSettingItemBase::IsUnconfirmed() const
-{
-	return EqualsToBySource(EVSSettingItemValueSource::Settings) != EqualsToBySource(EVSSettingItemValueSource::LastConfirmed);
+	
 }

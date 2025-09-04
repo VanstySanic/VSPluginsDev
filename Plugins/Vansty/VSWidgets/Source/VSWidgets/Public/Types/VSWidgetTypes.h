@@ -7,6 +7,10 @@
 #include "UObject/Object.h"
 #include "VSWidgetTypes.generated.h"
 
+class UCommonButtonBase;
+class UCommonButtonStyle;
+class UVSMessageDialog;
+
 USTRUCT(BlueprintType)
 struct FVSWidgetSubtitleParams : public FTableRowBase
 {
@@ -52,4 +56,67 @@ struct FVSWidgetNotifyParams : public FTableRowBase
 	/** Duration of this subtitle. Only works with invalid voice. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSAlphaDurationBlendArgs AlphaDurationBlendArgs;
+};
+
+USTRUCT(BlueprintType)
+struct FVSWidgetMessageDialogParams : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	FVSWidgetMessageDialogParams()
+	{
+		DialogTitleText = FText::FromString("Title");
+		MessageContentText = FText::FromString("Message");
+		DialogReplies = TArray<FName>
+			{
+				FName("Yes"),
+				FName("No")
+			};
+	}
+
+	/** Optional. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText DialogTitleText;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText MessageContentText;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FName> DialogReplies;
+
+	/** If not assigned, no button will be automatically focused. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName DefaultFocusReply = FName("Yes"); 
+};
+
+USTRUCT(BlueprintType)
+struct FVSCommonButtonDisplayParams : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	VSWIDGETS_API void ApplyToButton(UCommonButtonBase* Button);
+
+	/** Override if not none. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText DisplayName = FText::FromString("None");
+
+	/** Override if not none. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UCommonButtonStyle> Style;
+
+	/**
+	 * List all the input actions that this common action widget is intended to represent.  In some cases you might have multiple actions
+	 * that you need to represent as a single entry in the UI.  For example - zoom, might be mouse wheel up or down, but you just need to
+	 * show a single icon for Up & Down on the mouse, this solves that problem.
+	 * Override if not none.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (RowType = "/Script/CommonUI.CommonInputActionDataBase"))
+	TArray<FDataTableRowHandle> InputActions;
+
+	/**
+	 * Input Action this common action widget is intended to represent. Optional if using EnhancedInputs.
+	 * Override if not none.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class UInputAction> EnhancedInputAction;
 };

@@ -2,13 +2,16 @@
 
 #include "Items/Scalability/VSSettingItem_ScalabilityQualityLevel.h"
 #include "GameFramework/GameUserSettings.h"
+#include "Libraries/VSGameplayLibrary.h"
 #include "Types/VSSettingSystemTags.h"
 
 UVSSettingItem_ScalabilityQualityLevel::UVSSettingItem_ScalabilityQualityLevel(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	ItemInfo.SpecifyTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Scalability_QualityLevel_ViewDistance);
-	QualityLevelNames = TMap<int32, FText>
+
+	DesiredValueRange = FIntPoint(0, 4);
+	NamedValues = TMap<int32, FText>
 		{
 			{ 0, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.0", "Low") },
 			{ 1, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.1", "Medium") },
@@ -56,6 +59,19 @@ void UVSSettingItem_ScalabilityQualityLevel::PostEditChangeProperty(struct FProp
 }
 #endif
 
+void UVSSettingItem_ScalabilityQualityLevel::Validate_Implementation()
+{
+	if (!GEngine) return;
+	UGameUserSettings* GameUserSettings = GEngine->GetGameUserSettings();
+	Scalability::SetQualityLevels(GameUserSettings->ScalabilityQuality);
+
+	int32 QualityLevel = GetQualityLevel(EVSSettingItemValueSource::Settings);
+	if (QualityLevel < 0 || QualityLevel > 4)
+	{
+		SetQualityLevel(GetQualityLevel(EVSSettingItemValueSource::Default));
+	}
+}
+
 void UVSSettingItem_ScalabilityQualityLevel::Apply_Implementation()
 {
 	if (!GEngine) return;
@@ -73,14 +89,14 @@ void UVSSettingItem_ScalabilityQualityLevel::Save_Implementation()
 	Scalability::SaveState(GIsEditor ? GEditorSettingsIni : GGameUserSettingsIni);
 }
 
-void UVSSettingItem_ScalabilityQualityLevel::SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource)
+void UVSSettingItem_ScalabilityQualityLevel::SetValue_Implementation(int32 InValue)
 {
-	SetQualityLevel(GetQualityLevel(ValueSource));
+	SetQualityLevel(InValue);
 }
 
-bool UVSSettingItem_ScalabilityQualityLevel::EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
+int32 UVSSettingItem_ScalabilityQualityLevel::GetValue_Implementation(EVSSettingItemValueSource::Type ValueSource) const
 {
-	return GetQualityLevel(EVSSettingItemValueSource::Settings) != GetQualityLevel(ValueSource);
+	return GetQualityLevel(ValueSource);
 }
 
 void UVSSettingItem_ScalabilityQualityLevel::SetQualityLevel(int32 InQualityLevel)
@@ -131,7 +147,7 @@ void UVSSettingItem_ScalabilityQualityLevel::SetQualityLevel(int32 InQualityLeve
 		GameUserSettings->SetShadingQuality(InQualityLevel);
 	}
 
-	NotifyUpdate();
+	NotifyValueUpdate();
 }
 
 int32 UVSSettingItem_ScalabilityQualityLevel::GetQualityLevel(const EVSSettingItemValueSource::Type ValueSource) const

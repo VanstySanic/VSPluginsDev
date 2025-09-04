@@ -4,6 +4,7 @@
 #include "VSPrivablic.h"
 #include "Engine/GameEngine.h"
 #include "GameFramework/GameUserSettings.h"
+#include "Libraries/VSGameplayLibrary.h"
 #include "Types/VSSettingSystemTags.h"
 
 VS_DECLARE_PRIVABLIC_MEMBER(UGameUserSettings, LastConfirmedFullscreenMode, int32);
@@ -14,9 +15,31 @@ UVSSettingItem_WindowMode::UVSSettingItem_WindowMode(const FObjectInitializer& O
 	ItemInfo.SpecifyTag = EVSSettingItem::Video_WindowMode;
 	ItemInfo.DisplayName = NSLOCTEXT("VSSettingSystem", "SettingItem.WindowMode", "Window Mode");
 
-	WindowModeNames.Emplace(EWindowMode::WindowedFullscreen, NSLOCTEXT("VSSettingSystem", "SettingItem.WindowMode.WindowedFullscreen", "Windowed-Fullscreen"));
-	WindowModeNames.Emplace(EWindowMode::Fullscreen, NSLOCTEXT("VSSettingSystem", "SettingItem.WindowMode.Fullscreen", "Fullscreen"));
-	WindowModeNames.Emplace(EWindowMode::Windowed, NSLOCTEXT("VSSettingSystem", "SettingItem.WindowMode.Windowed", "Windowed"));
+	DesiredValueRange = FIntPoint(0, 2);
+
+	NamedValues.Empty();
+	NamedValues.Emplace(EWindowMode::Fullscreen, NSLOCTEXT("VSSettingSystem", "SettingItem.WindowMode.Fullscreen", "Fullscreen"));
+	NamedValues.Emplace(EWindowMode::WindowedFullscreen, NSLOCTEXT("VSSettingSystem", "SettingItem.WindowMode.WindowedFullscreen", "Windowed-Fullscreen"));
+	NamedValues.Emplace(EWindowMode::Windowed, NSLOCTEXT("VSSettingSystem", "SettingItem.WindowMode.Windowed", "Windowed"));
+}
+
+void UVSSettingItem_WindowMode::Load_Implementation()
+{
+	int32 LoadWindowMode = 0;
+	if (GConfig->GetInt(TEXT("/Script/Engine.GameUserSettings"), TEXT("FullscreenMode"), LoadWindowMode, GGameUserSettingsIni))
+	{
+		SetWindowMode(EWindowMode::Type(LoadWindowMode));
+	}
+}
+
+void UVSSettingItem_WindowMode::Validate_Implementation()
+{
+	if (GetWindowMode(EVSSettingItemValueSource::Settings) == EWindowMode::NumWindowModes)
+	{
+		if (!GEngine) return;
+		UGameUserSettings* GameUserSettings = GEngine->GetGameUserSettings();
+		SetWindowMode(GameUserSettings->GetPreferredFullscreenMode());
+	}
 }
 
 void UVSSettingItem_WindowMode::Apply_Implementation()
@@ -42,14 +65,14 @@ void UVSSettingItem_WindowMode::Save_Implementation()
 	GConfig->Flush(false, GGameUserSettingsIni);
 }
 
-void UVSSettingItem_WindowMode::SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource)
+void UVSSettingItem_WindowMode::SetValue_Implementation(int32 InValue)
 {
-	SetWindowMode(GetWindowMode(ValueSource));
+	SetWindowMode(EWindowMode::Type(InValue));
 }
 
-bool UVSSettingItem_WindowMode::EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
+int32 UVSSettingItem_WindowMode::GetValue_Implementation(EVSSettingItemValueSource::Type ValueType) const
 {
-	return GetWindowMode(EVSSettingItemValueSource::Settings) != GetWindowMode(ValueSource);
+	return GetWindowMode(ValueType);
 }
 
 void UVSSettingItem_WindowMode::SetWindowMode(EWindowMode::Type InWindowMode)
@@ -58,7 +81,7 @@ void UVSSettingItem_WindowMode::SetWindowMode(EWindowMode::Type InWindowMode)
 	if (!GEngine) return;
 	UGameUserSettings* GameUserSettings = GEngine->GetGameUserSettings();
 	GameUserSettings->SetFullscreenMode(InWindowMode);
-	NotifyUpdate();
+	NotifyValueUpdate();
 }
 
 EWindowMode::Type UVSSettingItem_WindowMode::GetWindowMode(EVSSettingItemValueSource::Type ValueSource) const

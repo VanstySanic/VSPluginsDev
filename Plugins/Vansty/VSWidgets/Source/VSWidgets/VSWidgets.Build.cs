@@ -29,6 +29,7 @@ public class VSWidgets : ModuleRules
 				"InputCore",
 				"UMG",
 				"CommonUI",
+				"EnhancedInput",
 				// ... add other public dependencies that you statically link with here ...
 				"VSPluginsCore"
 			}

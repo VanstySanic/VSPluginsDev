@@ -1,4 +1,4 @@
-﻿{
+{
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
@@ -18,6 +18,17 @@
 			"Name": "VSSettingSystem",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		}
+	],
+	"SupportURL": "",
+	"Plugins": [
+		{
+			"Name": "VSPluginsCore",
+			"Enabled": true
+		},
+		{
+			"Name": "CommonUI",
+			"Enabled": true
 		}
 	]
 }

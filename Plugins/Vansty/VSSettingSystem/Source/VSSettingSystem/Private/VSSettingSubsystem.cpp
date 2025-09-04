@@ -5,7 +5,7 @@
 #include "VSSettingSystemUtils.h"
 #include "GameFramework/GameUserSettings.h"
 #include "Items/VSSettingItemBase.h"
-#include "Items/VSSettingItemSet.h"
+#include "Items/VSSettingItemConfig.h"
 
 UVSSettingSubsystem* UVSSettingSubsystem::Get()
 {
@@ -30,31 +30,35 @@ UVSSettingSubsystem::UVSSettingSubsystem()
 	
 }
 
+bool UVSSettingSubsystem::ShouldCreateSubsystem(UObject* Outer) const
+{
+	TArray<UClass*> ChildClasses;
+	GetDerivedClasses(GetClass(), ChildClasses, false);
+	
+	return ChildClasses.Num() == 0;
+}
+
 void UVSSettingSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
 	check(GEngine);
+	Scalability::LoadState(GGameUserSettingsIni);
 	GEngine->GameUserSettingsClass = GEngine->GameUserSettingsClassName.TryLoadClass<UGameUserSettings>();
 
-	for (const FSoftClassPath& SettingItemSetClass : UVSSettingSystemConfig::Get()->SettingItemSetClasses)
+	for (const FSoftClassPath& SettingItemConfigClass : UVSSettingSystemConfig::Get()->SettingItemConfigClasses)
 	{
-		if (UClass* Class = SettingItemSetClass.TryLoadClass<UVSSettingItemSet>())
+		if (UClass* Class = SettingItemConfigClass.TryLoadClass<UVSSettingItemConfig>())
 		{
-			if (UVSSettingItemSet* Set = NewObject<UVSSettingItemSet>(this, Class))
+			if (UVSSettingItemConfig* Config = NewObject<UVSSettingItemConfig>(this, Class))
 			{
-				SettingItemSets.Add(Set);
-			}
-		}
-	}
-
-	for (TObjectPtr<UVSSettingItemSet> SettingItemSet : SettingItemSets)
-	{
-		for (UVSSettingItemBase* SettingItem : SettingItemSet->GetSettingItems())
-		{
-			if (SettingItem)
-			{
-				SettingItems.Add(SettingItem);
+				for (UVSSettingItemBase* SettingItem : Config->GetSettingItems())
+				{
+					if (SettingItem)
+					{
+						SettingItems.Add(SettingItem);
+					}
+				}
 			}
 		}
 	}
@@ -86,18 +90,10 @@ void UVSSettingSubsystem::Deinitialize()
 		if (SettingItem.IsValid() && SettingItem->HasBeenInitialized())
 		{
 			SettingItem->Uninitialize();
+			SettingItem->MarkAsGarbage();
 		}
 	}
-
 	SettingItems.Empty();
-	for (TObjectPtr<UVSSettingItemSet> SettingItemSet : SettingItemSets)
-	{
-		if (SettingItemSet)
-		{
-			SettingItemSet->MarkAsGarbage();
-		}
-	}
-	SettingItemSets.Empty();
 	
 	Super::Deinitialize();
 }

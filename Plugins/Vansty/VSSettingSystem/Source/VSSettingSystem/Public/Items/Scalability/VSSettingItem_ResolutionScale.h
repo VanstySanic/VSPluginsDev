@@ -4,25 +4,26 @@
 
 #include "CoreMinimal.h"
 #include "Items/VSSettingItemBase.h"
+#include "Items/VSSettingItemBase_Float.h"
 #include "VSSettingItem_ResolutionScale.generated.h"
 
 /**
  * 
  */
 UCLASS(DisplayName = "Settings.Item.Scalability.ResolutionScale")
-class VSSETTINGSYSTEM_API UVSSettingItem_ResolutionScale : public UVSSettingItemBase
+class VSSETTINGSYSTEM_API UVSSettingItem_ResolutionScale : public UVSSettingItemBase_Float
 {
 	GENERATED_UCLASS_BODY()
 
 protected:
 	virtual void Load_Implementation() override;
 	virtual void Apply_Implementation() override;
-	virtual void Validate_Implementation() override;
 	virtual void Confirm_Implementation() override;
 	virtual void Save_Implementation() override;
-	virtual void SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) override;
-	virtual bool EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const override;
-
+	
+	virtual float GetValue_Implementation(EVSSettingItemValueSource::Type ValueType = EVSSettingItemValueSource::Settings) const override;
+	virtual void SetValue_Implementation(float InValue) override;
+	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetResolutionScale(float InResolutionScale);

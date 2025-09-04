@@ -27,6 +27,7 @@ public class VSPluginsCore : ModuleRules
 			{
 				"Core",
 				"NetCore",
+				"UMG",
 				"GameplayTags",
 				"AnimGraphRuntime",
 				"ApplicationCore",

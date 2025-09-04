@@ -4,13 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "Items/VSSettingItemBase.h"
+#include "Items/VSSettingItemBase_Integer.h"
 #include "VSSettingItem_ScalabilityQualityLevel.generated.h"
+
+enum class ERotatorDirection : uint8;
 
 /**
  * 
  */
 UCLASS(DisplayName = "Settings.Item.Scalability.QualityLevels")
-class VSSETTINGSYSTEM_API UVSSettingItem_ScalabilityQualityLevel : public UVSSettingItemBase
+class VSSETTINGSYSTEM_API UVSSettingItem_ScalabilityQualityLevel : public UVSSettingItemBase_Integer
 {
 	GENERATED_UCLASS_BODY()
 
@@ -20,12 +23,14 @@ public:
 #endif
 
 protected:
+	virtual void Validate_Implementation() override;
 	virtual void Apply_Implementation() override;
 	virtual void Confirm_Implementation() override;
 	virtual void Save_Implementation() override;
-	virtual void SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) override;
-	virtual bool EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const override;
 	
+	virtual void SetValue_Implementation(int32 InValue) override;
+	virtual int32 GetValue_Implementation(EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::Settings) const override;
+
 public:
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetQualityLevel(int32 InQualityLevel);
@@ -37,11 +42,6 @@ private:
 #if WITH_EDITOR
 	static const TMap<FGameplayTag, FText>& GetDefaultScalabilityQualityLevelNames();
 #endif
-
-
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-	TMap<int32, FText> QualityLevelNames;
 	
 private:
 	int32 LastConfirmedQualityLevel = 0;

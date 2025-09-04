@@ -24,15 +24,8 @@ UVSNotifyLine* UVSNotifyLine::CreateAndDisplay(UPanelWidget* ParentPanelWidget, 
 	
 	if (NotifyLine->Image_Notify)
 	{
-		if (NotifyParams.NotifyImage.IsSet())
-		{
-			NotifyLine->Image_Notify->SetBrush(NotifyParams.NotifyImage);
-			NotifyLine->Image_Notify->SetVisibility(ESlateVisibility::HitTestInvisible);
-		}
-		else
-		{
-			NotifyLine->Image_Notify->SetVisibility(ESlateVisibility::Collapsed);
-		}
+		NotifyLine->Image_Notify->SetBrush(NotifyParams.NotifyImage);
+		NotifyLine->Image_Notify->SetVisibility(ESlateVisibility::HitTestInvisible);
 	}
 
 	NotifyLine->RichTextBlock_NotifyTitle->SetText(NotifyParams.NotifyTitleText);
