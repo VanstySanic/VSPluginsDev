@@ -8,6 +8,7 @@
 UVSSettingItem_ConsoleVariable_Boolean::UVSSettingItem_ConsoleVariable_Boolean(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+
 }
 
 void UVSSettingItem_ConsoleVariable_Boolean::Initialize_Implementation()

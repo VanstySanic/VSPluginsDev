@@ -9,6 +9,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetTextLibrary.h"
 #include "Libraries/VSGameplayLibrary.h"
+#include "Libraries/VSSetContainerLibrary.h"
 
 VS_DECLARE_PRIVABLIC_MEMBER(UComboBoxString, DefaultOptions, TArray<FString>);
 VS_DECLARE_PRIVABLIC_MEMBER(UCommonRotator, TextLabels, TArray<FText>);
@@ -18,30 +19,49 @@ UVSSettingItemBase_Float::UVSSettingItemBase_Float(const FObjectInitializer& Obj
 {
 }
 
+void UVSSettingItemBase_Float::PostInitProperties()
+{
+	Super::PostInitProperties();
+	RefreshOptions();
+}
+
+#if WITH_EDITOR
+void UVSSettingItemBase_Float::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Float, bUseGeneratedOptions)
+		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Float, bGenerateOptionsHighToLow)
+		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Float, CustomOptions)
+		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Float, DesiredValueRange)
+		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Float, DesiredValueStep)
+		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Float, bEnableLowerBoundExtensionReroute)
+		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Float, bEnableUpperBoundExtensionReroute)
+		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Float, LowerBoundExtensionRerouteValue)
+		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Float, UpperBoundExtensionRerouteValue))
+	{
+		RefreshOptions();
+	}
+	
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+}
+#endif
+
+void UVSSettingItemBase_Float::Initialize_Implementation()
+{
+	Super::Initialize_Implementation();
+	RefreshOptions();
+}
+
 void UVSSettingItemBase_Float::Validate_Implementation()
 {
-	Super::Validate_Implementation();
-
 	if (DesiredValueRange.X > DesiredValueRange.Y)
 	{
 		Swap(DesiredValueRange.X, DesiredValueRange.Y);
 	}
 
-	float ValidateValue = GetValue(EVSSettingItemValueSource::Settings);
+	const float SettingValue = GetValue(EVSSettingItemValueSource::Settings);
+	float ValidateValue = GetConditionToSettingValue(SettingValue);
 
-	bool bClampBorderExtension = false;
-	if (bEnableLowerBoundExtensionReroute && FMath::IsNearlyEqual(ValidateValue, DesiredValueRange.X - DesiredValueStep, DesiredValueStep / 2.f))
-	{
-		ValidateValue = LowerBoundExtensionRerouteValue;
-		bClampBorderExtension = true;
-	}
-	else if (bEnableUpperBoundExtensionReroute && FMath::IsNearlyEqual(ValidateValue, DesiredValueRange.Y + DesiredValueStep, DesiredValueStep / 2.f))
-	{
-		ValidateValue = UpperBoundExtensionRerouteValue;
-		bClampBorderExtension = true;
-	}
-
-	if (bClampBorderExtension)
+	if (!FMath::IsNearlyEqual(ValidateValue, SettingValue))
 	{
 		SetValue(ValidateValue);
 	}
@@ -53,20 +73,16 @@ void UVSSettingItemBase_Float::Validate_Implementation()
 		{
 			bShouldClampRange = false;
 		}
-		else if (!bUseGeneratedOptions)
+		else
 		{
-			for (float CustomValue : CustomOptions)
+			for (float Option : GetOptions())
 			{
-				if (UKismetMathLibrary::InRange_FloatFloat(CustomValue, ValidateValue - DesiredValueStep * 0.5f, ValidateValue + DesiredValueStep * 0.5f))
+				if (UKismetMathLibrary::InRange_FloatFloat(Option, ValidateValue - DesiredValueStep * 0.5f, ValidateValue + DesiredValueStep * 0.5f))
 				{
 					bShouldClampRange = false;
 					break;
 				}
 			}
-		}
-		else
-		{
-			bShouldClampRange = false;
 		}
 
 		if (bShouldClampRange)
@@ -120,20 +136,7 @@ void UVSSettingItemBase_Float::OnItemValueUpdated_Implementation()
 		else if (USlider* Slider = Cast<USlider>(Widget))
 		{
 			if (bIsInGame) { Slider->OnValueChanged.RemoveDynamic(this, &UVSSettingItemBase_Float::OnValueSliderValueChanged); }
-			
-			if (bEnableLowerBoundExtensionReroute && FMath::IsNearlyEqual(SettingValue, LowerBoundExtensionRerouteValue, DesiredValueStep / 2.f))
-			{
-				Slider->SetValue(DesiredValueRange.X - DesiredValueStep);
-			}
-			else if (bEnableUpperBoundExtensionReroute && FMath::IsNearlyEqual(SettingValue, UpperBoundExtensionRerouteValue, DesiredValueStep / 2.f))
-			{
-				Slider->SetValue(DesiredValueRange.Y + DesiredValueStep);
-			}
-			else
-			{
-				Slider->SetValue(SettingValue);
-			}
-			
+			Slider->SetValue(GetSettingToConditionValue(SettingValue));
 			if (bIsInGame) { Slider->OnValueChanged.AddDynamic(this, &UVSSettingItemBase_Float::OnValueSliderValueChanged); }
 		}
 	}
@@ -158,9 +161,9 @@ void UVSSettingItemBase_Float::BindWidgetInternal_Implementation(UWidget* Widget
 	if (TypeName == FName("Value"))
 	{
 		/** Generate options. */
-		TArray<float> Options = bUseGeneratedOptions ? GenerateOptions() : CustomOptions;
+		const TArray<float>& Options = GetOptions();
 		TArray<FText> OptionTexts;
-		for (int32 Option : Options)
+		for (float Option : Options)
 		{
 			OptionTexts.Add(GetValueContentText(Option));
 		}
@@ -220,18 +223,7 @@ void UVSSettingItemBase_Float::BindWidgetInternal_Implementation(UWidget* Widget
 			Slider->SetMaxValue(DesiredValueRange.Y + (bEnableUpperBoundExtensionReroute ? DesiredValueStep : 0.f));
 			Slider->SetStepSize(DesiredValueStep);
 
-			if (bEnableLowerBoundExtensionReroute && FMath::IsNearlyEqual(SettingValue, LowerBoundExtensionRerouteValue, DesiredValueStep / 2.f))
-			{
-				Slider->SetValue(DesiredValueRange.X - DesiredValueStep);
-			}
-			else if (bEnableUpperBoundExtensionReroute && FMath::IsNearlyEqual(SettingValue, UpperBoundExtensionRerouteValue, DesiredValueStep / 2.f))
-			{
-				Slider->SetValue(DesiredValueRange.Y + DesiredValueStep);
-			}
-			else
-			{
-				Slider->SetValue(SettingValue);
-			}
+			Slider->SetValue(GetSettingToConditionValue(SettingValue));
 		}
 	}
 	else if (TypeName.IsEqual(FName("Content")))
@@ -284,7 +276,7 @@ FText UVSSettingItemBase_Float::GetValueContentText_Implementation(float InValue
 	return FormatText;
 }
 
-TArray<float> UVSSettingItemBase_Float::GenerateOptions_Implementation() const
+TArray<float> UVSSettingItemBase_Float::CalcGeneratedOptions_Implementation() const
 {
 	TArray<float> Options;
 	if (!bGenerateOptionsHighToLow)
@@ -303,87 +295,118 @@ TArray<float> UVSSettingItemBase_Float::GenerateOptions_Implementation() const
 			Options.Add(i);
 		}
 	}
+
+	if (bEnableLowerBoundExtensionReroute)
+	{
+		if (!bGenerateOptionsHighToLow)
+		{
+			Options.Insert(LowerBoundExtensionRerouteValue, 0);
+		}
+		else
+		{
+			Options.Add(LowerBoundExtensionRerouteValue);
+		}
+	}
+
+	if (bEnableUpperBoundExtensionReroute)
+	{
+		if (!bGenerateOptionsHighToLow)
+		{
+			Options.Add(UpperBoundExtensionRerouteValue);
+		}
+		else
+		{
+			Options.Insert(UpperBoundExtensionRerouteValue, 0);
+		}
+	}
+	
 	return Options;
+}
+
+TArray<float> UVSSettingItemBase_Float::GetOptions() const
+{
+	return bUseGeneratedOptions ? GeneratedOptions : CustomOptions;
+}
+
+void UVSSettingItemBase_Float::RefreshOptions()
+{
+	if (bUseGeneratedOptions)
+	{
+		GeneratedOptions = CalcGeneratedOptions();
+	}
+	else
+	{
+		GeneratedOptions.Empty();
+	}
+
+	/** Must rebind the value widgets. */
+	const TArray<UWidget*>& ValueWidgets = GetBoundWidgetsOfType(FName("Value"));
+	for (UWidget* BoundWidget : ValueWidgets)
+	{
+		RebindWidget(BoundWidget);
+	}
+}
+
+float UVSSettingItemBase_Float::GetConditionToSettingValue(const float InValue)
+{
+	float OutValue = InValue;
+	if (bEnableLowerBoundExtensionReroute && FMath::IsNearlyEqual(InValue, DesiredValueRange.X - DesiredValueStep, DesiredValueStep / 2.f))
+	{
+		OutValue = LowerBoundExtensionRerouteValue;
+	}
+	else if (bEnableUpperBoundExtensionReroute && FMath::IsNearlyEqual(InValue, DesiredValueRange.Y + DesiredValueStep, DesiredValueStep / 2.f))
+	{
+		OutValue = UpperBoundExtensionRerouteValue;
+	}
+	else
+	{
+		/** Round to options. */
+		const TArray<float> Options = GetOptions();
+		int32 Index = UVSSetContainerLibrary::GetArrayNearestElementIndex<float>(InValue, Options);
+		if (Options.IsValidIndex(Index))
+		{
+			OutValue = Options[Index];
+		}
+	}
+
+	return OutValue;
+}
+
+float UVSSettingItemBase_Float::GetSettingToConditionValue(const float InValue)
+{
+	float OutValue = InValue;
+	if (bEnableLowerBoundExtensionReroute && FMath::IsNearlyEqual(InValue, LowerBoundExtensionRerouteValue, DesiredValueStep / 2.f))
+	{
+		OutValue = DesiredValueRange.X - DesiredValueStep;
+	}
+	else if (bEnableUpperBoundExtensionReroute && FMath::IsNearlyEqual(InValue, UpperBoundExtensionRerouteValue, DesiredValueStep / 2.f))
+	{
+		OutValue = DesiredValueRange.Y + DesiredValueStep;
+	}
+	return OutValue;
 }
 
 void UVSSettingItemBase_Float::OnValueComboBoxStringSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
-	if (bUseGeneratedOptions)
+	for (float Option : GetOptions())
 	{
-		if (!bGenerateOptionsHighToLow)
+		if (SelectedItem == GetValueContentText(Option).ToString())
 		{
-			for (float i = DesiredValueRange.X; i <= DesiredValueRange.Y + DesiredValueStep / 2.f; i+= DesiredValueStep)
-			{
-				i = FMath::Clamp(i, DesiredValueRange.X, DesiredValueRange.Y);
-				if (SelectedItem == GetValueContentText(i).ToString())
-				{
-					SetValue(i);
-					break;
-				}
-			}
-		}
-		else
-		{
-			for (float i = DesiredValueRange.Y; i >= DesiredValueRange.X - DesiredValueStep / 2.f; i -= DesiredValueStep)
-			{
-				i = FMath::Clamp(i, DesiredValueRange.X, DesiredValueRange.Y);
-				if (SelectedItem == GetValueContentText(i).ToString())
-				{
-					SetValue(i);
-					break;
-				}
-			}
-		}
-	}
-	else
-	{
-		for (float CustomOption : CustomOptions)
-		{
-			if (SelectedItem == GetValueContentText(CustomOption).ToString())
-			{
-				SetValue(CustomOption);
-				break;
-			}
+			SetValue(Option);
+			break;
 		}
 	}
 }
 
 void UVSSettingItemBase_Float::OnValueRotatorRotatedWithDirection(int32 NewValue, ERotatorDirection RotatorDir)
 {
-	float NewValToSet = NewValue;
-
-	if (bUseGeneratedOptions)
-	{
-		if (!bGenerateOptionsHighToLow)
-		{
-			NewValToSet = DesiredValueRange.X + DesiredValueStep * NewValue;
-		}
-		else
-		{
-			NewValToSet = DesiredValueRange.Y - DesiredValueStep * NewValue;
-		}
-		NewValToSet = FMath::Clamp(NewValue, DesiredValueRange.X, DesiredValueRange.Y);
-	}
-	else
-	{
-		NewValToSet = CustomOptions.IsValidIndex(NewValue) ? CustomOptions[NewValue] : NewValue;
-	}
-	
+	const TArray<float>& Options = GetOptions();
+	const float NewValToSet = Options.IsValidIndex(NewValue) ? Options[NewValue] : NewValue;
 	SetValue(NewValToSet);
 }
 
 void UVSSettingItemBase_Float::OnValueSliderValueChanged(float NewValue)
 {
-	if (bEnableLowerBoundExtensionReroute && FMath::IsNearlyEqual(NewValue, DesiredValueRange.X - DesiredValueStep, DesiredValueStep / 2.f))
-	{
-		SetValue(LowerBoundExtensionRerouteValue);
-	}
-	else if (bEnableUpperBoundExtensionReroute && FMath::IsNearlyEqual(NewValue, DesiredValueRange.Y + DesiredValueStep, DesiredValueStep / 2.f))
-	{
-		SetValue(UpperBoundExtensionRerouteValue);
-	}
-	else
-	{
-		SetValue(NewValue);
-	}
+	/** TODO Refine the snap rules. */
+	SetValue(GetConditionToSettingValue(NewValue));
 }

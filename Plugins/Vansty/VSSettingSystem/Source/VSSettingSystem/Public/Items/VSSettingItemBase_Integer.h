@@ -16,6 +16,15 @@ class VSSETTINGSYSTEM_API UVSSettingItemBase_Integer : public UVSSettingItemBase
 {
 	GENERATED_UCLASS_BODY()
 
+public:
+	virtual void PostInitProperties() override;
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+	
+protected:
+	virtual void Initialize_Implementation() override;
+	
 protected:
 	virtual void Validate_Implementation() override;
 	virtual void SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) override;
@@ -32,12 +41,28 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
 	int32 GetValue(EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::Settings) const;
 
+protected:
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FText GetValueContentText(int32 InValue) const;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
-	TArray<int32> GenerateOptions() const;
+	TArray<int32> CalcGeneratedOptions() const;
 
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	TArray<int32> GetOptions() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void RefreshOptions();
+
+
+	/** Widget to settings. */
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	int32 GetConditionToSettingValue(const int32 InValue);
+
+	/** Settings to widget. */
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	int32 GetSettingToConditionValue(const int32 InValue);
+	
 private:
 	UFUNCTION()
 	void OnValueComboBoxStringSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
@@ -86,4 +111,8 @@ protected:
 	/** Only works when no named value is matched. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Texts")
 	FText ContentTextFormat = FText::FromString("{0}");
+
+private:
+	UPROPERTY(VisibleAnywhere, Category = "Options", Transient)
+	TArray<int32> GeneratedOptions;
 };

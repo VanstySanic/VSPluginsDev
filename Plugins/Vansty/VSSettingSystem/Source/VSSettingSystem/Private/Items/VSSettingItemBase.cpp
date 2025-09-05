@@ -187,7 +187,7 @@ void UVSSettingItemBase::BindWidget(UWidget* Widget, FName TypeID)
 void UVSSettingItemBase::RebindWidget(UWidget* Widget, FName TypeID)
 {
 	UnbindWidget(Widget, TypeID);
-	BindWidgetInternal(Widget, TypeID);
+	BindWidget(Widget, TypeID);
 }
 
 void UVSSettingItemBase::UnbindWidget(UWidget* Widget, FName TypeID)

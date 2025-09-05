@@ -36,13 +36,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FIntPoint GetScreenResolution(EVSSettingItemValueSource::Type ValueSource) const;
 
-	
+protected:
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FText ResolutionToText(const FIntPoint& Resolution) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FIntPoint TextToResolution(const FText& Text) const;
-	
+
 private:
 	UFUNCTION()
 	void OnValueComboBoxStringSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);

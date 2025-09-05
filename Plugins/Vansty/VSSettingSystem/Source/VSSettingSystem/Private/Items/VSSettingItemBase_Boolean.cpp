@@ -15,6 +15,22 @@ UVSSettingItemBase_Boolean::UVSSettingItemBase_Boolean(const FObjectInitializer&
 	NamedBooleans = UVSSettingSystemConfig::Get()->EnableDisableTexts;
 }
 
+#if WITH_EDITOR
+void UVSSettingItemBase_Boolean::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Boolean, bOptionsTrueThenFalse))
+	{
+		TArray<UWidget*> ValueWidgets = GetBoundWidgetsOfType(FName("Value"));
+		for (UWidget* Widget : ValueWidgets)
+		{
+			RebindWidget(Widget);
+		}
+	}
+	
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+}
+#endif
+
 void UVSSettingItemBase_Boolean::SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource)
 {
 	SetValue(GetValue(ValueSource));

@@ -16,7 +16,14 @@ class VSSETTINGSYSTEM_API UVSSettingItemBase_Float : public UVSSettingItemBase
 {
 	GENERATED_UCLASS_BODY()
 
+public:
+	virtual void PostInitProperties() override;
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+
 protected:
+	virtual void Initialize_Implementation() override;
 	virtual void Validate_Implementation() override;
 	virtual void SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) override;
 	virtual bool EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const override;
@@ -31,12 +38,27 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
 	float GetValue(EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::Settings) const;
-
+	
+protected:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
 	FText GetValueContentText(float InValue) const;
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
-	TArray<float> GenerateOptions() const;
+	TArray<float> CalcGeneratedOptions() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	TArray<float> GetOptions() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void RefreshOptions();
+
+	/** Widget to settings. */
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	float GetConditionToSettingValue(const float InValue);
+
+	/** Settings to widget. */
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	float GetSettingToConditionValue(const float InValue);
 	
 private:
 	UFUNCTION()
@@ -88,4 +110,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Texts")
 	int32 DesiredFractionNum = 2;
+
+private:
+	UPROPERTY(VisibleAnywhere, Category = "Options", Transient)
+	TArray<float> GeneratedOptions;
 };

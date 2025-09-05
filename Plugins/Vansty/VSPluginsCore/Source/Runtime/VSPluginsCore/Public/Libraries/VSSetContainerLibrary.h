@@ -30,6 +30,9 @@ class VSPLUGINSCORE_API UVSSetContainerLibrary : public UBlueprintFunctionLibrar
 	
 	template <typename T>
 	static void RemoveArrayDuplicates(TArray<T>& Array);
+
+	template <typename T>
+	static int32 GetArrayNearestElementIndex(T Source, const TArray<T>& Array);
 };
 
 template <typename T>
@@ -116,5 +119,59 @@ void UVSSetContainerLibrary::RemoveArrayDuplicates(TArray<T>& Array)
 		}
 	}
 	Array.SetNum(WriteIndex);
+}
+
+template <typename T>
+int32 UVSSetContainerLibrary::GetArrayNearestElementIndex(T Source, const TArray<T>& Array)
+{
+	static_assert(TIsArithmetic<T>::Value, "GetArrayNearestElementIndex<T>: T must be an arithmetic type.");
+
+	if (Array.Num() == 0)
+	{
+		return INDEX_NONE;
+	}
+
+	if constexpr (TIsFloatingPoint<T>::Value)
+	{
+		if (!FMath::IsFinite(static_cast<double>(Source)))
+		{
+			return INDEX_NONE;
+		}
+	}
+
+	int32 BestIndex = INDEX_NONE;
+	long double BestDiff = std::numeric_limits<long double>::infinity();
+
+	for (int32 i = 0; i < Array.Num(); ++i)
+	{
+		const T& Elem = Array[i];
+
+		if constexpr (TIsFloatingPoint<T>::Value)
+		{
+			if (!FMath::IsFinite(static_cast<double>(Elem)))
+			{
+				continue;
+			}
+		}
+
+		long double Diff = static_cast<long double>(Elem) - static_cast<long double>(Source);
+		if (Diff < 0)
+		{
+			Diff = -Diff;
+		}
+
+		if (Diff < BestDiff)
+		{
+			BestDiff = Diff;
+			BestIndex = i;
+
+			if (BestDiff == static_cast<long double>(0))
+			{
+				break;
+			}
+		}
+	}
+
+	return BestIndex;
 }
 

@@ -14,6 +14,10 @@ class VSSETTINGSYSTEM_API UVSSettingItemBase_Boolean : public UVSSettingItemBase
 {
 	GENERATED_UCLASS_BODY()
 
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+
 protected:
 	virtual void SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) override;
 	virtual bool EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const override;
