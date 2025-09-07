@@ -16,7 +16,7 @@ UVSSettingItem_ResolutionScale::UVSSettingItem_ResolutionScale(const FObjectInit
 	DesiredValueStep = 1.f;
 
 	ContentTextFormat = FText::FromString("{0}%");
-	DesiredFractionNum = 0;
+	DisplayFractionNum = 0;
 }
 
 void UVSSettingItem_ResolutionScale::Load_Implementation()

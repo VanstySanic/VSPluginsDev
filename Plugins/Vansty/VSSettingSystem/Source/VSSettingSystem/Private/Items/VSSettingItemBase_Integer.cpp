@@ -29,7 +29,7 @@ void UVSSettingItemBase_Integer::PostInitProperties()
 void UVSSettingItemBase_Integer::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
 	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Integer, bUseGeneratedOptions)
-		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Integer, bGenerateOptionsHighToLow)
+		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Integer, bOptionsHighToLow)
 		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Integer, CustomOptions)
 		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Integer, DesiredValueRange)
 		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Integer, DesiredValueStep)
@@ -54,11 +54,6 @@ void UVSSettingItemBase_Integer::Initialize_Implementation()
 void UVSSettingItemBase_Integer::Validate_Implementation()
 {
 	Super::Validate_Implementation();
-
-	if (DesiredValueRange.X > DesiredValueRange.Y)
-	{
-		Swap(DesiredValueRange.X, DesiredValueRange.Y);
-	}
 
 	const int32 SettingValue = GetValue(EVSSettingItemValueSource::Settings);
 	int32 ValidateValue = GetConditionToSettingValue(SettingValue);
@@ -297,7 +292,26 @@ void UVSSettingItemBase_Integer::RefreshOptions()
 		GeneratedOptions.Empty();
 	}
 
-	/** Must rebind the value widgets. */
+	/** Sort options to the right order. */
+	TArray<int32> Options = bUseGeneratedOptions ? GeneratedOptions : CustomOptions;
+	Algo::Sort(Options);
+	if (bEnableLowerBoundExtensionReroute)
+	{
+		Options.RemoveSingle(LowerBoundExtensionRerouteValue);
+		Options.Insert(LowerBoundExtensionRerouteValue, 0);
+	}
+	if (bEnableUpperBoundExtensionReroute)
+	{
+		Options.RemoveSingle(LowerBoundExtensionRerouteValue);
+		Options.Push(LowerBoundExtensionRerouteValue);
+	}
+	if (bOptionsHighToLow)
+	{
+		Algo::Reverse(Options);
+	}
+	
+
+	/** Must rebind the value widgets after the options are changed. */
 	const TArray<UWidget*>& ValueWidgets = GetBoundWidgetsOfType(FName("Value"));
 	for (UWidget* BoundWidget : ValueWidgets)
 	{
@@ -348,7 +362,7 @@ TArray<int32> UVSSettingItemBase_Integer::CalcGeneratedOptions_Implementation() 
 {
 	/** Generate options. */
 	TArray<int32> Options;
-	if (!bGenerateOptionsHighToLow)
+	if (!bOptionsHighToLow)
 	{
 		for (int i = DesiredValueRange.X; i <= DesiredValueRange.Y + DesiredValueStep - 1; i += DesiredValueStep)
 		{
@@ -367,7 +381,7 @@ TArray<int32> UVSSettingItemBase_Integer::CalcGeneratedOptions_Implementation() 
 
 	if (bEnableLowerBoundExtensionReroute)
 	{
-		if (!bGenerateOptionsHighToLow)
+		if (!bOptionsHighToLow)
 		{
 			Options.Insert(LowerBoundExtensionRerouteValue, 0);
 		}
@@ -379,7 +393,7 @@ TArray<int32> UVSSettingItemBase_Integer::CalcGeneratedOptions_Implementation() 
 
 	if (bEnableUpperBoundExtensionReroute)
 	{
-		if (!bGenerateOptionsHighToLow)
+		if (!bOptionsHighToLow)
 		{
 			Options.Add(UpperBoundExtensionRerouteValue);
 		}
@@ -413,6 +427,41 @@ void UVSSettingItemBase_Integer::OnValueRotatorRotatedWithDirection(int32 NewVal
 
 void UVSSettingItemBase_Integer::OnValueSliderValueChanged(float NewValue)
 {
-	/** TODO Refine the snap rules. */
+	const int32 SettingValue = GetValue(EVSSettingItemValueSource::Settings);
+	const int32 NewIntValue = FMath::RoundToInt(NewValue);
+
+	if (SettingValue == NewIntValue) return;
+
+	const TArray<int32> Options = GetOptions();
+	const int32 SettingOptionIndex = UVSSetContainerLibrary::GetArrayNearestElementIndex<int32>(SettingValue, Options);
+
+	for (UWidget* Widget : GetBoundWidgetsOfType(FName("Value")))
+	{
+		if (USlider* Slider = Cast<USlider>(Widget))
+		{
+			const int32 SliderValue = FMath::RoundToInt(Slider->GetValue());
+			
+			/** Not set by mouse movement. */
+			if (!Slider->HasMouseCapture())
+			{
+				/** Is it the slider that has been set value. */
+				if (SliderValue == NewIntValue)
+				{
+					/** The value set is within one step. */
+					if (FMath::IsNearlyEqual(SettingValue, SliderValue, DesiredValueStep * 1.1f))
+					{
+						/** Snap value to option. */
+						const int32 NewValueIndex = SettingOptionIndex + (NewIntValue > SettingValue ? 1 : -1);
+						if (Options.IsValidIndex(NewIntValue))
+						{
+							SetValue(GetConditionToSettingValue(Options[NewValueIndex]));
+							return;
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	SetValue(GetConditionToSettingValue(FMath::RoundToInt(NewValue)));
 }

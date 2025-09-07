@@ -29,7 +29,7 @@ void UVSSettingItemBase_Float::PostInitProperties()
 void UVSSettingItemBase_Float::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
 	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Float, bUseGeneratedOptions)
-		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Float, bGenerateOptionsHighToLow)
+		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Float, bOptionsHighToLow)
 		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Float, CustomOptions)
 		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Float, DesiredValueRange)
 		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase_Float, DesiredValueStep)
@@ -53,11 +53,6 @@ void UVSSettingItemBase_Float::Initialize_Implementation()
 
 void UVSSettingItemBase_Float::Validate_Implementation()
 {
-	if (DesiredValueRange.X > DesiredValueRange.Y)
-	{
-		Swap(DesiredValueRange.X, DesiredValueRange.Y);
-	}
-
 	const float SettingValue = GetValue(EVSSettingItemValueSource::Settings);
 	float ValidateValue = GetConditionToSettingValue(SettingValue);
 
@@ -271,7 +266,7 @@ FText UVSSettingItemBase_Float::GetValueContentText_Implementation(float InValue
 		}
 	}
 	
-	const FText& ValueText = UKismetTextLibrary::Conv_DoubleToText(InValue, HalfToEven, false, true, 1, 324, DesiredFractionNum, DesiredFractionNum);
+	const FText& ValueText = UKismetTextLibrary::Conv_DoubleToText(InValue, HalfToEven, false, true, 1, 324, DisplayFractionNum, DisplayFractionNum);
 	const FText& FormatText = FText::Format(ContentTextFormat, ValueText);
 	return FormatText;
 }
@@ -279,7 +274,7 @@ FText UVSSettingItemBase_Float::GetValueContentText_Implementation(float InValue
 TArray<float> UVSSettingItemBase_Float::CalcGeneratedOptions_Implementation() const
 {
 	TArray<float> Options;
-	if (!bGenerateOptionsHighToLow)
+	if (!bOptionsHighToLow)
 	{
 		for (int i = DesiredValueRange.X; i <= DesiredValueRange.Y + DesiredValueStep - 1; i += DesiredValueStep)
 		{
@@ -298,7 +293,7 @@ TArray<float> UVSSettingItemBase_Float::CalcGeneratedOptions_Implementation() co
 
 	if (bEnableLowerBoundExtensionReroute)
 	{
-		if (!bGenerateOptionsHighToLow)
+		if (!bOptionsHighToLow)
 		{
 			Options.Insert(LowerBoundExtensionRerouteValue, 0);
 		}
@@ -310,7 +305,7 @@ TArray<float> UVSSettingItemBase_Float::CalcGeneratedOptions_Implementation() co
 
 	if (bEnableUpperBoundExtensionReroute)
 	{
-		if (!bGenerateOptionsHighToLow)
+		if (!bOptionsHighToLow)
 		{
 			Options.Add(UpperBoundExtensionRerouteValue);
 		}
@@ -338,6 +333,25 @@ void UVSSettingItemBase_Float::RefreshOptions()
 	{
 		GeneratedOptions.Empty();
 	}
+
+	/** Sort options to the right order. */
+	TArray<float> Options = bUseGeneratedOptions ? GeneratedOptions : CustomOptions;
+	Algo::Sort(Options);
+	if (bEnableLowerBoundExtensionReroute)
+	{
+		Options.RemoveSingle(LowerBoundExtensionRerouteValue);
+		Options.Insert(LowerBoundExtensionRerouteValue, 0);
+	}
+	if (bEnableUpperBoundExtensionReroute)
+	{
+		Options.RemoveSingle(LowerBoundExtensionRerouteValue);
+		Options.Push(LowerBoundExtensionRerouteValue);
+	}
+	if (bOptionsHighToLow)
+	{
+		Algo::Reverse(Options);
+	}
+	
 
 	/** Must rebind the value widgets. */
 	const TArray<UWidget*>& ValueWidgets = GetBoundWidgetsOfType(FName("Value"));
@@ -407,6 +421,40 @@ void UVSSettingItemBase_Float::OnValueRotatorRotatedWithDirection(int32 NewValue
 
 void UVSSettingItemBase_Float::OnValueSliderValueChanged(float NewValue)
 {
-	/** TODO Refine the snap rules. */
+	const float SettingValue = GetValue(EVSSettingItemValueSource::Settings);
+
+	if (FMath::IsNearlyEqual(SettingValue, NewValue)) return;
+
+	const TArray<float> Options = GetOptions();
+	const int32 SettingOptionIndex = UVSSetContainerLibrary::GetArrayNearestElementIndex(SettingValue, Options);
+
+	for (UWidget* Widget : GetBoundWidgetsOfType(FName("Value")))
+	{
+		if (USlider* Slider = Cast<USlider>(Widget))
+		{
+			const float SliderValue = Slider->GetValue();
+			
+			/** Not set by mouse movement. */
+			if (!Slider->HasMouseCapture())
+			{
+				/** Is it the slider that has been set value. */
+				if (FMath::IsNearlyEqual(SliderValue, NewValue))
+				{
+					/** The value set is within one step. */
+					if (FMath::IsNearlyEqual(SettingValue, SliderValue, DesiredValueStep * 1.1f))
+					{
+						/** Snap the value to option. */
+						const int32 NewValueIndex = SettingOptionIndex + (NewValue > SettingValue ? 1 : -1);
+						if (Options.IsValidIndex(NewValue))
+						{
+							SetValue(GetConditionToSettingValue(Options[NewValueIndex]));
+							return;
+						}
+					}
+				}
+			}
+		}
+	}
+
 	SetValue(GetConditionToSettingValue(NewValue));
 }

@@ -66,6 +66,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Widget")
 	void BindWidget(UWidget* Widget, FName TypeID = NAME_None);
 
+	/** Unbind the widget, then bind the widget again. */
 	UFUNCTION(BlueprintCallable, Category = "Widget")
 	void RebindWidget(UWidget* Widget, FName TypeID = NAME_None);
 	
@@ -78,11 +79,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Widget")
 	FName GetWidgetBoundTypeID(UWidget* Widget) const;
-	
+
+protected:
 	UFUNCTION(BlueprintCallable, Category = "Widget")
 	TArray<UWidget*> GetBoundWidgetsOfType(FName TypeName) const;
 
-protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	void Load();
 	
@@ -108,6 +109,9 @@ protected:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
 	void OnItemValueUpdated();
 
+	/**
+	 * Implement this cause some widget bindings may have concern with culture and language.
+	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
 	void OnCultureChanged();
 	
@@ -116,14 +120,15 @@ protected:
 	 * @param TypeName Widget type.
 	 *		It could be:
 	 *		Item (The composed widget that handles the item),
-	 *		Name (The widget is normally TextBlock), Content (The widget is normally TextBlock or RichTextBlock, etc.),
-	 *		Value (The widget is normally CheckBox, ComboBox or Slider, etc.)
+	 *		Name (The widget is normally TextBlock),
+	 *		Value (The widget is normally CheckBox, ComboBox or Slider, etc.),
+	 *		Content (The widget is normally TextBlock or RichTextBlock, etc.),
 	 *		or any custom type id that you'll need to handle manually.
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	void BindWidgetInternal(UWidget* Widget, FName TypeName = NAME_None);
 
-	/** This is possibly unused. */
+	/** Unbind widget from the setting item. Normally needs to be called when rebinding or when the widget is destroyed. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	void UnbindWidgetInternal(UWidget* Widget, FName TypeName);
 

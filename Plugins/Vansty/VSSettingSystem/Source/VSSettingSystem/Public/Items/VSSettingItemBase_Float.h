@@ -97,8 +97,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Options", meta = (EditCondition = "!bUseGeneratedOptions"))
 	TArray<float> CustomOptions;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Options", meta = (EditCondition = "bUseGeneratedOptions"))
-	bool bGenerateOptionsHighToLow = true;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Options")
+	bool bOptionsHighToLow = true;
 	
 	/** If not assigned, will use the value itself as name. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Texts")
@@ -109,7 +109,7 @@ protected:
 	FText ContentTextFormat = FText::FromString("{0}");
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Texts")
-	int32 DesiredFractionNum = 2;
+	int32 DisplayFractionNum = 2;
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Options", Transient)

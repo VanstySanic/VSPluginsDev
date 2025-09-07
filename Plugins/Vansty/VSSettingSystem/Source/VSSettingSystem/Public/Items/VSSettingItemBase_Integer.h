@@ -101,9 +101,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Options", meta = (EditCondition = "!bUseGeneratedOptions"))
 	TArray<int32> CustomOptions;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Options", meta = (EditCondition = "bUseGeneratedOptions"))
-	bool bGenerateOptionsHighToLow = true;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Options")
+	bool bOptionsHighToLow = true;
 
+	
 	/** If not assigned, will use the value itself as name. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Texts")
 	TMap<int32, FText> NamedValues;

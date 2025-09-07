@@ -20,7 +20,7 @@ UVSSettingItem_FrameRateLimit::UVSSettingItem_FrameRateLimit(const FObjectInitia
 	Algo::Reverse(CustomOptions);
 
 	NamedValues.Emplace(0.f, UVSSettingSystemConfig::Get()->NoLimitsText);
-	DesiredFractionNum = 0.f;
+	DisplayFractionNum = 0.f;
 	ContentTextFormat = FText::FromString("{0} FPS");
 }
 
