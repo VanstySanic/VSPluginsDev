@@ -48,11 +48,6 @@ class VSPLUGINSCORE_API UVSGameplayLibrary : public UBlueprintFunctionLibrary
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (AutoCreateRefTerm = "PlaneNormal, PlanePoint"))
 	static bool GetLocationUnderCursor(FVector& OutLocation, const FVSLocationUnderCursorQueryParams QueryParams = FVSLocationUnderCursorQueryParams());
-
-	
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Widget")
-	static int32 GetViewportMaxWidgetZOrder(APlayerController* PlayerController);
-
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Projectile", meta = (AutoCreateRefTerm = "StartLocation, EndLocation, GravityDirection"))
 	static FVector SuggestVelocityForProjectileMovementByTime(const FVector& StartLocation, const FVector& EndLocation, const float MovementTime = 1.f, const FVector& GravityDirection = FVector(0.0, 0.0, -1.0), float GravitySize = 980.f);

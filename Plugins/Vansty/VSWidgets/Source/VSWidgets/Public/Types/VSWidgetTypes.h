@@ -3,13 +3,35 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/SlateWrapperTypes.h"
 #include "Types/VSMathTypes.h"
 #include "UObject/Object.h"
 #include "VSWidgetTypes.generated.h"
 
+class UWidget;
 class UCommonButtonBase;
 class UCommonButtonStyle;
 class UVSMessageDialog;
+
+USTRUCT(BlueprintType)
+struct FVSWidgetLayoutParams
+{
+	GENERATED_BODY()
+
+	void ApplyToWidget(UWidget* Widget);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FSlateChildSize Size = FSlateChildSize(ESlateSizeRule::Fill);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FMargin Padding = FMargin();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EHorizontalAlignment> HorizontalAlignment = HAlign_Fill;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EVerticalAlignment> VerticalAlignment = VAlign_Fill;
+};
 
 USTRUCT(BlueprintType)
 struct FVSWidgetSubtitleParams : public FTableRowBase
@@ -94,7 +116,7 @@ struct FVSCommonButtonDisplayParams : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	VSWIDGETS_API void ApplyToButton(UCommonButtonBase* Button);
+	VSWIDGETS_API void ApplyToButton(UCommonButtonBase* Button) const;
 
 	/** Override if not none. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

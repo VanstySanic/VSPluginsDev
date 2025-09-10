@@ -5,12 +5,26 @@
 #include "CommonButtonBase.h"
 #include "VSPrivablic.h"
 #include "Blueprint/WidgetTree.h"
+#include "Components/HorizontalBoxSlot.h"
 #include "Components/RichTextBlock.h"
 #include "Components/TextBlock.h"
 
 VS_DECLARE_PRIVABLIC_MEMBER(UCommonButtonBase, InputActionWidget, TObjectPtr<UCommonActionWidget>);
 
-void FVSCommonButtonDisplayParams::ApplyToButton(UCommonButtonBase* Button)
+void FVSWidgetLayoutParams::ApplyToWidget(UWidget* Widget)
+{
+	if (!Widget) return;
+
+	if (UHorizontalBoxSlot* PanelSlot = Cast<UHorizontalBoxSlot>(Widget->Slot))
+	{
+		PanelSlot->SetSize(Size);
+		PanelSlot->SetPadding(Padding);
+		PanelSlot->SetHorizontalAlignment(HorizontalAlignment);
+		PanelSlot->SetVerticalAlignment(VerticalAlignment);
+	}
+}
+
+void FVSCommonButtonDisplayParams::ApplyToButton(UCommonButtonBase* Button) const
 {
 	if (!Button) return;
 

@@ -47,16 +47,15 @@ private:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<URichTextBlock> RichTextBlock_Message;
 	
-	/** This button is used as a sample for size and paddings. This is optional. */
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<UCommonButtonBase> Button_Sample;
-	
 protected:
 	UPROPERTY(EditAnywhere, Category = "Widget")
 	TMap<FName, TSubclassOf<UCommonButtonBase>> RepliedButtonClasses;
 
 	UPROPERTY(EditAnywhere, Category = "Widget", meta = (RowType = "/Script/VSWidgets.VSCommonButtonDisplayParams"))
 	TMap<FName, FDataTableRowHandle> RepliedButtonDisplayParams;
+
+	UPROPERTY(EditAnywhere, Category = "Widget")
+	FVSWidgetLayoutParams ButtonLayoutParams; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget")
 	bool bRestoreActiveUIInputConfig = true;

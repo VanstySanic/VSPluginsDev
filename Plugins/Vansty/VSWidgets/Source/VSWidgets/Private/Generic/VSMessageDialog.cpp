@@ -3,9 +3,8 @@
 #include "Generic/VSMessageDialog.h"
 #include "CommonActivatableWidget.h"
 #include "CommonButtonBase.h"
-#include "VSWidgetUtils.h"
+#include "VSWidgetLibrary.h"
 #include "Blueprint/WidgetTree.h"
-#include "Components/HorizontalBoxSlot.h"
 #include "Components/RichTextBlock.h"
 #include "Components/TextBlock.h"
 #include "Libraries/VSGameplayLibrary.h"
@@ -28,7 +27,7 @@ UVSMessageDialog* UVSMessageDialog::CreateMessageDialog(APlayerController* Playe
 
 	if (MessageDialog->bRestoreActiveUIInputConfig && MessageDialog->bAutoActivate)
 	{
-		MessageDialog->CachedUIInputConfig = UVSWidgetUtils::GetCurrentUIInputConfig(PlayerController);
+		MessageDialog->CachedUIInputConfig = UVSWidgetLibrary::GetCurrentUIInputConfig(PlayerController);
 	}
 	
 	if (MessageDialog->TextBlock_Title)
@@ -42,7 +41,7 @@ UVSMessageDialog* UVSMessageDialog::CreateMessageDialog(APlayerController* Playe
 
 	if (bAutoDisplay)
 	{
-		const int32 ZOrder = UVSGameplayLibrary::GetViewportMaxWidgetZOrder(PlayerController);
+		const int32 ZOrder = UVSWidgetLibrary::GetViewportMaxWidgetZOrder(PlayerController);
 		MessageDialog->AddToPlayerScreen(ZOrder);
 	}
 	
@@ -53,7 +52,6 @@ bool UVSMessageDialog::Initialize()
 {
 	if (!Super::Initialize()) return false;
 	if (!Panel_Button || !RichTextBlock_Message) return false;
-	if (Button_Sample && !Panel_Button->HasChild(Panel_Button)) return false;
 
 	return true;
 }
@@ -73,7 +71,7 @@ void UVSMessageDialog::NativeOnActivated()
 	/** Cache the ui input config befor set to new. */
 	if (bRestoreActiveUIInputConfig)
 	{
-		CachedUIInputConfig = UVSWidgetUtils::GetCurrentUIInputConfig(GetOwningPlayer());
+		CachedUIInputConfig = UVSWidgetLibrary::GetCurrentUIInputConfig(GetOwningPlayer());
 	}
 
 	Super::NativeOnActivated();
@@ -83,7 +81,7 @@ void UVSMessageDialog::NativeOnDeactivated()
 {
 	if (bRestoreActiveUIInputConfig)
 	{
-		UVSWidgetUtils::SetCurrentUIInputConfig(GetOwningPlayer(), CachedUIInputConfig);
+		UVSWidgetLibrary::SetCurrentUIInputConfig(GetOwningPlayer(), CachedUIInputConfig);
 	}
 	
 	Super::NativeOnDeactivated();
@@ -91,21 +89,17 @@ void UVSMessageDialog::NativeOnDeactivated()
 
 void UVSMessageDialog::GenerateAndInitializeButtons()
 {
-	if (Button_Sample)
-	{
-		check(Panel_Button->HasChild(Button_Sample));
-	}
-	
 	/** Clear original buttons in the panel. */
 	for (UWidget* Child : Panel_Button->GetAllChildren())
 	{
 		if (UCommonButtonBase* Button = Cast<UCommonButtonBase>(Child))
 		{
-			if (Button_Sample && Button != Button_Sample)
-			{
-				Button->RemoveFromParent();
-			}
-		}	
+			Button->RemoveFromParent();
+		}
+		else
+		{
+			Panel_Button->RemoveChild(Child);
+		}
 	}
 
 	/** Process reply for buttons. */
@@ -127,24 +121,7 @@ void UVSMessageDialog::GenerateAndInitializeButtons()
 			
 			/** Setup panel. */
 			Panel_Button->AddChild(Button);
-			if (UHorizontalBoxSlot* PanelSlot = Cast<UHorizontalBoxSlot>(Button->Slot))
-			{
-				if (Button_Sample)
-				{
-					UHorizontalBoxSlot* SampleSlot = Cast<UHorizontalBoxSlot>(Button_Sample->Slot);
-					PanelSlot->SetSize(SampleSlot->GetSize());
-					PanelSlot->SetPadding(SampleSlot->GetPadding());
-					PanelSlot->SetHorizontalAlignment(SampleSlot->GetHorizontalAlignment());
-					PanelSlot->SetVerticalAlignment(SampleSlot->GetVerticalAlignment());
-				}
-				else
-				{
-					PanelSlot->SetSize(ESlateSizeRule::Fill);
-					PanelSlot->SetHorizontalAlignment(HAlign_Center);
-					PanelSlot->SetVerticalAlignment(VAlign_Fill);
-				}
-			}
-			/** else if (false) {  } */
+			ButtonLayoutParams.ApplyToWidget(Button);
 			
 			if (MessageDialogParams.DefaultFocusReply == Reply)
 			{
@@ -160,18 +137,13 @@ void UVSMessageDialog::GenerateAndInitializeButtons()
 			});
 		}
 	}
-	
-	if (Button_Sample)
-	{
-		Button_Sample->RemoveFromParent();
-	}
 }
 
 void UVSMessageDialog::OnDialogReplied()
 {
 	if (bRestoreActiveUIInputConfig)
 	{
-		UVSWidgetUtils::SetCurrentUIInputConfig(GetOwningPlayer(), CachedUIInputConfig);
+		UVSWidgetLibrary::SetCurrentUIInputConfig(GetOwningPlayer(), CachedUIInputConfig);
 	}
 	
 	if (IsActivated())

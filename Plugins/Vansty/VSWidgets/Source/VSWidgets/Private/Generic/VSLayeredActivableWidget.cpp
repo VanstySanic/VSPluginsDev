@@ -1,7 +1,7 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Generic/VSLayeredActivableWidget.h"
-#include "VSWidgetUtils.h"
+#include "VSWidgetLibrary.h"
 #include "Components/WidgetSwitcher.h"
 #include "Input/CommonUIActionRouterBase.h"
 #include "Widgets/CommonActivatableWidgetContainer.h"
@@ -42,7 +42,7 @@ void UVSLayeredActivableWidget::NativeOnActivated()
 	/** Cache the ui input config befor set to new. */
 	if (bRestoreActiveUIInputConfig)
 	{
-		CachedUIInputConfig = UVSWidgetUtils::GetCurrentUIInputConfig(GetOwningPlayer());
+		CachedUIInputConfig = UVSWidgetLibrary::GetCurrentUIInputConfig(GetOwningPlayer());
 	}
 
 	Super::NativeOnActivated();
@@ -52,7 +52,7 @@ void UVSLayeredActivableWidget::NativeOnDeactivated()
 {
 	if (bRestoreActiveUIInputConfig)
 	{
-		UVSWidgetUtils::SetCurrentUIInputConfig(GetOwningPlayer(), CachedUIInputConfig);
+		UVSWidgetLibrary::SetCurrentUIInputConfig(GetOwningPlayer(), CachedUIInputConfig);
 	}
 	
 	Super::NativeOnDeactivated();

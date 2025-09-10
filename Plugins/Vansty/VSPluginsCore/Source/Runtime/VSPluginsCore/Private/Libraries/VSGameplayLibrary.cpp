@@ -2,9 +2,6 @@
 
 #include "Libraries/VSGameplayLibrary.h"
 #include "EngineUtils.h"
-#include "Blueprint/GameViewportSubsystem.h"
-#include "Blueprint/UserWidget.h"
-#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/BrushComponent.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerState.h"
@@ -156,29 +153,6 @@ FVector UVSGameplayLibrary::SuggestVelocityForProjectileMovementByTime(const FVe
 	AnsVelocity += DeltaLocationZ / MovementTime - 0.5f * GravitySize * NegativeGravityNormal * MovementTime;
 
 	return AnsVelocity;
-}
-
-int32 UVSGameplayLibrary::GetViewportMaxWidgetZOrder(APlayerController* PlayerController)
-{
-	if (!PlayerController) return INT16_MIN;
-	UGameViewportSubsystem* Subsystem = UGameViewportSubsystem::Get(PlayerController->GetWorld());
-	TArray<UUserWidget*> Widgets;
-	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(PlayerController, Widgets, UUserWidget::StaticClass());
-
-	int32 MaxWidgetPriority = INT16_MIN;
-	for (UUserWidget* Widget : Widgets)
-	{
-		if (Widget->IsInViewport() && Widget->GetOwningPlayer() == PlayerController)
-		{
-			FGameViewportWidgetSlot ViewportSlot = Subsystem->GetWidgetSlot(Widget);
-			if (ViewportSlot.ZOrder >= MaxWidgetPriority)
-			{
-				MaxWidgetPriority = ViewportSlot.ZOrder;
-			}
-		}
-	}
-	
-	return MaxWidgetPriority;
 }
 
 APostProcessVolume* UVSGameplayLibrary::GetPostProcessVolumeAtLocation(UObject* WorldContext, const FVector& Location)

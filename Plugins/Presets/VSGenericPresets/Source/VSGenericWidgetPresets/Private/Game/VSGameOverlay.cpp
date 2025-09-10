@@ -2,8 +2,8 @@
 
 #include "Game/VSGameOverlay.h"
 #include "Game/VSGameWidgetController.h"
-#include "Game/VSNotifyLine.h"
-#include "Game/VSSubtitleLine.h"
+#include "Components/VSNotifyLine.h"
+#include "Components/VSSubtitleLine.h"
 
 UVSGameOverlay::UVSGameOverlay(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
