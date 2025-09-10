@@ -340,16 +340,16 @@ const TMap<FGameplayTag, FText>& UVSSettingItem_ScalabilityQualityLevel::GetDefa
 {
 	static TMap<FGameplayTag, FText> ScalabilityQualityLevel = TMap<FGameplayTag, FText>
 	{
-		{ EVSSettingItem::Scalability_QualityLevel_ViewDistance, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.ViewDistance", "View Distance") },
-		{ EVSSettingItem::Scalability_QualityLevel_AntiAliasing, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.AntiAliasing", "Anti-Aliasing") },
-		{ EVSSettingItem::Scalability_QualityLevel_Shadow, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.Shadow", "Shadow") },
-		{ EVSSettingItem::Scalability_QualityLevel_GlobalIllumination, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.GlobalIllumination", "Global Illumination") },
-		{ EVSSettingItem::Scalability_QualityLevel_Reflection, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.Reflection", "Reflection") },
-		{ EVSSettingItem::Scalability_QualityLevel_PostProcess, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.PostProcess", "Post-Process") },
-		{ EVSSettingItem::Scalability_QualityLevel_Texture, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.Texture", "Texture") },
-		{ EVSSettingItem::Scalability_QualityLevel_Effects, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.PostProcess", "Post-Process") },
-		{ EVSSettingItem::Scalability_QualityLevel_Foliage, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.Effects", "Effects") },
-		{ EVSSettingItem::Scalability_QualityLevel_Shading, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.Shading", "Shading") }
+		{ EVSSettingItem::Scalability_QualityLevel_ViewDistance, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.ViewDistance", "View Distance Quality") },
+		{ EVSSettingItem::Scalability_QualityLevel_AntiAliasing, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.AntiAliasing", "Anti-Aliasing Quality") },
+		{ EVSSettingItem::Scalability_QualityLevel_Shadow, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.Shadow", "Shadow Quality") },
+		{ EVSSettingItem::Scalability_QualityLevel_GlobalIllumination, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.GlobalIllumination", "Global Illumination Quality") },
+		{ EVSSettingItem::Scalability_QualityLevel_Reflection, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.Reflection", "Reflection Quality") },
+		{ EVSSettingItem::Scalability_QualityLevel_PostProcess, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.PostProcess", "Post-Process Quality") },
+		{ EVSSettingItem::Scalability_QualityLevel_Texture, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.Texture", "Texture Quality") },
+		{ EVSSettingItem::Scalability_QualityLevel_Effects, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.Effects", "Effects Quality") },
+		{ EVSSettingItem::Scalability_QualityLevel_Foliage, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.Foliage", "Foliage Quality") },
+		{ EVSSettingItem::Scalability_QualityLevel_Shading, NSLOCTEXT("VSSettingSystem", "SettingItem.Scalability.QualityLevel.Shading", "Shading Quality") }
 	};
 
 	return ScalabilityQualityLevel;

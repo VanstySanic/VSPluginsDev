@@ -23,9 +23,9 @@ namespace EVSSettingItem
 	UE_DEFINE_GAMEPLAY_TAG(Scalability_QualityLevel_Effects, "VSSettingSystem.SettingItem.Scalability.QualityLevel.Effects");
 	UE_DEFINE_GAMEPLAY_TAG(Scalability_QualityLevel_Foliage, "VSSettingSystem.SettingItem.Scalability.QualityLevel.Foliage");
 	UE_DEFINE_GAMEPLAY_TAG(Scalability_QualityLevel_Shading, "VSSettingSystem.SettingItem.Scalability.QualityLevel.Shading");
-
-	UE_DEFINE_GAMEPLAY_TAG(Graphics_MotionBlur, "VSSettingSystem.SettingItem.Graphics.MotionBlur");
-
+	
 	UE_DEFINE_GAMEPLAY_TAG(Audio_Volume_Master, "VSSettingSystem.SettingItem.Audio.Volume.Master");
 	UE_DEFINE_GAMEPLAY_TAG(Audio_Volume_Music, "VSSettingSystem.SettingItem.Audio.Volume.Music");
+
+	UE_DEFINE_GAMEPLAY_TAG(Graphics_MotionBlur, "VSSettingSystem.SettingItem.Graphics.MotionBlur");
 }
