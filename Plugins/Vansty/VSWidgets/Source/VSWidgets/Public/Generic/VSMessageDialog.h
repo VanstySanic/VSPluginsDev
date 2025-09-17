@@ -55,7 +55,7 @@ protected:
 	TMap<FName, FDataTableRowHandle> RepliedButtonDisplayParams;
 
 	UPROPERTY(EditAnywhere, Category = "Widget")
-	FVSWidgetLayoutParams ButtonLayoutParams; 
+	FVSPanelSlotLayoutParams ButtonSlotLayoutParams; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget")
 	bool bRestoreActiveUIInputConfig = true;

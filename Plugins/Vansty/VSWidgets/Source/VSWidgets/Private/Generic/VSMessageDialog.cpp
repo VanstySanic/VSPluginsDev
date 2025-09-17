@@ -121,7 +121,7 @@ void UVSMessageDialog::GenerateAndInitializeButtons()
 			
 			/** Setup panel. */
 			Panel_Button->AddChild(Button);
-			ButtonLayoutParams.ApplyToWidget(Button);
+			ButtonSlotLayoutParams.ApplyToWidget(Button);
 			
 			if (MessageDialogParams.DefaultFocusReply == Reply)
 			{

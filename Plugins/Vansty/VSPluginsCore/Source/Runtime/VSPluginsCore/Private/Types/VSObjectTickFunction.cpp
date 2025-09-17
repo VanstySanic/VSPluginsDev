@@ -107,7 +107,7 @@ void FVSObjectTickFunction::RegisterAndSetup(UObject* InTargetObject)
 		bShouldTickCrossWorld = true;
 		OnWorldInitializeDelegateHandle = FWorldDelegates::OnPostWorldInitialization.AddLambda([&] (UWorld* InWorld, FWorldInitializationValues)
 		{
-			if (!InWorld) return;
+			if (!InWorld || !InWorld->GetCurrentLevel()) return;
 			RegisterTickFunction(InWorld->GetCurrentLevel());
 		});
 
@@ -145,7 +145,10 @@ void FVSObjectTickFunction::RegisterAndSetup(UObject* InTargetObject)
 	}
 
 	SetTickFunctionEnable(bStartWithTickEnabled || IsTickFunctionEnabled());
-	RegisterTickFunction(World->GetCurrentLevel());
+	if (ULevel* CurrentLevel = World->GetCurrentLevel())
+	{
+		RegisterTickFunction(CurrentLevel);
+	}
 }
 
 void FVSObjectTickFunction::UnregisterAndCleanup()

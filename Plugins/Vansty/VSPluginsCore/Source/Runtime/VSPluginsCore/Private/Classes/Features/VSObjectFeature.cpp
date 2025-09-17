@@ -303,9 +303,11 @@ void UVSObjectFeature::DestroyFeature()
 
 	if (UVSObjectFeature* OwnerFeature = GetOwnerFeature()) { OwnerFeature->RemoveSubFeature(this); }
 
-	MarkAsGarbage();
+	if (!IsRooted())
+	{
+		MarkAsGarbage();
+	}
 }
-
 
 void UVSObjectFeature::SetIsReplicated(bool bShouldReplicate)
 {
@@ -328,6 +330,16 @@ UVSObjectFeature* UVSObjectFeature::AddSubFeatureByClass(TSubclassOf<UVSObjectFe
 {
 	if (!Class) return nullptr;
 	UVSObjectFeature* ObjectFeature = NewObject<UVSObjectFeature>(this, Class, NAME_None);
+	if (!ObjectFeature) return nullptr;
+	ObjectFeature->FeatureName = OptionalFeatureName;
+	AddSubFeatureInternal(ObjectFeature);
+	return ObjectFeature;
+}
+
+UVSObjectFeature* UVSObjectFeature::AddDefaultSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName)
+{
+	if (!Class) return nullptr;
+	UVSObjectFeature* ObjectFeature = Cast<UVSObjectFeature>(CreateDefaultSubobject(MakeUniqueObjectName(this, Class, Class->GetFName()), Class, Class, true, false));
 	if (!ObjectFeature) return nullptr;
 	ObjectFeature->FeatureName = OptionalFeatureName;
 	AddSubFeatureInternal(ObjectFeature);

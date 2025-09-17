@@ -5,13 +5,14 @@
 #include "CommonButtonBase.h"
 #include "VSPrivablic.h"
 #include "Blueprint/WidgetTree.h"
+#include "Components/CanvasPanelSlot.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/RichTextBlock.h"
 #include "Components/TextBlock.h"
 
 VS_DECLARE_PRIVABLIC_MEMBER(UCommonButtonBase, InputActionWidget, TObjectPtr<UCommonActionWidget>);
 
-void FVSWidgetLayoutParams::ApplyToWidget(UWidget* Widget)
+void FVSPanelSlotLayoutParams::ApplyToWidget(UWidget* Widget)
 {
 	if (!Widget) return;
 
@@ -21,6 +22,20 @@ void FVSWidgetLayoutParams::ApplyToWidget(UWidget* Widget)
 		PanelSlot->SetPadding(Padding);
 		PanelSlot->SetHorizontalAlignment(HorizontalAlignment);
 		PanelSlot->SetVerticalAlignment(VerticalAlignment);
+	}
+}
+
+void FVSCanvasSlotLayoutParams::ApplyToWidget(UWidget* Widget)
+{
+	if (!Widget) return;
+
+	if (UCanvasPanelSlot* CanvasPanelSlot = Cast<UCanvasPanelSlot>(Widget->Slot))
+	{
+		CanvasPanelSlot->SetAnchors(Anchors);
+		CanvasPanelSlot->SetOffsets(Offsets);
+		CanvasPanelSlot->SetAlignment(Alignment);
+		CanvasPanelSlot->SetAutoSize(bAutoSize);
+		CanvasPanelSlot->SetZOrder(ZOrder);
 	}
 }
 

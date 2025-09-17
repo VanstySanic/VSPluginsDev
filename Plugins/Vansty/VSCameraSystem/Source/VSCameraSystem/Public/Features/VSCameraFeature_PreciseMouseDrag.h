@@ -8,6 +8,7 @@
 #include "VSCameraFeature_PreciseMouseDrag.generated.h"
 
 struct FVSLocationUnderCursorQueryParams;
+
 /**
  * 
  */
@@ -47,5 +48,5 @@ private:
 	FVSLocationUnderCursorQueryParams LocationUnderCursorQueryParams;
 	FVector AnchorLocationWorld = FVector::ZeroVector;
 	FVector MovementPlaneNormalWorld = FVector::ZeroVector;
-	FVector RemainedZoomRelativeMovementNoScale = FVector::ZeroVector;
+	FVector RemainedRelativeMovementNoScale = FVector::ZeroVector;
 };

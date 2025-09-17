@@ -82,7 +82,7 @@ struct FVSAlphaDurationBlendArgs
 
 /**
  * Performs an alpha blend with duration.
- * This will cause the alpha changing from 0.f to 1.f, and then reverse it.
+ * This will cause the alpha changing from 0.f to 1.f, and then reverse form 1.f to 0.f.
  */
 USTRUCT(BlueprintType)
 struct FVSAlphaDurationBlend

@@ -130,6 +130,9 @@ public:
 	bool IsActive() const { return bIsActive; }
 
 protected:
+	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
+	UVSObjectFeature* AddDefaultSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName = NAME_None);
+	
 	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
 	void OnFeatureActivated();
 

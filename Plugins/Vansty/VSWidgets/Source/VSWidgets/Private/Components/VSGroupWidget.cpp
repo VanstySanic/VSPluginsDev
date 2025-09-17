@@ -8,8 +8,8 @@
 UVSGroupWidget::UVSGroupWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	WidgetLayoutParams.Padding.Left = 2.f;
-	WidgetLayoutParams.Padding.Right = 2.f;
+	WidgetSlotLayoutParams.Padding.Left = 2.f;
+	WidgetSlotLayoutParams.Padding.Right = 2.f;
 }
 
 void UVSGroupWidget::NativePreConstruct()
@@ -58,7 +58,7 @@ void UVSGroupWidget::RefreshWidgets()
 		UWidget* Widget = WidgetTree->ConstructWidget(WidgetClass);
 		Panel->AddChild(Widget);
 		Widget->SetVisibility(WidgetVisibility);
-		WidgetLayoutParams.ApplyToWidget(Widget);
+		WidgetSlotLayoutParams.ApplyToWidget(Widget);
 	}
 
 	if (WidgetGroup && Panel)

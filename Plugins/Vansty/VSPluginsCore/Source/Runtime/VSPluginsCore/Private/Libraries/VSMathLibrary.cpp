@@ -11,6 +11,19 @@ UVSMathLibrary::UVSMathLibrary(const FObjectInitializer& ObjectInitializer)
 }
 
 
+bool UVSMathLibrary::VectorHasZeroAxes(const FVector& Vector, const float Tolerance)
+{
+	return FMath::IsNearlyZero(Vector.X, Tolerance) || FMath::IsNearlyZero(Vector.Y, Tolerance) || FMath::IsNearlyZero(Vector.Z, Tolerance);
+}
+
+FVector UVSMathLibrary::VectorSafeDevide(const FVector& VectorA, const FVector& VectorB)
+{
+	return FVector(
+		UKismetMathLibrary::SafeDivide(VectorA.X, VectorB.X),
+		UKismetMathLibrary::SafeDivide(VectorA.Y, VectorB.Y),
+		UKismetMathLibrary::SafeDivide(VectorA.Z, VectorB.Z));
+}
+
 FRotator UVSMathLibrary::RotatorProjectOntoPlane(const FRotator& Rotator, const FVector& PlaneNormal)
 {
 	const FQuat& WorldToPlaneRotation = UKismetMathLibrary::Quat_FindBetweenVectors(PlaneNormal, FVector::UpVector);

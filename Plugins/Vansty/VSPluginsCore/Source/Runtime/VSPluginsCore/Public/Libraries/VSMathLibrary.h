@@ -15,6 +15,12 @@ class VSPLUGINSCORE_API UVSMathLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_UCLASS_BODY()
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Vector"))
+	static bool VectorHasZeroAxes(const FVector& Vector, const float Tolerance = 0.00000001);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Vector"))
+	static FVector VectorSafeDevide(const FVector& VectorA, const FVector& VectorB);
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Rotator, PlaneNormal"))
 	static FRotator RotatorProjectOntoPlane(const FRotator& Rotator, const FVector& PlaneNormal);
 

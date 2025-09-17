@@ -52,10 +52,10 @@ void UVSAutoContextActionFeature::BeginPlay_Implementation()
 	
 	if (!UVSActorLibrary::IsActorNetLocal(GetOwnerActor())) return;
 
-	/** Add initial contexts. */
+	/** Add default contexts. */
 	for (const auto& QueriedContext : QueriedContexts)
 	{
-		if (!QueriedContext.Value.bAddByDefault || !QueriedContext.Key) continue;
+		if (!QueriedContext.Key || !QueriedContext.Value.bAddByDefault) continue;
 		if (!EnhancedInputLocalPlayerSubsystemPrivate->HasMappingContext(QueriedContext.Key))
 		{
 			EnhancedInputLocalPlayerSubsystemPrivate->AddMappingContext(

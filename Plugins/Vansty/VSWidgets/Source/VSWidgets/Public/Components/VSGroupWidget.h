@@ -48,7 +48,7 @@ protected:
 	int32 WidgetNum = 3;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget")
-	FVSWidgetLayoutParams WidgetLayoutParams;
+	FVSPanelSlotLayoutParams WidgetSlotLayoutParams;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget")
 	ESlateVisibility WidgetVisibility = ESlateVisibility::SelfHitTestInvisible;

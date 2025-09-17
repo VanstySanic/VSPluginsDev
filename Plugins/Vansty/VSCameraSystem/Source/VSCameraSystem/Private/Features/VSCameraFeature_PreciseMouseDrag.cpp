@@ -14,7 +14,7 @@ bool UVSCameraFeature_PreciseMouseDrag::CanUpdateCamera_Implementation() const
 {
 	return Super::CanUpdateCamera_Implementation()
 		&& (LocationUnderCursorQueryParams.PlayerController.IsValid()
-			|| !RemainedZoomRelativeMovementNoScale.IsNearlyZero(0.01f));
+			|| !RemainedRelativeMovementNoScale.IsNearlyZero(0.01f));
 }
 
 void UVSCameraFeature_PreciseMouseDrag::UpdateCamera_Implementation(float DeltaTime)
@@ -30,16 +30,16 @@ void UVSCameraFeature_PreciseMouseDrag::UpdateCamera_Implementation(float DeltaT
 		FVector LocationUnderCursor;
 		if (UVSGameplayLibrary::GetLocationUnderCursor(LocationUnderCursor, LocationUnderCursorQueryParams))
 		{
-			RemainedZoomRelativeMovementNoScale = ViewTransform.InverseTransformVectorNoScale(FVector::VectorPlaneProject(AnchorLocationWorld - LocationUnderCursor, MovementPlaneNormalWorld));
+			RemainedRelativeMovementNoScale = ViewTransform.InverseTransformVectorNoScale(FVector::VectorPlaneProject(AnchorLocationWorld - LocationUnderCursor, MovementPlaneNormalWorld));
 		}
 	}
 
 	const float LaggedScale = UVSMathLibrary::FloatInterpTo(1.f, 0.f, MovementLagSpeed, MaxLagTimeSubStepping);
-	const FVector& MovementRelative = RemainedZoomRelativeMovementNoScale * (1.f - LaggedScale);
+	const FVector& MovementRelative = RemainedRelativeMovementNoScale * (1.f - LaggedScale);
 	const FVector& MovementWorld = ViewTransform.TransformVectorNoScale(MovementRelative);
 	
 	CameraViewData->CameraTransform.SetTranslation(CameraViewData->CameraTransform.GetTranslation() + MovementWorld);
-	RemainedZoomRelativeMovementNoScale *= LaggedScale;
+	RemainedRelativeMovementNoScale *= LaggedScale;
 }
 
 void UVSCameraFeature_PreciseMouseDrag::OnFeatureDeactivated_Implementation()
@@ -65,7 +65,7 @@ void UVSCameraFeature_PreciseMouseDrag::SetPreciseMouseDragAnchor(const FVector&
 	}
 
 	/** Reset the remained movement when set new anchor. */
-	RemainedZoomRelativeMovementNoScale = FVector::ZeroVector;
+	RemainedRelativeMovementNoScale = FVector::ZeroVector;
 
 	AnchorLocationWorld = NewAnchorLocation;
 	MovementPlaneNormalWorld = MovementPlaneNormal;
@@ -88,5 +88,5 @@ void UVSCameraFeature_PreciseMouseDrag::RemovePreciseMouseDragAnchor()
 
 void UVSCameraFeature_PreciseMouseDrag::ClearRemainedMovement()
 {
-	RemainedZoomRelativeMovementNoScale = FVector::ZeroVector;
+	RemainedRelativeMovementNoScale = FVector::ZeroVector;
 }

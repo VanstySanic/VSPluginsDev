@@ -6,6 +6,7 @@
 #include "Components/SlateWrapperTypes.h"
 #include "Types/VSMathTypes.h"
 #include "UObject/Object.h"
+#include "Widgets/Layout/Anchors.h"
 #include "VSWidgetTypes.generated.h"
 
 class UWidget;
@@ -13,12 +14,13 @@ class UCommonButtonBase;
 class UCommonButtonStyle;
 class UVSMessageDialog;
 
+/** Panel slot layout that works for most panel widgets. */
 USTRUCT(BlueprintType)
-struct FVSWidgetLayoutParams
+struct FVSPanelSlotLayoutParams
 {
 	GENERATED_BODY()
 
-	void ApplyToWidget(UWidget* Widget);
+	VSWIDGETS_API void ApplyToWidget(UWidget* Widget);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FSlateChildSize Size = FSlateChildSize(ESlateSizeRule::Fill);
@@ -31,6 +33,30 @@ struct FVSWidgetLayoutParams
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<EVerticalAlignment> VerticalAlignment = VAlign_Fill;
+};
+
+/** Panel slot layout that only works for canvas panel widget. */
+USTRUCT(BlueprintType)
+struct FVSCanvasSlotLayoutParams
+{
+	GENERATED_BODY()
+
+	VSWIDGETS_API void ApplyToWidget(UWidget* Widget);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FAnchors Anchors = FAnchors(0.f, 0.f, 1.f, 1.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FMargin Offsets = FMargin();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector2D Alignment = FVector2D::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bAutoSize = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 ZOrder = 0;
 };
 
 USTRUCT(BlueprintType)
