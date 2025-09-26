@@ -36,7 +36,7 @@ UVSMessageDialog* UVSMessageDialog::CreateMessageDialog(APlayerController* Playe
 	}
 	if (MessageDialog->RichTextBlock_Message)
 	{
-		MessageDialog->RichTextBlock_Message->SetText(Params.MessageContentText);
+		Params.MessageContentText.ApplyToRichTextBlock(MessageDialog->RichTextBlock_Message);
 	}
 
 	if (bAutoDisplay)

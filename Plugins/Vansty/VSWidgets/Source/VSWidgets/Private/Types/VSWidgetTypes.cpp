@@ -39,6 +39,21 @@ void FVSCanvasSlotLayoutParams::ApplyToWidget(UWidget* Widget)
 	}
 }
 
+FString FVSWidgetSubtitleParams::ToString() const
+{
+	FString TextToDisplay = !SpeakerName.IsEmpty() ?
+		(!SpeakerNameTextStyle.ToString().IsEmpty() ? ("<" + SpeakerNameTextStyle.ToString() + ">" + SpeakerName.ToString() + "</>: ") : SpeakerName.ToString())
+		: FString();
+
+	TextToDisplay += SubtitleText.GetString();
+	return TextToDisplay;
+}
+
+FText FVSWidgetSubtitleParams::ToText() const
+{
+	return FText::FromString(ToString());
+}
+
 void FVSCommonButtonDisplayParams::ApplyToButton(UCommonButtonBase* Button) const
 {
 	if (!Button) return;

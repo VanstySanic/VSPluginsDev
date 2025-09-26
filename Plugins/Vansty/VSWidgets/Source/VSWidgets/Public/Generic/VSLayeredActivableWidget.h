@@ -49,25 +49,27 @@ protected:
 
 protected:
 	/** The widget switcher that contains the Panel ans WidgetStack. Optional. User can switch between this. */
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UPROPERTY(BlueprintReadOnly, Category = "Widget", meta = (BindWidgetOptional))
 	TObjectPtr<UWidgetSwitcher> WidgetSwitcher;
 
-	/** Optional. Need to be outside the widget switcher, on the top layer. */
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
-	TObjectPtr<UOverlay> Overlay;
-
 	/** The panel that contains the primary contents. Optional. Needs to be in WidgetSwitcher. */
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	UPROPERTY(BlueprintReadOnly, Category = "Widget", meta = (BindWidgetOptional))
 	TObjectPtr<UPanelWidget> Panel;
 
 	/** Push activable widgets and process input here. Optional. Needs to be in WidgetSwitcher. */
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	UPROPERTY(BlueprintReadOnly, Category = "Widget", meta = (BindWidgetOptional))
 	TObjectPtr<UCommonActivatableWidgetStack> WidgetStack;
 
+	/** Optional. Need to be outside the widget switcher, on the top layer. */
+	UPROPERTY(BlueprintReadOnly, Category = "Widget")
+	TObjectPtr<UOverlay> Overlay;
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget")
 	bool bRestoreActiveUIInputConfig = true;
 
 private:
+
+
 	FUIInputConfig CachedUIInputConfig;
 };

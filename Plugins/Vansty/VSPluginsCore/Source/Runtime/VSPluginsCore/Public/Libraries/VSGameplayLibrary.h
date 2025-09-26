@@ -56,6 +56,12 @@ class VSPLUGINSCORE_API UVSGameplayLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Post Process", meta = (WorldContext = "WorldContext", AutoCreateRefTerm = "Location"))
 	static APostProcessVolume* GetPostProcessVolumeAtLocation(UObject* WorldContext, const FVector& Location);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay")
+	static FText GetRichStyledText(const FVSRichStyledText& RichStyledText);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay")
+	static FString GetRichStyledTextString(const FVSRichStyledText& RichStyledText);
+
 	
 	/**
 	 * @return Whether the sweep has been blocked.

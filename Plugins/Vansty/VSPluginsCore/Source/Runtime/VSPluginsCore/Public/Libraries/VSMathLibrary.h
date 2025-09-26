@@ -15,6 +15,14 @@ class VSPLUGINSCORE_API UVSMathLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_UCLASS_BODY()
 
+public:
+	/** 
+	 * Get number of decimal places of a float after trimming trailing zeros.
+	 * Handles artifacts like 0.29999999998 / 0.1000000001 correctly.
+	 */
+	UFUNCTION(BlueprintPure, Category="Math|Number", meta=(DisplayName="Get Decimal Places (Trimmed, Float)", AdvancedDisplay="MaxDecimals", ClampMin="0", UIMin="0", UIMax="12"))
+	static int32 GetDecimalPlacesTrimmedFloat(float Value, int32 MaxDecimals = 12);
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Vector"))
 	static bool VectorHasZeroAxes(const FVector& Vector, const float Tolerance = 0.00000001);
 

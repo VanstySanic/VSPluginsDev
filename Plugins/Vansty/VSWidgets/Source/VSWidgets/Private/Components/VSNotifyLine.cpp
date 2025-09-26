@@ -31,7 +31,7 @@ UVSNotifyLine* UVSNotifyLine::CreateAndDisplay(UPanelWidget* ParentPanelWidget, 
 	NotifyLine->RichTextBlock_NotifyTitle->SetText(NotifyParams.NotifyTitleText);
 	if (NotifyLine->RichTextBlock_NotifyContent)
 	{
-		NotifyLine->RichTextBlock_NotifyContent->SetText(NotifyParams.NotifyContentText);
+		NotifyParams.NotifyContentText.ApplyToRichTextBlock(NotifyLine->RichTextBlock_NotifyContent);
 	}
 	
 	ParentPanelWidget->AddChild(NotifyLine);

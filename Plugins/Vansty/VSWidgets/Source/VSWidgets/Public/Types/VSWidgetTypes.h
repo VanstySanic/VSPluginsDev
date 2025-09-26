@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/SlateWrapperTypes.h"
+#include "Types/VSGameplayTypes.h"
 #include "Types/VSMathTypes.h"
 #include "UObject/Object.h"
 #include "Widgets/Layout/Anchors.h"
@@ -64,15 +65,18 @@ struct FVSWidgetSubtitleParams : public FTableRowBase
 {
 	GENERATED_BODY()
 
+	VSWIDGETS_API FString ToString() const;
+	VSWIDGETS_API FText ToText() const;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText SubtitleText;
+	FVSRichStyledText SubtitleText;
 
 	/** Could be left empty. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText SpeakerName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName SpeakerNameTextStyleRowName = FName("Default");
+	FName SpeakerNameTextStyle = NAME_None;
 
 	/**
 	 * If assigned, the duration will be set to the voice's length.
@@ -95,7 +99,7 @@ struct FVSWidgetNotifyParams : public FTableRowBase
 
 	/** Optional. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText NotifyContentText;
+	FVSRichStyledText NotifyContentText;
 	
 	/** Used as an icon. Optional. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -114,7 +118,6 @@ struct FVSWidgetMessageDialogParams : public FTableRowBase
 	FVSWidgetMessageDialogParams()
 	{
 		DialogTitleText = FText::FromString("Title");
-		MessageContentText = FText::FromString("Message");
 		DialogReplies = TArray<FName>
 			{
 				FName("Yes"),
@@ -127,7 +130,7 @@ struct FVSWidgetMessageDialogParams : public FTableRowBase
 	FText DialogTitleText;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText MessageContentText;
+	FVSRichStyledText MessageContentText;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FName> DialogReplies;

@@ -189,6 +189,16 @@ APostProcessVolume* UVSGameplayLibrary::GetPostProcessVolumeAtLocation(UObject* 
 	return BestVolume;
 }
 
+FText UVSGameplayLibrary::GetRichStyledText(const FVSRichStyledText& RichStyledText)
+{
+	return RichStyledText.GetText();
+}
+
+FString UVSGameplayLibrary::GetRichStyledTextString(const FVSRichStyledText& RichStyledText)
+{
+	return RichStyledText.GetString();
+}
+
 bool UVSGameplayLibrary::SweepSingleByShapeAndChannels(const UObject* WorldContext, FHitResult& OutHit, const FVector& Start, const FVector& End, const FQuat& Rotation, const FCollisionShape& Shape, const FCollisionResponseContainer& Channels, const FCollisionQueryParams& QueryParams, FCollisionResponseParams ResponseParams)
 {
 	if (!WorldContext || !WorldContext->GetWorld()) return false;

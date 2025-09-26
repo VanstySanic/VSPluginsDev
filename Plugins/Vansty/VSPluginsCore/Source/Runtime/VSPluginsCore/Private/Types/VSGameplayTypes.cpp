@@ -2,6 +2,8 @@
 
 #include "Types/VSGameplayTypes.h"
 
+#include "Components/RichTextBlock.h"
+
 namespace EVSGameplayTagControllerTags
 {
 	UE_DEFINE_GAMEPLAY_TAG(Event_TagsUpdated, "VSPluginsCore.GameplayTagController.Event.TagsUpdated");
@@ -132,4 +134,47 @@ bool FVSLocationUnderCursorQueryParams::IsValid() const
 	if (!PlayerController.IsValid()) return false;
 	if (!bTraceByCollision && !bIntersectByPlane) return false;
 	return true;
+}
+
+FString FVSRichStyledText::GetString() const
+{
+	FString String = "";
+	for (int i = 0; i < ContentArray.Num(); i++)
+	{
+		const bool bApplyStyle = StyleArray.IsValidIndex(i) && !StyleArray[i].IsNone();
+		if (bApplyStyle)
+		{
+			String.Append("<");
+			String.Append(StyleArray[i].ToString());
+			String.Append(">");
+		}
+		String.Append(ContentArray[i].ToString());
+		if (bApplyStyle)
+		{
+			String.Append("</>");
+		}
+	}
+
+	return String;
+}
+
+FText FVSRichStyledText::GetText() const
+{
+	return FText::FromString(GetString());
+}
+
+void FVSRichStyledText::ApplyToRichTextBlock(URichTextBlock* RichTextBlock) const
+{
+	if (!RichTextBlock) return;
+	
+	if (DesiredStyleTable)
+	{
+		RichTextBlock->SetTextStyleSet(DesiredStyleTable);
+	}
+	if (DesiredDecoratorsClasses.Num())
+	{
+		RichTextBlock->SetDecorators(DesiredDecoratorsClasses);
+	}
+
+	RichTextBlock->SetText(GetText());
 };

@@ -9,6 +9,9 @@
 #include "UObject/Object.h"
 #include "VSGameplayTypes.generated.h"
 
+class URichTextBlock;
+class URichTextBlockDecorator;
+
 namespace EVSGameplayTagControllerTags
 {
 	VSPLUGINSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_TagsUpdated);
@@ -244,6 +247,11 @@ struct FVSDataTableRowHandleWrap
 		return Row.IsNull();
 	}
 
+	VSPLUGINSCORE_API bool operator==(const FVSDataTableRowHandleWrap& Other) const
+	{
+		return Row == Other.Row;
+	}
+
 	VSPLUGINSCORE_API bool operator!=(const FVSDataTableRowHandleWrap& Other) const
 	{
 		return Row != Other.Row;
@@ -360,4 +368,39 @@ struct FVSAutoContextOptions
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FModifyContextOptions RemoveModifyOptions;
+};
+
+USTRUCT(BlueprintType)
+struct FVSRichStyledText
+{
+	GENERATED_BODY()
+	
+	VSPLUGINSCORE_API FString GetString() const;
+	VSPLUGINSCORE_API FText GetText() const;
+	VSPLUGINSCORE_API void ApplyToRichTextBlock(URichTextBlock* RichTextBlock) const;
+
+	/**
+	 * Texts to display.
+	 * This can also be a decorator. For example, if you want to display an image, write [ <img id="0001"/> ]
+	 * Notice that this will not automatically handle the line change. Handle it by your self.
+	 * You can handle your own styles here if the style of the same index is none.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FText> ContentArray;
+
+	/**
+	 * Row name in the data table. "Default" .ect.
+	 * Match texts one by one.
+	 * If left empty, will not apply style.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FName> StyleArray;
+
+	/** Optional. Get and process by yourself. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UDataTable> DesiredStyleTable;
+
+	/** Optional. Get and process by yourself. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TSubclassOf<URichTextBlockDecorator>> DesiredDecoratorsClasses;
 };

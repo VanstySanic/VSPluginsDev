@@ -19,11 +19,8 @@ UVSSubtitleLine* UVSSubtitleLine::CreateAndDisplay(UPanelWidget* ParentPanelWidg
 	SubtitleLine->SetRenderOpacity(0.f);
 	SubtitleLine->AlphaDurationBlend = FVSAlphaDurationBlend(SubtitleParams.AlphaDurationBlendArgs);
 	SubtitleLine->AlphaDurationBlend.AlphaDurationBlendArgs.Duration = SubtitleParams.SourceVoice ? SubtitleParams.SourceVoice->GetDuration() : SubtitleParams.AlphaDurationBlendArgs.Duration;
-	FString TextToDisplay = !SubtitleParams.SpeakerName.IsEmpty() ?
-		(!SubtitleParams.SpeakerNameTextStyleRowName.ToString().IsEmpty() ? ("<" + SubtitleParams.SpeakerNameTextStyleRowName.ToString() + ">" + SubtitleParams.SpeakerName.ToString() + "</>: ") : SubtitleParams.SpeakerName.ToString())
-		: FString();
-	TextToDisplay += SubtitleParams.SubtitleText.ToString();
-	SubtitleLine->RichTextBlock_Subtitle->SetText(FText::FromString(TextToDisplay));
+	SubtitleParams.SubtitleText.ApplyToRichTextBlock(SubtitleLine->RichTextBlock_Subtitle);
+	SubtitleLine->RichTextBlock_Subtitle->SetText(SubtitleParams.ToText());
 	ParentPanelWidget->AddChild(SubtitleLine);
 
 	return SubtitleLine;
