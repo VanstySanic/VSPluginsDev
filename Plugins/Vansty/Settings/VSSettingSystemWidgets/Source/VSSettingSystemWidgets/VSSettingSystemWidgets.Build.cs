@@ -2,12 +2,11 @@
 
 using UnrealBuildTool;
 
-public class VSSettingSystem : ModuleRules
+public class VSSettingSystemWidgets : ModuleRules
 {
-	public VSSettingSystem(ReadOnlyTargetRules Target) : base(Target)
+	public VSSettingSystemWidgets(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		bUseUnity = false;
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
@@ -26,16 +25,16 @@ public class VSSettingSystem : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Engine",
 				"Core",
-				"GameplayTags",
-				"DeveloperSettings",
+				// ... add other public dependencies that you statically link with here ...
+				
+				"VSPluginsCore",
 				"UMG",
 				"CommonUI",
 				"CommonInput",
-				// ... add other public dependencies that you statically link with here ...
-				"VSPluginsCore",
-				"VSPluginsCoreCPP"
+				"GameplayTags",
+				"VSWidgets",
+				"VSSettingSystem",
 			}
 			);
 			
