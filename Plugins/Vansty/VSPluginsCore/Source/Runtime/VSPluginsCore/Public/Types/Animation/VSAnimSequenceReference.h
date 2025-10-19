@@ -23,7 +23,11 @@ struct VSPLUGINSCORE_API FVSAnimSequenceReference : public FTableRowBase
 	TObjectPtr<UAnimSequenceBase> AnimSequence;
 
 protected:
-	/** Do not get it directly. Use GetSafePlayTimeRange function instead. */
+	/**
+	 * The desired play time range of this animation.
+	 * Do not get it directly.
+	 * Use GetSafePlayTimeRange function instead.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector2D PlayTimeRange = FVector2D(0.f, 65536.f);
 	

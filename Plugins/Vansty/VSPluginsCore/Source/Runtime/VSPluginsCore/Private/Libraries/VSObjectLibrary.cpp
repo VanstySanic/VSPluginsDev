@@ -2,6 +2,8 @@
 
 #include "Libraries/VSObjectLibrary.h"
 
+#include "Classes/Features/VSObjectFeature.h"
+#include "Classes/Features/VSObjectFeatureComponent.h"
 #include "Interfaces/VSTickFunctionInterface.h"
 
 UVSObjectLibrary::UVSObjectLibrary(const FObjectInitializer& ObjectInitializer)
@@ -83,5 +85,93 @@ FTickFunction* UVSObjectLibrary::GetTickFunctionFromObject(UObject* Object)
 		}
 	}
 
+	return nullptr;
+}
+
+UVSObjectFeature* UVSObjectLibrary::GetFeatureByClassFromObject(UObject* Object, TSubclassOf<UVSObjectFeature> Class)
+{
+	if (!Object || !Class) return nullptr;
+
+	if (AActor* Actor = Cast<AActor>(Object))
+	{
+		TArray<UActorComponent*> Components;
+		Actor->GetComponents(UVSObjectFeatureComponent::StaticClass(), Components);
+		for (UActorComponent* Component : Components)
+		{
+			if (UVSObjectFeatureComponent* FeatureComponent = Cast<UVSObjectFeatureComponent>(Component))
+			{
+				if (UVSObjectFeature* Feature = FeatureComponent->GetSubFeatureByClass(Class))
+				{
+					return Feature;
+				}
+			}
+		}
+	}
+	
+	for (FProperty* Property = Object->GetClass()->PropertyLink; Property; Property = Property->PropertyLinkNext)
+	{
+		FObjectProperty* ObjectProperty = CastField<FObjectProperty>(Property);
+		if (!ObjectProperty) continue;
+		void* ValuePtr = Property->ContainerPtrToValuePtr<void>(Object);
+		if (!ValuePtr) continue;
+		UObject* Value = ObjectProperty->GetPropertyValue(ValuePtr);
+		if (!Value) continue;
+		if (UVSObjectFeature* Feature = Cast<UVSObjectFeature>(Value))
+		{
+			if (Value->IsA(Class))
+			{
+				return Feature;
+			}
+			if (UVSObjectFeature* SubFeature = Feature->GetSubFeatureByClass(Class))
+			{
+				return SubFeature;
+			}
+		}
+	}
+	
+	return nullptr;
+}
+
+UVSObjectFeature* UVSObjectLibrary::GetFeatureByNameFromObject(UObject* Object, FName Name)
+{
+	if (!Object || Name.IsNone()) return nullptr;
+
+	if (AActor* Actor = Cast<AActor>(Object))
+	{
+		TArray<UActorComponent*> Components;
+		Actor->GetComponents(UVSObjectFeature::StaticClass(), Components);
+		for (UActorComponent* Component : Components)
+		{
+			if (UVSObjectFeatureComponent* FeatureComponent = Cast<UVSObjectFeatureComponent>(Component))
+			{
+				if (UVSObjectFeature* Feature = FeatureComponent->GetSubFeatureByName(Name))
+				{
+					return Feature;
+				}
+			}
+		}
+	}
+	
+	for (FProperty* Property = Object->GetClass()->PropertyLink; Property; Property = Property->PropertyLinkNext)
+	{
+		FObjectProperty* ObjectProperty = CastField<FObjectProperty>(Property);
+		if (!ObjectProperty) continue;
+		void* ValuePtr = Property->ContainerPtrToValuePtr<void>(Object);
+		if (!ValuePtr) continue;
+		UObject* Value = ObjectProperty->GetPropertyValue(ValuePtr);
+		if (!Value) continue;
+		if (UVSObjectFeature* Feature = Cast<UVSObjectFeature>(Value))
+		{
+			if (Feature->FeatureName == Name)
+			{
+				return Feature;
+			}
+			if (UVSObjectFeature* SubFeature = Feature->GetSubFeatureByName(Name))
+			{
+				return SubFeature;
+			}
+		}
+	}
+	
 	return nullptr;
 }

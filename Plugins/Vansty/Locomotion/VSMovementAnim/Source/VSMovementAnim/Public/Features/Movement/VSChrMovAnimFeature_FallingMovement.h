@@ -99,7 +99,7 @@ protected:
 	 * Notice that reassignment will only occur in falling mode.
 	 */
 	UPROPERTY(EditAnywhere, Category = "Animation")
-	FVSGameplayTagEventQueryContainer ReassignAnimSettingsQuery;
+	FVSGameplayTagEventQuery ReassignAnimSettingsTagQuery;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	bool bIsFallingDown = false;

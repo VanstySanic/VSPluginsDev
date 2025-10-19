@@ -28,6 +28,7 @@ public:
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 	virtual void NativePreConstruct() override;
+	virtual void NativeDestruct() override;
 	virtual FReply NativeOnFocusReceived(const FGeometry& InGeometry, const FFocusEvent& InFocusEvent) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Widget")
@@ -35,13 +36,17 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Widget")
 	UWidget* GetCoreWidget() const { return CoreWidget; }
+
+	/**
+	 * Set the core widget class and generate a new one.
+	 * This will do the widget rebinding process for setting item.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Widget", meta = (DeterminesOutputType = "Class"))
+	UWidget* SetCoreWidgetByClass(TSubclassOf<UWidget> Class);
 	
 protected:
 	virtual void BindWidgetToSettingItem_Implementation(const FGameplayTag& SpecifyTag) override;
 	virtual void UnbindWidgetFromSettingItem_Implementation(const FGameplayTag& SpecifyTag) override;
-
-private:
-	void GenerateCoreWidget();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget")

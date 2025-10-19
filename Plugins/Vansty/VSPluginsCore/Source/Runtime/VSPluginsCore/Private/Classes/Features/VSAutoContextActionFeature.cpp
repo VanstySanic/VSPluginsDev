@@ -77,7 +77,7 @@ void UVSAutoContextActionFeature::OnGameplayTagEventNotified(const FGameplayTag&
 	for (const auto& QueriedContext : QueriedContexts)
 	{
 		if (!QueriedContext.Key) return;
-		if (QueriedContext.Value.AutoRemoveQueries.Matches(GameplayTags, TagEvent))
+		if (QueriedContext.Value.AutoRemoveTagQuery.Matches(TagEvent, GameplayTags))
 		{
 			if (EnhancedInputLocalPlayerSubsystemPrivate->HasMappingContext(QueriedContext.Key))
 			{
@@ -85,7 +85,7 @@ void UVSAutoContextActionFeature::OnGameplayTagEventNotified(const FGameplayTag&
 				continue;
 			}
 		}
-		if (QueriedContext.Value.AutoAddQueries.Matches(GameplayTags, TagEvent))
+		if (QueriedContext.Value.AutoAddTagQuery.Matches(TagEvent, GameplayTags))
 		{
 			if (!EnhancedInputLocalPlayerSubsystemPrivate->HasMappingContext(QueriedContext.Key))
 			{

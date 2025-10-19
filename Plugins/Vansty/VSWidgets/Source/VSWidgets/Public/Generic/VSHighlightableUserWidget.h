@@ -14,7 +14,7 @@ class VSWIDGETS_API UVSHighlightableUserWidget : public UUserWidget
 {
 	GENERATED_UCLASS_BODY()
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FHighlightSignature);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighlightSignature, UVSHighlightableUserWidget*, Widget);
 
 public:
 	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;

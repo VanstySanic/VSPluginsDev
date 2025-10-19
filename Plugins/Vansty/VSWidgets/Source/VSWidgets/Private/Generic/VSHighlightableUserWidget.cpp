@@ -96,6 +96,8 @@ void UVSHighlightableUserWidget::HighlightInternal()
 	}
 	NativeOnHighlighted();
 	OnWidgetHighlighted();
+
+	OnHighlighted.Broadcast(this);
 }
 
 void UVSHighlightableUserWidget::UnhighlightInternal()
@@ -108,4 +110,6 @@ void UVSHighlightableUserWidget::UnhighlightInternal()
 	}
 	NativeOnUnhighlighted();
 	OnWidgetUnhighlighted();
+
+	OnUnhighlighted.Broadcast(this);
 }

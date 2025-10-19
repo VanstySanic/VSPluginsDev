@@ -118,11 +118,11 @@ protected:
 	FVSMovementBaseSettings DefaultCrouchedMovementBaseSettings;
 	
 	UPROPERTY(EditAnywhere, Category = "Movement")
-	TMap<FVSMovementBaseSettings, FVSGameplayTagEventQueryContainer> QueriedMovementBaseSettings;
+	TMap<FVSMovementBaseSettings, FVSGameplayTagEventQuery> QueriedMovementBaseSettings;
 
 	/** Works as an entry to define when to refresh the tagged movement base settings. */
 	UPROPERTY(EditAnywhere, Category = "Movement")
-	FVSGameplayTagEventQueryContainer RefreshMovementBaseSettingsQueries;
+	FVSGameplayTagEventQuery RefreshMovementBaseSettingsTagQuery;
 
 private:
 	UPROPERTY(ReplicatedUsing = "OnRep_ReplicatedStance")

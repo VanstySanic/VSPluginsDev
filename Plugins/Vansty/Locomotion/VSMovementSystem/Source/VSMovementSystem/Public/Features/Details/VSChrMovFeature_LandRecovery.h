@@ -48,7 +48,7 @@ protected:
 	 * Notice that reassignment will only occur when character enters walking mode.
 	 */
 	UPROPERTY(EditAnywhere, Category = "Land Recovery", meta = (ShowOnlyInnerProperties, RowType = "/Script/VSMovementSystem.VSLandRecoverySettings"))
-	TMap<FVSDataTableRowHandleWrap, FVSGameplayTagEventQueryContainer> QueriedSettingRows;
+	TMap<FVSDataTableRowHandleWrap, FGameplayTagQuery> TagQueriedSettingRows;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	bool bEarlyOutWithInputWhenAdditive = false;

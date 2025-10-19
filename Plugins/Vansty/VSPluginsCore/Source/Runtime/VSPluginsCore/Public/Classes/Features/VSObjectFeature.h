@@ -103,10 +103,17 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	bool GetIsReplicated() const { return bReplicates; }
-		
+
+	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
+	void AddInstancedSubFeature(UVSObjectFeature* Feature, FName OptionalFeatureName = NAME_None);
+	
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* AddSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName = NAME_None);
 
+	/** Must call at Outer's constructor, otherwise an error will occur. */
+	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
+	UVSObjectFeature* AddDefaultSubFeatureByClass(UObject* Outer, TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName = NAME_None);
+	
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void RemoveSubFeature(UVSObjectFeature* InFeature, bool bRecursive = true);
 
@@ -118,7 +125,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	TArray<UVSObjectFeature*> GetSubFeaturesByClass(TSubclassOf<UVSObjectFeature> Class, bool bRecursive = true) const;
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	UVSObjectFeature* GetSubFeatureByName(FName Name, bool bRecursive = true) const;
 
@@ -130,9 +137,6 @@ public:
 	bool IsActive() const { return bIsActive; }
 
 protected:
-	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
-	UVSObjectFeature* AddDefaultSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName = NAME_None);
-	
 	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
 	void OnFeatureActivated();
 

@@ -9,7 +9,6 @@
 #include "Types/VSCharacterMovementTypes.h"
 #include "VSCharacterMovementFeature.generated.h"
 
-class UVSCharacterMovementComponent;
 class UVSGameplayTagController;
 class UVSChrMovCapsuleComponent;
 class UCharacterMovementComponent;
@@ -21,8 +20,8 @@ UCLASS(Abstract, DisplayName = "Feature.ChrMov.Base")
 class VSMOVEMENTSYSTEM_API UVSCharacterMovementFeature : public UVSObjectFeature
 {
 	GENERATED_UCLASS_BODY()
+	
 	friend class UVSCharacterMovementFeatureAgent;
-	friend class UVSCharacterMovementComponent;
 	
 protected:
 	virtual void Initialize_Implementation() override;

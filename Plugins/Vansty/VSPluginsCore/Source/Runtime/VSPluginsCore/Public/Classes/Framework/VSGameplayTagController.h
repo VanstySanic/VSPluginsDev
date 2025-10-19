@@ -13,6 +13,7 @@ class UAbilitySystemComponent;
 
 /**
  * Gives control for gameplay tags in ability system component.
+ * This is mostly for player or AI character.
  */
 UCLASS(DisplayName = "Feature.Gameplay.GameplayTagController")
 class VSPLUGINSCORE_API UVSGameplayTagController : public UVSObjectFeature, public IGameplayTagAssetInterface
@@ -39,7 +40,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags")
 	FGameplayTagContainer GetGameplayTags() const;
 	
-	/** Returns the number of instances of a given tag */
+	/** Returns the number of instances of a given tag. */
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags", meta = (AutoCreateRefTerm = "TagToCheck"))
 	int32 GetTagCount(FGameplayTag TagToCheck) const;
 

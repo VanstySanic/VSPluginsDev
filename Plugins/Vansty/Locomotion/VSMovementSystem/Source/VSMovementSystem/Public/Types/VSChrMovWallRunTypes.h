@@ -16,14 +16,7 @@ struct FVSWallRunLimits
 {
 	GENERATED_BODY()
 
-	FVSWallRunLimits()
-	{
-		WallComponentQuery.ObjectTypes =
-		{
-			ObjectTypeQuery1,
-			ObjectTypeQuery2,
-		};
-	}
+	FVSWallRunLimits() { }
 	
 	bool IsValid() const;
 

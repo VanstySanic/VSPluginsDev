@@ -4,12 +4,15 @@
 #include "VSCameraViewData.h"
 #include "Camera/CameraActor.h"
 #include "Camera/CameraComponent.h"
+#include "Features/VSCameraFeature_ViewData.h"
 #include "Libraries/VSActorLibrary.h"
 
 UVSCameraFeatureAgent::UVSCameraFeatureAgent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	CameraViewData = CreateDefaultSubobject<UVSCameraViewData>(TEXT("CameraViewData"));
+	AddDefaultSubFeatureByClass(this, UVSCameraFeature_SyncViewData::StaticClass());
+	AddDefaultSubFeatureByClass(this, UVSCameraFeature_ApplyViewData::StaticClass());
 }
 
 void UVSCameraFeatureAgent::Initialize_Implementation()

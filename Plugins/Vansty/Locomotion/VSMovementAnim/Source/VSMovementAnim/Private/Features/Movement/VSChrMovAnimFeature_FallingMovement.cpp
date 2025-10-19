@@ -437,7 +437,7 @@ void UVSChrMovAnimFeature_FallingMovement::UpdateMovementTagQueryStates(const FG
 		}
 	}
 	/** Refresh movement data when enter falling mode. */
-	if (GetMovementMode() == EVSMovementMode::Falling && (GetPrevMovementMode() != EVSMovementMode::Falling || ReassignAnimSettingsQuery.Matches(GameplayTags, TagEvent)))
+	if (GetMovementMode() == EVSMovementMode::Falling && (GetPrevMovementMode() != EVSMovementMode::Falling || ReassignAnimSettingsTagQuery.Matches(TagEvent, GameplayTags)))
 	{
 		FDataTableRowHandle SettingsRowToUse = DefaultSettingsRow;
 		for (const FDataTableRowHandle& AnimSettingRow : AnimSettingRows)

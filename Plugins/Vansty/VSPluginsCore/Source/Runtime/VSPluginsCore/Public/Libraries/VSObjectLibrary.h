@@ -6,6 +6,8 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "VSObjectLibrary.generated.h"
 
+class UVSObjectFeature;
+
 /**
  * 
  */
@@ -35,7 +37,24 @@ class VSPLUGINSCORE_API UVSObjectLibrary : public UBlueprintFunctionLibrary
 
 	UFUNCTION(BlueprintCallable, Category = "Object", meta = (DefaultToSelf = "Target"))
 	static void RemoveTickPrerequisiteObject(UObject* Target, UObject* PrerequisiteObject);
-
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Object", DeterminesOutputType = "Class"))
+	static UVSObjectFeature* GetFeatureByClassFromObject(UObject* Object, TSubclassOf<UVSObjectFeature> Class);
+	template <typename T>
+	static T* FindFeatureByClassFromObject(UObject* Object, TSubclassOf<T> Class = T::StaticClass());
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
+	static UVSObjectFeature* GetFeatureByNameFromObject(UObject* Object, FName Name);
+	
 private:
 	static FTickFunction* GetTickFunctionFromObject(UObject* Object);
 };
+
+
+
+template <typename T>
+T* UVSObjectLibrary::FindFeatureByClassFromObject(UObject* Object, TSubclassOf<T> Class)
+{
+	static_assert(TIsDerivedFrom<T, UVSObjectFeature>::IsDerived, "Class must derive from UVSObjectFeature.");
+	return static_cast<T*>(GetFeatureByClassFromObject(Object, Class));
+}

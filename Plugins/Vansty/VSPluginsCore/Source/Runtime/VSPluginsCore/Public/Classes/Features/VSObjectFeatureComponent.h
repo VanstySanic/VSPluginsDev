@@ -30,10 +30,17 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* GetRootFeatureByClass(TSubclassOf<UVSObjectFeature> Class) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
+	void AddInstancedSubFeature(UVSObjectFeature* Feature, FName OptionalFeatureName = NAME_None);
 	
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* AddSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName = NAME_None);
 
+	/** Must call at Outer's constructor, otherwise an error will occur. */
+	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
+	UVSObjectFeature* AddDefaultSubFeatureByClass(UObject* Outer, TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName = NAME_None);
+	
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void RemoveSubFeature(UVSObjectFeature* InFeature, bool bRecursive = true);
 

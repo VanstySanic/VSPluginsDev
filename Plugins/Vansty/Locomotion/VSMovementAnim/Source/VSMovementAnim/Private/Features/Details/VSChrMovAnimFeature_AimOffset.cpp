@@ -52,14 +52,14 @@ void UVSChrMovAnimFeature_AimOffset::UpdateTagQueryStates(const FGameplayTag& Ta
 	const UVSGameplayTagController* GameplayTagSet = GetGameplayTagController();
 	FGameplayTagContainer GameplayTags;
 	GameplayTagSet->GetOwnedGameplayTags(GameplayTags);
-	AnimData.bMatchesTagQuery = EnabledTagQuerySettings.Matches(GameplayTags, TagEvent);
+	AnimData.bMatchesTagQuery = EnabledTagQuery.Matches(TagEvent, GameplayTags);
 
-	if (RefreshQueriedOrientationEvaluateTypeQuery.Matches(GameplayTags, TagEvent))
+	if (RefreshQueriedOrientationEvaluateTypeTagQuery.Matches(TagEvent, GameplayTags))
 	{
 		AnimData.CurrentOrientationEvaluateType = DefaultOrientationEvaluateType;
-		for (const auto& TaggedTargetOrientationEvaluateType : QueriedOrientationEvaluateTypes)
+		for (const auto& TaggedTargetOrientationEvaluateType : TagQueriedOrientationEvaluateTypes)
 		{
-			if (TaggedTargetOrientationEvaluateType.Value.Matches(GameplayTags, TagEvent))
+			if (TaggedTargetOrientationEvaluateType.Value.Matches(TagEvent, GameplayTags))
 			{
 				AnimData.CurrentOrientationEvaluateType = TaggedTargetOrientationEvaluateType.Key;
 				break;

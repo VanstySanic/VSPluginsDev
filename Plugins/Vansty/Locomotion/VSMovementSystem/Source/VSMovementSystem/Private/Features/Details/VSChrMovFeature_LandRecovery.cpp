@@ -93,7 +93,7 @@ void UVSChrMovFeature_LandRecovery::CheckLandRecovery()
 	MovementData.LastUpdatedAnimMovementCurves = FVector::ZeroVector;
 	
 	FVSDataTableRowHandleWrap SettingRow = DefaultSettingRows;
-	for (const auto& TaggedSettingRow : QueriedSettingRows)
+	for (const auto& TaggedSettingRow : TagQueriedSettingRows)
 	{
 		if (!TaggedSettingRow.Value.Matches(GameplayTags)) continue;
 		FVSLandRecoverySettings* LandRecoverySettings = TaggedSettingRow.Key.GetRow<FVSLandRecoverySettings>(nullptr);

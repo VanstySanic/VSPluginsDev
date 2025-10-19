@@ -326,23 +326,27 @@ void UVSObjectFeature::SetIsReplicated(bool bShouldReplicate)
 	}
 }
 
+void UVSObjectFeature::AddInstancedSubFeature(UVSObjectFeature* Feature, FName OptionalFeatureName)
+{
+	if (!Feature) return;
+	Feature->OwnerFeaturePrivate = this;
+	Feature->FeatureName = OptionalFeatureName;
+	AddSubFeatureInternal(Feature);
+}
+
 UVSObjectFeature* UVSObjectFeature::AddSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName)
 {
 	if (!Class) return nullptr;
 	UVSObjectFeature* ObjectFeature = NewObject<UVSObjectFeature>(this, Class, NAME_None);
-	if (!ObjectFeature) return nullptr;
-	ObjectFeature->FeatureName = OptionalFeatureName;
-	AddSubFeatureInternal(ObjectFeature);
+	AddInstancedSubFeature(ObjectFeature, OptionalFeatureName);
 	return ObjectFeature;
 }
 
-UVSObjectFeature* UVSObjectFeature::AddDefaultSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName)
+UVSObjectFeature* UVSObjectFeature::AddDefaultSubFeatureByClass(UObject* Outer, TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName)
 {
 	if (!Class) return nullptr;
-	UVSObjectFeature* ObjectFeature = Cast<UVSObjectFeature>(CreateDefaultSubobject(MakeUniqueObjectName(this, Class, Class->GetFName()), Class, Class, true, false));
-	if (!ObjectFeature) return nullptr;
-	ObjectFeature->FeatureName = OptionalFeatureName;
-	AddSubFeatureInternal(ObjectFeature);
+	UVSObjectFeature* ObjectFeature = Cast<UVSObjectFeature>(Outer->CreateDefaultSubobject(MakeUniqueObjectName(Outer, Class, Class->GetFName()), Class, Class, true, false));
+	AddInstancedSubFeature(ObjectFeature);
 	return ObjectFeature;
 }
 

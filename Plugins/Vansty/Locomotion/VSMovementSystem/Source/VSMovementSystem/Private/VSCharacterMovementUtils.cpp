@@ -5,7 +5,7 @@
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Libraries/VSActorLibrary.h"
+#include "Libraries/VSObjectLibrary.h"
 
 UVSCharacterMovementUtils::UVSCharacterMovementUtils(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -25,7 +25,7 @@ UVSCharacterMovementFeatureAgent* UVSCharacterMovementUtils::GetCharacterMovemen
 	}
 	if (!FeatureAgent)
 	{
-		FeatureAgent = UVSActorLibrary::FindFeatureByClassFromActor<UVSCharacterMovementFeatureAgent>(Actor);
+		FeatureAgent = UVSObjectLibrary::FindFeatureByClassFromObject<UVSCharacterMovementFeatureAgent>(Actor);
 	}
 	return FeatureAgent;
 }

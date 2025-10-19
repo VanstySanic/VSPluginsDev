@@ -11,6 +11,8 @@
 #include "Components/TextBlock.h"
 
 VS_DECLARE_PRIVABLIC_MEMBER(UCommonButtonBase, InputActionWidget, TObjectPtr<UCommonActionWidget>);
+VS_DECLARE_PRIVABLIC_MEMBER(UCommonButtonBase, MinWidth, int32);
+VS_DECLARE_PRIVABLIC_MEMBER(UCommonButtonBase, MinHeight, int32);
 
 void FVSPanelSlotLayoutParams::ApplyToWidget(UWidget* Widget)
 {
@@ -81,6 +83,15 @@ void FVSCommonButtonDisplayParams::ApplyToButton(UCommonButtonBase* Button) cons
 				break;
 			}
 		}
+	}
+
+	if (MinimumSize.X >= 0.f)
+	{
+		Button->SetMinDimensions(MinimumSize.X, VS_PRIVABLIC_MEMBER(Button, UCommonButtonBase, MinHeight));
+	}
+	if (MinimumSize.Y >= 0.f)
+	{
+		Button->SetMinDimensions(VS_PRIVABLIC_MEMBER(Button, UCommonButtonBase, MinWidth), MinimumSize.Y);
 	}
 	
 	if (Style)

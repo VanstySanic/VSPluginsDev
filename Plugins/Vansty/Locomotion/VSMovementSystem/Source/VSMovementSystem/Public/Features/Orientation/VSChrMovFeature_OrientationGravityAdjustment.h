@@ -39,7 +39,7 @@ public:
 	bool bIsAntiGravity = false;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	FVSGameplayTagEventQueryContainer MovementStateQuerySettings; 
+	FVSGameplayTagEventQuery MovementStateTagQuery; 
 
 	
 private:

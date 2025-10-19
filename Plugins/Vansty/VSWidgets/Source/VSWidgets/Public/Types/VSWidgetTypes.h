@@ -170,4 +170,11 @@ struct FVSCommonButtonDisplayParams : public FTableRowBase
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<class UInputAction> EnhancedInputAction;
+
+	/**
+	 * Override the common button's min size if the axis value is no less than 0.
+	 * [Width, Height]
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FIntPoint MinimumSize = FIntPoint(128, 32);
 };

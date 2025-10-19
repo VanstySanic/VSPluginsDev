@@ -96,14 +96,14 @@ protected:
 	FGameplayTagQuery InspectionEntryTagQuery;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interact")
-	FVSGameplayTagEventQueryContainer BreakInspectionTagQueries;
+	FVSGameplayTagEventQuery BreakInspectionTagQuery;
 
 	/** Empty as pass. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interact")
 	FGameplayTagQuery InteractionEntryTagQuery;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interact")
-	FVSGameplayTagEventQueryContainer BreakInteractionTagQueries;
+	FVSGameplayTagEventQuery BreakInteractionTagQuery;
 	
 private:
 	TWeakObjectPtr<UVSGameplayTagController> GameplayTagControllerPrivate;

@@ -1,6 +1,8 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Interactive/Feature/VSInteractiveOutlineFeature.h"
+
+#include "Classes/Queries/VSSceneComponentQueryExpression.h"
 #include "Components/BrushComponent.h"
 #include "Interact/Feature/VSInteractFeatureAgent.h"
 #include "Interactive/Feature/VSInteractiveFeatureAgent.h"
@@ -11,8 +13,13 @@
 UVSInteractiveOutlineFeature::UVSInteractiveOutlineFeature(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	MeshComponentQuery.ComponentClasses.Add(UStaticMeshComponent::StaticClass());
-	MeshComponentQuery.ComponentClasses.Add(USkeletalMeshComponent::StaticClass());
+	MeshComponentQuery.RootExpression = CreateDefaultSubobject<UVSSceneComponentQueryExpression>(TEXT("RootExpression"));
+	MeshComponentQuery.RootExpression->Type = EVSQueryMatchType::Params;
+	MeshComponentQuery.RootExpression->Range = EVSQueryMatchRange::Any;
+	FVSSceneComponentQueryParams Params;
+	Params.ComponentClasses.Add(UStaticMeshComponent::StaticClass());
+	Params.ComponentClasses.Add(USkeletalMeshComponent::StaticClass());
+	MeshComponentQuery.RootExpression->Params.Add(Params);
 }
 
 void UVSInteractiveOutlineFeature::Initialize_Implementation()

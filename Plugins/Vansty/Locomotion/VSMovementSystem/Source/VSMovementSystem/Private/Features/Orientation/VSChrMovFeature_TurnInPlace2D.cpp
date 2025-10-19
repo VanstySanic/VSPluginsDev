@@ -14,7 +14,6 @@
 UVSChrMovFeature_TurnInPlace2D::UVSChrMovFeature_TurnInPlace2D(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	AutoBreakTagQueries.bQueriesEmptyAsPass = false;
 }
 
 void UVSChrMovFeature_TurnInPlace2D::Tick_Implementation(float DeltaTime)
@@ -221,12 +220,12 @@ void UVSChrMovFeature_TurnInPlace2D::UpdateMovementTagQueryStates(const FGamepla
 
 	if (GetOwnerActor()->HasAuthority())
 	{
-		if (RefreshSettingsRowQueries.Matches(GameplayTags, TagEvent))
+		if (RefreshSettingsRowTagQuery.Matches(TagEvent, GameplayTags))
 		{
 			FVSDataTableRowHandleWrap NewRow = DefaultSettingsRow;
-			for (const auto& TaggedSettingRow : QueriedSettingRows)
+			for (const auto& TaggedSettingRow : TagQueriedSettingRows)
 			{
-				if (TaggedSettingRow.Value.Matches(GameplayTags, TagEvent))
+				if (TaggedSettingRow.Value.Matches(TagEvent, GameplayTags))
 				{
 					FVSTurnInPlaceSettings2D* Settings = TaggedSettingRow.Key.GetRow<FVSTurnInPlaceSettings2D>(nullptr);
 					if (!Settings || !Settings->IsValid()) continue;
@@ -243,15 +242,15 @@ void UVSChrMovFeature_TurnInPlace2D::UpdateMovementTagQueryStates(const FGamepla
 		}
 		
 		/** Check time and state. */
-		MovementData.bMatchesEntranceTagQuery = EntranceTagQueries.IsEmpty() || EntranceTagQueries.Matches(GameplayTags);
+		MovementData.bMatchesEntranceTagQuery = EntranceTagQuery.IsEmpty() || EntranceTagQuery.Matches(GameplayTags);
 		if (!MovementData.bMatchesEntranceTagQuery)
 		{
 			MovementData.CachedParams.TriggerDelayedTime = 0.f;
 		}
 		
-		for (const auto& QueriedCheckBlockTime : QueriedCheckBlockTimes)
+		for (const auto& QueriedCheckBlockTime : TagQueriedCheckBlockTimes)
 		{
-			if (QueriedCheckBlockTime.Value.Matches(GameplayTags, TagEvent))
+			if (QueriedCheckBlockTime.Value.Matches(TagEvent, GameplayTags))
 			{
 				MovementData.CachedParams.TriggerDelayedTime = 0.f;
 				MovementData.CachedParams.CheckBlockRemainedTime = QueriedCheckBlockTime.Key;
@@ -260,7 +259,7 @@ void UVSChrMovFeature_TurnInPlace2D::UpdateMovementTagQueryStates(const FGamepla
 		}
 	}
 
-	if (IsTurningInPlace() && AutoBreakTagQueries.Matches(GameplayTags, TagEvent))
+	if (IsTurningInPlace() && AutoBreakTagQuery.Matches(TagEvent, GameplayTags))
 	{
 		MovementData.CachedParams.TriggerDelayedTime = 0.f;
 		StopTurnInPlaceInternal();

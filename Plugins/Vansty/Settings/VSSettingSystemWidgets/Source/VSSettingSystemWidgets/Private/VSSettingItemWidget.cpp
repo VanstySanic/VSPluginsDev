@@ -44,16 +44,48 @@ void UVSSettingItemWidget::PostEditChangeProperty(struct FPropertyChangedEvent& 
 
 void UVSSettingItemWidget::NativePreConstruct()
 {
-	GenerateCoreWidget();
-	Execute_BindWidgetToSettingItem(this, SettingItemSpecifyTag);
-	
 	Super::NativePreConstruct();
+
+	SetCoreWidgetByClass(CoreWidgetClass);
+}
+
+void UVSSettingItemWidget::NativeDestruct()
+{
+	Execute_UnbindWidgetFromSettingItem(this, SettingItemSpecifyTag);
+	
+	Super::NativeDestruct();
 }
 
 FReply UVSSettingItemWidget::NativeOnFocusReceived(const FGeometry& InGeometry, const FFocusEvent& InFocusEvent)
 {
 	CoreWidget->SetFocus();
 	return Super::NativeOnFocusReceived(InGeometry, InFocusEvent);
+}
+
+UWidget* UVSSettingItemWidget::SetCoreWidgetByClass(TSubclassOf<UWidget> Class)
+{
+	bool bPrevFocused = false;
+	if (CoreWidget)
+	{
+		Execute_UnbindWidgetFromSettingItem(CoreWidget, SettingItemSpecifyTag);
+		CoreWidget->RemoveFromParent();
+		bPrevFocused = CoreWidget->HasAnyUserFocus() || CoreWidget->HasFocusedDescendants();
+	}
+	if (Class)
+	{
+		CoreWidget = WidgetTree->ConstructWidget<UWidget>(Class);
+		Panel_CoreWidget->AddChild(CoreWidget);
+		
+		Execute_BindWidgetToSettingItem(CoreWidget, SettingItemSpecifyTag);
+		
+		SetDesiredFocusWidget(CoreWidget);
+		if (bPrevFocused)
+		{
+			CoreWidget->SetFocus();
+		}
+	}
+
+	return CoreWidget;
 }
 
 void UVSSettingItemWidget::BindWidgetToSettingItem_Implementation(const FGameplayTag& SpecifyTag)
@@ -96,20 +128,5 @@ void UVSSettingItemWidget::UnbindWidgetFromSettingItem_Implementation(const FGam
 		{
 			SettingItem->UnbindWidget(Rotator, FName("Value"));
 		}
-	}
-}
-
-
-void UVSSettingItemWidget::GenerateCoreWidget()
-{
-	if (CoreWidget)
-	{
-		CoreWidget->RemoveFromParent();
-	}
-	if (CoreWidgetClass)
-	{
-		CoreWidget = WidgetTree->ConstructWidget<UWidget>(CoreWidgetClass);
-		SetDesiredFocusWidget(CoreWidget);
-		Panel_CoreWidget->AddChild(CoreWidget);
 	}
 }

@@ -41,13 +41,13 @@ protected:
 	
 
 	UPROPERTY(EditAnywhere, Category = "Orientation")
-	TMap<FVSMovementOrientationEvaluateType, FVSGameplayTagEventQueryContainer> QueriedOrientationEvaluateTypes;
+	TMap<FVSMovementOrientationEvaluateType, FVSGameplayTagEventQuery> TagQueriedOrientationEvaluateTypes;
 
 	UPROPERTY(EditAnywhere, Category = "Orientation")
-	FVSGameplayTagEventQueryContainer RefreshQueriedOrientationEvaluateTypeQuery;
+	FVSGameplayTagEventQuery RefreshQueriedOrientationEvaluateTypeTagQuery;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orientation")
-	FVSGameplayTagEventQueryContainer EnabledTagQuerySettings;
+	FVSGameplayTagEventQuery EnabledTagQuery;
 	
 	/** <MovementMode, AimOffsetBlendSpace> */
 	UPROPERTY(EditAnywhere, Category = "Animation")

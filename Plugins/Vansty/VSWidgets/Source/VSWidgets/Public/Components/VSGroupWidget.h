@@ -8,6 +8,7 @@
 #include "VSGroupWidget.generated.h"
 
 class UCommonWidgetGroupBase;
+
 /**
  * 
  */
@@ -20,12 +21,18 @@ public:
 	virtual void NativePreConstruct() override;
 
 public:
+	/** Get the widget group object that actually handles the group and index.. */
 	UFUNCTION(BlueprintCallable, Category = "Widget")
 	UCommonWidgetGroupBase* GetWidgetGroup() const { return WidgetGroup; }
 
+	/**
+	 * Set the count of widgets in the group.
+	 * All previous widgets in the group will be cleared, and new ones will be generated.
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Widget")
 	void SetWidgetNum(int32 InWidgetNum);
 
+	/** Get the widgets in the group. */
 	UFUNCTION(BlueprintCallable, Category = "Widget")
 	TArray<UWidget*> GetWidgets() const;
 
@@ -34,7 +41,8 @@ private:
 	void RefreshWidgetGroup();
 
 protected:
-	UPROPERTY(meta = (BindWidget))
+	/** The panel that accommodates the group widget. */
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UPanelWidget> Panel;
 
 protected:
@@ -43,7 +51,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget")
 	TSubclassOf<UWidget> WidgetClass;
-	
+
+	/** Defines the count of widgets in the group. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Widget")
 	int32 WidgetNum = 3;
 

@@ -5,7 +5,7 @@
 #include "Interact/Feature/VSInteractFeatureAgent.h"
 #include "Interactive/VSInteractiveInterface.h"
 #include "Interactive/Feature/VSInteractiveFeatureAgent.h"
-#include "Libraries/VSActorLibrary.h"
+#include "Libraries/VSObjectLibrary.h"
 
 UVSInteractSystemUtils::UVSInteractSystemUtils(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -25,7 +25,7 @@ UVSInteractFeatureAgent* UVSInteractSystemUtils::GetInteractFeatureAgentFromActo
 	}
 	if (!FeatureAgent)
 	{
-		FeatureAgent = UVSActorLibrary::FindFeatureByClassFromActor<UVSInteractFeatureAgent>(Actor);
+		FeatureAgent = UVSObjectLibrary::FindFeatureByClassFromObject<UVSInteractFeatureAgent>(Actor);
 	}
 	return FeatureAgent;
 }
@@ -43,7 +43,7 @@ UVSInteractiveFeatureAgent* UVSInteractSystemUtils::GetInteractiveFeatureAgentFr
 	}
 	if (!FeatureAgent)
 	{
-		FeatureAgent = UVSActorLibrary::FindFeatureByClassFromActor<UVSInteractiveFeatureAgent>(Actor);
+		FeatureAgent = UVSObjectLibrary::FindFeatureByClassFromObject<UVSInteractiveFeatureAgent>(Actor);
 	}
 	return FeatureAgent;
 }

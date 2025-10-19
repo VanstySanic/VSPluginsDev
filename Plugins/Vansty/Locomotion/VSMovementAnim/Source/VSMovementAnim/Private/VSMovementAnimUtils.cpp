@@ -6,6 +6,7 @@
 #include "Features/VSCharacterMovementAnimFeatureAgent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Libraries/VSActorLibrary.h"
+#include "Libraries/VSObjectLibrary.h"
 #include "Types/VSMovementAnimTypes.h"
 #include "Types/VSMovementAnimTags.h"
 
@@ -27,7 +28,7 @@ UVSCharacterMovementAnimFeatureAgent* UVSMovementAnimUtils::GetCharacterMovement
 	}
 	if (!FeatureAgent)
 	{
-		FeatureAgent = UVSActorLibrary::FindFeatureByClassFromActor<UVSCharacterMovementAnimFeatureAgent>(Actor);
+		FeatureAgent = UVSObjectLibrary::FindFeatureByClassFromObject<UVSCharacterMovementAnimFeatureAgent>(Actor);
 	}
 	return FeatureAgent;
 }

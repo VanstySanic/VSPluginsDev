@@ -57,9 +57,19 @@ UVSObjectFeature* UVSObjectFeatureComponent::GetRootFeatureByClass(TSubclassOf<U
 	return RootFeature;
 }
 
+void UVSObjectFeatureComponent::AddInstancedSubFeature(UVSObjectFeature* Feature, FName OptionalFeatureName)
+{
+	if (RootFeature) { RootFeature->AddInstancedSubFeature(Feature, OptionalFeatureName); }
+}
+
 UVSObjectFeature* UVSObjectFeatureComponent::AddSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName)
 {
 	return RootFeature ? RootFeature->AddSubFeatureByClass(Class, OptionalFeatureName) : nullptr;
+}
+
+UVSObjectFeature* UVSObjectFeatureComponent::AddDefaultSubFeatureByClass(UObject* Outer, TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName)
+{
+	return RootFeature ? RootFeature->AddDefaultSubFeatureByClass(Outer, Class, OptionalFeatureName) : nullptr;
 }
 
 void UVSObjectFeatureComponent::RemoveSubFeature(UVSObjectFeature* InFeature, bool bRecursive)

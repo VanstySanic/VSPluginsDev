@@ -6,6 +6,7 @@
 #include "EnhancedInputSubsystemInterface.h"
 #include "GameplayTagContainer.h"
 #include "NativeGameplayTags.h"
+#include "VSQueryMatchTypes.h"
 #include "UObject/Object.h"
 #include "VSGameplayTypes.generated.h"
 
@@ -16,66 +17,6 @@ namespace EVSGameplayTagControllerTags
 {
 	VSPLUGINSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_TagsUpdated);
 }
-
-USTRUCT(BlueprintType)
-struct FVSGameplayTagEventQuery
-{
-	GENERATED_BODY()
-
-	FVSGameplayTagEventQuery()
-		: bMatchExactTagEvent(true)
-		, bEmptyEventAsPass(true)
-		, bTagEventsEmptyAsPass(false)
-		, bTagQueryEmptyAsPass(true)
-	{
-	}
-
-	VSPLUGINSCORE_API bool Matches(const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent = FGameplayTag::EmptyTag) const;
-	
-	/** Work as an entry. Requires TagEvent in the array. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTagContainer TagEvents;
-
-	/** Gameplay tag query to check. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTagQuery TagQuery;
-
-	/** If true, only exact tag event will match. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	uint8 bMatchExactTagEvent : 1;
-	
-	/** If true, empty tag will be considered as a pass to the tag events. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	uint8 bEmptyEventAsPass : 1;
-	
-	/** If true and TagEvents array is empty, any non-empty tag event will be considered as trigger. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	uint8 bTagEventsEmptyAsPass : 1;
-
-	/** If true and TagQuery is empty, any tag states will match the query. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	uint8 bTagQueryEmptyAsPass : 1;
-};
-
-USTRUCT(BlueprintType)
-struct FVSGameplayTagEventQueryContainer
-{
-	GENERATED_BODY()
-	
-	FVSGameplayTagEventQueryContainer()
-		: bQueriesEmptyAsPass(true)
-	{
-	}
-
-	/** Pass if matches one. */
-	VSPLUGINSCORE_API bool Matches(const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent = FGameplayTag::EmptyTag) const;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FVSGameplayTagEventQuery> Queries;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	uint8 bQueriesEmptyAsPass : 1;
-};
 
 /**
  * Useful in multi-layer TMap with key type of gameplay tags.
@@ -156,6 +97,7 @@ namespace EVSNetAuthorityMethodExecPolicy
 		Client						= 1 << 2,
 		/** Execute locally and then send RPC to the owing client only. */
 		Simulated					= 1 << 3,
+		
 		ServerAndClient				= Server + Client,
 		ServerAndSimulated			= Server + Simulated,
 		ClientAndSimulated			= Client + Simulated,
@@ -171,7 +113,7 @@ namespace EVSNetAutonomousMethodExecPolicy
 	{
 		/** Nothing will happen. */
 		None						= 0,
-		/** Execute locally without sending RPC to serever. */
+		/** Execute locally without sending RPC to server. */
 		Client						= 1 << 0,
 		/** Send RPC to server without executing locally. */
 		Server						= 1 << 1,
@@ -268,53 +210,6 @@ T* FVSDataTableRowHandleWrap::GetRow(const TCHAR* ContextString) const
 }
 
 USTRUCT(BlueprintType)
-struct FVSSceneComponentQuery
-{
-	GENERATED_BODY()
-
-	VSPLUGINSCORE_API bool Matches(const USceneComponent* Component) const;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<TSubclassOf<USceneComponent>> ComponentClasses;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FName> ComponentTags;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FName> ActorTags;
-
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bInverseObjectTypes = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bInverseClassAllowance = false;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bInverseComponentTagAllowance = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bInverseActorTagAllowance = false;
-
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bComponentClassesEmptyAsPass = true;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bObjectTypesEmptyAsPass = true;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bComponentTagsEmptyAsPass = true;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bActorTagsEmptyAsPass = true;
-};
-
-
-USTRUCT(BlueprintType)
 struct FVSLocationUnderCursorQueryParams
 {
 	GENERATED_BODY()
@@ -358,10 +253,10 @@ struct FVSAutoContextOptions
 	int32 AddPriority = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVSGameplayTagEventQueryContainer AutoAddQueries;
+	FVSGameplayTagEventQuery AutoAddTagQuery;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVSGameplayTagEventQueryContainer AutoRemoveQueries;
+	FVSGameplayTagEventQuery AutoRemoveTagQuery;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FModifyContextOptions AddModifyOptions;

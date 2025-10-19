@@ -1,12 +1,10 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Features/VSCameraFeature.h"
-
 #include "VSCameraViewData.h"
-#include "Camera/CameraActor.h"
 #include "Camera/CameraComponent.h"
 #include "Features/VSCameraFeatureAgent.h"
-#include "Libraries/VSActorLibrary.h"
+#include "Libraries/VSObjectLibrary.h"
 
 UVSCameraFeature::UVSCameraFeature(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -16,9 +14,20 @@ UVSCameraFeature::UVSCameraFeature(const FObjectInitializer& ObjectInitializer)
 void UVSCameraFeature::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
-
+	
 	CameraFeatureAgentPrivate = GetTypedOuter<UVSCameraFeatureAgent>();
 	if (!CameraFeatureAgentPrivate.IsValid()) { CameraFeatureAgentPrivate = Cast<UVSCameraFeatureAgent>(this); }
+	if (!CameraFeatureAgentPrivate.IsValid())
+	{
+		if (UCameraComponent* CameraComponent = GetTypedOuter<UCameraComponent>())
+		{
+			CameraFeatureAgentPrivate = UVSObjectLibrary::FindFeatureByClassFromObject<UVSCameraFeatureAgent>(CameraComponent);
+		}
+		else
+		{
+			CameraFeatureAgentPrivate = UVSObjectLibrary::FindFeatureByClassFromObject<UVSCameraFeatureAgent>(GetOwnerActor());
+		}
+	}
 	check(CameraFeatureAgentPrivate.IsValid());
 }
 

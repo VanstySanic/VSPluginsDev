@@ -55,14 +55,14 @@ void UVSChrMovFeature_OrientationControl2D::UpdateTagQueryStates(const FGameplay
 	FGameplayTagContainer GameplayTags;
 	GameplayTagController->GetOwnedGameplayTags(GameplayTags);
 	
-	MovementData.bMatchesTagQuery = MovementTagQueries.Matches(GameplayTags, TagEvent);
+	MovementData.bMatchesTagQuery = MovementTagQuery.Matches(TagEvent, GameplayTags);
 
-	if (RefreshQueriedSettingsQueries.Matches(GameplayTags, TagEvent))
+	if (RefreshQueriedSettingsTagQuery.Matches(TagEvent, GameplayTags))
 	{
 		MovementData.CurrentSettings = DefaultSettings;
-		for (const auto& QueriedSetting : QueriedSettings)
+		for (const auto& QueriedSetting : TagQueriedSettings)
 		{
-			if (QueriedSetting.Value.Matches(GameplayTags, TagEvent))
+			if (QueriedSetting.Value.Matches(TagEvent, GameplayTags))
 			{
 				MovementData.CurrentSettings = QueriedSetting.Key;
 				break;

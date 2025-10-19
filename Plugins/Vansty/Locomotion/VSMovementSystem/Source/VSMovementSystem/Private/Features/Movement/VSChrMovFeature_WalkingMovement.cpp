@@ -240,12 +240,12 @@ void UVSChrMovFeature_WalkingMovement::RefreshMovementBaseSettings(const FGamepl
 	FGameplayTagContainer GameplayTags;
 	GameplayTagController->GetOwnedGameplayTags(GameplayTags);
 	
-	if (RefreshMovementBaseSettingsQueries.Matches(GameplayTags, TagEvent))
+	if (RefreshMovementBaseSettingsTagQuery.Matches(TagEvent, GameplayTags))
 	{
 		MovementData.CurrentMovementBaseSettings = MovementData.Stance == EVSStance::Crouching ? DefaultCrouchedMovementBaseSettings : DefaultMovementBaseSettings;
 		for (auto& Settings : QueriedMovementBaseSettings)
 		{
-			if (Settings.Value.Matches(GameplayTags, TagEvent))
+			if (Settings.Value.Matches(TagEvent, GameplayTags))
 			{
 				MovementData.CurrentMovementBaseSettings = Settings.Key;
 				break;

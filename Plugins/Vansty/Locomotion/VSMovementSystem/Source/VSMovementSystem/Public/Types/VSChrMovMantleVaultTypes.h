@@ -52,14 +52,7 @@ struct FVSMantleVaultLimits
 {
 	GENERATED_BODY()
 
-	FVSMantleVaultLimits()
-	{
-		TerrainComponentQuery.ObjectTypes =
-			{
-				ObjectTypeQuery1,
-				ObjectTypeQuery2,
-			};
-	}
+	FVSMantleVaultLimits() { }
 	
 	VSMOVEMENTSYSTEM_API bool IsValid() const;
 

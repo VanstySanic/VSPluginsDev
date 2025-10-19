@@ -57,21 +57,21 @@ protected:
 
 	/** Auto selected by tags, if not overriden. */
 	UPROPERTY(EditAnywhere, Category = "TurnInPlace", meta = (ShowOnlyInnerProperties, RowType = "/Script/VSMovementSystem.VSTurnInPlaceSettings2D"))
-	TMap<FVSDataTableRowHandleWrap, FVSGameplayTagEventQueryContainer> QueriedSettingRows;
+	TMap<FVSDataTableRowHandleWrap, FVSGameplayTagEventQuery> TagQueriedSettingRows;
 	
 	UPROPERTY(EditAnywhere, Category = "TurnInPlace")
-	FVSGameplayTagEventQueryContainer RefreshSettingsRowQueries;
+	FVSGameplayTagEventQuery RefreshSettingsRowTagQuery;
 	
 	/**
 	 * Turn in place can be checked and processed only if the movement states match the query.
 	 * Empty as pass.
 	 */
 	UPROPERTY(EditAnywhere, Category = "TurnInPlace")
-	FGameplayTagQuery EntranceTagQueries;
+	FGameplayTagQuery EntranceTagQuery;
 
 	/** Auto breaks when movement tags matches this. */
 	UPROPERTY(EditAnywhere, Category = "TurnInPlace")
-	FVSGameplayTagEventQueryContainer AutoBreakTagQueries;
+	FVSGameplayTagEventQuery AutoBreakTagQuery;
 
 	/**
 	 * The turn in place check will be blocked for some time when query matches.
@@ -79,7 +79,7 @@ protected:
 	 * Always override the time instead of adding.
 	 */
 	UPROPERTY(EditAnywhere, Category = "TurnInPlace")
-	TMap<float, FVSGameplayTagEventQueryContainer> QueriedCheckBlockTimes;
+	TMap<float, FVSGameplayTagEventQuery> TagQueriedCheckBlockTimes;
 
 	
 	/** Anim time after that means the turn in place process enters the recovery state and can do another check. */

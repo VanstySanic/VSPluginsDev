@@ -36,13 +36,13 @@ protected:
 	FVSOrientationControlSettings2D DefaultSettings;
 	
 	UPROPERTY(EditAnywhere, Category = "Orientation")
-	TMap<FVSOrientationControlSettings2D, FVSGameplayTagEventQuery> QueriedSettings;
+	TMap<FVSOrientationControlSettings2D, FVSGameplayTagEventQuery> TagQueriedSettings;
 
 	UPROPERTY(EditAnywhere, Category = "Orientation")
-	FVSGameplayTagEventQueryContainer RefreshQueriedSettingsQueries;
+	FVSGameplayTagEventQuery RefreshQueriedSettingsTagQuery;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orientation")
-	FVSGameplayTagEventQueryContainer MovementTagQueries; 
+	FVSGameplayTagEventQuery MovementTagQuery; 
 
 private:
 	struct FMovementData

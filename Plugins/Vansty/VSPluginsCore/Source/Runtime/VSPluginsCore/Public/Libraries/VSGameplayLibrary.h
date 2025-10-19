@@ -28,21 +28,21 @@ class VSPLUGINSCORE_API UVSGameplayLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (WorldContext = "WorldContext"))
 	static float GetServerTimeSeconds(const UObject* WorldContext);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (AutoCreateRefTerm = "Query, GameplayTags, TagEvent"))
-	static bool MatchesGameplayTagEventQuery(const FVSGameplayTagEventQuery& Query, const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent = FGameplayTag());
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (AutoCreateRefTerm = "Query, GameplayTags, TagEvent"))
-	static bool MatchesGameplayTagEventQueries(const FVSGameplayTagEventQueryContainer& Queries, const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent = FGameplayTag());
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (AutoCreateRefTerm = "Query, TagEvent, GameplayTags"))
+	static bool MatchesGameplayTagEventQuery(const FVSGameplayTagEventQuery& Query, const FGameplayTag& TagEvent = FGameplayTag(), const FGameplayTagContainer& GameplayTags = FGameplayTagContainer());
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Query"))
-	static bool MatchesSceneComponentQuery(const USceneComponent* SceneComponent, const FVSSceneComponentQuery& Query);
+	static bool MatchesSceneComponentQuery(const FVSSceneComponentQuery& Query, const USceneComponent* SceneComponent);
 
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Object"))
 	static APawn* GetPawnFromObject(UObject* Object);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Object"))
 	static AController* GetControllerFromObject(UObject* Object);
 
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay")
 	static bool GetScreenViewportSize(APlayerController* PlayerController, FVector2D& OutPosition);
 
@@ -56,6 +56,7 @@ class VSPLUGINSCORE_API UVSGameplayLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Post Process", meta = (WorldContext = "WorldContext", AutoCreateRefTerm = "Location"))
 	static APostProcessVolume* GetPostProcessVolumeAtLocation(UObject* WorldContext, const FVector& Location);
 
+	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay")
 	static FText GetRichStyledText(const FVSRichStyledText& RichStyledText);
 

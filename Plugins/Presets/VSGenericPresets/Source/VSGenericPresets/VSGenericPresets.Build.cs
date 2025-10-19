@@ -26,8 +26,14 @@ public class VSGenericPresets : ModuleRules
 			new string[]
 			{
 				"Core",
+				"GameplayTags",
+				"GameplayAbilities",
+				"GameplayTasks",
 				// ... add other public dependencies that you statically link with here ...
-				"VSPluginsCore"
+				"VSPluginsCore",
+				"VSCameraSystem",
+				"VSMovementSystem",
+				"VSMovementAnim",
 			}
 			);
 			

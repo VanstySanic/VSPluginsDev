@@ -13,6 +13,7 @@
 #include "Interfaces/VSGameplayTagControllerInterface.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Libraries/VSGameplayLibrary.h"
+#include "Libraries/VSObjectLibrary.h"
 
 UVSActorLibrary::UVSActorLibrary(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -118,89 +119,9 @@ UVSGameplayTagController* UVSActorLibrary::GetGameplayTagControllerFromActor(AAc
 	}
 	if (!GameplayTagController)
 	{
-		GameplayTagController = FindFeatureByClassFromActor<UVSGameplayTagController>(Actor);
+		GameplayTagController = UVSObjectLibrary::FindFeatureByClassFromObject<UVSGameplayTagController>(Actor);
 	}
 	return GameplayTagController;
-}
-
-UVSObjectFeature* UVSActorLibrary::GetFeatureByClassFromActor(AActor* Actor, TSubclassOf<UVSObjectFeature> Class)
-{
-	if (!Actor || !Class) return nullptr;
-	TArray<UActorComponent*> Components;
-	Actor->GetComponents(UVSObjectFeatureComponent::StaticClass(), Components);
-	for (UActorComponent* Component : Components)
-	{
-		if (UVSObjectFeatureComponent* FeatureComponent = Cast<UVSObjectFeatureComponent>(Component))
-		{
-			if (UVSObjectFeature* Feature = FeatureComponent->GetSubFeatureByClass(Class))
-			{
-				return Feature;
-			}
-		}
-	}
-
-	for (FProperty* Property = Actor->GetClass()->PropertyLink; Property; Property = Property->PropertyLinkNext)
-	{
-		FObjectProperty* ObjectProperty = CastField<FObjectProperty>(Property);
-		if (!ObjectProperty) continue;
-		void* ValuePtr = Property->ContainerPtrToValuePtr<void>(Actor);
-		if (!ValuePtr) continue;
-		UObject* Value = ObjectProperty->GetPropertyValue(ValuePtr);
-		if (!Value) continue;
-		if (UVSObjectFeature* Feature = Cast<UVSObjectFeature>(Value))
-		{
-			if (Value->IsA(Class))
-			{
-				return Feature;
-			}
-			if (UVSObjectFeature* SubFeature = Feature->GetSubFeatureByClass(Class))
-			{
-				return SubFeature;
-			}
-		}
-	}
-	
-	return nullptr;
-}
-
-UVSObjectFeature* UVSActorLibrary::GetFeatureByNameFromActor(AActor* Actor, FName Name)
-{
-	if (!Actor || Name.IsNone()) return nullptr;
-	TArray<UActorComponent*> Components;
-	Actor->GetComponents(UVSObjectFeature::StaticClass(), Components);
-	for (UActorComponent* Component : Components)
-	{
-		if (UVSObjectFeatureComponent* FeatureComponent = Cast<UVSObjectFeatureComponent>(Component))
-		{
-			if (UVSObjectFeature* Feature = FeatureComponent->GetSubFeatureByName(Name))
-			{
-				return Feature;
-			}
-		}
-	}
-
-	for (FProperty* Property = Actor->GetClass()->PropertyLink; Property; Property = Property->PropertyLinkNext)
-	{
-		FObjectProperty* ObjectProperty = CastField<FObjectProperty>(Property);
-		if (!ObjectProperty) continue;
-		void* ValuePtr = Property->ContainerPtrToValuePtr<void>(Actor);
-		if (!ValuePtr) continue;
-		UObject* Value = ObjectProperty->GetPropertyValue(ValuePtr);
-		if (!Value) continue;
-		if (UVSObjectFeature* Feature = Cast<UVSObjectFeature>(Value))
-		{
-			if (Feature->FeatureName == Name)
-			{
-				return Feature;
-			}
-			if (UVSObjectFeature* SubFeature = Feature->GetSubFeatureByName(Name))
-			{
-				return SubFeature;
-			}
-		}
-	}
-	
-	return nullptr;
 }
 
 UAbilitySystemComponent* UVSActorLibrary::GetAbilitySystemComponentFormActor(AActor* Actor)

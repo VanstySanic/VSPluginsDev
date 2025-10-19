@@ -172,7 +172,7 @@ void UVSInteractFeatureAgent::UpdateTagQueryStates(const FGameplayTag& TagEvent)
 		bMatchesInteractionEntryTagQuery = InteractionEntryTagQuery.IsEmpty() || InteractionEntryTagQuery.Matches(GameplayTags);
 	}
 
-	if (BreakInspectionTagQueries.Matches(GameplayTags))
+	if (BreakInspectionTagQuery.Matches(TagEvent, GameplayTags))
 	{
 		TArray<TWeakObjectPtr<UVSInteractiveFeatureAgent>> CopiedInspectiveAgentsPrivate;
 		for (TWeakObjectPtr<UVSInteractiveFeatureAgent> InteractiveFeatureAgent : CopiedInspectiveAgentsPrivate)
@@ -183,7 +183,7 @@ void UVSInteractFeatureAgent::UpdateTagQueryStates(const FGameplayTag& TagEvent)
 			}
 		}
 	}
-	if (IsInteracting() && BreakInteractionTagQueries.Matches(GameplayTags))
+	if (IsInteracting() && BreakInteractionTagQuery.Matches(TagEvent, GameplayTags))
 	{
 		if (UVSInteractiveActionFeature* ActionFeature = GetCurrentInteractiveActionFeature())
 		{

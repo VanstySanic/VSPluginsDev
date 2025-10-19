@@ -9,31 +9,6 @@ namespace EVSGameplayTagControllerTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_TagsUpdated, "VSPluginsCore.GameplayTagController.Event.TagsUpdated");
 }
 
-bool FVSGameplayTagEventQuery::Matches(const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent) const
-{
-	if (TagEvent == FGameplayTag::EmptyTag && !bEmptyEventAsPass) return false;
-	if (TagEvents.IsEmpty() && !bTagEventsEmptyAsPass) return false;
-	if (!TagEvents.IsEmpty() && !(bMatchExactTagEvent ? TagEvents.HasTag(TagEvent) : TagEvents.HasTagExact(TagEvent))) return false;
-	if (TagQuery.IsEmpty() && !bTagQueryEmptyAsPass) return false;
-	if (!TagQuery.IsEmpty() && !TagQuery.Matches(GameplayTags)) return false;
-	
-	return true;
-}
-
-bool FVSGameplayTagEventQueryContainer::Matches(const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent) const
-{
-	if (Queries.IsEmpty() && bQueriesEmptyAsPass) return true;
-	for (const FVSGameplayTagEventQuery& Query : Queries)
-	{
-		if (Query.Matches(GameplayTags, TagEvent))
-		{
-			return true;
-		}
-	}
-	
-	return false;
-}
-
 uint32 FVSUserQueryParams::GetUserIndex() const
 {
 	switch (Key)
@@ -89,45 +64,6 @@ FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::AuthorityMulticast 
 	EVSNetAuthorityMethodExecPolicy::Multicast,
 	EVSNetAuthorityMethodExecPolicy::Client,
 	false);
-
-bool FVSSceneComponentQuery::Matches(const USceneComponent* Component) const
-{
-	if (!Component) return false;
-	if (ComponentClasses.IsEmpty() && !bComponentClassesEmptyAsPass) return false;
-	if (!ComponentClasses.IsEmpty() && !(ComponentClasses.Contains(Component->GetClass()) && !bInverseClassAllowance)) return false;
-	if (ObjectTypes.IsEmpty() && !bObjectTypesEmptyAsPass) return false;
-	if (!ObjectTypes.IsEmpty() && !(ObjectTypes.Contains(Component->GetCollisionObjectType()) && !bInverseObjectTypes)) return false;
-	if (ComponentTags.IsEmpty() && !bComponentTagsEmptyAsPass) return false;
-	if (!ComponentTags.IsEmpty())
-	{
-		bool bHasComponentTag = false;
-		for (const FName& ComponentTag : ComponentTags)
-		{
-			if (Component->ComponentTags.Contains(ComponentTag))
-			{
-				bHasComponentTag = true;
-				break;
-			}
-		}
-		if (!(bHasComponentTag && !bInverseComponentTagAllowance)) return false;
-	}
-	if (ActorTags.IsEmpty() && !bActorTagsEmptyAsPass) return false;
-	if (!ActorTags.IsEmpty())
-	{
-		bool bHasActorTag = false;
-		for (const FName& ActorTag : ActorTags)
-		{
-			if (Component->GetOwner()->Tags.Contains(ActorTag))
-			{
-				bHasActorTag = true;
-				break;
-			}
-		}
-		if (!(bHasActorTag && !bInverseActorTagAllowance)) return false;
-	}
-
-	return true;
-}
 
 bool FVSLocationUnderCursorQueryParams::IsValid() const
 {

@@ -38,14 +38,6 @@ class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
 	static UVSGameplayTagController* GetGameplayTagControllerFromActor(AActor* Actor);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Object", DeterminesOutputType = "Class"))
-	static UVSObjectFeature* GetFeatureByClassFromActor(AActor* Object, TSubclassOf<UVSObjectFeature> Class);
-	template <typename T>
-	static T* FindFeatureByClassFromActor(AActor* Actor, TSubclassOf<T> Class = T::StaticClass());
-	
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
-	static UVSObjectFeature* GetFeatureByNameFromActor(AActor* Actor, FName Name);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
 	static UAbilitySystemComponent* GetAbilitySystemComponentFormActor(AActor* Actor);
@@ -77,11 +69,4 @@ T* UVSActorLibrary::DuplicateActor(T* Actor, const FTransform& SpawnTransform)
 	
 	T* NewActor = World->SpawnActor<T>(Actor->GetClass(), SpawnTransform, Params);
 	return NewActor;
-}
-
-template <typename T>
-T* UVSActorLibrary::FindFeatureByClassFromActor(AActor* Actor, TSubclassOf<T> Class)
-{
-	static_assert(TIsDerivedFrom<T, UVSObjectFeature>::IsDerived, "Class must derive from UVSObjectFeature.");
-	return static_cast<T*>(GetFeatureByClassFromActor(Actor, Class));
 }

@@ -25,17 +25,12 @@ float UVSGameplayLibrary::GetServerTimeSeconds(const UObject* WorldContext)
 	return GameState ? GameState->GetServerWorldTimeSeconds() : 0.f;
 }
 
-bool UVSGameplayLibrary::MatchesGameplayTagEventQuery(const FVSGameplayTagEventQuery& Query, const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent)
+bool UVSGameplayLibrary::MatchesGameplayTagEventQuery(const FVSGameplayTagEventQuery& Query, const FGameplayTag& TagEvent, const FGameplayTagContainer& GameplayTags)
 {
-	return Query.Matches(GameplayTags, TagEvent);
+	return Query.Matches(TagEvent, GameplayTags);
 }
 
-bool UVSGameplayLibrary::MatchesGameplayTagEventQueries(const FVSGameplayTagEventQueryContainer& Queries, const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent)
-{
-	return Queries.Matches(GameplayTags, TagEvent);
-}
-
-bool UVSGameplayLibrary::MatchesSceneComponentQuery(const USceneComponent* SceneComponent, const FVSSceneComponentQuery& Query)
+bool UVSGameplayLibrary::MatchesSceneComponentQuery( const FVSSceneComponentQuery& Query, const USceneComponent* SceneComponent)
 {
 	return Query.Matches(SceneComponent);
 }
