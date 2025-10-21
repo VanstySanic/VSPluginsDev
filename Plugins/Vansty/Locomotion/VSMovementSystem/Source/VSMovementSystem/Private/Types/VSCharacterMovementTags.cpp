@@ -36,7 +36,8 @@ namespace EVSGait
 namespace EVSMovementState
 {
 	UE_DEFINE_GAMEPLAY_TAG(IsMoving2D, "VSMovementSystem.State.IsMoving2D");
-	UE_DEFINE_GAMEPLAY_TAG(HasMovementInput2D, "VSMovementSystem.State.HasMovementInput2D");
+	UE_DEFINE_GAMEPLAY_TAG(HasAcceleration2D, "VSMovementSystem.State.HasMovementInput2D");
+	UE_DEFINE_GAMEPLAY_TAG(IsMovingAgainstWall2D, "VSMovementSystem.State.IsMovingAgainstWall2D");
 	
 	UE_DEFINE_GAMEPLAY_TAG(TurnInPlace, "VSMovementSystem.State.TurnInPlace");
 	UE_DEFINE_GAMEPLAY_TAG(LandRecovery, "VSMovementSystem.State.LandRecovery");
@@ -57,6 +58,7 @@ namespace EVSMovementEvent
 	
 	UE_DEFINE_GAMEPLAY_TAG(StateChange_IsMoving2D, "VSMovementSystem.Event.StateChange.IsMoving2D");
 	UE_DEFINE_GAMEPLAY_TAG(StateChange_HasMovementInput2D, "VSMovementSystem.Event.StateChange.HasMovementInput2D");
+	UE_DEFINE_GAMEPLAY_TAG(StateChange_IsMovingAgainstWall2D, "VSMovementSystem.Event.StateChange.IsMovingAgainstWall2D");
 	
 	UE_DEFINE_GAMEPLAY_TAG(Action_Jump, "VSMovementSystem.Event.Action.Jump");
 	

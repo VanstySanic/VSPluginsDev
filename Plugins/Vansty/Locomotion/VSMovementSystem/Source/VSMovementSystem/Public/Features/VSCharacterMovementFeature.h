@@ -7,6 +7,7 @@
 #include "VSCharacterMovementInterface.h"
 #include "Classes/Features/VSObjectFeature.h"
 #include "Types/VSCharacterMovementTypes.h"
+#include "Types/VSChrMovOrientationTypes.h"
 #include "VSCharacterMovementFeature.generated.h"
 
 class UVSGameplayTagController;
@@ -99,10 +100,10 @@ public:
 	bool IsMovingAgainstWall2D() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Movement")
-	bool HasMovementInput() const;
+	bool HasAcceleration() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Movement")
-	bool HasMovementInput2D() const;
+	bool HasAcceleration2D() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	FVector GetScale3D() const;
@@ -120,14 +121,14 @@ public:
 	FVector GetRootLocation() const;
 
 
-	UFUNCTION(BlueprintCallable, Category = "Movement")
-	FRotator EvaluateOrientation(const FVSMovementOrientationEvaluateParams& Params);
+	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "Params"))
+	FRotator EvaluateOrientation(const FVSMovementOrientationEvaluateParams& Params = FVSMovementOrientationEvaluateParams());
 
 protected:
-	UFUNCTION(BlueprintNativeEvent, Category = "Camera")
+	UFUNCTION(BlueprintNativeEvent, Category = "Movement")
 	void UpdateMovement(float DeltaTime);
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Camera")
+	UFUNCTION(BlueprintNativeEvent, Category = "Movement")
 	bool CanUpdateMovement() const;
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Movement")
@@ -137,10 +138,11 @@ protected:
 	void OnMovementTagEventNotified(const FGameplayTag& TagEvent);
 
 private:
+	void SetMovementModeInternal(const FGameplayTag& InMovementMode);
+
 	UFUNCTION(Server, Reliable)
 	void SetMovementMode_Server(const FGameplayTag& InMovementMode);
 	
-	void SetMovementModeInternal(const FGameplayTag& InMovementMode);
 
 private:
 	TWeakObjectPtr<UVSCharacterMovementFeatureAgent> ChrMovFeatureAgentPrivate;

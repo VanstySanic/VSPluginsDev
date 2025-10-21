@@ -4,7 +4,7 @@
 #include "Classes/Queries/VSGameplayTagQueryExpression.h"
 #include "Classes/Queries/VSSceneComponentQueryExpression.h"
 
-bool FVSGameplayTagEventQueryParams::Matches(const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent) const
+bool FVSGameplayTagEventQueryParams::Matches(const FGameplayTag& TagEvent, const FGameplayTagContainer& GameplayTags) const
 {
 	if (TagEvent == FGameplayTag::EmptyTag && !bEmptyEventAsPass) return false;
 	if (TagEvents.IsEmpty() && !bTagEventsEmptyAsPass) return false;

@@ -45,6 +45,31 @@ namespace EVSVectorAxes
 	};
 }
 
+UENUM(BlueprintType)
+namespace EVSAxesSwizzle
+{
+	enum Type : uint8
+	{
+		// Nothing changes
+		XYZ,
+		
+		// Swap X and Y axis. Useful for binding 1D inputs to the Y axis for 2D actions.
+		YXZ,
+
+		// Swap X and Z axis
+		ZYX,
+
+		// Swap Y and Z axis
+		XZY,
+
+		// Reorder all axes, Y first
+		YZX,
+
+		// Reorder all axes, Z first
+		ZXY,
+	};
+}
+
 USTRUCT(BlueprintType)
 struct FVSTransformAxes
 {

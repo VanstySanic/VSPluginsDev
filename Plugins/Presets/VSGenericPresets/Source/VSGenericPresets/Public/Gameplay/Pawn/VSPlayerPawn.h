@@ -15,6 +15,10 @@ UCLASS()
 class VSGENERICPRESETS_API AVSPlayerPawn : public APawn, public IAbilitySystemInterface, public IVSGameplayTagControllerInterface
 {
 	GENERATED_UCLASS_BODY()
+
+protected:
+	virtual void BeginPlay() override;
+	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
 	
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;

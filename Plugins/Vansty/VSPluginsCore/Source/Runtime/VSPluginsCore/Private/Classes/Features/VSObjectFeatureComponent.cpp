@@ -36,12 +36,16 @@ void UVSObjectFeatureComponent::OnUnregister()
 void UVSObjectFeatureComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	if (RootFeature) { RootFeature->RegisterFeature(); }
+	
+	if (bRegisterOnBeginPlay && RootFeature)
+	{
+		RootFeature->RegisterFeature();
+	}
 }
 
 void UVSObjectFeatureComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (RootFeature) { RootFeature->UnregisterFeature(); }
+	if (RootFeature && RootFeature->IsRegistered()) { RootFeature->UnregisterFeature(); }
 	Super::EndPlay(EndPlayReason);
 }
 

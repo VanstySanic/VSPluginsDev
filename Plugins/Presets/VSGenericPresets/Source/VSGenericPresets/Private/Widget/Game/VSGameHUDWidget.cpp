@@ -1,8 +1,7 @@
 // Copyright VanstySanic. All Rights Reserved.
 
-
-#include "VSGenericWidgetPresets/Public/Game/VSGameHUDWidget.h"
-#include "Game/VSGameWidgetController.h"
+#include "Widget/Game/VSGameHUDWidget.h"
+#include "Widget/Game/VSGameWidgetController.h"
 
 UVSGameHUDWidget::UVSGameHUDWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

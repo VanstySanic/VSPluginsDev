@@ -15,6 +15,7 @@
 #include "Libraries/VSAnimationLibrary.h"
 #include "Libraries/VSGameplayLibrary.h"
 #include "Libraries/VSMathLibrary.h"
+#include "Types/VSCharacterMovementTags.h"
 
 UVSChrMovFeature_MantleVaultMovement::UVSChrMovFeature_MantleVaultMovement(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -220,13 +221,13 @@ void UVSChrMovFeature_MantleVaultMovement::UpdateMovement_Implementation(float D
 	{
 		if (MovementData.MovementElapsedTime >= MovementData.AnimPtr->GetMarkTime(AnimGroundPivotTimeMarkName))
 		{
-			if (HasMovementInput2D()) { bShouldBreakOut = true; }
+			if (HasAcceleration2D()) { bShouldBreakOut = true; }
 			else if (MovementData.AnimSettingsPtr->MovementType & EVSMantleVaultMovementType::Vault) { bShouldBreakOut = true; }
 		}
 	}
 	else if (MovementData.SnappedParams.MovementType == EVSMantleVaultMovementType::Vault)
 	{
-		if (MovementData.MovementElapsedTime >= MovementData.AnimPtr->GetMarkTime(AnimVaultOffPlatformTimeMarkName) && HasMovementInput2D())
+		if (MovementData.MovementElapsedTime >= MovementData.AnimPtr->GetMarkTime(AnimVaultOffPlatformTimeMarkName) && HasAcceleration2D())
 		{
 			const FVector& DeltaHeightWS = ComponentTransformWS.TransformVector((TargetRootLocationRS - MovementData.SnappedParams.GroundPivotPointRS).ProjectOnToNormal(UpVectorRS));
 			if (DeltaHeightWS.Size() >= GetCharacter()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()
@@ -374,7 +375,7 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 	FVSMantleVaultSettings* SettingsPtr = SettingsRow.GetRow<FVSMantleVaultSettings>(nullptr);
 	if (!SettingsPtr || !SettingsPtr->IsValid()) return false;
 
-	if (SettingsPtr->Limits.bRequireMovementInput2D && !HasMovementInput2D()) return false;
+	if (SettingsPtr->Limits.bRequireMovementInput2D && !HasAcceleration2D()) return false;
 	if (!SettingsPtr->Limits.MovementTagQuery.IsEmpty() && !SettingsPtr->Limits.MovementTagQuery.Matches(GetGameplayTagController()->GetGameplayTags())) return false;
 
 	const FVector& CharacterScaleWS = GetCharacter()->GetActorScale3D();
@@ -465,7 +466,7 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 		else if (GetCharacter()->GetActorForwardVector().Dot(-FrontWallNormal2DWS) < UKismetMathLibrary::DegCos(SettingsPtr->Limits.FacingMovementMaxAngle)) bMeetTowardsMovementRequirementsByWall = false;
 		else if (IsMoving2D() && !IsMovingAgainstWall2D() && (GetVelocityWallAdjusted2D().GetSafeNormal()).Dot(-FrontWallNormal2DWS) < UKismetMathLibrary::DegCos(SettingsPtr->Limits.Velocity2DTowardsMovementMaxAngle)) { bMeetTowardsMovementRequirementsByWall = false; }
 		else if (IsMoving2D() && IsMovingAgainstWall2D() && (GetMovementInput2D().GetSafeNormal()).Dot(-FrontWallNormal2DWS) < UKismetMathLibrary::DegCos(SettingsPtr->Limits.Velocity2DTowardsMovementMaxAngle)) { bMeetTowardsMovementRequirementsByWall = false; }
-		else if (HasMovementInput2D() && (GetMovementInput2D().GetSafeNormal()).Dot(-FrontWallNormal2DWS) < UKismetMathLibrary::DegCos(SettingsPtr->Limits.Input2DTowardsMovementMaxAngle)) { bMeetTowardsMovementRequirementsByWall = false; }
+		else if (HasAcceleration2D() && (GetMovementInput2D().GetSafeNormal()).Dot(-FrontWallNormal2DWS) < UKismetMathLibrary::DegCos(SettingsPtr->Limits.Input2DTowardsMovementMaxAngle)) { bMeetTowardsMovementRequirementsByWall = false; }
 		if (!bMeetTowardsMovementRequirementsByWall) continue;
 
 		/** Calculate for anims. */

@@ -3,31 +3,161 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "VSCharacterMovementTags.h"
 #include "Types/VSGameplayTypes.h"
-#include "Types/VSCharacterMovementTypes.h"
 #include "UObject/Object.h"
 #include "VSChrMovOrientationTypes.generated.h"
 
 struct FGameplayTag;
 
+UENUM(BlueprintType)
+namespace EVSMovementRelatedOrientationType
+{
+	enum Type 
+	{
+		None,
+		Self,
+		Velocity,
+		Input,
+		Control,
+		Aim,
+		Custom,
+	};
+}
+
+UENUM(BlueprintType)
+namespace EVSMovementOrientationAimTargetType
+{
+	enum Type
+	{
+		None,
+		Point,
+		Direction,
+		Actor,
+		Component,
+		Socket
+	};
+}
+
 USTRUCT(BlueprintType)
-struct FVSOrientationControlSettings2D
+struct FVSMovementOrientationDynamicData
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FRotator SelfRotation = FRotator::ZeroRotator;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Velocity = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector MovementInput = FVector::ZeroVector;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FRotator ControlRotation = FRotator::ZeroRotator;
+};
+
+USTRUCT(BlueprintType)
+struct FVSMovementOrientationAimData
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Point = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector Direction = FVector::ForwardVector;
+
+	UPROPERTY(BlueprintReadWrite)
+	TWeakObjectPtr<AActor> Actor = nullptr;
+
+	UPROPERTY(BlueprintReadWrite)
+	TWeakObjectPtr<USceneComponent> Component = nullptr;
+
+	UPROPERTY(BlueprintReadWrite)
+	TWeakObjectPtr<USceneComponent> SocketComponent = nullptr;
+
+	UPROPERTY(BlueprintReadWrite)
+	FName SocketName = NAME_None;
+};
+
+USTRUCT(BlueprintType)
+struct FVSMovementOrientationEvaluateType
 {
 	GENERATED_BODY()
 
-	friend uint32 GetTypeHash(const FVSOrientationControlSettings2D& Settings)
+	FVSMovementOrientationEvaluateType(EVSMovementRelatedOrientationType::Type OrientationType = EVSMovementRelatedOrientationType::None, EVSMovementOrientationAimTargetType::Type AimTargetType = EVSMovementOrientationAimTargetType::None)
+		: OrientationType(OrientationType)
+		, AimTargetType(AimTargetType)
 	{
-		const uint32 HashA = HashCombine(GetTypeHash(Settings.MovingEvaluateType), GetTypeHash(Settings.IdleEvaluateType));
-		const uint32 HashB = HashCombine(GetTypeHash(Settings.OrientationLagSpeed), GetTypeHash(Settings.OrientationLagSpeed));
+	}
+
+	friend uint32 GetTypeHash(const FVSMovementOrientationEvaluateType& Type)
+	{
+		return HashCombine(GetTypeHash(Type.OrientationType), GetTypeHash(Type.AimTargetType));
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EVSMovementRelatedOrientationType::Type> OrientationType = EVSMovementRelatedOrientationType::None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EVSMovementOrientationAimTargetType::Type> AimTargetType = EVSMovementOrientationAimTargetType::None;
+};
+
+USTRUCT(BlueprintType)
+struct FVSMovementOrientationEvaluateParams
+{
+	GENERATED_BODY()
+
+	FVSMovementOrientationEvaluateParams(const FVSMovementOrientationEvaluateType& EvaluateTypes = FVSMovementOrientationEvaluateType())
+		: EvaluateType(EvaluateTypes)
+	{
+	}
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVSMovementOrientationEvaluateType EvaluateType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TEnumAsByte<EVSMovementRelatedOrientationType::Type>> OverridenRotationTypes;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVSMovementOrientationDynamicData DynamicDataOverride;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TEnumAsByte<EVSMovementOrientationAimTargetType::Type>> OverridenAimTargetTypes;
+	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVSMovementOrientationAimData AimDataOverride;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FRotator CustomRotation = FRotator::ZeroRotator;
+
+	/** If true, the movement will be adjusted if moving against wall. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bMovementAgainstWallAdjustment2D = true;
+	
+	/** If true, return the gravity space 2d rotation instead of the 3d rotation. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bReturnRotationInSpace2D = true;
+};
+
+USTRUCT(BlueprintType)
+struct FVSOrientationControlSettings
+{
+	GENERATED_BODY()
+
+	friend uint32 GetTypeHash(const FVSOrientationControlSettings& Settings)
+	{
+		const uint32 HashA = HashCombine(GetTypeHash(Settings.EvaluateType), GetTypeHash(Settings.EvaluateType));
+		const uint32 HashB = HashCombine(GetTypeHash(Settings.bControlOnly2D), GetTypeHash(Settings.OrientationLagSpeed));
 		return HashCombine(HashA, HashB);
 	}
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FVSMovementOrientationEvaluateType MovingEvaluateType = FVSMovementOrientationEvaluateType(EVSMovementRelatedOrientationType::Control);
+	FVSMovementOrientationEvaluateType EvaluateType = FVSMovementOrientationEvaluateType(EVSMovementRelatedOrientationType::None);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FVSMovementOrientationEvaluateType IdleEvaluateType;
+	bool bControlOnly2D = true;
 	
 	/** Lag the moving orientation 2D to the desired. 0.f means no lag. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -35,9 +165,6 @@ struct FVSOrientationControlSettings2D
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float OrientationLagMaxTimeSubstepping = 0.0166667f;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bMovingRequireInput = true;
 };
 
 #pragma region TurnInPlace2D

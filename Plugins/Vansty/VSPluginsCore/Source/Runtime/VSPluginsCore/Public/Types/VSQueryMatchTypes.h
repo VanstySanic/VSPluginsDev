@@ -45,7 +45,7 @@ struct FVSGameplayTagEventQueryParams
 	{
 	}
 
-	VSPLUGINSCORE_API bool Matches(const FGameplayTagContainer& GameplayTags, const FGameplayTag& TagEvent) const;
+	VSPLUGINSCORE_API bool Matches(const FGameplayTag& TagEvent, const FGameplayTagContainer& GameplayTags) const;
 	
 	/** Work as an entry. Requires TagEvent in the array. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

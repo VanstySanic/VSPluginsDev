@@ -23,12 +23,12 @@ void UVSCharacterMovementAnimFeatureAgent::Initialize_Implementation()
 
 	CharacterPrivate = Cast<ACharacter>(UVSGameplayLibrary::GetPawnFromObject(this));
 	check(CharacterPrivate.IsValid() && CharacterPrivate->Implements<UVSGameplayTagControllerInterface>());
-
-	ChrMovAgentFeaturePrivate = UVSCharacterMovementUtils::GetCharacterMovementFeatureAgentFromActor(CharacterPrivate.Get());
-	check(ChrMovAgentFeaturePrivate.IsValid());
-
+	
 	GameplayTagControllerPrivate = UVSActorLibrary::GetGameplayTagControllerFromActor(CharacterPrivate.Get());
 	check(GameplayTagControllerPrivate.IsValid());
+	
+	ChrMovAgentFeaturePrivate = UVSCharacterMovementUtils::GetCharacterMovementFeatureAgentFromActor(CharacterPrivate.Get());
+	check(ChrMovAgentFeaturePrivate.IsValid());
 
 	GetGameplayTagController()->OnTagsUpdated.AddDynamic(this, &UVSCharacterMovementAnimFeatureAgent::OnMovementTagsUpdated);
 	GetGameplayTagController()->OnTagEventNotified.AddDynamic(this, &UVSCharacterMovementAnimFeatureAgent::OnMovementTagEventNotified);
@@ -57,6 +57,8 @@ void UVSCharacterMovementAnimFeatureAgent::UpdateAnimation_Implementation(float 
 
 void UVSCharacterMovementAnimFeatureAgent::UpdateAnimationThreadSafe_Implementation(float DeltaTime)
 {
+	if (!HasBeenInitialized() || !HasBegunPlay()) return;
+	
 	AnimData.bMovementModeChangedThisFrame = AnimData.CachedMovementMode != GetMovementMode();
 	AnimData.CachedMovementMode = GetMovementMode();
 	AnimData.AnimVelocityDirectionToCharacter2D = UVSMovementAnimUtils::CalcAnimDirectionByTwoVector2D(GetAnimVelocity2D(), GetCharacter()->GetActorForwardVector(), GetUpDirection(), DirectionBufferAngle, AnimData.AnimVelocityDirectionToCharacter2D);

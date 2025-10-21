@@ -1,7 +1,6 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Features/VSCharacterMovementFeatureAgent.h"
-
 #include "VSCharacterMovementUtils.h"
 #include "VSChrMovCapsuleComponent.h"
 #include "VSMovementSystemSettings.h"
@@ -13,9 +12,9 @@
 #include "Libraries/VSGameplayLibrary.h"
 #include "VSPrivablic.h"
 #include "Net/UnrealNetwork.h"
+#include "Types/VSCharacterMovementTags.h"
 
 VS_DECLARE_PRIVABLIC_MEMBER(UCharacterMovementComponent, Acceleration, FVector);
-VS_DECLARE_PRIVABLIC_MEMBER(APawn, LastControlInputVector, FVector);
 
 UVSCharacterMovementFeatureAgent::UVSCharacterMovementFeatureAgent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -41,14 +40,14 @@ void UVSCharacterMovementFeatureAgent::Initialize_Implementation()
 	
 	CharacterMovementComponentPrivate = CharacterPrivate->GetCharacterMovement();
 	check(CharacterMovementComponentPrivate.IsValid() );
-	
+
 	GameplayTagControllerPrivate = UVSActorLibrary::GetGameplayTagControllerFromActor(CharacterPrivate.Get());
 	check(GameplayTagControllerPrivate.IsValid());
 	
 	MovementCapsuleComponentPrivate = Cast<UVSChrMovCapsuleComponent>(GetCharacter()->GetCapsuleComponent());
 	check(MovementCapsuleComponentPrivate.IsValid());
 	
-	CharacterPrivate->MovementModeChangedDelegate.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnCharacterMovementChanged);
+	CharacterPrivate->MovementModeChangedDelegate.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnCharacterMovementModeChanged);
 	
 	GetGameplayTagController()->OnTagsUpdated.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnMovementTagsUpdated);
 	GetGameplayTagController()->OnTagEventNotified.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnMovementTagEventNotified);
@@ -58,7 +57,7 @@ void UVSCharacterMovementFeatureAgent::Uninitialize_Implementation()
 {
 	if (CharacterPrivate.IsValid())
 	{
-		CharacterPrivate->MovementModeChangedDelegate.RemoveDynamic(this, &UVSCharacterMovementFeatureAgent::OnCharacterMovementChanged);
+		CharacterPrivate->MovementModeChangedDelegate.RemoveDynamic(this, &UVSCharacterMovementFeatureAgent::OnCharacterMovementModeChanged);
 	}
 	
 	Super::Uninitialize_Implementation();
@@ -96,28 +95,36 @@ void UVSCharacterMovementFeatureAgent::UpdateMovement_Implementation(float Delta
 	MovementData.CachedVelocity = GetVelocity();
 
 	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
+	
+	if (GetOwnerActor()->HasAuthority())
+	{
+		ReplicatedControlRotation = CharacterPrivate->GetControlRotation();
+		ReplicatedMovementInput = GetCharacterMovement()->GetCurrentAcceleration();
+	}
+	else if (!UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
+	{
+		if (GetCharacterMovement())
+		{
+			VS_PRIVABLIC_MEMBER(GetCharacterMovement(), UCharacterMovementComponent, Acceleration) = ReplicatedMovementInput;
+		}
+	}
+
 	if ((IsMoving2D() && !MovementData.bCachedIsMoving2D) || (!IsMoving2D() && MovementData.bCachedIsMoving2D))
 	{
 		GameplayTagController->SetTagCount(EVSMovementState::IsMoving2D, IsMoving2D() ? 1 : 0);
 		GameplayTagController->NotifyTagsUpdated();
 		GameplayTagController->NotifyTagEvent(EVSMovementEvent::StateChange_IsMoving2D);
 	}
-	if ((HasMovementInput2D() && !MovementData.bCachedHasMovementInput2D) || (!HasMovementInput2D() && MovementData.bCachedHasMovementInput2D))
+	if ((HasAcceleration2D() && !MovementData.bCachedHasMovementInput2D) || (!HasAcceleration2D() && MovementData.bCachedHasMovementInput2D))
 	{
-		GameplayTagController->SetTagCount(EVSMovementState::HasMovementInput2D, HasMovementInput2D() ? 1 : 0);
+		GameplayTagController->SetTagCount(EVSMovementState::HasAcceleration2D, HasAcceleration2D() ? 1 : 0);
 		GameplayTagController->NotifyTagsUpdated();
 		GameplayTagController->NotifyTagEvent(EVSMovementEvent::StateChange_HasMovementInput2D);
 	}
 	MovementData.bCachedIsMoving2D = IsMoving2D();
-	MovementData.bCachedHasMovementInput2D = HasMovementInput2D();
-	
-	CheckMovingAgainstWall2D();
+	MovementData.bCachedHasMovementInput2D = HasAcceleration2D();
 
-	if (GetOwnerActor()->HasAuthority())
-	{
-		ReplicatedControlRotation = CharacterPrivate->GetControlRotation();
-		ReplicatedMovementInput = GetCharacterMovement()->GetCurrentAcceleration();
-	}
+	CheckMovingAgainstWall2D();
 }
 
 void UVSCharacterMovementFeatureAgent::OnMovementTagsUpdated_Implementation()
@@ -125,9 +132,10 @@ void UVSCharacterMovementFeatureAgent::OnMovementTagsUpdated_Implementation()
 	Super::OnMovementTagsUpdated_Implementation();
 	
 	const FGameplayTagContainer& GameplayTags = GetGameplayTagController()->GetGameplayTags();
+	
 	if (GetCharacter()->HasAuthority())
 	{
-		if (NetworkIgnoreClientCorrectionQuery.Matches(GameplayTags))
+		if (NetworkIgnoreClientCorrectionTagQuery.Matches(GameplayTags))
 		{
 			GetCharacterMovement()->bIgnoreClientMovementErrorChecksAndCorrection = true;
 		}
@@ -138,9 +146,10 @@ void UVSCharacterMovementFeatureAgent::OnMovementTagsUpdated_Implementation()
 			GetCharacterMovement()->bIgnoreClientMovementErrorChecksAndCorrection = DefaultCharacterMove->bIgnoreClientMovementErrorChecksAndCorrection;
 		}
 	}
+	
 	if (GetCharacter()->IsLocallyControlled())
 	{
-		if (NetworkDisableMoveCombiningQuery.Matches(GameplayTags))
+		if (NetworkDisableMoveCombiningTagQuery.Matches(GameplayTags))
 		{
 			if (IConsoleVariable* ConsoleVariable = IConsoleManager::Get().FindConsoleVariable(*FString("p.NetEnableMoveCombining"), false))
 			{
@@ -152,15 +161,15 @@ void UVSCharacterMovementFeatureAgent::OnMovementTagsUpdated_Implementation()
 			if (IConsoleVariable* ConsoleVariable = IConsoleManager::Get().FindConsoleVariable(*FString("p.NetEnableMoveCombining"), false))
 			{
 				ConsoleVariable->SetWithCurrentPriority(FCString::Atoi(*ConsoleVariable->GetDefaultValue()));
-			}	
+			}
 		}
 	}
-
 }
 
 void UVSCharacterMovementFeatureAgent::CheckMovingAgainstWall2D()
 {
 	/** Check whether the character is moving against the wall in 2D direction. */
+	const bool bPrevMovingAgainstWall2D = MovementData.bIsMovingAgainstWall2D;
 	MovementData.bIsMovingAgainstWall2D = false;
 	if (IsMoving2D())
 	{
@@ -181,9 +190,17 @@ void UVSCharacterMovementFeatureAgent::CheckMovingAgainstWall2D()
 
 		MovementData.bIsMovingAgainstWall2D = HitResult.IsValidBlockingHit();
 	}
+
+	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
+	if ((!bPrevMovingAgainstWall2D && MovementData.bIsMovingAgainstWall2D) || (bPrevMovingAgainstWall2D && !MovementData.bIsMovingAgainstWall2D))
+	{
+		GameplayTagController->SetTagCount(EVSMovementState::IsMovingAgainstWall2D, MovementData.bIsMovingAgainstWall2D ? 1 : 0);
+		GameplayTagController->NotifyTagsUpdated();
+		GameplayTagController->NotifyTagEvent(EVSMovementEvent::StateChange_IsMovingAgainstWall2D);
+	}
 }
 
-void UVSCharacterMovementFeatureAgent::OnCharacterMovementChanged(ACharacter* Character, EMovementMode PrevMovementMode, uint8 PreviousCustomMode)
+void UVSCharacterMovementFeatureAgent::OnCharacterMovementModeChanged(ACharacter* Character, EMovementMode PrevMovementMode, uint8 PreviousCustomMode)
 {
 	if (!GetCharacter()) return;
 	

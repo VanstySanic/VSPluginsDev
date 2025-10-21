@@ -1,11 +1,11 @@
 // Copyright VanstySanic. All Rights Reserved.
 
-#include "VSGenericWidgetPresets/Public/Game/VSGameWidgetController.h"
+#include "Widget/Game/VSGameWidgetController.h"
 #include "Blueprint/UserWidget.h"
-#include "Game/VSGameHUDWidget.h"
-#include "Game/VSGameOverlay.h"
 #include "Libraries/VSGameplayLibrary.h"
 #include "Types/VSWidgetTypes.h"
+#include "Widget/Game/VSGameHUDWidget.h"
+#include "Widget/Game/VSGameOverlay.h"
 
 UVSGameWidgetController::UVSGameWidgetController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

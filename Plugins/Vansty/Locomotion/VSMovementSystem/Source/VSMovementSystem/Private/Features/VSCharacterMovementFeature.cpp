@@ -22,14 +22,12 @@ void UVSCharacterMovementFeature::Initialize_Implementation()
 	Super::Initialize_Implementation();
 	
 	ChrMovFeatureAgentPrivate = Cast<UVSCharacterMovementFeatureAgent>(this);
-	if (!ChrMovFeatureAgentPrivate.IsValid())
-	{
-		ChrMovFeatureAgentPrivate = UVSCharacterMovementUtils::GetCharacterMovementFeatureAgentFromActor(GetOwnerActor());
-	}
+	if (!ChrMovFeatureAgentPrivate.IsValid()) { ChrMovFeatureAgentPrivate = FindOwnerFeatureByClass<UVSCharacterMovementFeatureAgent>(); }
+	if (!ChrMovFeatureAgentPrivate.IsValid()) { ChrMovFeatureAgentPrivate = UVSCharacterMovementUtils::GetCharacterMovementFeatureAgentFromActor(GetOwnerActor()); }
 	check(ChrMovFeatureAgentPrivate.IsValid());
 
-	GetGameplayTagController()->OnTagsUpdated.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnMovementTagsUpdated);
-	GetGameplayTagController()->OnTagEventNotified.AddDynamic(this, &UVSCharacterMovementFeatureAgent::OnMovementTagEventNotified);
+	GetGameplayTagController()->OnTagsUpdated.AddDynamic(this, &UVSCharacterMovementFeature::OnMovementTagsUpdated);
+	GetGameplayTagController()->OnTagEventNotified.AddDynamic(this, &UVSCharacterMovementFeature::OnMovementTagEventNotified);
 }
 
 void UVSCharacterMovementFeature::Uninitialize_Implementation()
@@ -114,7 +112,7 @@ FVector UVSCharacterMovementFeature::GetVelocity2D() const
 FVector UVSCharacterMovementFeature::GetVelocityWallAdjusted2D() const
 {
 	if (!IsMovingAgainstWall2D()) return GetVelocity2D();
-	const FVector& DesiredMovementDirection = (HasMovementInput2D() ? GetMovementInput2D() : GetVelocity2D()).GetSafeNormal();
+	const FVector& DesiredMovementDirection = (HasAcceleration2D() ? GetMovementInput2D() : GetVelocity2D()).GetSafeNormal();
 	const float VelInputDot = GetVelocity2D().GetSafeNormal().Dot(GetMovementInput2D().GetSafeNormal());
 	return DesiredMovementDirection * GetVelocity2D().Size() * VelInputDot;
 }
@@ -142,7 +140,7 @@ float UVSCharacterMovementFeature::GetSpeedZ() const
 FVector UVSCharacterMovementFeature::GetMovementInput() const
 {
 	if (!GetCharacterMovement()) return FVector::ZeroVector;
-	if (!UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && ChrMovFeatureAgentPrivate.IsValid())
+	if (ChrMovFeatureAgentPrivate.IsValid() && !UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
 	{
 		return ChrMovFeatureAgentPrivate->ReplicatedMovementInput;
 	}
@@ -154,12 +152,12 @@ FVector UVSCharacterMovementFeature::GetMovementInput2D() const
 	return FVector::VectorPlaneProject(GetMovementInput(), GetUpDirection());
 }
 
-bool UVSCharacterMovementFeature::HasMovementInput() const
+bool UVSCharacterMovementFeature::HasAcceleration() const
 {
 	return !GetMovementInput().IsNearlyZero(1.f);
 }
 
-bool UVSCharacterMovementFeature::HasMovementInput2D() const
+bool UVSCharacterMovementFeature::HasAcceleration2D() const
 {
 	return !GetMovementInput2D().IsNearlyZero(1.f);
 }

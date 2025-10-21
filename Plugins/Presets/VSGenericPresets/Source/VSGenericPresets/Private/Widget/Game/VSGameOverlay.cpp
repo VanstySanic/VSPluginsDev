@@ -1,9 +1,9 @@
 // Copyright VanstySanic. All Rights Reserved.
 
-#include "Game/VSGameOverlay.h"
-#include "Game/VSGameWidgetController.h"
+#include "Widget/Game/VSGameOverlay.h"
 #include "Components/VSNotifyLine.h"
 #include "Components/VSSubtitleLine.h"
+#include "Widget/Game/VSGameWidgetController.h"
 
 UVSGameOverlay::UVSGameOverlay(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

@@ -16,7 +16,7 @@ struct FVSWidgetNotifyParams;
  * 
  */
 UCLASS(DisplayName = "Feature.WidgetController.Game")
-class VSGENERICWIDGETPRESETS_API UVSGameWidgetController : public UVSObjectFeature
+class VSGENERICPRESETS_API UVSGameWidgetController : public UVSObjectFeature
 {
 	GENERATED_UCLASS_BODY()
 

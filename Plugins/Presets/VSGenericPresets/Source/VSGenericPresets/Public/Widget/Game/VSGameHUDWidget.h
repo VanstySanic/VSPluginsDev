@@ -14,7 +14,7 @@ class UCommonAnimatedSwitcher;
  * 
  */
 UCLASS()
-class VSGENERICWIDGETPRESETS_API UVSGameHUDWidget : public UVSLayeredActivableWidget
+class VSGENERICPRESETS_API UVSGameHUDWidget : public UVSLayeredActivableWidget
 {
 	GENERATED_UCLASS_BODY()
 	friend class UVSGameWidgetController;

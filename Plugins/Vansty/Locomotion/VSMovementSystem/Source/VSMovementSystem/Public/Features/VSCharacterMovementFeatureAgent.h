@@ -39,29 +39,33 @@ private:
 	void CheckMovingAgainstWall2D();
 	
 	UFUNCTION()
-	void OnCharacterMovementChanged(ACharacter* Character, EMovementMode PrevMovementMode, uint8 PreviousCustomMode);
+	void OnCharacterMovementModeChanged(ACharacter* Character, EMovementMode PrevMovementMode, uint8 PreviousCustomMode);
 
 public:
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FOnMovementModeChangedDelegate OnMovementModeChanged;
 
-protected:
-	/** This only works on server. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Networks")
-	FGameplayTagQuery NetworkIgnoreClientCorrectionQuery;
-
-	/** This only works with locally controlled owner. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Networks")
-	FGameplayTagQuery NetworkDisableMoveCombiningQuery;
-
-
 public:
+	/**
+	 * Defines the desired orientation direction.
+	 * Actual orientation needs to be handled manually.
+	 * Notice that this might be overriden in some cases.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orientation")
 	FVSMovementOrientationAimData OrientationAimData;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orientation")
 	FRotator CustomEvaluateRotation = FRotator::ZeroRotator;
 
+protected:
+	/** This only works on server. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Networks")
+	FGameplayTagQuery NetworkIgnoreClientCorrectionTagQuery;
+
+	/** This only works with locally controlled owner. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Networks")
+	FGameplayTagQuery NetworkDisableMoveCombiningTagQuery;
+	
 private:
 	UPROPERTY(Replicated)
 	FRotator ReplicatedControlRotation = FRotator::ZeroRotator;

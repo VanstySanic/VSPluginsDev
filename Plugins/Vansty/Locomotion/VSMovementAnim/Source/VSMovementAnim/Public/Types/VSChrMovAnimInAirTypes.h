@@ -50,6 +50,13 @@ struct FVSFallingMovementAnimLimits
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FGameplayTag> AllowedPrevMovementModes;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bJumpOnly = false;
+	
+	/** Only judged when jumped. If not matching, them jump is not allowed. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<int32> AllowedJumpCounts;
+
 	/** Empty as pass. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTagQuery MovementTagQuery;

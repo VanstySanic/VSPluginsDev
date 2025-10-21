@@ -14,6 +14,7 @@
 #include "Libraries/VSAnimationLibrary.h"
 #include "Libraries/VSGameplayLibrary.h"
 #include "Libraries/VSMathLibrary.h"
+#include "Types/VSCharacterMovementTags.h"
 #include "Types/Animation/VSAnimSequenceReference.h"
 
 UVSChrMovFeature_WallRunMovement::UVSChrMovFeature_WallRunMovement(const FObjectInitializer& ObjectInitializer)
@@ -407,7 +408,7 @@ void UVSChrMovFeature_WallRunMovement::SetWallRunState(const FGameplayTag& NewWa
 
 bool UVSChrMovFeature_WallRunMovement::TryWallRunInternal(const TArray<FDataTableRowHandle>& SettingRows)
 {
-	/** Can't move or input backward. */
+	/** Can't move or accelerate backward. */
 	if (GetVelocityWallAdjusted2D().Dot(GetCharacter()->GetActorForwardVector()) < 0.f) return false;
 	if (GetMovementInput2D().Dot(GetCharacter()->GetActorForwardVector()) < 0.f) return false;
 	
@@ -555,7 +556,7 @@ bool UVSChrMovFeature_WallRunMovement::CalcWallRunSnappedParams(FVSWallRunSnappe
 	FVSWallRunSettings* Settings = SettingsRow.GetRow<FVSWallRunSettings>(nullptr);
 	if (!Settings || !Settings->IsValid()) return false;
 	
-	if (Settings->Limits.bRequireMovementInput2D && !HasMovementInput2D()) return false;
+	if (Settings->Limits.bRequireMovementInput2D && !HasAcceleration2D()) return false;
 	
 	const bool bFromGround = UVSActorLibrary::IsCharacterOnWalkableFloor(GetCharacter()) && GetVelocityZ().IsNearlyZero(0.01f);
 
@@ -573,13 +574,13 @@ bool UVSChrMovFeature_WallRunMovement::CalcWallRunSnappedParams(FVSWallRunSnappe
 	FVector WallTraceDirection = GetCharacter()->GetActorForwardVector();
 	if (bFromGround)
 	{
-		if (HasMovementInput2D()) { WallTraceDirection = GetMovementInput2D().GetSafeNormal(); }
+		if (HasAcceleration2D()) { WallTraceDirection = GetMovementInput2D().GetSafeNormal(); }
 		else if (IsMoving2D()) { WallTraceDirection = GetVelocityWallAdjusted2D().GetSafeNormal(); }
 	}
 	else
 	{
 		if (IsMoving2D()) { WallTraceDirection = GetVelocityWallAdjusted2D().GetSafeNormal(); }
-		else if (HasMovementInput2D()) { WallTraceDirection = GetMovementInput2D().GetSafeNormal(); }
+		else if (HasAcceleration2D()) { WallTraceDirection = GetMovementInput2D().GetSafeNormal(); }
 	}
 
 	/** Trace for ground. */
@@ -635,7 +636,7 @@ bool UVSChrMovFeature_WallRunMovement::CalcWallRunSnappedParams(FVSWallRunSnappe
 		const float VelocityMovementAngle = (FMath::RadiansToDegrees(FQuat::FindBetweenVectors(MovementDirectionLeft, GetVelocityWallAdjusted2D()).GetAngle())) * (FMath::Sign(GetVelocityWallAdjusted2D().Dot(-WallTraceLeftSideHitResult.ImpactNormal)));
 		if (!UKismetMathLibrary::InRange_FloatFloat(VelocityMovementAngle, Settings->Limits.VelocityTowardsMovementAngleRange2D.X, Settings->Limits.VelocityTowardsMovementAngleRange2D.Y)) { bValidWallLeftSide = false; }
 	}
-	if (bValidWallLeftSide && HasMovementInput2D())
+	if (bValidWallLeftSide && HasAcceleration2D())
 	{	const float InputMovementAngle = (FMath::RadiansToDegrees(FQuat::FindBetweenVectors(MovementDirectionLeft, GetMovementInput2D()).GetAngle())) * (FMath::Sign(GetMovementInput2D().Dot(-WallTraceLeftSideHitResult.ImpactNormal)));
 		if (!UKismetMathLibrary::InRange_FloatFloat(InputMovementAngle, Settings->Limits.InputTowardsMovementAngleRange2D.X, Settings->Limits.InputTowardsMovementAngleRange2D.Y)) { bValidWallLeftSide = false; }
 	}
@@ -688,7 +689,7 @@ bool UVSChrMovFeature_WallRunMovement::CalcWallRunSnappedParams(FVSWallRunSnappe
 		const float VelocityMovementAngle = (FMath::RadiansToDegrees(FQuat::FindBetweenVectors(MovementDirectionRight, GetVelocityWallAdjusted2D()).GetAngle())) * (FMath::Sign(GetVelocityWallAdjusted2D().Dot(-WallTraceRightSideHitResult.ImpactNormal)));
 		if (!UKismetMathLibrary::InRange_FloatFloat(VelocityMovementAngle, Settings->Limits.VelocityTowardsMovementAngleRange2D.X, Settings->Limits.VelocityTowardsMovementAngleRange2D.Y)) { bValidWallRightSide = false; }
 	}
-	if (bValidWallRightSide && HasMovementInput2D())
+	if (bValidWallRightSide && HasAcceleration2D())
 	{
 		const float InputMovementAngle = (FMath::RadiansToDegrees(FQuat::FindBetweenVectors(MovementDirectionRight, GetMovementInput2D()).GetAngle())) * (FMath::Sign(GetMovementInput2D().Dot(-WallTraceRightSideHitResult.ImpactNormal)));
 		if (!UKismetMathLibrary::InRange_FloatFloat(InputMovementAngle, Settings->Limits.InputTowardsMovementAngleRange2D.X, Settings->Limits.InputTowardsMovementAngleRange2D.Y)) { bValidWallRightSide = false; }

@@ -9,7 +9,7 @@
 
 class UVSAnimDataAsset_WalkingMovement;
 class UVSChrMovFeature_WalkingMovement;
-class UVSChrMovFeature_OrientationControl2D;
+class UVSChrMovFeature_OrientationControl;
 struct FAnimUpdateContext;
 struct FAnimNodeReference;
 
@@ -20,6 +20,10 @@ UCLASS(DisplayName = "Feautre.ChrMovAnim.Movement.Walking", meta = (BlueprintThr
 class VSMOVEMENTANIM_API UVSChrMovAnimFeature_WalkingMovement : public UVSCharacterMovementAnimFeature
 {
 	GENERATED_UCLASS_BODY()
+
+protected:
+	virtual void Initialize_Implementation() override;
+	virtual void UpdateAnimationThreadSafe_Implementation(float DeltaTime) override;
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Movement")
@@ -115,10 +119,6 @@ public:
 	void UpdatePivotAnim(const FAnimUpdateContext& Context, const FAnimNodeReference& Node);
 
 protected:
-	virtual void Initialize_Implementation() override;
-	virtual void UpdateAnimationThreadSafe_Implementation(float DeltaTime) override;
-
-protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation", meta = (RowType = "/Script/VSMovementAnim.VSWalkingMovementAnimSettings"))
 	FDataTableRowHandle AnimSettingsRow;
 
@@ -143,7 +143,7 @@ protected:
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	bool bGaitChangedThisFrame = false;
-
+	
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	FRotator EvaluatedTargetOrientationForInput = FRotator::ZeroRotator;
@@ -172,7 +172,7 @@ protected:
 	TWeakObjectPtr<UVSChrMovFeature_WalkingMovement> ChrMovFeature_WalkingMovement;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Reference")
-	TWeakObjectPtr<UVSChrMovFeature_OrientationControl2D> ChrMovFeature_OrientationControl2D;
+	TWeakObjectPtr<UVSChrMovFeature_OrientationControl> ChrMovFeature_OrientationControl2D;
 
 private:
 	struct FAnimData

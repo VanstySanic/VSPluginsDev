@@ -14,18 +14,18 @@ UVSCameraFeature_UseControlRotation::UVSCameraFeature_UseControlRotation(const F
 	RotationLagSettings.LagSpaceType = EVSCameraRelatedTransformType::AttachedComponent;
 }
 
-void UVSCameraFeature_UseControlRotation::BeginPlay_Implementation()
-{
-	Super::BeginPlay_Implementation();
-
-	CatchUpMovement();
-}
-
 void UVSCameraFeature_UseControlRotation::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
 
 	Controller = UVSGameplayLibrary::GetControllerFromObject(this);
+}
+
+void UVSCameraFeature_UseControlRotation::BeginPlay_Implementation()
+{
+	Super::BeginPlay_Implementation();
+
+	CatchUpMovement();
 }
 
 bool UVSCameraFeature_UseControlRotation::CanUpdateCamera_Implementation() const

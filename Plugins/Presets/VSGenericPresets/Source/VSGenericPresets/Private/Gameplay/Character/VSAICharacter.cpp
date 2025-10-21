@@ -12,8 +12,6 @@ AVSAICharacter::AVSAICharacter(const FObjectInitializer& ObjectInitializer)
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
-
-	FeatureComponent->AddDefaultSubFeatureByClass(this, UVSGameplayTagController::StaticClass());
 }
 
 UAbilitySystemComponent* AVSAICharacter::GetAbilitySystemComponent() const

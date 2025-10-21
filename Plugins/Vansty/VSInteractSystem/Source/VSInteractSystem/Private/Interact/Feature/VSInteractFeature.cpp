@@ -17,10 +17,8 @@ void UVSInteractFeature::Initialize_Implementation()
 	Super::Initialize_Implementation();
 
 	InteractFeatureAgentPrivate = Cast<UVSInteractFeatureAgent>(this);
-	if (!InteractFeatureAgentPrivate.IsValid())
-	{
-		InteractFeatureAgentPrivate = UVSInteractSystemUtils::GetInteractFeatureAgentFromActor(GetOwnerActor());
-	}
+	if (!InteractFeatureAgentPrivate.IsValid()) { InteractFeatureAgentPrivate = FindOwnerFeatureByClass<UVSInteractFeatureAgent>(); }
+	if (!InteractFeatureAgentPrivate.IsValid()) { InteractFeatureAgentPrivate = UVSInteractSystemUtils::GetInteractFeatureAgentFromActor(GetOwnerActor()); }
 	check(InteractFeatureAgentPrivate.IsValid());
 
 	GetGameplayTagController()->OnTagsUpdated.AddDynamic(this, &UVSInteractFeature::OnGameplayTagsUpdated);

@@ -11,6 +11,10 @@ class VSGENERICPRESETS_API AVSPlayerCharacter : public AVSCharacter
 {
 	GENERATED_UCLASS_BODY()
 
+protected:
+	virtual void BeginPlay() override;
+	virtual void OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState) override;
+	
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	

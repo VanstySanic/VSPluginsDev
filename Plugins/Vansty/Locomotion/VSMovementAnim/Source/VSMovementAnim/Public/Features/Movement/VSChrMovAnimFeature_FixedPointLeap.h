@@ -17,10 +17,11 @@ UCLASS(DisplayName = "Feautre.ChrMovAnim.Movement.FixedPointLeap", meta = (Bluep
 class VSMOVEMENTANIM_API UVSChrMovAnimFeature_FixedPointLeap : public UVSCharacterMovementAnimFeature
 {
 	GENERATED_UCLASS_BODY()
-
-public:
+	
+protected:
 	virtual void Initialize_Implementation() override;
 
+public:
 	UFUNCTION(BlueprintCallable, Category = "Node Events")
 	bool HasValidFixedPointLeapAnim() const;
 

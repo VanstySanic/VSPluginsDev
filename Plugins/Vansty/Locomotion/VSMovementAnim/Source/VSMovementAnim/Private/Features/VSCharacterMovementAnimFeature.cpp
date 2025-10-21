@@ -22,10 +22,8 @@ void UVSCharacterMovementAnimFeature::Initialize_Implementation()
 	Super::Initialize_Implementation();
 
 	AnimFeatureAgentPrivate = Cast<UVSCharacterMovementAnimFeatureAgent>(this);
-	if (!AnimFeatureAgentPrivate.IsValid())
-	{
-		AnimFeatureAgentPrivate = UVSMovementAnimUtils::GetCharacterMovementAnimFeatureAgentFromActor(GetOwnerActor());
-	}
+	if (!AnimFeatureAgentPrivate.IsValid()) { AnimFeatureAgentPrivate = FindOwnerFeatureByClass<UVSCharacterMovementAnimFeatureAgent>(); }
+	if (!AnimFeatureAgentPrivate.IsValid()) { AnimFeatureAgentPrivate = UVSMovementAnimUtils::GetCharacterMovementAnimFeatureAgentFromActor(GetOwnerActor()); }
 	check(AnimFeatureAgentPrivate.IsValid());
 
 	GetGameplayTagController()->OnTagsUpdated.AddDynamic(this, &UVSCharacterMovementAnimFeatureAgent::OnMovementTagsUpdated);

@@ -88,9 +88,14 @@ protected:
 	/** Used when no valid anim settings row is renewed. */
 	UPROPERTY(EditAnywhere, Category = "Animation", meta = (RowType = "/Script/VSMovementAnim.VSFallingMovementAnimSettings"))
 	FDataTableRowHandle DefaultSettingsRow;
-	
+
+	/** Common anim set rows. Notice that jump will be processed first. */
 	UPROPERTY(EditAnywhere, Category = "Animation", meta = (RowType = "/Script/VSMovementAnim.VSFallingMovementAnimSettings"))
 	TArray<FDataTableRowHandle> AnimSettingRows;
+
+	/** Resolved when jumping. <JumpCount, SettingRow> */
+	UPROPERTY(EditAnywhere, Category = "Animation", meta = (RowType = "/Script/VSMovementAnim.VSFallingMovementAnimSettings"))
+	TMap<int32, FDataTableRowHandle> JumpAnimSettingRows;
 	
 	/**
 	 * Reassign the settings when tags matches the container.

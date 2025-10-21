@@ -186,12 +186,12 @@ void UVSObjectFeature::RegisterFeature()
 	else
 	{
 		AActor* OwnerActor = GetOwnerActor();
-		UActorComponent* OwnerComponent = GetOwnerComponent();
+		// UActorComponent* OwnerComponent = GetOwnerComponent();
 		UVSObjectFeature* OwnerFeature = GetOwnerFeature();
 		// check(OwnerActor);
 		
 		const bool bOwnerActorBeginPlayStarted = OwnerActor ? (OwnerActor->HasActorBegunPlay() || OwnerActor->IsActorBeginningPlay()) : true;
-		const bool bOwnerComponentBeginPlayStarted = OwnerComponent ? (OwnerComponent->HasBeenInitialized() || OwnerComponent->HasBegunPlay()) : true;
+		// const bool bOwnerComponentBeginPlayStarted = OwnerComponent ? (OwnerComponent->HasBeenInitialized() || OwnerComponent->HasBegunPlay()) : true;
 		const bool bOwnerFeatureBeginPlayStarted = OwnerFeature ? (OwnerFeature->HasBeenInitialized() || OwnerFeature->HasBegunPlay()) : true;
 		
 		if (OwnerActor && bReplicates && OwnerActor->IsActorInitialized())
@@ -204,7 +204,7 @@ void UVSObjectFeature::RegisterFeature()
 			RegisterTickFunction();
 		}
 
-		if (bOwnerActorBeginPlayStarted && bOwnerComponentBeginPlayStarted && bOwnerFeatureBeginPlayStarted)
+		if (bOwnerActorBeginPlayStarted /*&& bOwnerComponentBeginPlayStarted*/ && bOwnerFeatureBeginPlayStarted)
 		{
 			if (!HasBeenInitialized()) { Initialize(); }
 			if (!HasBegunPlay())
@@ -319,7 +319,7 @@ void UVSObjectFeature::SetIsReplicated(bool bShouldReplicate)
 	}
 	else if (AActor* Actor = GetOwnerActor())
 	{
-		if (Actor->HasAuthority())
+		if (UVSGameplayLibrary::IsInGame() && Actor->HasAuthority())
 		{
 			bReplicates ? BeginReplication() : EndReplication();
 		}
@@ -419,6 +419,17 @@ UVSObjectFeature* UVSObjectFeature::GetSubFeatureByName(FName Name, bool bRecurs
 		}
 	}
 	return nullptr;
+}
+
+UVSObjectFeature* UVSObjectFeature::GetOwnerFeatureByClass(TSubclassOf<UVSObjectFeature> Class) const
+{
+	if (!OwnerFeaturePrivate.IsValid()) return nullptr;
+	if (OwnerFeaturePrivate->IsA(Class))
+	{
+		return OwnerFeaturePrivate.Get();
+	}
+
+	return OwnerFeaturePrivate->GetOwnerFeatureByClass(Class);
 }
 
 void UVSObjectFeature::SetActive(bool bNewActive)

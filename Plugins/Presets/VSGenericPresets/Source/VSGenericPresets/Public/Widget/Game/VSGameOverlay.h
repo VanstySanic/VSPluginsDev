@@ -18,7 +18,7 @@ class UVerticalBox;
  * 
  */
 UCLASS()
-class VSGENERICWIDGETPRESETS_API UVSGameOverlay : public UVSLayeredActivableWidget
+class VSGENERICPRESETS_API UVSGameOverlay : public UVSLayeredActivableWidget
 {
 	GENERATED_UCLASS_BODY()
 	friend class UVSGameWidgetController;

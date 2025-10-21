@@ -29,11 +29,14 @@ public class VSGenericPresets : ModuleRules
 				"GameplayTags",
 				"GameplayAbilities",
 				"GameplayTasks",
+				"UMG",
+				"CommonUI",
 				// ... add other public dependencies that you statically link with here ...
 				"VSPluginsCore",
 				"VSCameraSystem",
 				"VSMovementSystem",
 				"VSMovementAnim",
+				"VSWidgets",
 			}
 			);
 			

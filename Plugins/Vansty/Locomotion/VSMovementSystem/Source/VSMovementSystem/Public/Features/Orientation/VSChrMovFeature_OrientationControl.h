@@ -4,10 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Features/VSCharacterMovementFeature.h"
-#include "Types/VSCharacterMovementTags.h"
 #include "Types/VSChrMovOrientationTypes.h"
 #include "Types/VSGameplayTypes.h"
-#include "VSChrMovFeature_OrientationControl2D.generated.h"
+#include "VSChrMovFeature_OrientationControl.generated.h"
 
 /**
  * Gives convenient features for 2D orientation control.
@@ -15,13 +14,13 @@
  * 2D means the character's local space yaw.
  */
 UCLASS(DisplayName = "Feature.ChrMov.Orientation.Control2D")
-class VSMOVEMENTSYSTEM_API UVSChrMovFeature_OrientationControl2D : public UVSCharacterMovementFeature
+class VSMOVEMENTSYSTEM_API UVSChrMovFeature_OrientationControl : public UVSCharacterMovementFeature
 {
 	GENERATED_UCLASS_BODY()
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Orientation")
-	FVSOrientationControlSettings2D GetOrientationControlSettings2D() const { return MovementData.CurrentSettings; }
+	FVSOrientationControlSettings GetOrientationControlSettings() const { return MovementData.CurrentSettings; }
 
 protected:
 	virtual void BeginPlay_Implementation() override;
@@ -33,10 +32,10 @@ private:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
-	FVSOrientationControlSettings2D DefaultSettings;
+	FVSOrientationControlSettings DefaultSettings;
 	
 	UPROPERTY(EditAnywhere, Category = "Orientation")
-	TMap<FVSOrientationControlSettings2D, FVSGameplayTagEventQuery> TagQueriedSettings;
+	TMap<FVSOrientationControlSettings, FVSGameplayTagEventQuery> TagQueriedSettings;
 
 	UPROPERTY(EditAnywhere, Category = "Orientation")
 	FVSGameplayTagEventQuery RefreshQueriedSettingsTagQuery;
@@ -47,7 +46,7 @@ protected:
 private:
 	struct FMovementData
 	{
-		FVSOrientationControlSettings2D CurrentSettings;
+		FVSOrientationControlSettings CurrentSettings;
 		
 		bool bMatchesTagQuery = false;
 	} MovementData;

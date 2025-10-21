@@ -28,6 +28,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Vector"))
 	static FVector VectorSafeDevide(const FVector& VectorA, const FVector& VectorB);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Vector"))
+	static FVector VectorSwizzleAxes(const FVector& Vector, EVSAxesSwizzle::Type Swizzle = EVSAxesSwizzle::XZY);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Rotator, PlaneNormal"))
 	static FRotator RotatorProjectOntoPlane(const FRotator& Rotator, const FVector& PlaneNormal);

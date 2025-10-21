@@ -18,9 +18,10 @@ class VSMOVEMENTANIM_API UVSChrMovAnimFeature_MantleVaultMovement : public UVSCh
 {
 	GENERATED_UCLASS_BODY()
 
-public:
+protected:
 	virtual void Initialize_Implementation() override;
 
+public:
 	UFUNCTION(BlueprintCallable, Category = "Node Events")
 	bool HasValidMantleVaultAnim() const;
 

@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "VSCharacterMovementAnimInterface.h"
+#include "VSCharacterMovementInterface.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/VSGameplayTagControllerInterface.h"
 #include "VSCharacter.generated.h"
@@ -11,7 +13,7 @@
 class UVSObjectFeatureComponent;
 
 UCLASS()
-class VSGENERICPRESETS_API AVSCharacter : public ACharacter, public IAbilitySystemInterface, public IVSGameplayTagControllerInterface
+class VSGENERICPRESETS_API AVSCharacter : public ACharacter, public IAbilitySystemInterface, public IVSGameplayTagControllerInterface, public IVSCharacterMovementInterface, public IVSCharacterMovementAnimInterface
 {
 	GENERATED_UCLASS_BODY()
 
@@ -23,6 +25,8 @@ public:
 
 protected:
 	virtual UVSGameplayTagController* GetGameplayTagController_Implementation() const override;
+	virtual UVSCharacterMovementFeatureAgent* GetMovementAgentFeature_Implementation() const override;
+	virtual UVSCharacterMovementAnimFeatureAgent* GetCharacterMovementAnimFeatureAgent_Implementation() const override;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")

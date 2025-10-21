@@ -16,7 +16,7 @@ bool UVSGameplayTagQueryExpression::Matches(const FGameplayTag& TagEvent, const 
 			int32 MatchNum = 0;
 			for (const FVSGameplayTagEventQueryParams& Param : Params)
 			{
-				if (Param.Matches(GameplayTags, TagEvent))
+				if (Param.Matches(TagEvent, GameplayTags))
 				{
 					MatchNum++;
 				}

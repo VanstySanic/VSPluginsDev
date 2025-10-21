@@ -19,9 +19,10 @@ class VSMOVEMENTANIM_API UVSChrMovAnimFeature_WallRunMovement : public UVSCharac
 {
 	GENERATED_UCLASS_BODY()
 
-public:
+protected:
 	virtual void Initialize_Implementation() override;
-	
+
+public:
 	UFUNCTION(BlueprintCallable, Category = "Conditions")
 	bool HasValidWallRunStartAnim() const;
 	

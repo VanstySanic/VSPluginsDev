@@ -16,10 +16,8 @@ void UVSInteractiveFeature::Initialize_Implementation()
 	Super::Initialize_Implementation();
 
 	InteractiveFeatureAgentPrivate = Cast<UVSInteractiveFeatureAgent>(this);
-	if (!InteractiveFeatureAgentPrivate.IsValid())
-	{
-		InteractiveFeatureAgentPrivate = UVSInteractSystemUtils::GetInteractiveFeatureAgentFromActor(GetOwnerActor());
-	}
+	if (!InteractiveFeatureAgentPrivate.IsValid()) { InteractiveFeatureAgentPrivate = FindOwnerFeatureByClass<UVSInteractiveFeatureAgent>(); }
+	if (!InteractiveFeatureAgentPrivate.IsValid()) { InteractiveFeatureAgentPrivate = UVSInteractSystemUtils::GetInteractiveFeatureAgentFromActor(GetOwnerActor()); }
 	check(InteractiveFeatureAgentPrivate.IsValid());
 }
 

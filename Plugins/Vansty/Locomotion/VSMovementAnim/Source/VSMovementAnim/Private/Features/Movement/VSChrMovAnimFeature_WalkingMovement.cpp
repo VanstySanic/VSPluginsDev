@@ -12,7 +12,7 @@
 #include "Features/VSCharacterMovementAnimFeatureAgent.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "Features/Movement/VSChrMovFeature_WalkingMovement.h"
-#include "Features/Orientation/VSChrMovFeature_OrientationControl2D.h"
+#include "Features/Orientation/VSChrMovFeature_OrientationControl.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -31,7 +31,7 @@ void UVSChrMovAnimFeature_WalkingMovement::Initialize_Implementation()
 	
 	ChrMovFeature_WalkingMovement = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_WalkingMovement>();
 	check(ChrMovFeature_WalkingMovement.IsValid());
-	ChrMovFeature_OrientationControl2D = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationControl2D>();
+	ChrMovFeature_OrientationControl2D = GetMovementFeatureAgent()->FindSubFeatureByClass<UVSChrMovFeature_OrientationControl>();
 	check(ChrMovFeature_OrientationControl2D.IsValid());
 
 	AnimData.AnimSettingsPtr = AnimSettingsRow.GetRow<FVSWalkingMovementAnimSettings>(nullptr);
@@ -84,6 +84,8 @@ TMap<FGameplayTag, float> UVSChrMovAnimFeature_WalkingMovement::GetLeanAmounts()
 
 float UVSChrMovAnimFeature_WalkingMovement::GetLeanAlpha() const
 {
+	if (!GetCharacter()) return 0.f;
+	
 	const FVector& VelocityWallAdjusted2DRS = GetCharacter()->GetActorTransform().InverseTransformVector(GetAnimVelocity2D());
 	const FVector& RealAcceleration2DRS = GetCharacter()->GetActorTransform().InverseTransformVector(GetRealAcceleration2D());
 	const float SpeedAlpha = FMath::Clamp(VelocityWallAdjusted2DRS.Size() / AnimData.AnimSettingsPtr->LeanMaxSpeed, 0.f, 1.f);
@@ -94,7 +96,7 @@ float UVSChrMovAnimFeature_WalkingMovement::GetLeanAlpha() const
 FRotator UVSChrMovAnimFeature_WalkingMovement::EvaluateTargetOrientationForInput() const
 {
 	if (!GetCharacter() || !ChrMovFeature_OrientationControl2D.IsValid()) return FRotator::ZeroRotator;
-	FVSMovementOrientationEvaluateParams EvaluateParams(ChrMovFeature_OrientationControl2D->GetOrientationControlSettings2D().MovingEvaluateType);
+	FVSMovementOrientationEvaluateParams EvaluateParams(ChrMovFeature_OrientationControl2D->GetOrientationControlSettings().EvaluateType);
 	EvaluateParams.OverridenRotationTypes.Emplace(EVSMovementRelatedOrientationType::Velocity);
 	EvaluateParams.DynamicDataOverride.Velocity = GetMovementInput2D();
 	FRotator Rotation = GetMovementFeatureAgent()->EvaluateOrientation(EvaluateParams);

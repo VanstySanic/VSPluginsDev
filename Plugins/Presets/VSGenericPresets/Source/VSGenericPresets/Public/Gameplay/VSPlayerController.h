@@ -18,6 +18,10 @@ class VSGENERICPRESETS_API AVSPlayerController : public APlayerController, publi
 {
 	GENERATED_UCLASS_BODY()
 
+protected:
+	virtual void BeginPlay() override;
+	virtual void OnRep_PlayerState() override;
+	
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 

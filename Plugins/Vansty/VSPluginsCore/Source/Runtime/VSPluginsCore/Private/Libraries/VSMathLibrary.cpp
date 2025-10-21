@@ -73,6 +73,36 @@ FVector UVSMathLibrary::VectorSafeDevide(const FVector& VectorA, const FVector& 
 		UKismetMathLibrary::SafeDivide(VectorA.Z, VectorB.Z));
 }
 
+FVector UVSMathLibrary::VectorSwizzleAxes(const FVector& Vector, EVSAxesSwizzle::Type Swizzle)
+{
+	FVector Value = Vector;
+	switch (Swizzle)
+	{
+	case EVSAxesSwizzle::YXZ:
+		Swap(Value.X, Value.Y);
+		break;
+		
+	case EVSAxesSwizzle::ZYX:
+		Swap(Value.X, Value.Z);
+		break;
+		
+	case EVSAxesSwizzle::XZY:
+		Swap(Value.Y, Value.Z);
+		break;
+		
+	case EVSAxesSwizzle::YZX:
+		Value = FVector(Value.Y, Value.Z, Value.X);
+		break;
+		
+	case EVSAxesSwizzle::ZXY:
+		Value = FVector(Value.Z, Value.X, Value.Y);
+		break;
+
+	default:;
+	}
+	return Value;
+}
+
 FRotator UVSMathLibrary::RotatorProjectOntoPlane(const FRotator& Rotator, const FVector& PlaneNormal)
 {
 	const FQuat& WorldToPlaneRotation = UKismetMathLibrary::Quat_FindBetweenVectors(PlaneNormal, FVector::UpVector);

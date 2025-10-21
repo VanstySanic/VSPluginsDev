@@ -1,7 +1,6 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Features/Movement/VSChrMovFeature_WalkingMovement.h"
-#include "VSCharacterMovementUtils.h"
 #include "VSChrMovCapsuleComponent.h"
 #include "Classes/Framework/VSGameplayTagController.h"
 #include "Components/CapsuleComponent.h"
@@ -19,10 +18,12 @@ UVSChrMovFeature_WalkingMovement::UVSChrMovFeature_WalkingMovement(const FObject
 	DefaultStance = EVSStance::Standing;
 	DefaultGaits = {
 		{EVSStance::Standing, EVSGait::Running},
+		{EVSStance::Squatting, EVSGait::Walking},
 		{EVSStance::Crouching, EVSGait::Walking}
 	};
 
 	DefaultUncrouchedStance = EVSStance::Standing;
+	StancedHalfHeights.Emplace(EVSStance::Squatting, 60.f);
 	StancedHalfHeights.Emplace(EVSStance::Crouching, 60.f);
 
 	DefaultMovementBaseSettings.MaxSpeed = 600.f;
@@ -45,9 +46,8 @@ void UVSChrMovFeature_WalkingMovement::BeginPlay_Implementation()
 	Super::BeginPlay_Implementation();
 
 	MovementData.Gaits = DefaultGaits;
-
-	SetStance(DefaultStance);
 	MovementData.CurrentMovementBaseSettings = MovementData.Stance == EVSStance::Crouching ? DefaultCrouchedMovementBaseSettings : DefaultMovementBaseSettings;
+	SetStance(DefaultStance);
 }
 
 void UVSChrMovFeature_WalkingMovement::EndPlay_Implementation()
@@ -243,7 +243,7 @@ void UVSChrMovFeature_WalkingMovement::RefreshMovementBaseSettings(const FGamepl
 	if (RefreshMovementBaseSettingsTagQuery.Matches(TagEvent, GameplayTags))
 	{
 		MovementData.CurrentMovementBaseSettings = MovementData.Stance == EVSStance::Crouching ? DefaultCrouchedMovementBaseSettings : DefaultMovementBaseSettings;
-		for (auto& Settings : QueriedMovementBaseSettings)
+		for (auto& Settings : TagQueriedMovementBaseSettings)
 		{
 			if (Settings.Value.Matches(TagEvent, GameplayTags))
 			{

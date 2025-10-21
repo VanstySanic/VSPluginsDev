@@ -2,7 +2,6 @@
 
 #include "VSGenericPresets/Public/Gameplay/VSPlayerController.h"
 #include "VSPlayerCameraManager.h"
-#include "Classes/Features/VSAutoContextActionFeature.h"
 #include "Classes/Features/VSObjectFeatureComponent.h"
 #include "Classes/Framework/VSGameplayTagController.h"
 #include "Gameplay/VSPlayerState.h"
@@ -10,10 +9,38 @@
 AVSPlayerController::AVSPlayerController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	FeatureComponent = CreateDefaultSubobject<UVSObjectFeatureComponent>(TEXT("FeatureComponent"));
-	FeatureComponent->AddDefaultSubFeatureByClass(this, UVSAutoContextActionFeature::StaticClass(), TEXT("AutoContextActionFeature"));
-
+	bReplicateUsingRegisteredSubObjectList = true;
 	PlayerCameraManagerClass = AVSPlayerCameraManager::StaticClass();
+
+	FeatureComponent = CreateDefaultSubobject<UVSObjectFeatureComponent>(TEXT("FeatureComponent"));
+	FeatureComponent->GetRootFeature()->SetIsReplicated(true);
+	FeatureComponent->bRegisterOnBeginPlay = false;
+}
+
+void AVSPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (PlayerState)
+	{
+		if (FeatureComponent && !FeatureComponent->bRegisterOnBeginPlay && !FeatureComponent->GetRootFeature()->IsRegistered())
+		{
+			FeatureComponent->GetRootFeature()->RegisterFeature();	
+		}
+	}
+}
+
+void AVSPlayerController::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	if (HasActorBegunPlay())
+	{
+		if (FeatureComponent && !FeatureComponent->bRegisterOnBeginPlay && !FeatureComponent->GetRootFeature()->IsRegistered())
+		{
+			FeatureComponent->GetRootFeature()->RegisterFeature();	
+		}
+	}
 }
 
 UAbilitySystemComponent* AVSPlayerController::GetAbilitySystemComponent() const

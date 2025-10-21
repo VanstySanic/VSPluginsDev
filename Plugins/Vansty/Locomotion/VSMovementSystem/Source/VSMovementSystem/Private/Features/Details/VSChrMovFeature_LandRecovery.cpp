@@ -32,7 +32,7 @@ void UVSChrMovFeature_LandRecovery::UpdateMovement_Implementation(float DeltaTim
 	MovementData.AnimPlayedTime = FMath::Min(MovementData.AnimPlayedTime + DeltaTime * MovementData.Anim->PlayRate * MovementData.AnimParams.PlayRateMultiplier, MovementData.Anim->GetSafePlayTimeRange().Y);
 	if (FMath::IsNearlyEqual(MovementData.AnimPlayedTime, MovementData.Anim->GetSafePlayTimeRange().Y, 0.01f)
 		|| ((!bEarlyOutWithInputWhenAdditive || MovementData.AnimParams.AnimPlayPolicy != EVSLandRecoveryAnimPlayPolicy::PlayAsAdditive)
-			&& MovementData.Anim->HasTimeMark(AnimEarliestOutWithInputTimeMarkName) && MovementData.AnimPlayedTime >= MovementData.Anim->GetMarkTime(AnimEarliestOutWithInputTimeMarkName) && HasMovementInput2D()))
+			&& MovementData.Anim->HasTimeMark(AnimEarliestOutWithInputTimeMarkName) && MovementData.AnimPlayedTime >= MovementData.Anim->GetMarkTime(AnimEarliestOutWithInputTimeMarkName) && HasAcceleration2D()))
 	{
 		StopLandRecoveryInternal();
 	}

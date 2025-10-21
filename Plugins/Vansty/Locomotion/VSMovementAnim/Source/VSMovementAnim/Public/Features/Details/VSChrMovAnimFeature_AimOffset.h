@@ -6,6 +6,7 @@
 #include "Features/VSCharacterMovementAnimFeature.h"
 #include "Types/VSCharacterMovementTags.h"
 #include "Types/VSCharacterMovementTypes.h"
+#include "Types/VSChrMovOrientationTypes.h"
 #include "Types/VSGameplayTypes.h"
 #include "VSChrMovAnimFeature_AimOffset.generated.h"
 
@@ -39,19 +40,19 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Orientation")
 	FVSMovementOrientationEvaluateType DefaultOrientationEvaluateType = FVSMovementOrientationEvaluateType(EVSMovementRelatedOrientationType::Control);
 	
-
 	UPROPERTY(EditAnywhere, Category = "Orientation")
 	TMap<FVSMovementOrientationEvaluateType, FVSGameplayTagEventQuery> TagQueriedOrientationEvaluateTypes;
 
 	UPROPERTY(EditAnywhere, Category = "Orientation")
 	FVSGameplayTagEventQuery RefreshQueriedOrientationEvaluateTypeTagQuery;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orientation")
-	FVSGameplayTagEventQuery EnabledTagQuery;
-	
 	/** <MovementMode, AimOffsetBlendSpace> */
 	UPROPERTY(EditAnywhere, Category = "Animation")
 	TMap<FGameplayTag, TObjectPtr<UAimOffsetBlendSpace>> ModdedAimOffsetBlendSpaces;
+	
+	/** Aim offset is enabled only when the tag query matches. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	FGameplayTagQuery EnabledTagQuery;
 	
 private:
 	struct FAnimData

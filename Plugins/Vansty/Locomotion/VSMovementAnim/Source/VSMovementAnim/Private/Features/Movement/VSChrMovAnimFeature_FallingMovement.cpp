@@ -436,7 +436,69 @@ void UVSChrMovAnimFeature_FallingMovement::UpdateMovementTagQueryStates(const FG
 			bIsMovingUp = GetVelocityZ().Dot(GetUpDirection()) > 0.f;
 		}
 	}
-	/** Refresh movement data when enter falling mode. */
+	
+	/** Refresh movement data when in mode. */
+	if (ReassignAnimSettingsTagQuery.Matches(TagEvent, GameplayTags))
+	{
+		FDataTableRowHandle SettingsRowToUse = DefaultSettingsRow;
+
+		bool bRowFound = false;
+		if (TagEvent == EVSMovementEvent::Action_Jump)
+		{
+			for (const FDataTableRowHandle& AnimSettingRow : AnimSettingRows)
+			{
+				FVSFallingMovementAnimSettings* Settings = AnimSettingRow.GetRow<FVSFallingMovementAnimSettings>(nullptr);
+				if (!Settings || !Settings->IsValid()) continue;
+				if (!Settings->Limits.Matches(AnimFeatureAgent)) continue;
+				if (!Settings->Limits.AllowedJumpCounts.Contains(GetCharacter()->JumpCurrentCount))
+				{
+					continue;
+				}
+				SettingsRowToUse = AnimSettingRow;
+				bRowFound = true;
+				break;
+			}
+		}
+		if (!bRowFound)
+		{
+			for (const FDataTableRowHandle& AnimSettingRow : AnimSettingRows)
+			{
+				FVSFallingMovementAnimSettings* Settings = AnimSettingRow.GetRow<FVSFallingMovementAnimSettings>(nullptr);
+				if (!Settings || !Settings->IsValid()) continue;
+				if (!Settings->Limits.Matches(AnimFeatureAgent)) continue;
+				if (TagEvent == EVSMovementEvent::Action_Jump)
+				{
+					if (!Settings->Limits.AllowedJumpCounts.Contains(GetCharacter()->JumpCurrentCount))
+					{
+						continue;
+					}
+				}
+				else if (Settings->Limits.bJumpOnly)
+				{
+					continue;
+				}
+				SettingsRowToUse = AnimSettingRow;
+				bRowFound = true;
+				break;
+			}
+		}
+		
+		AnimData.CurrentAnimSettingsPtr = SettingsRowToUse.GetRow<FVSFallingMovementAnimSettings>(nullptr);
+		if (AnimData.CurrentAnimSettingsPtr && AnimData.CurrentAnimSettingsPtr->IsValid())
+		{
+			FVSAnimSequenceReference* Anim = AnimData.CurrentAnimSettingsPtr->LandAnimRow.GetRow<FVSAnimSequenceReference>(nullptr);
+			if (Anim && Anim->IsValid() && UVSAnimationLibrary::AnimationHasCurve(Anim->AnimSequence, DistanceToLandCurveName))
+			{
+				const float StartCurve = UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, DistanceToLandCurveName, Anim->GetSafePlayTimeRange().X);
+				const float EndCurve = UVSAnimationLibrary::GetAnimationCurveValueAtTime(Anim->AnimSequence, DistanceToLandCurveName, Anim->GetSafePlayTimeRange().Y);
+				AnimData.DistanceToLandThreshold = FMath::Abs(EndCurve - StartCurve);
+				AnimData.StartAnimPlayedTime = Anim->GetSafePlayTimeRange().X;
+			}
+		}
+		
+		AnimData.AnimSettingsReassignedMark = true;
+		bMovementReassignedThisFrame = true;
+	}
 	if (GetMovementMode() == EVSMovementMode::Falling && (GetPrevMovementMode() != EVSMovementMode::Falling || ReassignAnimSettingsTagQuery.Matches(TagEvent, GameplayTags)))
 	{
 		FDataTableRowHandle SettingsRowToUse = DefaultSettingsRow;

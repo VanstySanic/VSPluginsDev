@@ -65,6 +65,15 @@ public:
 
 	template <typename T>
 	TArray<T*> FindSubFeaturesByClass(TSubclassOf<T> Class = T::StaticClass(), bool bRecursive = true) const;
+
+public:
+	/**
+	 * If true, root feature will register during BeginPlay.
+	 * If your feature concerns about PlayerState, then this is suggested to be false.
+	 * In that case, you should register root feature manually during OnPlayerStateChange or OnRep_PlayerState.
+	 */
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Feature")
+	bool bRegisterOnBeginPlay = true;
 	
 private:
 	UPROPERTY(EditAnywhere, Instanced, Category = "Feature")

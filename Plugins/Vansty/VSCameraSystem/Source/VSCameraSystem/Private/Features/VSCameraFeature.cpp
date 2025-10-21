@@ -17,6 +17,7 @@ void UVSCameraFeature::Initialize_Implementation()
 	
 	CameraFeatureAgentPrivate = GetTypedOuter<UVSCameraFeatureAgent>();
 	if (!CameraFeatureAgentPrivate.IsValid()) { CameraFeatureAgentPrivate = Cast<UVSCameraFeatureAgent>(this); }
+	if (!CameraFeatureAgentPrivate.IsValid()) { CameraFeatureAgentPrivate = FindOwnerFeatureByClass<UVSCameraFeatureAgent>(); }
 	if (!CameraFeatureAgentPrivate.IsValid())
 	{
 		if (UCameraComponent* CameraComponent = GetTypedOuter<UCameraComponent>())

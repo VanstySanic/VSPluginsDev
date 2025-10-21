@@ -77,7 +77,7 @@ void UVSChrMovFeature_FixedPointLeap::UpdateMovement_Implementation(float DeltaT
 	{
 		bShouldStopMovement = true;
 	}
-	if (MovementData.MovementElapsedTime > MovementData.AnimPtr->GetMarkTime(AnimMovementEndTimeMarkName) && HasMovementInput2D())
+	if (MovementData.MovementElapsedTime > MovementData.AnimPtr->GetMarkTime(AnimMovementEndTimeMarkName) && HasAcceleration2D())
 	{
 		bShouldStopMovement = true;
 	}

@@ -37,15 +37,15 @@ public:
 	//~ End IInterface_ActorSubobject Interface
 
 	
-	/** Get the actor that actually owes this feature. */
+	/** Get the actor that actually owes this feature. Must in outer. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	AActor* GetOwnerActor() const;
 	
-	/** Get the component that owes this feature. */
+	/** Get the component that owes this feature. Must in outer. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	UActorComponent* GetOwnerComponent() const;
 	
-	/** Get the feature that owes this feature. */
+	/** Get the feature that contain this feature as sub feature. No need to be in outer. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	UVSObjectFeature* GetOwnerFeature() const;
 
@@ -122,13 +122,22 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* GetSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, bool bRecursive = true) const;
-
+	template <typename T>
+	T* FindSubFeatureByClass(TSubclassOf<T> Class = T::StaticClass(), bool bRecursive = true) const;
+	
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	TArray<UVSObjectFeature*> GetSubFeaturesByClass(TSubclassOf<UVSObjectFeature> Class, bool bRecursive = true) const;
+	template <typename T>
+	TArray<T*> FindSubFeaturesByClass(TSubclassOf<T> Class = T::StaticClass(), bool bRecursive = true) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	UVSObjectFeature* GetSubFeatureByName(FName Name, bool bRecursive = true) const;
 
+	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
+	UVSObjectFeature* GetOwnerFeatureByClass(TSubclassOf<UVSObjectFeature> Class) const;
+	template <typename T>
+	T* FindOwnerFeatureByClass(TSubclassOf<T> Class = T::StaticClass()) const;
+	
 
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void SetActive(bool bNewActive);
@@ -142,14 +151,6 @@ protected:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
 	void OnFeatureDeactivated();
-
-public:
-	template <typename T>
-	T* FindSubFeatureByClass(TSubclassOf<T> Class = T::StaticClass(), bool bRecursive = true) const;
-
-	template <typename T>
-	TArray<T*> FindSubFeaturesByClass(TSubclassOf<T> Class = T::StaticClass(), bool bRecursive = true) const;
-
 	
 private:
 	void BeginReplication();
@@ -215,5 +216,12 @@ TArray<T*> UVSObjectFeature::FindSubFeaturesByClass(TSubclassOf<T> Class, bool b
 		OutSubFeatures.Add(static_cast<T*>(SubFeature));
 	}
 	return OutSubFeatures;
+}
+
+template <typename T>
+T* UVSObjectFeature::FindOwnerFeatureByClass(TSubclassOf<T> Class) const
+{
+	static_assert(TIsDerivedFrom<T, UVSObjectFeature>::IsDerived, "Class must derive from UVSObjectFeature.");
+	return static_cast<T*>(GetOwnerFeatureByClass(Class));
 }
 
