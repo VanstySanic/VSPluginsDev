@@ -4,16 +4,16 @@
 
 namespace EVSMovementMode
 {
-	UE_DEFINE_GAMEPLAY_TAG(None, "VSMovementSystem.State.MovementMode.None");
-	UE_DEFINE_GAMEPLAY_TAG(Walking, "VSMovementSystem.State.MovementMode.Walking");
-	UE_DEFINE_GAMEPLAY_TAG(NavWalking, "VSMovementSystem.State.MovementMode.NavWalking");
-	UE_DEFINE_GAMEPLAY_TAG(Falling, "VSMovementSystem.State.MovementMode.Falling");
-	UE_DEFINE_GAMEPLAY_TAG(Swimming, "VSMovementSystem.State.MovementMode.Swimming");
-	UE_DEFINE_GAMEPLAY_TAG(Flying, "VSMovementSystem.State.MovementMode.Flying");
+	UE_DEFINE_GAMEPLAY_TAG(None, "VSMovementSystem.MovementMode.None");
+	UE_DEFINE_GAMEPLAY_TAG(Walking, "VSMovementSystem.MovementMode.Walking");
+	UE_DEFINE_GAMEPLAY_TAG(NavWalking, "VSMovementSystem.MovementMode.NavWalking");
+	UE_DEFINE_GAMEPLAY_TAG(Falling, "VSMovementSystem.MovementMode.Falling");
+	UE_DEFINE_GAMEPLAY_TAG(Swimming, "VSMovementSystem.MovementMode.Swimming");
+	UE_DEFINE_GAMEPLAY_TAG(Flying, "VSMovementSystem.MovementMode.Flying");
 	
-	UE_DEFINE_GAMEPLAY_TAG(MantlingOrVaulting, "VSMovementSystem.State.MovementMode.MantlingOrVaulting");
-	UE_DEFINE_GAMEPLAY_TAG(WallRunning, "VSMovementSystem.State.MovementMode.WallRunning");
-	UE_DEFINE_GAMEPLAY_TAG(FixedPointLeap, "VSMovementSystem.State.MovementMode.FixedPointLeap");
+	UE_DEFINE_GAMEPLAY_TAG(MantlingOrVaulting, "VSMovementSystem.MovementMode.MantlingOrVaulting");
+	UE_DEFINE_GAMEPLAY_TAG(WallRunning, "VSMovementSystem.MovementMode.WallRunning");
+	UE_DEFINE_GAMEPLAY_TAG(FixedPointLeap, "VSMovementSystem.MovementMode.FixedPointLeap");
 }
 
 namespace EVSStance

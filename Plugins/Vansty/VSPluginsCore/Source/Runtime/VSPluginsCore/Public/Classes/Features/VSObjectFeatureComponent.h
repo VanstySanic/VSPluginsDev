@@ -25,44 +25,59 @@ public:
 	virtual void DestroyComponent(bool bPromoteChildren) override;
 
 public:
+	/** Get root feature of this component. */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* GetRootFeature() const { return RootFeature; }
-	
-	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
-	UVSObjectFeature* GetRootFeatureByClass(TSubclassOf<UVSObjectFeature> Class) const;
 
+	// /** Get root feature if it matches the given class. */
+	// UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
+	// UVSObjectFeature* GetRootFeatureByClass(TSubclassOf<UVSObjectFeature> Class) const;
+
+	/** Add an instanced sub feature to the root feature. */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	void AddInstancedSubFeature(UVSObjectFeature* Feature, FName OptionalFeatureName = NAME_None);
-	
+
+	/** Create and add a sub feature by class to the root feature. */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* AddSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName = NAME_None);
 
-	/** Must call at Outer's constructor, otherwise an error will occur. */
+	/**
+	 * Create and add a default sub feature by class.
+	 * Must be called in the owner's constructor.
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* AddDefaultSubFeatureByClass(UObject* Outer, TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName = NAME_None);
-	
+
+	/** Remove a sub feature from the root feature. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void RemoveSubFeature(UVSObjectFeature* InFeature, bool bRecursive = true);
 
+	/** Get all sub features from the root feature. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	TArray<UVSObjectFeature*> GetSubFeatures(bool bRecursive = true) const;
-	
+
+	/** Get the first sub feature of a given class from the root feature. */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* GetSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, bool bRecursive = true) const;
 
+	/** Get all sub features of a given class from the root feature. */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	TArray<UVSObjectFeature*> GetSubFeaturesByClass(TSubclassOf<UVSObjectFeature> Class, bool bRecursive = true) const;
 
+	/** Get sub feature by name from the root feature. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	UVSObjectFeature* GetSubFeatureByName(FName Name, bool bRecursive = true) const;
 	
-
+public:
+	/** Get root feature of specific type. */
 	template <typename T>
 	T* GetRootFeature() const;
-	
+
+	/** Find the first sub feature of given class. */
 	template <typename T>
 	T* FindSubFeatureByClass(TSubclassOf<T> Class = T::StaticClass(), bool bRecursive = true) const;
 
+	/** Find all sub features of given class. */
 	template <typename T>
 	TArray<T*> FindSubFeaturesByClass(TSubclassOf<T> Class = T::StaticClass(), bool bRecursive = true) const;
 
@@ -79,6 +94,7 @@ private:
 	UPROPERTY(EditAnywhere, Instanced, Category = "Feature")
 	TObjectPtr<UVSObjectFeature> RootFeature;
 };
+
 
 template <typename T>
 T* UVSObjectFeatureComponent::GetRootFeature() const

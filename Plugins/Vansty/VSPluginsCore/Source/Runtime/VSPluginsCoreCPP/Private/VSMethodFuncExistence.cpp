@@ -1,4 +1,4 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 
-#include "VSMethodFuncExistence.h"
+#include "VSFunctionHook.h"

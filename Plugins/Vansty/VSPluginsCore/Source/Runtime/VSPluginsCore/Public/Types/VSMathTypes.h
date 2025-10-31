@@ -8,6 +8,17 @@
 #include "VSMathTypes.generated.h"
 
 UENUM(BlueprintType)
+namespace EVSRotationDirection
+{
+	enum Type
+	{
+		None,
+		Clockwise,
+		CounterClockwise
+	};
+}
+
+UENUM(BlueprintType)
 namespace EVSRotatorAxes
 {
 	enum Type : uint8

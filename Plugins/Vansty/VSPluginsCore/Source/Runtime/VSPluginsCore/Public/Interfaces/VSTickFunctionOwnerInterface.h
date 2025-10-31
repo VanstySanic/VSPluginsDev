@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "VSTickFunctionInterface.generated.h"
+#include "VSTickFunctionOwnerInterface.generated.h"
 
 UINTERFACE(NotBlueprintable, NotBlueprintType)
-class UVSTickFunctionInterface : public UInterface
+class UVSTickFunctionOwnerInterface : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -15,7 +15,7 @@ class UVSTickFunctionInterface : public UInterface
 /**
  * 
  */
-class VSPLUGINSCORE_API IVSTickFunctionInterface
+class VSPLUGINSCORE_API IVSTickFunctionOwnerInterface
 {
 	GENERATED_BODY()
 

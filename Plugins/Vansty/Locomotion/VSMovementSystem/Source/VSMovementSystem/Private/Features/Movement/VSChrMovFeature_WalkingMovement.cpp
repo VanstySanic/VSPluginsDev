@@ -52,10 +52,12 @@ void UVSChrMovFeature_WalkingMovement::BeginPlay_Implementation()
 
 void UVSChrMovFeature_WalkingMovement::EndPlay_Implementation()
 {
-	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
-	GameplayTagController->SetTagCount(MovementData.PrevStance, 0);
-	GameplayTagController->SetTagCount(GetGait(MovementData.PrevStance), 0);
-	GameplayTagController->NotifyTagsUpdated();
+	if (UVSGameplayTagController* GameplayTagController = GetGameplayTagController())
+	{
+		GameplayTagController->SetTagCount(MovementData.PrevStance, 0);
+		GameplayTagController->SetTagCount(GetGait(MovementData.PrevStance), 0);
+		GameplayTagController->NotifyTagsUpdated();
+	}
 
 	Super::EndPlay_Implementation();
 }

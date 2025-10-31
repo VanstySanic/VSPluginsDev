@@ -16,7 +16,16 @@ struct FVSWallRunLimits
 {
 	GENERATED_BODY()
 
-	FVSWallRunLimits() { }
+	FVSWallRunLimits()
+	{
+		WallComponentQuery.RootExpression.Range = EVSQueryMatchRange::Any;
+		WallComponentQuery.RootExpression.Type = EVSQueryMatchType::Params;
+		FVSSceneComponentQueryParams Params;
+		Params.ObjectTypes.Add(ObjectTypeQuery1);
+		Params.ObjectTypes.Add(ObjectTypeQuery2);
+		Params.bComponentTagsEmptyAsPass = true;
+		WallComponentQuery.RootExpression.Params.Add(Params);
+	}
 	
 	bool IsValid() const;
 

@@ -62,6 +62,7 @@ void UVSSettingItem_WindowMode::Confirm_Implementation()
 void UVSSettingItem_WindowMode::Save_Implementation()
 {
 	GConfig->SetInt(TEXT("/Script/Engine.GameUserSettings"), TEXT("FullscreenMode"), GetWindowMode(EVSSettingItemValueSource::Settings), GGameUserSettingsIni);
+	GConfig->SetInt(TEXT("/Script/Engine.GameUserSettings"), TEXT("LastConfirmedFullscreenMode"), GetWindowMode(EVSSettingItemValueSource::LastConfirmed), GGameUserSettingsIni);
 	GConfig->Flush(false, GGameUserSettingsIni);
 }
 

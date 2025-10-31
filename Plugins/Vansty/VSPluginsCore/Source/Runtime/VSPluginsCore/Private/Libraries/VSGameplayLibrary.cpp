@@ -4,7 +4,6 @@
 #include "EngineUtils.h"
 #include "Components/BrushComponent.h"
 #include "GameFramework/GameStateBase.h"
-#include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Types/VSGameplayTypes.h"
 
@@ -33,44 +32,6 @@ bool UVSGameplayLibrary::MatchesGameplayTagEventQuery(const FVSGameplayTagEventQ
 bool UVSGameplayLibrary::MatchesSceneComponentQuery( const FVSSceneComponentQuery& Query, const USceneComponent* SceneComponent)
 {
 	return Query.Matches(SceneComponent);
-}
-
-APawn* UVSGameplayLibrary::GetPawnFromObject(UObject* Object)
-{
-	if (!Object) return nullptr;
-	if (APawn* Pawn = Cast<APawn>(Object))
-	{
-		return Pawn;
-	}
-	if (AController* Controller = Cast<AController>(Object))
-	{
-		return Controller->GetPawn();
-	}
-	if (APlayerState* PlayerState = Cast<APlayerState>(Object))
-	{
-		return PlayerState->GetPawn();
-	}
-
-	return GetPawnFromObject(Object->GetOuter());
-}
-
-AController* UVSGameplayLibrary::GetControllerFromObject(UObject* Object)
-{
-	if (!Object) return nullptr;
-	if (AController* Controller = Cast<AController>(Object))
-	{
-		return Controller;
-	}
-	if (APawn* Pawn = Cast<APawn>(Object))
-	{
-		return Pawn->GetController();
-	}
-	if (APlayerState* PlayerState = Cast<APlayerState>(Object))
-	{
-		return PlayerState->GetOwningController();
-	}
-
-	return GetControllerFromObject(Object->GetOuter());
 }
 
 bool UVSGameplayLibrary::GetScreenViewportSize(APlayerController* PlayerController, FVector2D& OutPosition)

@@ -81,9 +81,11 @@ void UVSSettingItem_ScreenResolution::Confirm_Implementation()
 void UVSSettingItem_ScreenResolution::Save_Implementation()
 {
 	const FIntPoint& ScreenResolution = GetScreenResolution(EVSSettingItemValueSource::Settings);
-
+	UGameUserSettings* GameUserSettings = GEngine->GetGameUserSettings();
 	GConfig->SetInt(TEXT("/Script/Engine.GameUserSettings"), TEXT("ResolutionSizeX"), ScreenResolution.X, GGameUserSettingsIni);
-	GConfig->SetInt(TEXT("/Script/Engine.GameUserSettings"), TEXT("ResolutionSizeY"), ScreenResolution.Y, GGameUserSettingsIni);
+	GConfig->SetInt(TEXT("/Script/Engine.GameUserSettings"), TEXT("ResolutionSizeX"), ScreenResolution.X, GGameUserSettingsIni);
+	GConfig->SetInt(TEXT("/Script/Engine.GameUserSettings"), TEXT("LastUserConfirmedResolutionSizeX"), GameUserSettings->GetLastConfirmedScreenResolution().X, GGameUserSettingsIni);
+	GConfig->SetInt(TEXT("/Script/Engine.GameUserSettings"), TEXT("LastUserConfirmedResolutionSizeY"), GameUserSettings->GetLastConfirmedScreenResolution().Y, GGameUserSettingsIni);
 	GConfig->Flush(false, GGameUserSettingsIni);
 }
 

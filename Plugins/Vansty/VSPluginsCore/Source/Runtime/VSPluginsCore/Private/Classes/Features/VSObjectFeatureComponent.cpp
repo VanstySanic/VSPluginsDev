@@ -55,11 +55,11 @@ void UVSObjectFeatureComponent::DestroyComponent(bool bPromoteChildren)
 	Super::DestroyComponent(bPromoteChildren);
 }
 
-UVSObjectFeature* UVSObjectFeatureComponent::GetRootFeatureByClass(TSubclassOf<UVSObjectFeature> Class) const
-{
-	if (!RootFeature || !RootFeature.IsA(Class)) return nullptr;
-	return RootFeature;
-}
+// UVSObjectFeature* UVSObjectFeatureComponent::GetRootFeatureByClass(TSubclassOf<UVSObjectFeature> Class) const
+// {
+// 	if (!RootFeature || !RootFeature.IsA(Class)) return nullptr;
+// 	return RootFeature;
+// }
 
 void UVSObjectFeatureComponent::AddInstancedSubFeature(UVSObjectFeature* Feature, FName OptionalFeatureName)
 {

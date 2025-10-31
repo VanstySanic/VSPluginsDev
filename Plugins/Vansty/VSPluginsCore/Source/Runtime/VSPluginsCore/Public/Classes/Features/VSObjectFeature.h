@@ -82,15 +82,16 @@ protected:
 	void EndPlay();
 
 public:
+	/** Destroy this feature and its sub features. This will do the unregistration and end play process.*/
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void DestroyFeature();
-	
+
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	bool IsRegistered() const { return bIsRegistered; }
 
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	bool HasBeenInitialized() const { return bHasBeenInitialized; }
-	
+
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	bool HasBegunPlay() const { return bHasBegunPlay; }
 
@@ -98,46 +99,59 @@ public:
 	bool IsBeingDestroyed() const { return bIsBeingDestroyed; }
 
 	
+	/** Set whether this feature should replicate or is replicating. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void SetIsReplicated(bool bShouldReplicate);
-	
+
+	/** Get whether this feature replicates. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	bool GetIsReplicated() const { return bReplicates; }
 
+	/** Add an instanced sub-feature to this feature. */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	void AddInstancedSubFeature(UVSObjectFeature* Feature, FName OptionalFeatureName = NAME_None);
-	
+
+	/** Create and add a sub-feature by class. */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* AddSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName = NAME_None);
 
-	/** Must call at Outer's constructor, otherwise an error will occur. */
+	/**
+	 * Create and add a default sub-feature by class.
+	 * Must be called in the Outer's constructor.
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* AddDefaultSubFeatureByClass(UObject* Outer, TSubclassOf<UVSObjectFeature> Class, FName OptionalFeatureName = NAME_None);
-	
+
+	/** Remove a sub feature instance from this feature. This will do the destruction. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void RemoveSubFeature(UVSObjectFeature* InFeature, bool bRecursive = true);
 
+	/** Get all sub features of this feature. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	TArray<UVSObjectFeature*> GetSubFeatures(bool bRecursive = true) const;
-	
+
+	/** Find a sub feature by class. */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* GetSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, bool bRecursive = true) const;
-	template <typename T>
-	T* FindSubFeatureByClass(TSubclassOf<T> Class = T::StaticClass(), bool bRecursive = true) const;
 	
+	/** Get all sub features of a given class. */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	TArray<UVSObjectFeature*> GetSubFeaturesByClass(TSubclassOf<UVSObjectFeature> Class, bool bRecursive = true) const;
-	template <typename T>
-	TArray<T*> FindSubFeaturesByClass(TSubclassOf<T> Class = T::StaticClass(), bool bRecursive = true) const;
-	
+
+	/** Find a sub-feature by name. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	UVSObjectFeature* GetSubFeatureByName(FName Name, bool bRecursive = true) const;
 
+	/** Get the nearest owner feature of a given class. */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* GetOwnerFeatureByClass(TSubclassOf<UVSObjectFeature> Class) const;
-	template <typename T>
-	T* FindOwnerFeatureByClass(TSubclassOf<T> Class = T::StaticClass()) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Feature")
+	bool HasChildFeature(UVSObjectFeature* Feature, bool bRecursive = true);
 	
+	/** Check whether the specified feature is in the owner chain. */
+	UFUNCTION(BlueprintCallable, Category = "Feature")
+	bool IsFeatureInOwnerChain(UVSObjectFeature* Feature);
 
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void SetActive(bool bNewActive);
@@ -145,6 +159,19 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	bool IsActive() const { return bIsActive; }
 
+public:
+	/** Get all sub features of given class. */
+	template <typename T>
+	TArray<T*> FindSubFeaturesByClass(TSubclassOf<T> Class = T::StaticClass(), bool bRecursive = true) const;
+
+	/** Get the first sub feature of given class. */
+	template <typename T>
+	T* FindSubFeatureByClass(TSubclassOf<T> Class = T::StaticClass(), bool bRecursive = true) const;
+
+	/** Find the nearest owner feature of a given class. */
+	template <typename T>
+	T* FindOwnerFeatureByClass(TSubclassOf<T> Class = T::StaticClass()) const;
+	
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
 	void OnFeatureActivated();
@@ -166,6 +193,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Feature")
 	FName FeatureName = NAME_None;
 
+	/** Whether the feature should activate automatically during BeginPlay. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Feature")
 	bool bAutoActivate = true;
 	

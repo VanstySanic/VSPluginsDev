@@ -21,7 +21,7 @@ void UVSChrMovFeature_TurnInPlace2D::Tick_Implementation(float DeltaTime)
 {
 	Super::Tick_Implementation(DeltaTime);
 
-	if (IsMoving2D() || HasAcceleration2D())
+	if (IsMoving2D() || HasMovementInput2D())
 	{
 		if (IsTurningInPlace()) StopTurnInPlaceInternal();
 		MovementData.CachedParams.TriggerDelayedTime = 0.f;
@@ -110,7 +110,7 @@ bool UVSChrMovFeature_TurnInPlace2D::IsTurningInPlace() const
 void UVSChrMovFeature_TurnInPlace2D::TurnInPlaceCheck(float DeltaTime)
 {
 	if (!GetCharacter()) return;
-	if (IsMoving2D() || HasAcceleration2D() || !MovementData.bMatchesEntranceTagQuery)
+	if (IsMoving2D() || HasMovementInput2D() || !MovementData.bMatchesEntranceTagQuery)
 	{
 		MovementData.CachedParams.TriggerDelayedTime = 0.f;
 		return;

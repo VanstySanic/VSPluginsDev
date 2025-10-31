@@ -1,25 +1,19 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Interactive/Feature/VSInteractiveOutlineFeature.h"
-
-#include "Classes/Queries/VSSceneComponentQueryExpression.h"
-#include "Components/BrushComponent.h"
 #include "Interact/Feature/VSInteractFeatureAgent.h"
 #include "Interactive/Feature/VSInteractiveFeatureAgent.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "Libraries/VSActorLibrary.h"
-#include "Libraries/VSGameplayLibrary.h"
 
 UVSInteractiveOutlineFeature::UVSInteractiveOutlineFeature(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	MeshComponentQuery.RootExpression = CreateDefaultSubobject<UVSSceneComponentQueryExpression>(TEXT("RootExpression"));
-	MeshComponentQuery.RootExpression->Type = EVSQueryMatchType::Params;
-	MeshComponentQuery.RootExpression->Range = EVSQueryMatchRange::Any;
+	MeshComponentQuery.RootExpression.Type = EVSQueryMatchType::Params;
+	MeshComponentQuery.RootExpression.Range = EVSQueryMatchRange::Any;
 	FVSSceneComponentQueryParams Params;
 	Params.ComponentClasses.Add(UStaticMeshComponent::StaticClass());
 	Params.ComponentClasses.Add(USkeletalMeshComponent::StaticClass());
-	MeshComponentQuery.RootExpression->Params.Add(Params);
+	MeshComponentQuery.RootExpression.Params.Add(Params);
 }
 
 void UVSInteractiveOutlineFeature::Initialize_Implementation()

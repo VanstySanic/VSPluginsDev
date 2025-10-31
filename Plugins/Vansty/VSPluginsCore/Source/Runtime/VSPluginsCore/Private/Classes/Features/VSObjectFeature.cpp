@@ -243,7 +243,8 @@ void UVSObjectFeature::UnregisterFeature()
 	bIsRegistered = false;
 	
 	/** Unregister sub features. */
-	for (TObjectPtr<UVSObjectFeature> SubFeature : SubFeatures)
+	TArray<TObjectPtr<UVSObjectFeature>> CopiedSubFeatures;
+	for (TObjectPtr<UVSObjectFeature> SubFeature : CopiedSubFeatures)
 	{
 		if (SubFeature && SubFeature->IsRegistered())
 		{
@@ -301,8 +302,11 @@ void UVSObjectFeature::DestroyFeature()
 	if (bHasBeenInitialized) { Uninitialize(); }
 	if (bIsRegistered) { UnregisterFeature(); }
 
-	if (UVSObjectFeature* OwnerFeature = GetOwnerFeature()) { OwnerFeature->RemoveSubFeature(this); }
-
+	if (OwnerFeaturePrivate.IsValid())
+	{
+		OwnerFeaturePrivate->SubFeatures.Remove(this);
+	}
+	
 	if (!IsRooted())
 	{
 		MarkAsGarbage();
@@ -352,19 +356,12 @@ UVSObjectFeature* UVSObjectFeature::AddDefaultSubFeatureByClass(UObject* Outer, 
 
 void UVSObjectFeature::RemoveSubFeature(UVSObjectFeature* InFeature, bool bRecursive)
 {
-	if (!InFeature || !InFeature->GetOwnerFeature()) return;
-	if (SubFeatures.Contains(InFeature))
+	if (!InFeature || !HasChildFeature(InFeature) || (!bRecursive && InFeature->GetOwnerFeature() != this)) return;
+	if (!InFeature->IsBeingDestroyed())
 	{
-		if (!InFeature->IsBeingDestroyed())
-		{
-			InFeature->DestroyFeature();
-		}
-		SubFeatures.Remove(InFeature);
+		InFeature->DestroyFeature();
 	}
-	else if (bRecursive && InFeature->GetOwnerFeature()->IsInOuter(this))
-	{
-		InFeature->GetOwnerFeature()->RemoveSubFeature(InFeature);
-	}
+	InFeature->GetOwnerFeature()->SubFeatures.Remove(InFeature);
 }
 
 TArray<UVSObjectFeature*> UVSObjectFeature::GetSubFeatures(bool bRecursive) const
@@ -430,6 +427,20 @@ UVSObjectFeature* UVSObjectFeature::GetOwnerFeatureByClass(TSubclassOf<UVSObject
 	}
 
 	return OwnerFeaturePrivate->GetOwnerFeatureByClass(Class);
+}
+
+bool UVSObjectFeature::HasChildFeature(UVSObjectFeature* Feature, bool bRecursive)
+{
+	if (!Feature || !Feature->GetOwnerFeature()) return false;
+	if (!bRecursive) { return Feature->GetOwnerFeature() == this; };
+	return Feature->IsFeatureInOwnerChain(this);
+}
+
+bool UVSObjectFeature::IsFeatureInOwnerChain(UVSObjectFeature* Feature)
+{
+	if (!Feature || GetOwnerFeature()) return false;
+	if (GetOwnerFeature() == Feature) return true;
+	return GetOwnerFeature()->IsFeatureInOwnerChain(Feature);
 }
 
 void UVSObjectFeature::SetActive(bool bNewActive)

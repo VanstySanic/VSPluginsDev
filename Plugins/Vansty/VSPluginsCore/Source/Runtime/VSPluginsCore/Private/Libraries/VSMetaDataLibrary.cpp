@@ -8,7 +8,7 @@ UVSMetaDataLibrary::UVSMetaDataLibrary(const FObjectInitializer& ObjectInitializ
 {
 }
 
-FName UVSMetaDataLibrary::GetClassPropertyMetaData(UClass* Class, FName PropertyName, FName MetaDataName)
+FName UVSMetaDataLibrary::GetPropertyMetaDataFormClass(UClass* Class, FName PropertyName, FName MetaDataName)
 {
 #if WITH_EDITOR
 	if (!Class) return NAME_None;
@@ -24,7 +24,7 @@ FName UVSMetaDataLibrary::GetClassPropertyMetaData(UClass* Class, FName Property
 	return NAME_None;
 }
 
-FName UVSMetaDataLibrary::GetClassMapKeyPropertyMetaData(UClass* Class, FName MapPropertyName, FName MetaDataName)
+FName UVSMetaDataLibrary::GetMapKeyPropertyMetaDataFormClass(UClass* Class, FName MapPropertyName, FName MetaDataName)
 {
 #if WITH_EDITOR
 	if (!Class) return NAME_None;
@@ -44,7 +44,7 @@ FName UVSMetaDataLibrary::GetClassMapKeyPropertyMetaData(UClass* Class, FName Ma
 	return NAME_None;
 }
 
-FName UVSMetaDataLibrary::GetClassMapValuePropertyMetaData(UClass* Class, FName MapPropertyName, FName MetaDataName)
+FName UVSMetaDataLibrary::GetMapValuePropertyMetaDataFromClass(UClass* Class, FName MapPropertyName, FName MetaDataName)
 {
 #if WITH_EDITOR
 	if (!Class) return NAME_None;
@@ -64,7 +64,7 @@ FName UVSMetaDataLibrary::GetClassMapValuePropertyMetaData(UClass* Class, FName 
 	return NAME_None;
 }
 
-bool UVSMetaDataLibrary::SetClassPropertyMetaData(UClass* Class, FName PropertyName, FName MetaDataName, FName MetaData)
+bool UVSMetaDataLibrary::SetPropertyMetaDataForClass(UClass* Class, FName PropertyName, FName MetaDataName, FName MetaData)
 {
 #if WITH_EDITOR
 	if (!Class) return false;
@@ -80,7 +80,7 @@ bool UVSMetaDataLibrary::SetClassPropertyMetaData(UClass* Class, FName PropertyN
 	return true;
 }
 
-bool UVSMetaDataLibrary::SetClassMapKeyPropertyMetaData(UClass* Class, FName MapPropertyName, FName MetaDataName, FName MetaData)
+bool UVSMetaDataLibrary::SetMapKeyPropertyMetaDataForClass(UClass* Class, FName MapPropertyName, FName MetaDataName, FName MetaData)
 {
 #if WITH_EDITOR
 	if (!Class) return false;
@@ -100,7 +100,7 @@ bool UVSMetaDataLibrary::SetClassMapKeyPropertyMetaData(UClass* Class, FName Map
 	return true;
 }
 
-bool UVSMetaDataLibrary::SetClassMapValuePropertyMetaData(UClass* Class, FName MapPropertyName, FName MetaDataName, FName MetaData)
+bool UVSMetaDataLibrary::SetMapValuePropertyMetaDataForClass(UClass* Class, FName MapPropertyName, FName MetaDataName, FName MetaData)
 {
 #if WITH_EDITOR
 	if (!Class) return false;

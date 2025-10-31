@@ -2,6 +2,7 @@
 
 #include "Widget/Game/VSGameWidgetController.h"
 #include "Blueprint/UserWidget.h"
+#include "Libraries/VSActorLibrary.h"
 #include "Libraries/VSGameplayLibrary.h"
 #include "Types/VSWidgetTypes.h"
 #include "Widget/Game/VSGameHUDWidget.h"
@@ -16,7 +17,7 @@ void UVSGameWidgetController::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
 
-	PlayerControllerPrivate = Cast<APlayerController>(UVSGameplayLibrary::GetControllerFromObject(this));
+	PlayerControllerPrivate = Cast<APlayerController>(UVSActorLibrary::GetControllerFromActor(GetOwnerActor()));
 	check(PlayerControllerPrivate.Get());
 }
 

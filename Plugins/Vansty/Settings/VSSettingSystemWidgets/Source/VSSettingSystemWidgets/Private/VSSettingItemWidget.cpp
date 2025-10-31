@@ -47,6 +47,7 @@ void UVSSettingItemWidget::NativePreConstruct()
 	Super::NativePreConstruct();
 
 	SetCoreWidgetByClass(CoreWidgetClass);
+	Execute_BindWidgetToSettingItem(this, SettingItemSpecifyTag);
 }
 
 void UVSSettingItemWidget::NativeDestruct()
@@ -67,7 +68,11 @@ UWidget* UVSSettingItemWidget::SetCoreWidgetByClass(TSubclassOf<UWidget> Class)
 	bool bPrevFocused = false;
 	if (CoreWidget)
 	{
-		Execute_UnbindWidgetFromSettingItem(CoreWidget, SettingItemSpecifyTag);
+		if (CoreWidget.GetClass()->ImplementsInterface(UVSSettingWidgetInterface::StaticClass()))
+		{
+			Execute_UnbindWidgetFromSettingItem(CoreWidget, SettingItemSpecifyTag);
+		}
+		
 		CoreWidget->RemoveFromParent();
 		bPrevFocused = CoreWidget->HasAnyUserFocus() || CoreWidget->HasFocusedDescendants();
 	}
@@ -75,8 +80,11 @@ UWidget* UVSSettingItemWidget::SetCoreWidgetByClass(TSubclassOf<UWidget> Class)
 	{
 		CoreWidget = WidgetTree->ConstructWidget<UWidget>(Class);
 		Panel_CoreWidget->AddChild(CoreWidget);
-		
-		Execute_BindWidgetToSettingItem(CoreWidget, SettingItemSpecifyTag);
+
+		if (Class->ImplementsInterface(UVSSettingWidgetInterface::StaticClass()))
+		{
+			Execute_BindWidgetToSettingItem(CoreWidget, SettingItemSpecifyTag);
+		}
 		
 		SetDesiredFocusWidget(CoreWidget);
 		if (bPrevFocused)

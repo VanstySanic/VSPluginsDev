@@ -27,8 +27,6 @@ class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
 
 	UFUNCTION(BlueprintCallable, Category = "Actor")
 	static AActor* DuplicateActor(AActor* Actor, const FTransform& SpawnTransform = FTransform());
-	template<typename T>
-	static T* DuplicateActor(T* Actor, const FTransform& SpawnTransform = FTransform::Identity);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
 	static UActorComponent* GetActorComponentByName(const AActor* Actor, FName ComponentName);
@@ -42,6 +40,11 @@ class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
 	static UAbilitySystemComponent* GetAbilitySystemComponentFormActor(AActor* Actor);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Object"))
+	static APawn* GetPawnFromActor(AActor* Actor);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay", meta = (DefaultToSelf = "Object"))
+	static AController* GetControllerFromActor(AActor* Actor);
 
 	/**
 	 * Whether the character is on walkable floor.
@@ -52,6 +55,10 @@ class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Character")
 	static FVector GetCharacterRootLocation(const ACharacter* Character, const float VerticalOffset = 0.f /** 2.f */, float UnscaledHalfHeightOverride = 0.f);
+
+public:
+	template<typename T>
+	static T* DuplicateActor(T* Actor, const FTransform& SpawnTransform = FTransform::Identity);
 };
 
 template <typename T>

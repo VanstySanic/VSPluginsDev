@@ -77,7 +77,7 @@ void UVSChrMovFeature_FixedPointLeap::UpdateMovement_Implementation(float DeltaT
 	{
 		bShouldStopMovement = true;
 	}
-	if (MovementData.MovementElapsedTime > MovementData.AnimPtr->GetMarkTime(AnimMovementEndTimeMarkName) && HasAcceleration2D())
+	if (MovementData.MovementElapsedTime > MovementData.AnimPtr->GetMarkTime(AnimMovementEndTimeMarkName) && HasMovementInput2D())
 	{
 		bShouldStopMovement = true;
 	}
@@ -91,13 +91,22 @@ void UVSChrMovFeature_FixedPointLeap::UpdateMovement_Implementation(float DeltaT
 void UVSChrMovFeature_FixedPointLeap::OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent)
 {
 	Super::OnMovementTagEventNotified_Implementation(TagEvent);
-
+	
+	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
+	const FGameplayTagContainer& GameplayTags = GameplayTagController->GetGameplayTags();
+	
+	MovementData.bMatchesEntranceTagQuery = EntranceTagQuery.Matches(TagEvent, GameplayTags);
+	
 	if (TagEvent == EVSMovementEvent::StateChange_MovementMode)
 	{
 		if (!IsFixedPointLeapMode() && GetPrevMovementMode() == EVSMovementMode::FixedPointLeap && !MovementData.SnappedParams.SettingsRow.IsNull())
 		{
 			StopFixPointLeap();
 		}
+	}
+	else if (IsFixedPointLeapMode() && AutoBreakTagQuery.Matches(TagEvent, GameplayTags))
+	{
+		StopFixPointLeap();
 	}
 }
 
@@ -109,6 +118,7 @@ bool UVSChrMovFeature_FixedPointLeap::IsFixedPointLeapMode() const
 
 void UVSChrMovFeature_FixedPointLeap::TryFixedPointLeap(const TArray<FDataTableRowHandle>& SettingRows, const FVector& TargetRootLocation, AActor* ActorToFollow, FName ComponentName, const FVSNetMethodExecutionPolicies& NetExecPolicies)
 {
+	if (!MovementData.bMatchesEntranceTagQuery) return;
 	if (SettingRows.IsEmpty() && DefaultSettingRows.IsEmpty()) return;
 	USceneComponent* ComponentToFollow = ActorToFollow ? Cast<USceneComponent>(UVSActorLibrary::GetActorComponentByName(ActorToFollow, ComponentName)) : nullptr;
 	const bool bIsReplicatedComponent = ComponentToFollow && ComponentToFollow->GetOwner()->GetIsReplicated() && ComponentToFollow->IsReadyForReplication();
@@ -150,7 +160,7 @@ void UVSChrMovFeature_FixedPointLeap::StopFixPointLeap()
 		GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(GetMovementCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - MovementData.CapsuleHalfHeightOffsetUSCZ);
 	}
 	MovementData = FMovementData();
-
+	
 	if (UVSActorLibrary::IsCharacterOnWalkableFloor(GetCharacter()))
 	{
 		GetCharacterMovement()->StopMovementImmediately();

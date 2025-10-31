@@ -22,7 +22,6 @@ protected:
 	virtual void OnFeatureDeactivated_Implementation() override;
 	virtual bool CanUpdateMovement_Implementation() const override;
 	virtual void UpdateMovement_Implementation(float DeltaTime) override;
-
 	virtual void OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent) override;
 	
 public:
@@ -61,6 +60,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (RowType = "/Script/VSMovementSystem.VSFixedPointLeapSettings"))
 	TArray<FDataTableRowHandle> DefaultSettingRows;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+	FVSGameplayTagEventQuery EntranceTagQuery = FVSGameplayTagEventQuery::GetEmptyPass();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+	FVSGameplayTagEventQuery AutoBreakTagQuery;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	FName AnimMovementStartTimeMarkName = FName("MovementStart");
@@ -77,5 +81,7 @@ private:
 		FVSFixedPointLeapSettings* SettingsPtr = nullptr;
 		FVSAnimSequenceReference* AnimPtr = nullptr;
 		float CapsuleHalfHeightOffsetUSCZ = 0.f;
+
+		bool bMatchesEntranceTagQuery = false;
 	} MovementData;
 };

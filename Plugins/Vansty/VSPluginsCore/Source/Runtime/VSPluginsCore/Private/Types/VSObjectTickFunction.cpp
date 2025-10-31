@@ -108,6 +108,7 @@ void FVSObjectTickFunction::RegisterAndSetup(UObject* InTargetObject)
 		OnWorldInitializeDelegateHandle = FWorldDelegates::OnPostWorldInitialization.AddLambda([&] (UWorld* InWorld, FWorldInitializationValues)
 		{
 			if (!InWorld || !InWorld->GetCurrentLevel()) return;
+			UnRegisterTickFunction();
 			RegisterTickFunction(InWorld->GetCurrentLevel());
 		});
 

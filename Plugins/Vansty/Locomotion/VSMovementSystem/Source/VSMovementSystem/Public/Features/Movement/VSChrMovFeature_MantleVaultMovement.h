@@ -67,6 +67,12 @@ private:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (RowType = "/Script/VSMovementSystem.VSMantleVaultSettings"))
 	TArray<FDataTableRowHandle> DefaultSettingRows;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+	FVSGameplayTagEventQuery EntranceTagQuery = FVSGameplayTagEventQuery::GetEmptyPass();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+	FVSGameplayTagEventQuery AutoBreakTagQuery;
 	
 	/**
 	 * The time when the animation begins to scale its movement to the reach-target location.
@@ -115,5 +121,6 @@ private:
 		float MovementElapsedTime = 0.f;
 		FVector LastUpdatedRootLocationRS = FVector::ZeroVector;
 		float CapsuleHalfHeightOffsetUSCZ = 0.f;
+		bool bMatchesEntranceTagQuery = 0.f;
 	} MovementData;
 };

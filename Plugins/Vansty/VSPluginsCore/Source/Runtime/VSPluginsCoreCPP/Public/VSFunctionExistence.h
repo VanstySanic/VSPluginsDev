@@ -2,7 +2,6 @@
 
 #pragma once
 
-
 #define VS_DECLARE_HAS_GLOBAL_FUNC_IMPLICIT(FuncName)	\
 template<typename R, typename... Args>	\
 struct FVSHasGlobalFunc_##FuncName##_Implicit {	\
@@ -55,8 +54,8 @@ struct FVSHasMethod_##FuncName##Exact {	\
 		static auto Test(int) -> decltype(	\
 			static_cast<	\
 				typename std::conditional<IsConst,	\
-					typename VS::MethodFuncExistence::MemberFunctionPointerHelper<U, R, Args...>::Const,	\
-					typename VS::MethodFuncExistence::MemberFunctionPointerHelper<U, R, Args...>::NonConst	\
+					typename VS::Function::ExistenceFunctionPointerHelper<U, R, Args...>::Const,	\
+					typename VS::Function::ExistenceFunctionPointerHelper<U, R, Args...>::NonConst	\
 				>::type	\
 			>(&U::FuncName), std::true_type{});	\
 	\
@@ -82,12 +81,15 @@ struct FVSHasMethod_##FuncName##Exact {	\
 
 namespace VS
 {
-	namespace MethodFuncExistence
+	namespace Function
 	{
-		template<typename T, typename R, typename... Args>
-		struct FMemberFunctionPointerHelper {
-			using NonConst = R(T::*)(Args...);
-			using Const = R(T::*)(Args...) const;
-		};
+		namespace Existence
+		{
+			template<typename T, typename R, typename... Args>
+			struct FFunctionPointerHelper {
+				using NonConst = R(T::*)(Args...);
+				using Const = R(T::*)(Args...) const;
+			};
+		}
 	}
 }

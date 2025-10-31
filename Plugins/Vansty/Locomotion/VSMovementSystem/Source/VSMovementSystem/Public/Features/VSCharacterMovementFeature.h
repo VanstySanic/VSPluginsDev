@@ -103,7 +103,7 @@ public:
 	bool HasAcceleration() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Movement")
-	bool HasAcceleration2D() const;
+	bool HasMovementInput2D() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	FVector GetScale3D() const;

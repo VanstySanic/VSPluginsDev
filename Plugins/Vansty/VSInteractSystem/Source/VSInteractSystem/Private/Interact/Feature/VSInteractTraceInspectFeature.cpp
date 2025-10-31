@@ -22,7 +22,7 @@ void UVSInteractTraceInspectFeature::Initialize_Implementation()
 
 	if (UVSActorLibrary::IsActorNetLocal(GetOwnerActor()))
 	{
-		Controller = UVSGameplayLibrary::GetControllerFromObject(this);
+		Controller = UVSActorLibrary::GetControllerFromActor(GetOwnerActor());
 	}
 }
 

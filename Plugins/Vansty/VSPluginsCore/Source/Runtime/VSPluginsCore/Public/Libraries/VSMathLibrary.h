@@ -18,20 +18,24 @@ class VSPLUGINSCORE_API UVSMathLibrary : public UBlueprintFunctionLibrary
 public:
 	/** 
 	 * Get number of decimal places of a float after trimming trailing zeros.
-	 * Handles artifacts like 0.29999999998 / 0.1000000001 correctly.
+	 * Handles artifacts like 0.29999999998f / 0.1000000001f correctly.
 	 */
-	UFUNCTION(BlueprintPure, Category="Math|Number", meta=(DisplayName="Get Decimal Places (Trimmed, Float)", AdvancedDisplay="MaxDecimals", ClampMin="0", UIMin="0", UIMax="12"))
+	UFUNCTION(BlueprintPure, Category = "Math|Number")
 	static int32 GetDecimalPlacesTrimmedFloat(float Value, int32 MaxDecimals = 12);
-	
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Vector"))
-	static bool VectorHasZeroAxes(const FVector& Vector, const float Tolerance = 0.00000001);
 
+	/** Check if a vector has any axis nearly zero within tolerance. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Vector"))
-	static FVector VectorSafeDevide(const FVector& VectorA, const FVector& VectorB);
+	static bool VectorHasZeroAxis(const FVector& Vector, const float Tolerance = 0.00000001);
 
+	/** Safely divide VectorA by VectorB (per component), avoiding divide-by-zero. */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Vector"))
+	static FVector VectorSafeDivide(const FVector& VectorA, const FVector& VectorB);
+
+	/** Rearrange or swap vector axes according to swizzle rule. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Vector"))
 	static FVector VectorSwizzleAxes(const FVector& Vector, EVSAxesSwizzle::Type Swizzle = EVSAxesSwizzle::XZY);
-	
+
+	/** Project a rotator orientation onto a plane defined by a normal. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Rotator, PlaneNormal"))
 	static FRotator RotatorProjectOntoPlane(const FRotator& Rotator, const FVector& PlaneNormal);
 
@@ -66,11 +70,18 @@ public:
 	
 	
 	/**
-	 * Lag a float with optional time sub-stepping.
-	 * @param MaxTimeStep Max time step used when sub-stepping camera lag. If > 0.f, it will handle fluctuating frame rates well (though this comes at a cost).
+	 * Interpolate a float with optional time sub-stepping.
+	 * @param MaxTimeStep Max time step used when sub-stepping interpolation. If > 0.f, it will handle fluctuating frame rates well (though this comes at a cost).
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform")
-	static float FloatInterpTo(const float From, const float To, float DeltaTime, const float LagSpeed, float MaxTimeStep = 0.016667f);
+	static float FloatInterpTo(const float From, const float To, float DeltaTime, const float InterpSpeed, float MaxTimeStep = 0.016667f);
+
+	/**
+	 * Interpolate a double with optional time sub-stepping.
+	 * @param MaxTimeStep Max time step used when sub-stepping interpolation. If > 0.f, it will handle fluctuating frame rates well (though this comes at a cost).
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform")
+	static double DoubleInterpTo(const double From, const double To, float DeltaTime, const float InterpSpeed, float MaxTimeStep = 0.016667f);
 	
 	/**
 	 * Interpolate a rotator in specified space with optional time sub-stepping.
@@ -105,18 +116,19 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Source, RangeMin, RangeMax, ConstrainSpace"))
 	static FVector ClampVectorScale(const FVector& Source, const FVector& RangeMin, const FVector& RangeMax, const FTransform& ConstrainSpace);
 	
-	/** Clamp rotation angle. Range min larger than range max means inverse. */
+	/** Clamp rotation angle. Range min larger than range max indicates the inversed area. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Source, RangeMin, RangeMax, ConstrainSpace"))
 	static FRotator ClampRotation(const FRotator& Source, const FRotator& RangeMin, const FRotator& RangeMax, const FRotator& ConstrainSpace = FRotator::ZeroRotator);
 	
 	/** Clamp transform for all axes. Rotation range min larger than range max means inverse. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Source, RangeMin, RangeMax, ConstrainSpace"))
 	static FTransform ClampTransform(const FTransform& Source, const FTransform& RangeMin, const FTransform& RangeMax, bool bTranslationAsLocation, const FTransform& ConstrainSpace = FTransform());
-	
+
+	/** Get diagonal size of a 2D vector along specified yaw angle. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Vector2D"))
 	static float GetVectorDiagonalSize2D(const FVector2D& Vector2D, float AngleYaw);
 
-	
+	/** Get diagonal size of a 3D vector along specified rotation. */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Vector, Rotation"))
 	static float GetVectorDiagonalSize(const FVector& Vector, const FRotator& Rotation);
 };

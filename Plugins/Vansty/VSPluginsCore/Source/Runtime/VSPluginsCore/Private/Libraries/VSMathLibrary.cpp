@@ -60,12 +60,12 @@ int32 UVSMathLibrary::GetDecimalPlacesTrimmedFloat(float Value, int32 MaxDecimal
 	return End - PointIndex; // number of digits after '.'
 }
 
-bool UVSMathLibrary::VectorHasZeroAxes(const FVector& Vector, const float Tolerance)
+bool UVSMathLibrary::VectorHasZeroAxis(const FVector& Vector, const float Tolerance)
 {
 	return FMath::IsNearlyZero(Vector.X, Tolerance) || FMath::IsNearlyZero(Vector.Y, Tolerance) || FMath::IsNearlyZero(Vector.Z, Tolerance);
 }
 
-FVector UVSMathLibrary::VectorSafeDevide(const FVector& VectorA, const FVector& VectorB)
+FVector UVSMathLibrary::VectorSafeDivide(const FVector& VectorA, const FVector& VectorB)
 {
 	return FVector(
 		UKismetMathLibrary::SafeDivide(VectorA.X, VectorB.X),
@@ -160,7 +160,7 @@ FTransform UVSMathLibrary::TransformApplyAxes(const FTransform& From, const FTra
 	return FTransform(AnsRotation, AnsTranslation, AnsScale);
 }
 
-float UVSMathLibrary::FloatInterpTo(const float From, const float To, float DeltaTime, const float LagSpeed, float MaxTimeStep)
+float UVSMathLibrary::FloatInterpTo(const float From, const float To, float DeltaTime, const float InterpSpeed, float MaxTimeStep)
 {
 	float AnsFloat = From;
 	
@@ -176,12 +176,38 @@ float UVSMathLibrary::FloatInterpTo(const float From, const float To, float Delt
 			RemainingTime -= LerpAmount;
 			FloatLerpTarget += FloatStep * LerpAmount;
 			
-			AnsFloat = UKismetMathLibrary::FInterpTo(AnsFloat, To, LerpAmount, LagSpeed);
+			AnsFloat = FMath::FInterpTo(AnsFloat, To, LerpAmount, InterpSpeed);
 		}
 	}
 	else
 	{
-		AnsFloat = UKismetMathLibrary::FInterpTo(AnsFloat, To, DeltaTime, LagSpeed);
+		AnsFloat = FMath::FInterpTo(AnsFloat, To, DeltaTime, InterpSpeed);
+	}
+
+	return AnsFloat;
+}
+
+double UVSMathLibrary::DoubleInterpTo(const double From, const double To, float DeltaTime, const float InterpSpeed, float MaxTimeStep)
+{
+	float AnsFloat = From;
+	
+	if (MaxTimeStep > 0.f && DeltaTime > MaxTimeStep)
+	{
+		float RemainingTime = DeltaTime;
+		const double DoubleStep = (To - From) * (1.f / DeltaTime);
+		double DoubleLerpTarget = AnsFloat;
+
+		while (RemainingTime > UE_KINDA_SMALL_NUMBER)
+		{
+			const double LerpAmount = FMath::Min(MaxTimeStep, RemainingTime);
+			RemainingTime -= LerpAmount;
+			DoubleLerpTarget += DoubleStep * LerpAmount;
+			AnsFloat = FMath::FInterpTo(AnsFloat, To, LerpAmount, InterpSpeed);
+		}
+	}
+	else
+	{
+		AnsFloat = FMath::FInterpTo(AnsFloat, To, DeltaTime, InterpSpeed);
 	}
 
 	return AnsFloat;
@@ -205,21 +231,21 @@ FRotator UVSMathLibrary::RotatorInterpTo(const FRotator& From, const FRotator& T
 
 		while (RemainingTime > UE_KINDA_SMALL_NUMBER)
 		{
-			const float LerpAmount = FMath::Min(MaxTimeStep, RemainingTime);
-			RemainingTime -= LerpAmount;
-			RotationLerpTarget += RotationStep * LerpAmount;
+			const float LerpTimeAmount = FMath::Min(MaxTimeStep, RemainingTime);
+			RemainingTime -= LerpTimeAmount;
+			RotationLerpTarget += RotationStep * LerpTimeAmount;
 
 			if (!bConstantSpeed)
 			{
-				LagSpaceAnsRotation.Roll = UKismetMathLibrary::RInterpTo(LagSpaceAnsRotation, RotationLerpTarget, LerpAmount, InterpSpeed.Roll).Roll;
-				LagSpaceAnsRotation.Pitch = UKismetMathLibrary::RInterpTo(LagSpaceAnsRotation, RotationLerpTarget, LerpAmount, InterpSpeed.Pitch).Pitch;
-				LagSpaceAnsRotation.Yaw = UKismetMathLibrary::RInterpTo(LagSpaceAnsRotation, RotationLerpTarget, LerpAmount, InterpSpeed.Yaw).Yaw;
+				LagSpaceAnsRotation.Roll = FMath::RInterpTo(LagSpaceAnsRotation, RotationLerpTarget, LerpTimeAmount, InterpSpeed.Roll).Roll;
+				LagSpaceAnsRotation.Pitch = FMath::RInterpTo(LagSpaceAnsRotation, RotationLerpTarget, LerpTimeAmount, InterpSpeed.Pitch).Pitch;
+				LagSpaceAnsRotation.Yaw = FMath::RInterpTo(LagSpaceAnsRotation, RotationLerpTarget, LerpTimeAmount, InterpSpeed.Yaw).Yaw;
 			}
 			else
 			{
-				LagSpaceAnsRotation.Roll = UKismetMathLibrary::RInterpTo_Constant(LagSpaceAnsRotation, RotationLerpTarget, LerpAmount, InterpSpeed.Roll).Roll;
-				LagSpaceAnsRotation.Pitch = UKismetMathLibrary::RInterpTo_Constant(LagSpaceAnsRotation, RotationLerpTarget, LerpAmount, InterpSpeed.Pitch).Pitch;
-				LagSpaceAnsRotation.Yaw = UKismetMathLibrary::RInterpTo_Constant(LagSpaceAnsRotation, RotationLerpTarget, LerpAmount, InterpSpeed.Yaw).Yaw;
+				LagSpaceAnsRotation.Roll = FMath::RInterpConstantTo(LagSpaceAnsRotation, RotationLerpTarget, LerpTimeAmount, InterpSpeed.Roll).Roll;
+				LagSpaceAnsRotation.Pitch = FMath::RInterpConstantTo(LagSpaceAnsRotation, RotationLerpTarget, LerpTimeAmount, InterpSpeed.Pitch).Pitch;
+				LagSpaceAnsRotation.Yaw = FMath::RInterpConstantTo(LagSpaceAnsRotation, RotationLerpTarget, LerpTimeAmount, InterpSpeed.Yaw).Yaw;
 			}
 		}
 	}
@@ -227,15 +253,15 @@ FRotator UVSMathLibrary::RotatorInterpTo(const FRotator& From, const FRotator& T
 	{
 		if (!bConstantSpeed)
 		{
-			LagSpaceAnsRotation.Roll = UKismetMathLibrary::RInterpTo(LagSpaceAnsRotation, LagSpaceTo, DeltaTime, InterpSpeed.Roll).Roll;
-			LagSpaceAnsRotation.Pitch = UKismetMathLibrary::RInterpTo(LagSpaceAnsRotation, LagSpaceTo, DeltaTime, InterpSpeed.Pitch).Pitch;
-			LagSpaceAnsRotation.Yaw = UKismetMathLibrary::RInterpTo(LagSpaceAnsRotation, LagSpaceTo, DeltaTime, InterpSpeed.Yaw).Yaw;
+			LagSpaceAnsRotation.Roll = FMath::RInterpTo(LagSpaceAnsRotation, LagSpaceTo, DeltaTime, InterpSpeed.Roll).Roll;
+			LagSpaceAnsRotation.Pitch = FMath::RInterpTo(LagSpaceAnsRotation, LagSpaceTo, DeltaTime, InterpSpeed.Pitch).Pitch;
+			LagSpaceAnsRotation.Yaw = FMath::RInterpTo(LagSpaceAnsRotation, LagSpaceTo, DeltaTime, InterpSpeed.Yaw).Yaw;
 		}
 		else
 		{
-			LagSpaceAnsRotation.Roll = UKismetMathLibrary::RInterpTo_Constant(LagSpaceAnsRotation, LagSpaceTo, DeltaTime, InterpSpeed.Roll).Roll;
-			LagSpaceAnsRotation.Pitch = UKismetMathLibrary::RInterpTo_Constant(LagSpaceAnsRotation, LagSpaceTo, DeltaTime, InterpSpeed.Pitch).Pitch;
-			LagSpaceAnsRotation.Yaw = UKismetMathLibrary::RInterpTo_Constant(LagSpaceAnsRotation, LagSpaceTo, DeltaTime, InterpSpeed.Yaw).Yaw;
+			LagSpaceAnsRotation.Roll = FMath::RInterpConstantTo(LagSpaceAnsRotation, LagSpaceTo, DeltaTime, InterpSpeed.Roll).Roll;
+			LagSpaceAnsRotation.Pitch = FMath::RInterpConstantTo(LagSpaceAnsRotation, LagSpaceTo, DeltaTime, InterpSpeed.Pitch).Pitch;
+			LagSpaceAnsRotation.Yaw = FMath::RInterpConstantTo(LagSpaceAnsRotation, LagSpaceTo, DeltaTime, InterpSpeed.Yaw).Yaw;
 		}
 	}
 
@@ -260,21 +286,21 @@ FVector UVSMathLibrary::VectorInterpTo(const FVector& From, const FVector& To, f
 
 		while (RemainingTime > UE_KINDA_SMALL_NUMBER)
 		{
-			const float LerpAmount = FMath::Min(MaxTimeStep, RemainingTime);
-			RemainingTime -= LerpAmount;
-			VectorLerpTarget += VectorStep * LerpAmount;
+			const float LerpTimeAmount = FMath::Min(MaxTimeStep, RemainingTime);
+			RemainingTime -= LerpTimeAmount;
+			VectorLerpTarget += VectorStep * LerpTimeAmount;
 
 			if (!bConstantSpeed)
 			{
-				LagSpaceAnsVector.X = FMath::FInterpTo(LagSpaceAnsVector.X, VectorLerpTarget.X, LerpAmount, InterpSpeed.X);
-				LagSpaceAnsVector.Y = FMath::FInterpTo(LagSpaceAnsVector.Y, VectorLerpTarget.Y, LerpAmount, InterpSpeed.Y);
-				LagSpaceAnsVector.Z = FMath::FInterpTo(LagSpaceAnsVector.Z, VectorLerpTarget.Z, LerpAmount, InterpSpeed.Z);
+				LagSpaceAnsVector.X = FMath::FInterpTo(LagSpaceAnsVector.X, VectorLerpTarget.X, LerpTimeAmount, InterpSpeed.X);
+				LagSpaceAnsVector.Y = FMath::FInterpTo(LagSpaceAnsVector.Y, VectorLerpTarget.Y, LerpTimeAmount, InterpSpeed.Y);
+				LagSpaceAnsVector.Z = FMath::FInterpTo(LagSpaceAnsVector.Z, VectorLerpTarget.Z, LerpTimeAmount, InterpSpeed.Z);
 			}
 			else
 			{
-				LagSpaceAnsVector.X = FMath::FInterpConstantTo(LagSpaceAnsVector.X, VectorLerpTarget.X, LerpAmount, InterpSpeed.X);
-				LagSpaceAnsVector.Y = FMath::FInterpConstantTo(LagSpaceAnsVector.Y, VectorLerpTarget.Y, LerpAmount, InterpSpeed.Y);
-				LagSpaceAnsVector.Z = FMath::FInterpConstantTo(LagSpaceAnsVector.Z, VectorLerpTarget.Z, LerpAmount, InterpSpeed.Z);
+				LagSpaceAnsVector.X = FMath::FInterpConstantTo(LagSpaceAnsVector.X, VectorLerpTarget.X, LerpTimeAmount, InterpSpeed.X);
+				LagSpaceAnsVector.Y = FMath::FInterpConstantTo(LagSpaceAnsVector.Y, VectorLerpTarget.Y, LerpTimeAmount, InterpSpeed.Y);
+				LagSpaceAnsVector.Z = FMath::FInterpConstantTo(LagSpaceAnsVector.Z, VectorLerpTarget.Z, LerpTimeAmount, InterpSpeed.Z);
 			}
 		}
 	}
@@ -321,39 +347,39 @@ FTransform UVSMathLibrary::TransformInterpTo(const FTransform& From, const FTran
 
 		while (RemainingTime > UE_KINDA_SMALL_NUMBER)
 		{
-			const float LerpAmount = FMath::Min(MaxTimeStep, RemainingTime);
-			RemainingTime -= LerpAmount;
-			RotationLerpTarget += RotationStep * LerpAmount;
-			TranslationLerpTarget += TranslationStep * LerpAmount;
-			ScaleLerpTarget += ScaleStep * LerpAmount;
+			const float LerpTimeAmount = FMath::Min(MaxTimeStep, RemainingTime);
+			RemainingTime -= LerpTimeAmount;
+			RotationLerpTarget += RotationStep * LerpTimeAmount;
+			TranslationLerpTarget += TranslationStep * LerpTimeAmount;
+			ScaleLerpTarget += ScaleStep * LerpTimeAmount;
 
 			if (!bConstantSpeed)
 			{
-				LagSpaceAnsRotation.Roll = UKismetMathLibrary::RInterpTo(LagSpaceAnsRotation, RotationLerpTarget, LerpAmount, InterpSpeed.Rotator().Roll).Roll;
-				LagSpaceAnsRotation.Pitch = UKismetMathLibrary::RInterpTo(LagSpaceAnsRotation, RotationLerpTarget, LerpAmount, InterpSpeed.Rotator().Pitch).Pitch;
-				LagSpaceAnsRotation.Yaw = UKismetMathLibrary::RInterpTo(LagSpaceAnsRotation, RotationLerpTarget, LerpAmount, InterpSpeed.Rotator().Yaw).Yaw;
+				LagSpaceAnsRotation.Roll = FMath::RInterpTo(LagSpaceAnsRotation, RotationLerpTarget, LerpTimeAmount, InterpSpeed.Rotator().Roll).Roll;
+				LagSpaceAnsRotation.Pitch = FMath::RInterpTo(LagSpaceAnsRotation, RotationLerpTarget, LerpTimeAmount, InterpSpeed.Rotator().Pitch).Pitch;
+				LagSpaceAnsRotation.Yaw = FMath::RInterpTo(LagSpaceAnsRotation, RotationLerpTarget, LerpTimeAmount, InterpSpeed.Rotator().Yaw).Yaw;
 
-				LagSpaceAnsTranslation.X = FMath::FInterpTo(LagSpaceAnsTranslation.X, TranslationLerpTarget.X, LerpAmount, InterpSpeed.GetTranslation().X);
-				LagSpaceAnsTranslation.Y = FMath::FInterpTo(LagSpaceAnsTranslation.Y, TranslationLerpTarget.Y, LerpAmount, InterpSpeed.GetTranslation().Y);
-				LagSpaceAnsTranslation.Z = FMath::FInterpTo(LagSpaceAnsTranslation.Z, TranslationLerpTarget.Z, LerpAmount, InterpSpeed.GetTranslation().Z);
+				LagSpaceAnsTranslation.X = FMath::FInterpTo(LagSpaceAnsTranslation.X, TranslationLerpTarget.X, LerpTimeAmount, InterpSpeed.GetTranslation().X);
+				LagSpaceAnsTranslation.Y = FMath::FInterpTo(LagSpaceAnsTranslation.Y, TranslationLerpTarget.Y, LerpTimeAmount, InterpSpeed.GetTranslation().Y);
+				LagSpaceAnsTranslation.Z = FMath::FInterpTo(LagSpaceAnsTranslation.Z, TranslationLerpTarget.Z, LerpTimeAmount, InterpSpeed.GetTranslation().Z);
 			
-				LagSpaceAnsScale.X = FMath::FInterpTo(LagSpaceAnsScale.X, ScaleLerpTarget.X, LerpAmount, InterpSpeed.GetScale3D().X);
-				LagSpaceAnsScale.Y = FMath::FInterpTo(LagSpaceAnsScale.Y, ScaleLerpTarget.Y, LerpAmount, InterpSpeed.GetScale3D().Y);
-				LagSpaceAnsScale.Z = FMath::FInterpTo(LagSpaceAnsScale.Z, ScaleLerpTarget.Z, LerpAmount, InterpSpeed.GetScale3D().Z);
+				LagSpaceAnsScale.X = FMath::FInterpTo(LagSpaceAnsScale.X, ScaleLerpTarget.X, LerpTimeAmount, InterpSpeed.GetScale3D().X);
+				LagSpaceAnsScale.Y = FMath::FInterpTo(LagSpaceAnsScale.Y, ScaleLerpTarget.Y, LerpTimeAmount, InterpSpeed.GetScale3D().Y);
+				LagSpaceAnsScale.Z = FMath::FInterpTo(LagSpaceAnsScale.Z, ScaleLerpTarget.Z, LerpTimeAmount, InterpSpeed.GetScale3D().Z);
 			}
 			else
 			{
-				LagSpaceAnsRotation.Roll = UKismetMathLibrary::RInterpTo_Constant(LagSpaceAnsRotation, RotationLerpTarget, LerpAmount, InterpSpeed.Rotator().Roll).Roll;
-				LagSpaceAnsRotation.Pitch = UKismetMathLibrary::RInterpTo_Constant(LagSpaceAnsRotation, RotationLerpTarget, LerpAmount, InterpSpeed.Rotator().Pitch).Pitch;
-				LagSpaceAnsRotation.Yaw = UKismetMathLibrary::RInterpTo_Constant(LagSpaceAnsRotation, RotationLerpTarget, LerpAmount, InterpSpeed.Rotator().Yaw).Yaw;
+				LagSpaceAnsRotation.Roll = FMath::RInterpConstantTo(LagSpaceAnsRotation, RotationLerpTarget, LerpTimeAmount, InterpSpeed.Rotator().Roll).Roll;
+				LagSpaceAnsRotation.Pitch = FMath::RInterpConstantTo(LagSpaceAnsRotation, RotationLerpTarget, LerpTimeAmount, InterpSpeed.Rotator().Pitch).Pitch;
+				LagSpaceAnsRotation.Yaw = FMath::RInterpConstantTo(LagSpaceAnsRotation, RotationLerpTarget, LerpTimeAmount, InterpSpeed.Rotator().Yaw).Yaw;
 
-				LagSpaceAnsTranslation.X = FMath::FInterpConstantTo(LagSpaceAnsTranslation.X, TranslationLerpTarget.X, LerpAmount, InterpSpeed.GetTranslation().X);
-				LagSpaceAnsTranslation.Y = FMath::FInterpConstantTo(LagSpaceAnsTranslation.Y, TranslationLerpTarget.Y, LerpAmount, InterpSpeed.GetTranslation().Y);
-				LagSpaceAnsTranslation.Z = FMath::FInterpConstantTo(LagSpaceAnsTranslation.Z, TranslationLerpTarget.Z, LerpAmount, InterpSpeed.GetTranslation().Z);
+				LagSpaceAnsTranslation.X = FMath::FInterpConstantTo(LagSpaceAnsTranslation.X, TranslationLerpTarget.X, LerpTimeAmount, InterpSpeed.GetTranslation().X);
+				LagSpaceAnsTranslation.Y = FMath::FInterpConstantTo(LagSpaceAnsTranslation.Y, TranslationLerpTarget.Y, LerpTimeAmount, InterpSpeed.GetTranslation().Y);
+				LagSpaceAnsTranslation.Z = FMath::FInterpConstantTo(LagSpaceAnsTranslation.Z, TranslationLerpTarget.Z, LerpTimeAmount, InterpSpeed.GetTranslation().Z);
 			
-				LagSpaceAnsScale.X = FMath::FInterpConstantTo(LagSpaceAnsScale.X, ScaleLerpTarget.X, LerpAmount, InterpSpeed.GetScale3D().X);
-				LagSpaceAnsScale.Y = FMath::FInterpConstantTo(LagSpaceAnsScale.Y, ScaleLerpTarget.Y, LerpAmount, InterpSpeed.GetScale3D().Y);
-				LagSpaceAnsScale.Z = FMath::FInterpConstantTo(LagSpaceAnsScale.Z, ScaleLerpTarget.Z, LerpAmount, InterpSpeed.GetScale3D().Z);
+				LagSpaceAnsScale.X = FMath::FInterpConstantTo(LagSpaceAnsScale.X, ScaleLerpTarget.X, LerpTimeAmount, InterpSpeed.GetScale3D().X);
+				LagSpaceAnsScale.Y = FMath::FInterpConstantTo(LagSpaceAnsScale.Y, ScaleLerpTarget.Y, LerpTimeAmount, InterpSpeed.GetScale3D().Y);
+				LagSpaceAnsScale.Z = FMath::FInterpConstantTo(LagSpaceAnsScale.Z, ScaleLerpTarget.Z, LerpTimeAmount, InterpSpeed.GetScale3D().Z);
 			}
 		}
 	}
@@ -361,9 +387,9 @@ FTransform UVSMathLibrary::TransformInterpTo(const FTransform& From, const FTran
 	{
 		if (!bConstantSpeed)
 		{
-			LagSpaceAnsRotation.Roll = UKismetMathLibrary::RInterpTo(LagSpaceAnsRotation, LagSpaceTo.Rotator(), DeltaTime, InterpSpeed.Rotator().Roll).Roll;
-			LagSpaceAnsRotation.Pitch = UKismetMathLibrary::RInterpTo(LagSpaceAnsRotation, LagSpaceTo.Rotator(), DeltaTime, InterpSpeed.Rotator().Pitch).Pitch;
-			LagSpaceAnsRotation.Yaw = UKismetMathLibrary::RInterpTo(LagSpaceAnsRotation, LagSpaceTo.Rotator(), DeltaTime, InterpSpeed.Rotator().Yaw).Yaw;
+			LagSpaceAnsRotation.Roll = FMath::RInterpTo(LagSpaceAnsRotation, LagSpaceTo.Rotator(), DeltaTime, InterpSpeed.Rotator().Roll).Roll;
+			LagSpaceAnsRotation.Pitch = FMath::RInterpTo(LagSpaceAnsRotation, LagSpaceTo.Rotator(), DeltaTime, InterpSpeed.Rotator().Pitch).Pitch;
+			LagSpaceAnsRotation.Yaw = FMath::RInterpTo(LagSpaceAnsRotation, LagSpaceTo.Rotator(), DeltaTime, InterpSpeed.Rotator().Yaw).Yaw;
 
 			LagSpaceAnsTranslation.X = FMath::FInterpTo(LagSpaceAnsTranslation.X, LagSpaceTo.GetTranslation().X, DeltaTime, InterpSpeed.GetTranslation().X);
 			LagSpaceAnsTranslation.Y = FMath::FInterpTo(LagSpaceAnsTranslation.Y, LagSpaceTo.GetTranslation().Y, DeltaTime, InterpSpeed.GetTranslation().Y);
@@ -375,9 +401,9 @@ FTransform UVSMathLibrary::TransformInterpTo(const FTransform& From, const FTran
 		}
 		else
 		{
-			LagSpaceAnsRotation.Roll = UKismetMathLibrary::RInterpTo_Constant(LagSpaceAnsRotation, LagSpaceTo.Rotator(), DeltaTime, InterpSpeed.Rotator().Roll).Roll;
-			LagSpaceAnsRotation.Pitch = UKismetMathLibrary::RInterpTo_Constant(LagSpaceAnsRotation, LagSpaceTo.Rotator(), DeltaTime, InterpSpeed.Rotator().Pitch).Pitch;
-			LagSpaceAnsRotation.Yaw = UKismetMathLibrary::RInterpTo_Constant(LagSpaceAnsRotation, LagSpaceTo.Rotator(), DeltaTime, InterpSpeed.Rotator().Yaw).Yaw;
+			LagSpaceAnsRotation.Roll = FMath::RInterpConstantTo(LagSpaceAnsRotation, LagSpaceTo.Rotator(), DeltaTime, InterpSpeed.Rotator().Roll).Roll;
+			LagSpaceAnsRotation.Pitch = FMath::RInterpConstantTo(LagSpaceAnsRotation, LagSpaceTo.Rotator(), DeltaTime, InterpSpeed.Rotator().Pitch).Pitch;
+			LagSpaceAnsRotation.Yaw = FMath::RInterpConstantTo(LagSpaceAnsRotation, LagSpaceTo.Rotator(), DeltaTime, InterpSpeed.Rotator().Yaw).Yaw;
 
 			LagSpaceAnsTranslation.X = FMath::FInterpConstantTo(LagSpaceAnsTranslation.X, LagSpaceTo.GetTranslation().X, DeltaTime, InterpSpeed.GetTranslation().X);
 			LagSpaceAnsTranslation.Y = FMath::FInterpConstantTo(LagSpaceAnsTranslation.Y, LagSpaceTo.GetTranslation().Y, DeltaTime, InterpSpeed.GetTranslation().Y);

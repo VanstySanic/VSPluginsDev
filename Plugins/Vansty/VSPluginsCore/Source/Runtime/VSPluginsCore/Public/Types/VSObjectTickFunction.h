@@ -17,7 +17,7 @@ struct VSPLUGINSCORE_API FVSObjectTickFunction : public FTickFunction
 	DECLARE_DELEGATE_RetVal(bool, FObjectTickAbilityDelegate);
 
 	FVSObjectTickFunction()
-		: bTickCrossWorldIfPossible(true),
+		: bTickCrossWorldIfPossible(false),
 	      bShouldTickCrossWorld(false)
 	{
 	}
@@ -54,6 +54,9 @@ public:
 	uint8 bTickCrossWorldIfPossible : 1;
 	
 private:
+	using FTickFunction::RegisterTickFunction;
+	using FTickFunction::UnRegisterTickFunction;
+	
 	TWeakObjectPtr<UObject> Target;
 	TUnion<TWeakObjectPtr<UObject>, TWeakObjectPtr<UActorComponent>, TWeakObjectPtr<AActor>> TypedOuter;
 

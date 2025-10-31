@@ -52,7 +52,16 @@ struct FVSMantleVaultLimits
 {
 	GENERATED_BODY()
 
-	FVSMantleVaultLimits() { }
+	FVSMantleVaultLimits()
+	{
+		TerrainComponentQuery.RootExpression.Range = EVSQueryMatchRange::Any;
+		TerrainComponentQuery.RootExpression.Type = EVSQueryMatchType::Params;
+		FVSSceneComponentQueryParams Params;
+		Params.ObjectTypes.Add(ObjectTypeQuery1);
+		Params.ObjectTypes.Add(ObjectTypeQuery2);
+		Params.bComponentTagsEmptyAsPass = true;
+		TerrainComponentQuery.RootExpression.Params.Add(Params);
+	}
 	
 	VSMOVEMENTSYSTEM_API bool IsValid() const;
 

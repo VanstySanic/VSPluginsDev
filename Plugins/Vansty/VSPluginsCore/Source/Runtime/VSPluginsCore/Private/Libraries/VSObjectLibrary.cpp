@@ -4,7 +4,7 @@
 
 #include "Classes/Features/VSObjectFeature.h"
 #include "Classes/Features/VSObjectFeatureComponent.h"
-#include "Interfaces/VSTickFunctionInterface.h"
+#include "Interfaces/VSTickFunctionOwnerInterface.h"
 
 UVSObjectLibrary::UVSObjectLibrary(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -68,7 +68,7 @@ FTickFunction* UVSObjectLibrary::GetTickFunctionFromObject(UObject* Object)
 	{
 		return &ActorComponent->PrimaryComponentTick;
 	}
-	if (IVSTickFunctionInterface* TickFunctionInterface = Cast<IVSTickFunctionInterface>(Object))
+	if (IVSTickFunctionOwnerInterface* TickFunctionInterface = Cast<IVSTickFunctionOwnerInterface>(Object))
 	{
 		return TickFunctionInterface->GetTickFunctionPtr();
 	}

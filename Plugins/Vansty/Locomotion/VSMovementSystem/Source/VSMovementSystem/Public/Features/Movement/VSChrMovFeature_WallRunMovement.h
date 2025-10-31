@@ -95,6 +95,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (RowType = "/Script/VSMovementSystem.VSWallRunSettings"))
 	TArray<FDataTableRowHandle> DefaultSettingRows;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+	FVSGameplayTagEventQuery EntranceTagQuery = FVSGameplayTagEventQuery::GetEmptyPass();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+	FVSGameplayTagEventQuery AutoBreakTagQuery;
 	
 	/** This is the time when start-from-ground anim reaches the wall. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
@@ -130,5 +135,7 @@ private:
 		float EndMovementElapsedTime = 0.f;
 
 		float CapsuleHalfHeightOffsetUSCZ = 0.f;
+
+		bool bMatchesEntranceTagQuery = false;
 	} MovementData;
 };

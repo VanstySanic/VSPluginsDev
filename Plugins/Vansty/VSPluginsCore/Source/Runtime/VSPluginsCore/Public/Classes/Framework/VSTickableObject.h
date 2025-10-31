@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Interfaces/VSTickFunctionInterface.h"
+#include "Interfaces/VSTickFunctionOwnerInterface.h"
 #include "Types/VSObjectTickFunction.h"
 #include "UObject/Object.h"
 #include "VSTickableObject.generated.h"
@@ -12,7 +12,7 @@
  * 
  */
 UCLASS(Abstract, Blueprintable, BlueprintType, DisplayName = "Tickable Object")
-class VSPLUGINSCORE_API UVSTickableObject : public UObject, public IVSTickFunctionInterface
+class VSPLUGINSCORE_API UVSTickableObject : public UObject, public IVSTickFunctionOwnerInterface
 {
 	GENERATED_UCLASS_BODY()
 

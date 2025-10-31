@@ -35,7 +35,7 @@ void UVSCharacterMovementFeatureAgent::Initialize_Implementation()
 	
 	ChrMovFeatureAgentPrivate = this;
 
-	CharacterPrivate = Cast<ACharacter>(UVSGameplayLibrary::GetPawnFromObject(this));
+	CharacterPrivate = Cast<ACharacter>(UVSActorLibrary::GetPawnFromActor(GetOwnerActor()));
 	check(CharacterPrivate.IsValid());
 	
 	CharacterMovementComponentPrivate = CharacterPrivate->GetCharacterMovement();
@@ -115,14 +115,14 @@ void UVSCharacterMovementFeatureAgent::UpdateMovement_Implementation(float Delta
 		GameplayTagController->NotifyTagsUpdated();
 		GameplayTagController->NotifyTagEvent(EVSMovementEvent::StateChange_IsMoving2D);
 	}
-	if ((HasAcceleration2D() && !MovementData.bCachedHasMovementInput2D) || (!HasAcceleration2D() && MovementData.bCachedHasMovementInput2D))
+	if ((HasMovementInput2D() && !MovementData.bCachedHasMovementInput2D) || (!HasMovementInput2D() && MovementData.bCachedHasMovementInput2D))
 	{
-		GameplayTagController->SetTagCount(EVSMovementState::HasAcceleration2D, HasAcceleration2D() ? 1 : 0);
+		GameplayTagController->SetTagCount(EVSMovementState::HasAcceleration2D, HasMovementInput2D() ? 1 : 0);
 		GameplayTagController->NotifyTagsUpdated();
 		GameplayTagController->NotifyTagEvent(EVSMovementEvent::StateChange_HasMovementInput2D);
 	}
 	MovementData.bCachedIsMoving2D = IsMoving2D();
-	MovementData.bCachedHasMovementInput2D = HasAcceleration2D();
+	MovementData.bCachedHasMovementInput2D = HasMovementInput2D();
 
 	CheckMovingAgainstWall2D();
 }

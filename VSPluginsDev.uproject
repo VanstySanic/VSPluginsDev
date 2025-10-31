@@ -33,6 +33,10 @@
 		{
 			"Name": "UNTLink",
 			"Enabled": true
+		},
+		{
+			"Name": "OnlineServicesEOSGS",
+			"Enabled": true
 		}
 	]
 }

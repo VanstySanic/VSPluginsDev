@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "StructUtils/InstancedStruct.h"
 #include "UObject/Object.h"
 #include "VSQueryMatchTypes.generated.h"
 
@@ -46,6 +47,9 @@ struct FVSGameplayTagEventQueryParams
 	}
 
 	VSPLUGINSCORE_API bool Matches(const FGameplayTag& TagEvent, const FGameplayTagContainer& GameplayTags) const;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText Description;
 	
 	/** Work as an entry. Requires TagEvent in the array. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -73,17 +77,46 @@ struct FVSGameplayTagEventQueryParams
 };
 
 USTRUCT(BlueprintType)
+struct FVSGameplayTagQueryExpression
+{
+	GENERATED_BODY()
+	
+	bool Matches(const FGameplayTag& TagEvent = FGameplayTag(), const FGameplayTagContainer& GameplayTags = FGameplayTagContainer()) const;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText Description;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EVSQueryMatchRange::Type> Range = EVSQueryMatchRange::None;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EVSQueryMatchType::Type> Type = EVSQueryMatchType::None;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSQueryMatchType::Params", EditConditionHides))
+	TArray<FVSGameplayTagEventQueryParams> Params;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSQueryMatchType::Expression", EditConditionHides))
+	TArray<TInstancedStruct<FVSGameplayTagQueryExpression>> Expressions;
+};
+
+USTRUCT(BlueprintType)
 struct FVSGameplayTagEventQuery
 {
 	GENERATED_BODY()
 	
 	FVSGameplayTagEventQuery() {}
-
+	
+	VSPLUGINSCORE_API static FVSGameplayTagEventQuery GetEmptyPass();
 	VSPLUGINSCORE_API bool Matches(const FGameplayTag& TagEvent = FGameplayTag(), const FGameplayTagContainer& GameplayTags = FGameplayTagContainer()) const;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
-	TObjectPtr<UVSGameplayTagQueryExpression> RootExpression;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVSGameplayTagQueryExpression RootExpression;
+
+public:
+	static FVSGameplayTagEventQuery Empty;
+	static FVSGameplayTagEventQuery EmptyPass;
 };
+
 
 USTRUCT(BlueprintType)
 struct FVSSceneComponentQueryParams
@@ -92,6 +125,9 @@ struct FVSSceneComponentQueryParams
 
 	VSPLUGINSCORE_API bool Matches(const USceneComponent* Component) const;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText Description;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 
@@ -132,6 +168,29 @@ struct FVSSceneComponentQueryParams
 };
 
 USTRUCT(BlueprintType)
+struct FVSSceneComponentQueryExpression
+{
+	GENERATED_BODY()
+
+	bool Matches(const USceneComponent* Component) const;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText Description;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EVSQueryMatchRange::Type> Range = EVSQueryMatchRange::None;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TEnumAsByte<EVSQueryMatchType::Type> Type = EVSQueryMatchType::None;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSQueryMatchType::Params", EditConditionHides))
+	TArray<FVSSceneComponentQueryParams> Params;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSQueryMatchType::Expression", EditConditionHides))
+	TArray<TInstancedStruct<FVSSceneComponentQueryExpression>> Expressions;
+};
+
+USTRUCT(BlueprintType)
 struct FVSSceneComponentQuery
 {
 	GENERATED_BODY()
@@ -140,6 +199,6 @@ struct FVSSceneComponentQuery
 
 	VSPLUGINSCORE_API bool Matches(const USceneComponent* Component) const;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
-	TObjectPtr<UVSSceneComponentQueryExpression> RootExpression;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVSSceneComponentQueryExpression RootExpression;
 };

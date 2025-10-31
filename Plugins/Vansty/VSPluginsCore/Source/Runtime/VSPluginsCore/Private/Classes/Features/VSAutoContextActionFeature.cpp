@@ -21,7 +21,7 @@ void UVSAutoContextActionFeature::Initialize_Implementation()
 	GameplayTagControllerPrivate = UVSActorLibrary::GetGameplayTagControllerFromActor(GetOwnerActor());
 	check(GameplayTagControllerPrivate.IsValid());
 
-	PlayerControllerPrivate = Cast<APlayerController>(UVSGameplayLibrary::GetControllerFromObject(this));
+	PlayerControllerPrivate = Cast<APlayerController>(UVSActorLibrary::GetControllerFromActor(GetOwnerActor()));
 	check(PlayerControllerPrivate.IsValid());
 
 	EnhancedInputComponentPrivate = Cast<UEnhancedInputComponent>(PlayerControllerPrivate->InputComponent);

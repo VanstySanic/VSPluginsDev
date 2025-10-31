@@ -9,7 +9,7 @@
 
 UVSInteractFeatureAgent::UVSInteractFeatureAgent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, bMatchesInspectionEntryTagQuery(false), bMatchesInteractionEntryTagQuery(false)
+	, bMatchesInspectionEntranceTagQuery(false), bMatchesInteractionEntranceTagQuery(false)
 {
 }
 
@@ -52,7 +52,7 @@ void UVSInteractFeatureAgent::OnGameplayTagEventNotified_Implementation(const FG
 void UVSInteractFeatureAgent::TryInspectTarget(UVSInteractiveFeatureAgent* TargetAgent)
 {
 	if (!IsActive()) return;
-	if (!bMatchesInspectionEntryTagQuery) return;
+	if (!bMatchesInspectionEntranceTagQuery) return;
 	if (!TargetAgent || !TargetAgent->IsInteractable(this) || IsInteracting()) return;
 	if (IsInspectingOnTarget(TargetAgent)) return;
 	
@@ -85,7 +85,7 @@ void UVSInteractFeatureAgent::StopAllInspections()
 void UVSInteractFeatureAgent::TryInteractWithTarget(UVSInteractiveFeatureAgent* TargetAgent, const FName ActionFeatureName)
 {
 	if (!IsActive()) return;
-	if (!bMatchesInteractionEntryTagQuery) return;
+	if (!bMatchesInteractionEntranceTagQuery) return;
 	if (!TargetAgent || !TargetAgent->IsInteractable(this)) return;
 	UVSInteractiveActionFeature* ActionFeature = !ActionFeatureName.IsNone()
 		? TargetAgent->GetActionFeatureByName(ActionFeatureName)
@@ -168,8 +168,8 @@ void UVSInteractFeatureAgent::UpdateTagQueryStates(const FGameplayTag& TagEvent)
 	const FGameplayTagContainer& GameplayTags = GameplayTagController->GetGameplayTags();
 	if (TagEvent == EVSGameplayTagControllerTags::Event_TagsUpdated)
 	{
-		bMatchesInspectionEntryTagQuery = InspectionEntryTagQuery.IsEmpty() || InspectionEntryTagQuery.Matches(GameplayTags);
-		bMatchesInteractionEntryTagQuery = InteractionEntryTagQuery.IsEmpty() || InteractionEntryTagQuery.Matches(GameplayTags);
+		bMatchesInspectionEntranceTagQuery = InspectionEntryTagQuery.IsEmpty() || InspectionEntryTagQuery.Matches(GameplayTags);
+		bMatchesInteractionEntranceTagQuery = InteractionEntryTagQuery.IsEmpty() || InteractionEntryTagQuery.Matches(GameplayTags);
 	}
 
 	if (BreakInspectionTagQuery.Matches(TagEvent, GameplayTags))

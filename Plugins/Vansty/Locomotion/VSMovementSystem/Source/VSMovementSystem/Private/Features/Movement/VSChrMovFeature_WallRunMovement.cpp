@@ -36,12 +36,21 @@ void UVSChrMovFeature_WallRunMovement::OnMovementTagEventNotified_Implementation
 {
 	Super::OnMovementTagEventNotified_Implementation(TagEvent);
 
+	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
+	const FGameplayTagContainer& GameplayTags = GameplayTagController->GetGameplayTags();
+	
+	MovementData.bMatchesEntranceTagQuery = EntranceTagQuery.Matches(TagEvent, GameplayTags);
+	
 	if (TagEvent == EVSMovementEvent::StateChange_MovementMode)
 	{
 		if (!IsWallRunMode() && GetPrevMovementMode() == EVSMovementMode::WallRunning && !MovementData.SnappedParams.SettingsRow.IsNull())
 		{
 			StopWallRun(false, FVSNetMethodExecutionPolicies::LocalExecution);
 		}
+	}
+	else if (IsWallRunMode() && AutoBreakTagQuery.Matches(TagEvent, GameplayTags))
+	{
+		StopWallRun(false, FVSNetMethodExecutionPolicies::LocalExecution);
 	}
 }
 
@@ -240,6 +249,7 @@ bool UVSChrMovFeature_WallRunMovement::IsWallRunMode() const
 
 void UVSChrMovFeature_WallRunMovement::TryWallRun(const TArray<FDataTableRowHandle>& SettingRows, const FVSNetMethodExecutionPolicies& NetExecPolicies)
 {
+	if (!MovementData.bMatchesEntranceTagQuery) return;
 	if (SettingRows.IsEmpty() && DefaultSettingRows.IsEmpty()) return;
 	
 	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy)
@@ -556,7 +566,7 @@ bool UVSChrMovFeature_WallRunMovement::CalcWallRunSnappedParams(FVSWallRunSnappe
 	FVSWallRunSettings* Settings = SettingsRow.GetRow<FVSWallRunSettings>(nullptr);
 	if (!Settings || !Settings->IsValid()) return false;
 	
-	if (Settings->Limits.bRequireMovementInput2D && !HasAcceleration2D()) return false;
+	if (Settings->Limits.bRequireMovementInput2D && !HasMovementInput2D()) return false;
 	
 	const bool bFromGround = UVSActorLibrary::IsCharacterOnWalkableFloor(GetCharacter()) && GetVelocityZ().IsNearlyZero(0.01f);
 
@@ -574,13 +584,13 @@ bool UVSChrMovFeature_WallRunMovement::CalcWallRunSnappedParams(FVSWallRunSnappe
 	FVector WallTraceDirection = GetCharacter()->GetActorForwardVector();
 	if (bFromGround)
 	{
-		if (HasAcceleration2D()) { WallTraceDirection = GetMovementInput2D().GetSafeNormal(); }
+		if (HasMovementInput2D()) { WallTraceDirection = GetMovementInput2D().GetSafeNormal(); }
 		else if (IsMoving2D()) { WallTraceDirection = GetVelocityWallAdjusted2D().GetSafeNormal(); }
 	}
 	else
 	{
 		if (IsMoving2D()) { WallTraceDirection = GetVelocityWallAdjusted2D().GetSafeNormal(); }
-		else if (HasAcceleration2D()) { WallTraceDirection = GetMovementInput2D().GetSafeNormal(); }
+		else if (HasMovementInput2D()) { WallTraceDirection = GetMovementInput2D().GetSafeNormal(); }
 	}
 
 	/** Trace for ground. */
@@ -636,7 +646,7 @@ bool UVSChrMovFeature_WallRunMovement::CalcWallRunSnappedParams(FVSWallRunSnappe
 		const float VelocityMovementAngle = (FMath::RadiansToDegrees(FQuat::FindBetweenVectors(MovementDirectionLeft, GetVelocityWallAdjusted2D()).GetAngle())) * (FMath::Sign(GetVelocityWallAdjusted2D().Dot(-WallTraceLeftSideHitResult.ImpactNormal)));
 		if (!UKismetMathLibrary::InRange_FloatFloat(VelocityMovementAngle, Settings->Limits.VelocityTowardsMovementAngleRange2D.X, Settings->Limits.VelocityTowardsMovementAngleRange2D.Y)) { bValidWallLeftSide = false; }
 	}
-	if (bValidWallLeftSide && HasAcceleration2D())
+	if (bValidWallLeftSide && HasMovementInput2D())
 	{	const float InputMovementAngle = (FMath::RadiansToDegrees(FQuat::FindBetweenVectors(MovementDirectionLeft, GetMovementInput2D()).GetAngle())) * (FMath::Sign(GetMovementInput2D().Dot(-WallTraceLeftSideHitResult.ImpactNormal)));
 		if (!UKismetMathLibrary::InRange_FloatFloat(InputMovementAngle, Settings->Limits.InputTowardsMovementAngleRange2D.X, Settings->Limits.InputTowardsMovementAngleRange2D.Y)) { bValidWallLeftSide = false; }
 	}
@@ -689,7 +699,7 @@ bool UVSChrMovFeature_WallRunMovement::CalcWallRunSnappedParams(FVSWallRunSnappe
 		const float VelocityMovementAngle = (FMath::RadiansToDegrees(FQuat::FindBetweenVectors(MovementDirectionRight, GetVelocityWallAdjusted2D()).GetAngle())) * (FMath::Sign(GetVelocityWallAdjusted2D().Dot(-WallTraceRightSideHitResult.ImpactNormal)));
 		if (!UKismetMathLibrary::InRange_FloatFloat(VelocityMovementAngle, Settings->Limits.VelocityTowardsMovementAngleRange2D.X, Settings->Limits.VelocityTowardsMovementAngleRange2D.Y)) { bValidWallRightSide = false; }
 	}
-	if (bValidWallRightSide && HasAcceleration2D())
+	if (bValidWallRightSide && HasMovementInput2D())
 	{
 		const float InputMovementAngle = (FMath::RadiansToDegrees(FQuat::FindBetweenVectors(MovementDirectionRight, GetMovementInput2D()).GetAngle())) * (FMath::Sign(GetMovementInput2D().Dot(-WallTraceRightSideHitResult.ImpactNormal)));
 		if (!UKismetMathLibrary::InRange_FloatFloat(InputMovementAngle, Settings->Limits.InputTowardsMovementAngleRange2D.X, Settings->Limits.InputTowardsMovementAngleRange2D.Y)) { bValidWallRightSide = false; }

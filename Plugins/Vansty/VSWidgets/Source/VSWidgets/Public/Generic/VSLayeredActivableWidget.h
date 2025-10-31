@@ -19,9 +19,13 @@ class VSWIDGETS_API UVSLayeredActivableWidget : public UCommonActivatableWidget
 {
 	GENERATED_UCLASS_BODY()
 
-public:
+protected:
 	virtual void NativeDestruct() override;
-	
+	virtual void NativeOnActivated() override;
+	virtual void NativeOnDeactivated() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
+public:
 	/** Get the widget switcher that contains the Panel ans WidgetStack. User can switch between this. */
 	UFUNCTION(BlueprintCallable, Category = "Widget")
 	UWidgetSwitcher* GetWidgetSwitcher() const { return WidgetSwitcher; }
@@ -36,16 +40,6 @@ public:
 	/** Get the widget stack that user can push activable widgets to and process input in. */
 	UFUNCTION(BlueprintCallable, Category = "Widget")
 	UCommonActivatableWidgetStack* GetWidgetStack() const { return WidgetStack; }
-
-	UFUNCTION(BlueprintCallable, Category = "Widget")
-	void SwitchToPanel();
-
-	UFUNCTION(BlueprintCallable, Category = "Widget")
-	void SwitchToWidgetStack();
-	
-protected:
-	virtual void NativeOnActivated() override;
-	virtual void NativeOnDeactivated() override;
 
 protected:
 	/** The widget switcher that contains the Panel ans WidgetStack. Optional. User can switch between this. */
@@ -69,7 +63,6 @@ protected:
 	bool bRestoreActiveUIInputConfig = true;
 
 private:
-
-
 	FUIInputConfig CachedUIInputConfig;
+	int32 WidgetNumInStackLastFrame = 0;
 };

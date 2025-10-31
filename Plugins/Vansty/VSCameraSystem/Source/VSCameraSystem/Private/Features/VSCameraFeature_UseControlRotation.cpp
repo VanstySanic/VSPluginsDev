@@ -4,6 +4,7 @@
 #include "VSCameraViewData.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Libraries/VSActorLibrary.h"
 #include "Libraries/VSGameplayLibrary.h"
 #include "Libraries/VSMathLibrary.h"
 
@@ -18,7 +19,7 @@ void UVSCameraFeature_UseControlRotation::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
 
-	Controller = UVSGameplayLibrary::GetControllerFromObject(this);
+	Controller = UVSActorLibrary::GetControllerFromActor(GetOwnerActor());
 }
 
 void UVSCameraFeature_UseControlRotation::BeginPlay_Implementation()

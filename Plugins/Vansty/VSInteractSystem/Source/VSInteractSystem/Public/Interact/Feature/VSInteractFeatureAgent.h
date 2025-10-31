@@ -115,6 +115,6 @@ private:
 	TWeakObjectPtr<UVSInteractiveFeatureAgent> CurrentInteractiveAgentPrivate;
 	FName CurrentInteractiveActionFeatureName = NAME_None;
 
-	uint8 bMatchesInspectionEntryTagQuery : 1;
-	uint8 bMatchesInteractionEntryTagQuery : 1;
+	uint8 bMatchesInspectionEntranceTagQuery : 1;
+	uint8 bMatchesInteractionEntranceTagQuery : 1;
 };

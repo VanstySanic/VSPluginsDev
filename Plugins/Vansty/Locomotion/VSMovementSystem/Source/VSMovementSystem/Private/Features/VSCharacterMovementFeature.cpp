@@ -111,10 +111,9 @@ FVector UVSCharacterMovementFeature::GetVelocity2D() const
 
 FVector UVSCharacterMovementFeature::GetVelocityWallAdjusted2D() const
 {
-	if (!IsMovingAgainstWall2D()) return GetVelocity2D();
-	const FVector& DesiredMovementDirection = (HasAcceleration2D() ? GetMovementInput2D() : GetVelocity2D()).GetSafeNormal();
+	if (!IsMovingAgainstWall2D() || !HasMovementInput2D()) return GetVelocity2D();
 	const float VelInputDot = GetVelocity2D().GetSafeNormal().Dot(GetMovementInput2D().GetSafeNormal());
-	return DesiredMovementDirection * GetVelocity2D().Size() * VelInputDot;
+	return GetMovementInput2D() * GetVelocity2D().Size() * FMath::Abs(VelInputDot);
 }
 
 FVector UVSCharacterMovementFeature::GetVelocityZ() const
@@ -157,7 +156,7 @@ bool UVSCharacterMovementFeature::HasAcceleration() const
 	return !GetMovementInput().IsNearlyZero(1.f);
 }
 
-bool UVSCharacterMovementFeature::HasAcceleration2D() const
+bool UVSCharacterMovementFeature::HasMovementInput2D() const
 {
 	return !GetMovementInput2D().IsNearlyZero(1.f);
 }
@@ -230,7 +229,7 @@ FRotator UVSCharacterMovementFeature::EvaluateOrientation(const FVSMovementOrien
 	case EVSMovementRelatedOrientationType::Velocity:
 		{
 			const bool bOverrideVelocity = Params.OverridenRotationTypes.Contains(EVSMovementRelatedOrientationType::Velocity);
-			const FVector& VelocityToProcess = !bOverrideVelocity ? GetVelocity() : Params.DynamicDataOverride.Velocity;
+			const FVector& VelocityToProcess = !bOverrideVelocity ? GetVelocityWallAdjusted2D() : Params.DynamicDataOverride.Velocity;
 			FVector VelocityGS = UKismetMathLibrary::Quat_RotateVector(UpDirectionToWorldRotation, VelocityToProcess);
 			if (Params.bReturnRotationInSpace2D) VelocityGS.Z = 0.f;
 			if (VelocityGS.IsNearlyZero(0.01f)) break;

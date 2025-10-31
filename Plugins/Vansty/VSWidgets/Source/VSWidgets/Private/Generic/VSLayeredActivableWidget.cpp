@@ -21,22 +21,6 @@ void UVSLayeredActivableWidget::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-void UVSLayeredActivableWidget::SwitchToPanel()
-{
-	if (WidgetSwitcher && Panel)
-	{
-		WidgetSwitcher->SetActiveWidget(Panel);
-	}
-}
-
-void UVSLayeredActivableWidget::SwitchToWidgetStack()
-{
-	if (WidgetSwitcher && WidgetStack)
-	{
-		WidgetSwitcher->SetActiveWidget(WidgetStack);
-	}
-}
-
 void UVSLayeredActivableWidget::NativeOnActivated()
 {
 	/** Cache the ui input config befor set to new. */
@@ -56,4 +40,25 @@ void UVSLayeredActivableWidget::NativeOnDeactivated()
 	}
 	
 	Super::NativeOnDeactivated();
+}
+
+void UVSLayeredActivableWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry, InDeltaTime);
+
+	const int32 WidgetNumInStackThisFrame = WidgetStack->GetNumWidgets();
+	if (WidgetNumInStackLastFrame == 0 && WidgetNumInStackThisFrame > 0
+		|| WidgetNumInStackLastFrame > 0 && WidgetNumInStackThisFrame == 0)
+	{
+		if (WidgetStack && WidgetSwitcher->GetActiveWidget() != WidgetStack && WidgetStack->GetNumWidgets() > 0)
+		{
+			WidgetSwitcher->SetActiveWidget(WidgetStack);
+		}
+		else if (Panel && WidgetSwitcher->GetActiveWidget() != Panel && (WidgetStack->GetNumWidgets() == 0 /** || !WidgetStack->GetActiveWidget() */))
+		{
+			WidgetSwitcher->SetActiveWidget(Panel);
+		}
+	}
+
+	WidgetNumInStackLastFrame = WidgetStack->GetNumWidgets();
 }

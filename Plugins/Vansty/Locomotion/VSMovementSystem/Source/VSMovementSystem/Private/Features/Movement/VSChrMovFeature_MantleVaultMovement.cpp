@@ -31,6 +31,7 @@ bool UVSChrMovFeature_MantleVaultMovement::IsMantlingOrVaultingMode() const
 
 void UVSChrMovFeature_MantleVaultMovement::TryMantleVault(const TArray<FDataTableRowHandle>& SettingRows, const FVector& WallTraceDirection, TEnumAsByte<EVSMantleVaultMovementType::Type> SupportedMovementType, const FVSNetMethodExecutionPolicies& NetExecPolicies)
 {
+	if (!MovementData.bMatchesEntranceTagQuery) return;
 	if (SupportedMovementType == EVSMantleVaultMovementType::None || (SettingRows.IsEmpty() && DefaultSettingRows.IsEmpty())) return;
 	
 	if (GetCharacter()->GetLocalRole() == ROLE_AutonomousProxy)
@@ -221,13 +222,13 @@ void UVSChrMovFeature_MantleVaultMovement::UpdateMovement_Implementation(float D
 	{
 		if (MovementData.MovementElapsedTime >= MovementData.AnimPtr->GetMarkTime(AnimGroundPivotTimeMarkName))
 		{
-			if (HasAcceleration2D()) { bShouldBreakOut = true; }
+			if (HasMovementInput2D()) { bShouldBreakOut = true; }
 			else if (MovementData.AnimSettingsPtr->MovementType & EVSMantleVaultMovementType::Vault) { bShouldBreakOut = true; }
 		}
 	}
 	else if (MovementData.SnappedParams.MovementType == EVSMantleVaultMovementType::Vault)
 	{
-		if (MovementData.MovementElapsedTime >= MovementData.AnimPtr->GetMarkTime(AnimVaultOffPlatformTimeMarkName) && HasAcceleration2D())
+		if (MovementData.MovementElapsedTime >= MovementData.AnimPtr->GetMarkTime(AnimVaultOffPlatformTimeMarkName) && HasMovementInput2D())
 		{
 			const FVector& DeltaHeightWS = ComponentTransformWS.TransformVector((TargetRootLocationRS - MovementData.SnappedParams.GroundPivotPointRS).ProjectOnToNormal(UpVectorRS));
 			if (DeltaHeightWS.Size() >= GetCharacter()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()
@@ -248,12 +249,21 @@ void UVSChrMovFeature_MantleVaultMovement::OnMovementTagEventNotified_Implementa
 {
 	Super::OnMovementTagEventNotified_Implementation(TagEvent);
 
+	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
+	const FGameplayTagContainer& GameplayTags = GameplayTagController->GetGameplayTags();
+	
+	MovementData.bMatchesEntranceTagQuery = EntranceTagQuery.Matches(TagEvent, GameplayTags);
+	
 	if (TagEvent == EVSMovementEvent::StateChange_MovementMode)
 	{
 		if (!IsMantlingOrVaultingMode() && GetPrevMovementMode() == EVSMovementMode::MantlingOrVaulting && MovementData.SnappedParams.MovementType != EVSMantleVaultMovementType::None)
 		{
 			StopMantleVault();
 		}
+	}
+	else if (IsMantlingOrVaultingMode() && AutoBreakTagQuery.Matches(TagEvent, GameplayTags))
+	{
+		StopMantleVault();
 	}
 }
 
@@ -375,7 +385,7 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 	FVSMantleVaultSettings* SettingsPtr = SettingsRow.GetRow<FVSMantleVaultSettings>(nullptr);
 	if (!SettingsPtr || !SettingsPtr->IsValid()) return false;
 
-	if (SettingsPtr->Limits.bRequireMovementInput2D && !HasAcceleration2D()) return false;
+	if (SettingsPtr->Limits.bRequireMovementInput2D && !HasMovementInput2D()) return false;
 	if (!SettingsPtr->Limits.MovementTagQuery.IsEmpty() && !SettingsPtr->Limits.MovementTagQuery.Matches(GetGameplayTagController()->GetGameplayTags())) return false;
 
 	const FVector& CharacterScaleWS = GetCharacter()->GetActorScale3D();
@@ -466,7 +476,7 @@ bool UVSChrMovFeature_MantleVaultMovement::CalcMantleVaultSnappedParams(FVSMantl
 		else if (GetCharacter()->GetActorForwardVector().Dot(-FrontWallNormal2DWS) < UKismetMathLibrary::DegCos(SettingsPtr->Limits.FacingMovementMaxAngle)) bMeetTowardsMovementRequirementsByWall = false;
 		else if (IsMoving2D() && !IsMovingAgainstWall2D() && (GetVelocityWallAdjusted2D().GetSafeNormal()).Dot(-FrontWallNormal2DWS) < UKismetMathLibrary::DegCos(SettingsPtr->Limits.Velocity2DTowardsMovementMaxAngle)) { bMeetTowardsMovementRequirementsByWall = false; }
 		else if (IsMoving2D() && IsMovingAgainstWall2D() && (GetMovementInput2D().GetSafeNormal()).Dot(-FrontWallNormal2DWS) < UKismetMathLibrary::DegCos(SettingsPtr->Limits.Velocity2DTowardsMovementMaxAngle)) { bMeetTowardsMovementRequirementsByWall = false; }
-		else if (HasAcceleration2D() && (GetMovementInput2D().GetSafeNormal()).Dot(-FrontWallNormal2DWS) < UKismetMathLibrary::DegCos(SettingsPtr->Limits.Input2DTowardsMovementMaxAngle)) { bMeetTowardsMovementRequirementsByWall = false; }
+		else if (HasMovementInput2D() && (GetMovementInput2D().GetSafeNormal()).Dot(-FrontWallNormal2DWS) < UKismetMathLibrary::DegCos(SettingsPtr->Limits.Input2DTowardsMovementMaxAngle)) { bMeetTowardsMovementRequirementsByWall = false; }
 		if (!bMeetTowardsMovementRequirementsByWall) continue;
 
 		/** Calculate for anims. */

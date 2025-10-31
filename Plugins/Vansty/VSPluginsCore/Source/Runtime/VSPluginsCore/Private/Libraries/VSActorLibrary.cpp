@@ -158,6 +158,44 @@ UAbilitySystemComponent* UVSActorLibrary::GetAbilitySystemComponentFormActor(AAc
 	return nullptr;
 }
 
+APawn* UVSActorLibrary::GetPawnFromActor(AActor* Actor)
+{
+	if (!Actor) return nullptr;
+	if (APawn* Pawn = Cast<APawn>(Actor))
+	{
+		return Pawn;
+	}
+	if (AController* Controller = Cast<AController>(Actor))
+	{
+		return Controller->GetPawn();
+	}
+	if (APlayerState* PlayerState = Cast<APlayerState>(Actor))
+	{
+		return PlayerState->GetPawn();
+	}
+
+	return GetPawnFromActor(Actor->GetOwner());
+}
+
+AController* UVSActorLibrary::GetControllerFromActor(AActor* Actor)
+{
+	if (!Actor) return nullptr;
+	if (AController* Controller = Cast<AController>(Actor))
+	{
+		return Controller;
+	}
+	if (APawn* Pawn = Cast<APawn>(Actor))
+	{
+		return Pawn->GetController();
+	}
+	if (APlayerState* PlayerState = Cast<APlayerState>(Actor))
+	{
+		return PlayerState->GetOwningController();
+	}
+
+	return GetControllerFromActor(Actor->GetOwner());
+}
+
 bool UVSActorLibrary::IsCharacterOnWalkableFloor(const ACharacter* Character, const float ToleranceToFloor, const bool bConsiderCollisionOffset)
 {
 	if (!Character) return false;

@@ -1,8 +1,8 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Types/VSQueryMatchTypes.h"
-#include "Classes/Queries/VSGameplayTagQueryExpression.h"
-#include "Classes/Queries/VSSceneComponentQueryExpression.h"
+
+FVSGameplayTagEventQuery FVSGameplayTagEventQuery::Empty = FVSGameplayTagEventQuery();
 
 bool FVSGameplayTagEventQueryParams::Matches(const FGameplayTag& TagEvent, const FGameplayTagContainer& GameplayTags) const
 {
@@ -15,11 +15,79 @@ bool FVSGameplayTagEventQueryParams::Matches(const FGameplayTag& TagEvent, const
 	return true;
 }
 
-bool FVSGameplayTagEventQuery::Matches(const FGameplayTag& TagEvent, const FGameplayTagContainer& GameplayTags) const
+bool FVSGameplayTagQueryExpression::Matches(const FGameplayTag& TagEvent, const FGameplayTagContainer& GameplayTags) const
 {
-	return RootExpression && RootExpression->Matches(TagEvent, GameplayTags);
+	switch (Type) {
+	case EVSQueryMatchType::Params:
+		{
+			int32 MatchNum = 0;
+			for (const FVSGameplayTagEventQueryParams& Param : Params)
+			{
+				if (Param.Matches(TagEvent, GameplayTags))
+				{
+					MatchNum++;
+				}
+			}
+
+			switch (Range) {
+			case EVSQueryMatchRange::None:
+				return MatchNum == 0;
+
+			case EVSQueryMatchRange::Any:
+				return MatchNum > 0;
+				
+			case EVSQueryMatchRange::All:
+				return MatchNum == Params.Num();
+
+			default: ;
+			}
+		}
+		break;
+		
+	case EVSQueryMatchType::Expression:
+		{
+			int32 MatchNum = 0;
+			for (const TInstancedStruct<FVSGameplayTagQueryExpression>& Expression : Expressions)
+			{
+				if (Expression.Get<FVSGameplayTagQueryExpression>().Matches(TagEvent, GameplayTags))
+				{
+					MatchNum++;
+				}
+			}
+
+			switch (Range) {
+			case EVSQueryMatchRange::None:
+				return MatchNum == 0;
+
+			case EVSQueryMatchRange::Any:
+				return MatchNum > 0;
+				
+			case EVSQueryMatchRange::All:
+				return MatchNum == Params.Num();
+
+			default: ;
+			}
+		}
+		break;
+		
+	default: ;
+	}
+
+	return false;
 }
 
+FVSGameplayTagEventQuery FVSGameplayTagEventQuery::GetEmptyPass()
+{
+	FVSGameplayTagEventQuery Query;
+	Query.RootExpression.Range = EVSQueryMatchRange::None;
+	Query.RootExpression.Type = EVSQueryMatchType::Params;
+	return Query;
+}
+
+bool FVSGameplayTagEventQuery::Matches(const FGameplayTag& TagEvent, const FGameplayTagContainer& GameplayTags) const
+{
+	return RootExpression.Matches(TagEvent, GameplayTags);
+}
 
 bool FVSSceneComponentQueryParams::Matches(const USceneComponent* Component) const
 {
@@ -60,8 +128,69 @@ bool FVSSceneComponentQueryParams::Matches(const USceneComponent* Component) con
 	return true;
 }
 
+bool FVSSceneComponentQueryExpression::Matches(const USceneComponent* Component) const
+{
+	switch (Type) {
+	case EVSQueryMatchType::Params:
+		{
+			int32 MatchNum = 0;
+			for (const FVSSceneComponentQueryParams& Param : Params)
+			{
+				if (Param.Matches(Component))
+				{
+					MatchNum++;
+				}
+			}
+
+			switch (Range) {
+			case EVSQueryMatchRange::None:
+				return MatchNum == 0;
+
+			case EVSQueryMatchRange::Any:
+				return MatchNum > 0;
+				
+			case EVSQueryMatchRange::All:
+				return MatchNum == Expressions.Num();
+
+			default: ;
+			}
+		}
+		break;
+		
+	case EVSQueryMatchType::Expression:
+		{
+			int32 MatchNum = 0;
+			for (const TInstancedStruct<FVSSceneComponentQueryExpression>& Expression : Expressions)
+			{
+				if (Expression.Get<FVSSceneComponentQueryExpression>().Matches(Component))
+				{
+					MatchNum++;
+				}
+			}
+
+			switch (Range) {
+			case EVSQueryMatchRange::None:
+				return MatchNum == 0;
+
+			case EVSQueryMatchRange::Any:
+				return MatchNum > 0;
+				
+			case EVSQueryMatchRange::All:
+				return MatchNum == Expressions.Num();
+
+			default: ;
+			}
+		}
+		break;
+		
+	default: ;
+	}
+
+	return false;
+}
+
 bool FVSSceneComponentQuery::Matches(const USceneComponent* Component) const
 {
-	return RootExpression && RootExpression->Matches(Component);
+	return RootExpression.Matches(Component);
 }
 
