@@ -20,7 +20,7 @@
 UVSChrMovFeature_MantleVaultMovement::UVSChrMovFeature_MantleVaultMovement(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	
+	SetIsReplicated(true);
 }
 
 bool UVSChrMovFeature_MantleVaultMovement::IsMantlingOrVaultingMode() const

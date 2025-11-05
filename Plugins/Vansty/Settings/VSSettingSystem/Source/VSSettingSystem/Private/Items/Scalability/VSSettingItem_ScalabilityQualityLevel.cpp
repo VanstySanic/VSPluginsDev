@@ -336,6 +336,7 @@ int32 UVSSettingItem_ScalabilityQualityLevel::GetQualityLevel(const EVSSettingIt
 	return 0;
 }
 
+#if WITH_EDITORONLY_DATA
 const TMap<FGameplayTag, FText>& UVSSettingItem_ScalabilityQualityLevel::GetDefaultScalabilityQualityLevelNames()
 {
 	static TMap<FGameplayTag, FText> ScalabilityQualityLevel = TMap<FGameplayTag, FText>
@@ -354,3 +355,4 @@ const TMap<FGameplayTag, FText>& UVSSettingItem_ScalabilityQualityLevel::GetDefa
 
 	return ScalabilityQualityLevel;
 }
+#endif

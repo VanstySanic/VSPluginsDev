@@ -41,6 +41,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Camera")
 	UCameraComponent* GetCameraComponent() const;
 
+	UFUNCTION(BlueprintCallable, Category = "Camera")
+	FRotator GetControlRotation() const;
+
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "Camera")
 	void UpdateCamera(float DeltaTime);

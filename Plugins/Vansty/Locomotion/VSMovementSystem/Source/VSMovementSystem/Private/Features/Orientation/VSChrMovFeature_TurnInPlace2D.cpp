@@ -15,6 +15,7 @@
 UVSChrMovFeature_TurnInPlace2D::UVSChrMovFeature_TurnInPlace2D(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	SetIsReplicated(true);
 }
 
 void UVSChrMovFeature_TurnInPlace2D::Tick_Implementation(float DeltaTime)

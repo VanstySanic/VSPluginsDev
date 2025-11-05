@@ -25,6 +25,11 @@ void UVSAutoContextActionFeature::Initialize_Implementation()
 	check(PlayerControllerPrivate.IsValid());
 
 	EnhancedInputComponentPrivate = Cast<UEnhancedInputComponent>(PlayerControllerPrivate->InputComponent);
+	if (!EnhancedInputComponentPrivate.IsValid())
+	{
+		EnhancedInputComponentPrivate = NewObject<UEnhancedInputComponent>(PlayerControllerPrivate.Get());
+		PlayerControllerPrivate->InputComponent = EnhancedInputComponentPrivate.Get();
+	}
 	check(EnhancedInputComponentPrivate.IsValid());
 	
 	LocalPlayerPrivate = PlayerControllerPrivate->GetLocalPlayer();

@@ -11,6 +11,7 @@ UVSInteractFeatureAgent::UVSInteractFeatureAgent(const FObjectInitializer& Objec
 	: Super(ObjectInitializer)
 	, bMatchesInspectionEntranceTagQuery(false), bMatchesInteractionEntranceTagQuery(false)
 {
+	SetIsReplicated(true);
 }
 
 void UVSInteractFeatureAgent::Initialize_Implementation()

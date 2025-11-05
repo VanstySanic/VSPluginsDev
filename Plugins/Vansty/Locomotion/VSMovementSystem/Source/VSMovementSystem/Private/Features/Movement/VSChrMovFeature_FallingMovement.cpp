@@ -11,6 +11,7 @@
 UVSChrMovFeature_FallingMovement::UVSChrMovFeature_FallingMovement(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	SetIsReplicated(true);
 }
 
 bool UVSChrMovFeature_FallingMovement::CanUpdateMovement_Implementation() const

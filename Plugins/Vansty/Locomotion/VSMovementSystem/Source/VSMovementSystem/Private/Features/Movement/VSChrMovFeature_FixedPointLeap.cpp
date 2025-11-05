@@ -19,7 +19,7 @@
 UVSChrMovFeature_FixedPointLeap::UVSChrMovFeature_FixedPointLeap(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	
+	SetIsReplicated(true);
 }
 
 void UVSChrMovFeature_FixedPointLeap::OnFeatureDeactivated_Implementation()

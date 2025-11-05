@@ -18,11 +18,6 @@
 			"Name": "VSGenericPresets",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
-		},
-		{
-			"Name": "VSGenericWidgetPresets",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
 		}
 	],
 	"SupportURL": "",

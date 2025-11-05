@@ -86,7 +86,7 @@ void UVSInteractiveActionFeature::EndInteraction(UVSInteractFeatureAgent* Source
 	}
 }
 
-float UVSInteractiveActionFeature::GetActionInteractedTime_Implementation(UVSInteractFeatureAgent* SourceAgent) const
+float UVSInteractiveActionFeature::GetActionInteractedTime(UVSInteractFeatureAgent* SourceAgent) const
 {
 	return InteractingSourceTimeMap.FindRef(SourceAgent);
 }

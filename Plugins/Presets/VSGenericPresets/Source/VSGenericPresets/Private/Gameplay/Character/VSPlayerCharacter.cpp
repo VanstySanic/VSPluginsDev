@@ -3,8 +3,8 @@
 #include "Gameplay/Character/VSPlayerCharacter.h"
 #include "Classes/Features/VSObjectFeature.h"
 #include "Classes/Features/VSObjectFeatureComponent.h"
-#include "Features/VSCharacterMovementFeatureAgent.h"
 #include "GameFramework/PlayerState.h"
+#include "Kismet/GameplayStatics.h"
 
 AVSPlayerCharacter::AVSPlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

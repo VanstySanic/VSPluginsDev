@@ -15,23 +15,11 @@ UVSCameraFeature_UseControlRotation::UVSCameraFeature_UseControlRotation(const F
 	RotationLagSettings.LagSpaceType = EVSCameraRelatedTransformType::AttachedComponent;
 }
 
-void UVSCameraFeature_UseControlRotation::Initialize_Implementation()
-{
-	Super::Initialize_Implementation();
-
-	Controller = UVSActorLibrary::GetControllerFromActor(GetOwnerActor());
-}
-
 void UVSCameraFeature_UseControlRotation::BeginPlay_Implementation()
 {
 	Super::BeginPlay_Implementation();
 
 	CatchUpMovement();
-}
-
-bool UVSCameraFeature_UseControlRotation::CanUpdateCamera_Implementation() const
-{
-	return Super::CanUpdateCamera_Implementation() && Controller.IsValid();
 }
 
 void UVSCameraFeature_UseControlRotation::UpdateCamera_Implementation(float DeltaTime)
@@ -40,7 +28,7 @@ void UVSCameraFeature_UseControlRotation::UpdateCamera_Implementation(float Delt
 	
 	const FRotator& RotationModifySpace = GetCameraRelatedRotationByType(RotationModifySettings.ModifySpaceType, RotationModifySettings.CustomModifySpace);
 	const FRotator& RotationLagSpace = GetCameraRelatedRotationByType(RotationLagSettings.LagSpaceType, RotationLagSettings.CustomLagSpace);
-	const FRotator& ControlRotationWS = Controller->GetControlRotation().GetNormalized();
+	const FRotator& ControlRotationWS = GetControlRotation();
 	const FRotator& LaggedRotationWS = UVSMathLibrary::RotatorInterpTo(LastUpdatedRotation, ControlRotationWS, DeltaTime, RotationLagSettings.LagSpeedRotator, false, RotationLagSettings.MaxLagTimeSubStepping, RotationLagSpace);
 	const FRotator& AxesedRotationWS = UVSMathLibrary::RotatorApplyAxes(GetCameraViewData()->CameraTransform.Rotator(), LaggedRotationWS, RotationModifySettings.AxesToModify, RotationModifySpace);
 	GetCameraViewData()->CameraTransform.SetRotation(AxesedRotationWS.Quaternion());
@@ -49,9 +37,8 @@ void UVSCameraFeature_UseControlRotation::UpdateCamera_Implementation(float Delt
 
 void UVSCameraFeature_UseControlRotation::CatchUpMovement()
 {
-	if (!Controller.IsValid()) return;
 	const FRotator& RotationModifySpace = GetCameraRelatedRotationByType(RotationModifySettings.ModifySpaceType, RotationModifySettings.CustomModifySpace);
-	const FRotator& ControlRotationWS = Controller->GetControlRotation().GetNormalized();
+	const FRotator& ControlRotationWS = GetControlRotation();;
 	const FRotator& AxesedRotationWS = UVSMathLibrary::RotatorApplyAxes(GetCameraViewData()->CameraTransform.Rotator(), ControlRotationWS, RotationModifySettings.AxesToModify, RotationModifySpace);
 	GetCameraViewData()->CameraTransform.SetRotation(AxesedRotationWS.Quaternion());
 	LastUpdatedRotation = AxesedRotationWS;

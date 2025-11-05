@@ -19,6 +19,7 @@ VS_DECLARE_PRIVABLIC_MEMBER(UCharacterMovementComponent, Acceleration, FVector);
 UVSCharacterMovementFeatureAgent::UVSCharacterMovementFeatureAgent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	SetIsReplicated(true);
 }
 
 void UVSCharacterMovementFeatureAgent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const

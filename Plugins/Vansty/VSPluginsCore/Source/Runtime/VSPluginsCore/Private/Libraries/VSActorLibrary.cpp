@@ -24,12 +24,11 @@ bool UVSActorLibrary::IsActorNetLocal(AActor* Actor)
 {
 	if (!Actor) return false;
 
-	if (Actor->IsA<APawn>() || Actor->IsA<AController>())
-	{
-		return Actor->HasLocalNetOwner();
-	}
+	if (Actor->HasLocalNetOwner()) return true;
+	if (Actor->GetLocalRole() == ROLE_AutonomousProxy) return true;
+	if (Actor->GetLocalRole() == ROLE_Authority && Actor->GetRemoteRole() == ROLE_AutonomousProxy) return true;
 	
-	return !Actor->GetIsReplicated() || Actor->GetLocalRole() == ROLE_SimulatedProxy;
+	return false;
 }
 
 bool UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(AActor* Actor)

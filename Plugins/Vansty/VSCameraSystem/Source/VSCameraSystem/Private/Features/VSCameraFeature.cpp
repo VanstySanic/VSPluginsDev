@@ -52,6 +52,13 @@ UCameraComponent* UVSCameraFeature::GetCameraComponent() const
 	return CameraFeatureAgentPrivate.IsValid() ? CameraFeatureAgentPrivate->CameraComponentPrivate.Get() : nullptr;
 }
 
+FRotator UVSCameraFeature::GetControlRotation() const
+{
+	return CameraFeatureAgentPrivate.IsValid()
+		? CameraFeatureAgentPrivate->ReplicatedControlRotation
+		: FRotator::ZeroRotator;
+}
+
 void UVSCameraFeature::UpdateCamera_Implementation(float DeltaTime)
 {
 

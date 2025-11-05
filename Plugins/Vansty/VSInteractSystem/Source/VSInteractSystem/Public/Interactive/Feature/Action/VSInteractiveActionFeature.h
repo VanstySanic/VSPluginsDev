@@ -29,7 +29,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interactive")
 	void EndInteraction(UVSInteractFeatureAgent* SourceAgent, bool bIsLocalBreak);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactive")
+	UFUNCTION(BlueprintCallable, Category = "Interactive")
 	float GetActionInteractedTime(UVSInteractFeatureAgent* SourceAgent) const;
 	
 protected:

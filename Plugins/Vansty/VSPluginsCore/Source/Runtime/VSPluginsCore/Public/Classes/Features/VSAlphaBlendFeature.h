@@ -15,7 +15,7 @@ class VSPLUGINSCORE_API UVSAlphaBlendFeature : public UVSObjectFeature
 {
 	GENERATED_UCLASS_BODY()
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAlphaBlendSignature, UVSAlphaBlendFeature*, Feature,float, Alpha, float, UpdatedTime);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAlphaBlendSignature, UVSAlphaBlendFeature*, Feature, float, Alpha, float, UpdatedTime);
 
 protected:
 	virtual void Initialize_Implementation() override;

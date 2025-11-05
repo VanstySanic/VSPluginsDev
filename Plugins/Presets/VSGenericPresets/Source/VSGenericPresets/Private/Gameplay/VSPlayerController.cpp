@@ -5,6 +5,7 @@
 #include "Classes/Features/VSObjectFeatureComponent.h"
 #include "Classes/Framework/VSGameplayTagController.h"
 #include "Gameplay/VSPlayerState.h"
+#include "Kismet/GameplayStatics.h"
 
 AVSPlayerController::AVSPlayerController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -38,7 +39,7 @@ void AVSPlayerController::OnRep_PlayerState()
 	{
 		if (FeatureComponent && !FeatureComponent->bRegisterOnBeginPlay && !FeatureComponent->GetRootFeature()->IsRegistered())
 		{
-			FeatureComponent->GetRootFeature()->RegisterFeature();	
+			FeatureComponent->GetRootFeature()->RegisterFeature();
 		}
 	}
 }

@@ -8,7 +8,7 @@
 UVSInteractiveFeatureAgent::UVSInteractiveFeatureAgent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	
+	SetIsReplicated(true);
 }
 
 void UVSInteractiveFeatureAgent::Initialize_Implementation()
@@ -99,7 +99,7 @@ void UVSInteractiveFeatureAgent::OnInteractBySource(UVSInteractFeatureAgent* Sou
 	InteractingSourceActionMap.Emplace(SourceAgent, ActionFeatureName);
 	ActionFeature->OnStartInteraction(SourceAgent);
 	OnInteractionStart.Broadcast(SourceAgent, ActionFeatureName);
-
+	
 	if (ActionFeature->bIsInstantAction)
 	{
 		ActionFeature->OnProcessInteraction(SourceAgent, 0.f);

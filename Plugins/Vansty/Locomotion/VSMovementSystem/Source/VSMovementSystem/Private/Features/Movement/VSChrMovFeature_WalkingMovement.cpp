@@ -28,6 +28,8 @@ UVSChrMovFeature_WalkingMovement::UVSChrMovFeature_WalkingMovement(const FObject
 
 	DefaultMovementBaseSettings.MaxSpeed = 600.f;
 	DefaultCrouchedMovementBaseSettings.MaxSpeed = 240.f;
+
+	SetIsReplicated(true);
 }
 
 

@@ -18,7 +18,7 @@ void UVSAlphaBlendFeature::Initialize_Implementation()
 void UVSAlphaBlendFeature::BeginPlay_Implementation()
 {
 	Super::BeginPlay_Implementation();
-
+	
 	if (bDefaultAutoUpdate)
 	{
 		SetAutoUpdate(true);

@@ -12,7 +12,7 @@ VS_DECLARE_PRIVABLIC_MEMBER(FGameplayTagCountContainer, OnAnyTagChangeDelegate, 
 UVSGameplayTagController::UVSGameplayTagController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	
+	SetIsReplicated(true);
 }
 
 void UVSGameplayTagController::Initialize_Implementation()

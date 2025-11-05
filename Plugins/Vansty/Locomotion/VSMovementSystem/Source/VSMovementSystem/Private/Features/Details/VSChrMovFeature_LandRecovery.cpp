@@ -12,6 +12,7 @@
 UVSChrMovFeature_LandRecovery::UVSChrMovFeature_LandRecovery(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	SetIsReplicated(true);
 }
 
 bool UVSChrMovFeature_LandRecovery::IsLandRecovering() const
