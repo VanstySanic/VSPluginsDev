@@ -8,6 +8,7 @@
 #include "Types/VSCharacterMovementTypes.h"
 #include "VSCharacterMovementFeatureAgent.generated.h"
 
+class UVSControlRotationFeature;
 class UVSChrMovCapsuleComponent;
 class UVSGameplayTagController;
 class UCharacterMovementComponent;
@@ -68,9 +69,6 @@ protected:
 	
 private:
 	UPROPERTY(Replicated)
-	FRotator ReplicatedControlRotation = FRotator::ZeroRotator;
-	
-	UPROPERTY(Replicated)
 	FVector ReplicatedMovementInput = FVector::ZeroVector;
 
 	
@@ -79,6 +77,7 @@ private:
 	TWeakObjectPtr<UVSGameplayTagController> GameplayTagControllerPrivate;
 	/** Capsule component that takes place of the character's capsule collision. */
 	TWeakObjectPtr<UVSChrMovCapsuleComponent> MovementCapsuleComponentPrivate;
+	TWeakObjectPtr<UVSControlRotationFeature> ControlRotationFeaturePrivate;
 
 	
 	struct FMovementData

@@ -3,12 +3,14 @@
 #include "Interact/Feature/VSInteractTraceInspectFeature.h"
 #include "KismetTraceUtils.h"
 #include "VSInteractSystemUtils.h"
+#include "Classes/Features/VSControlRotationFeature.h"
 #include "Classes/Framework/VSGameplayTagController.h"
 #include "Interact/Feature/VSInteractFeatureAgent.h"
 #include "Interactive/Feature/VSInteractiveFeatureAgent.h"
+#include "Interfaces/VSControlRotationFeatureInterface.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Libraries/VSActorLibrary.h"
-#include "Libraries/VSGameplayLibrary.h"
+#include "Libraries/VSObjectLibrary.h"
 #include "Libraries/VSSetContainerLibrary.h"
 
 UVSInteractTraceInspectFeature::UVSInteractTraceInspectFeature(const FObjectInitializer& ObjectInitializer)
@@ -20,9 +22,13 @@ void UVSInteractTraceInspectFeature::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
 
-	if (UVSActorLibrary::IsActorNetLocal(GetOwnerActor()))
+	if (GetOwnerActor()->GetClass()->ImplementsInterface(UVSControlRotationFeatureInterface::StaticClass()))
 	{
-		Controller = UVSActorLibrary::GetControllerFromActor(GetOwnerActor());
+		ControlRotationFeaturePrivate = IVSControlRotationFeatureInterface::Execute_GetControlRotationFeature(GetOwnerActor());
+	}
+	else
+	{
+		ControlRotationFeaturePrivate = UVSObjectLibrary::FindFeatureByClassFromObject<UVSControlRotationFeature>(GetOwnerActor());
 	}
 }
 
@@ -79,22 +85,25 @@ void UVSInteractTraceInspectFeature::DoTrace(float DeltaTime)
 
 	const int32 YawSteps = FMath::FloorToInt((MaxTraceYawAngleRange.Y - MaxTraceYawAngleRange.X) / TraceAngleStep) + 1;
 	const int32 PitchSteps = FMath::FloorToInt((MaxTracePitchAngleRange.Y - MaxTracePitchAngleRange.X) / TraceAngleStep) + 1;
-
+	
 	FQuat ControllerRotation = FQuat::Identity;
-	if (bTryUseControlDirectionAsBase && Controller.IsValid())
+	if (bTryUseControlDirectionInsteadOfActor && ControlRotationFeaturePrivate.IsValid())
 	{
 		if (bControlDirectionUseOnly2D)
 		{
 			const FQuat& WorldToUpRotation = FQuat::FindBetweenVectors(FVector::UpVector, GetOwnerActor()->GetActorUpVector());
-			FRotator ControlDS = UKismetMathLibrary::ComposeRotators(Controller->GetControlRotation(), WorldToUpRotation.Inverse().Rotator());
+			FRotator ControlDS = UKismetMathLibrary::ComposeRotators(ControlRotationFeaturePrivate->GetControlRotation(), WorldToUpRotation.Inverse().Rotator());
 			ControlDS.Pitch = 0.f;
 			ControllerRotation = UKismetMathLibrary::ComposeRotators(ControlDS, WorldToUpRotation.Rotator()).Quaternion();
 		}
 		else
 		{
-			ControllerRotation = Controller->GetControlRotation().Quaternion();
+			ControllerRotation = ControlRotationFeaturePrivate->GetControlRotation().Quaternion();
 		}
 	}
+
+	FQuat TraceBaseRotation = (bTryUseControlDirectionInsteadOfActor && ControlRotationFeaturePrivate.IsValid()) ? ControllerRotation : ActorRotation.Quaternion();
+	FVector TraceBaseDirection = TraceBaseRotation.Vector();
 
 	TArray<UVSInteractiveFeatureAgent*> FoundInteractiveAgents;
 	for (int32 PitchIndex = 0; PitchIndex < PitchSteps; ++PitchIndex)
@@ -106,7 +115,7 @@ void UVSInteractTraceInspectFeature::DoTrace(float DeltaTime)
 			const float YawAngle = MaxTraceYawAngleRange.X + TraceAngleStep * YawIndex;
 
 			const FRotator OffsetRotator = FRotator(PitchAngle, YawAngle, 0.f);
-			const FQuat WorldQuat = (((bTryUseControlDirectionAsBase && Controller.IsValid()) ? ControllerRotation : ActorRotation.Quaternion())) * OffsetRotator.Quaternion();
+			const FQuat WorldQuat = TraceBaseRotation * OffsetRotator.Quaternion();
 
 			const FVector& Direction = WorldQuat.GetForwardVector();
 			const FVector End = Origin + Direction * (MaxTraceDistance + TraceDistanceBuffer);
@@ -120,7 +129,10 @@ void UVSInteractTraceInspectFeature::DoTrace(float DeltaTime)
 			{
 				if (UVSInteractiveFeatureAgent* Agent = UVSInteractSystemUtils::GetInteractiveFeatureAgentFromActor(HitResult.GetActor()))
 				{
-					FoundInteractiveAgents.AddUnique(Agent);
+					if (Agent->IsInspectable(InteractFeatureAgent))
+					{
+						FoundInteractiveAgents.AddUnique(Agent);
+					}
 				}
 			}
 
@@ -133,12 +145,26 @@ void UVSInteractTraceInspectFeature::DoTrace(float DeltaTime)
 		}
 	}
 
-	FoundInteractiveAgents.StableSort([&] (const UVSInteractiveFeatureAgent& A, const UVSInteractiveFeatureAgent& B)
+	if (bSortByAngleInsteadOfDistance)
 	{
-		const float DisA = (A.GetOwnerActor()->GetActorLocation() - Origin).Size();
-		const float DisB = (B.GetOwnerActor()->GetActorLocation() - Origin).Size();
-		return DisA < DisB;
-	});
+		FoundInteractiveAgents.StableSort([&] (const UVSInteractiveFeatureAgent& A, const UVSInteractiveFeatureAgent& B)
+		{
+			const FVector& DirectionA = (A.GetOwnerActor()->GetActorLocation() - Origin).GetSafeNormal();
+			const FVector& DirectionB = (B.GetOwnerActor()->GetActorLocation() - Origin).GetSafeNormal();
+			const float DotA = DirectionA.Dot(TraceBaseDirection);
+			const float DotB = DirectionB.Dot(TraceBaseDirection);
+			return DotA >= DotB;
+		});
+	}
+	else
+	{
+		FoundInteractiveAgents.StableSort([&] (const UVSInteractiveFeatureAgent& A, const UVSInteractiveFeatureAgent& B)
+		{
+			const float DisA = (A.GetOwnerActor()->GetActorLocation() - Origin).Size();
+			const float DisB = (B.GetOwnerActor()->GetActorLocation() - Origin).Size();
+			return DisA < DisB;
+		});
+	}
 
 	const TArray<UVSInteractiveFeatureAgent*> CurrentTargets = GetCurrentInspectiveTargets();
 	const TArray<UVSInteractiveFeatureAgent*>& TargetsToStopInteraction = UVSSetContainerLibrary::GetArrayDifference<UVSInteractiveFeatureAgent*>(CurrentTargets, FoundInteractiveAgents);

@@ -2,6 +2,7 @@
 
 #include "Gameplay/Character/VSCharacter.h"
 #include "VSChrMovCapsuleComponent.h"
+#include "Classes/Features/VSControlRotationFeature.h"
 #include "Classes/Features/VSObjectFeatureComponent.h"
 #include "Features/VSCharacterMovementAnimFeatureAgent.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
@@ -43,4 +44,7 @@ UVSCharacterMovementAnimFeatureAgent* AVSCharacter::GetCharacterMovementAnimFeat
 	return FeatureComponent ? FeatureComponent->FindSubFeatureByClass<UVSCharacterMovementAnimFeatureAgent>() : nullptr;
 }
 
-
+UVSControlRotationFeature* AVSCharacter::GetControlRotationFeature_Implementation() const
+{
+	return FeatureComponent ? FeatureComponent->FindSubFeatureByClass<UVSControlRotationFeature>() : nullptr;
+}

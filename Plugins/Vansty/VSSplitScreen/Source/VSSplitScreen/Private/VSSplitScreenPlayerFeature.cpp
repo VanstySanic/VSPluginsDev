@@ -7,7 +7,6 @@
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Libraries/VSActorLibrary.h"
-#include "Libraries/VSGameplayLibrary.h"
 
 UVSSplitScreenPlayerFeature::UVSSplitScreenPlayerFeature(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -27,12 +26,23 @@ void UVSSplitScreenPlayerFeature::Initialize_Implementation()
 		}
 	}
 	check(PlayerState);
-	PlayerState->OnPawnSet.AddDynamic(this, &UVSSplitScreenPlayerFeature::OnPlayerStatePawnSet);
-
-	const int32 PlayerID = UVSActorLibrary::IsActorNetLocal(PlayerState) ? 0 : 1;
+	
+	int32 PlayerID = UVSActorLibrary::IsActorNetLocal(PlayerState) ? 0 : 1;
+	if (GetWorld()->GetNetMode() == NM_Standalone)
+	{
+		PlayerID = PlayerState == UGameplayStatics::GetPlayerState(this, 0) ? 0 : 1;
+	}
 	SplitScreenPlayer = UVSSplitScreenSubsystemGI::Get(this)->GetPlayerFormID(PlayerID);
 
 	UVSSplitScreenSubsystemW::Get(this)->SetPlayerState(SplitScreenPlayer, PlayerState);
+	if (PlayerState->GetPawn())
+	{
+		UVSSplitScreenSubsystemW::Get(this)->SetPlayerViewTargetWithBlend(SplitScreenPlayer, PlayerState->GetPawn());
+	}
+	else
+	{
+		PlayerState->OnPawnSet.AddDynamic(this, &UVSSplitScreenPlayerFeature::OnPlayerStatePawnSet);
+	}
 }
 
 FVSSplitScreenPlayerData UVSSplitScreenPlayerFeature::GetSplitScreenPlayerData() const
@@ -43,6 +53,7 @@ FVSSplitScreenPlayerData UVSSplitScreenPlayerFeature::GetSplitScreenPlayerData()
 void UVSSplitScreenPlayerFeature::OnPlayerStatePawnSet(APlayerState* Player, APawn* NewPawn, APawn* OldPawn)
 {
 	if (!Player || !NewPawn) return;
+
 	UVSSplitScreenSubsystemW::Get(this)->SetPlayerViewTargetWithBlend(SplitScreenPlayer, NewPawn);
 	Player->OnPawnSet.RemoveDynamic(this, &UVSSplitScreenPlayerFeature::OnPlayerStatePawnSet);
 }

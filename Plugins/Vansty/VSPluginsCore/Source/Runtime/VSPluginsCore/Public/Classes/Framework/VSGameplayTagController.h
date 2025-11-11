@@ -89,6 +89,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags")
 	FString ToDebugString();
 
+	UFUNCTION(BlueprintCallable, Category = "GameplayTags")
+	void BindDelegateForObject(UObject* Object);
+
+	UFUNCTION(BlueprintCallable, Category = "GameplayTags")
+	void UnbindDelegateForObject(UObject* Object);
+
+	
 private:
 	UAbilitySystemComponent* GetAbilitySystemComponent() const;
 	void NotifyTagsUpdatedInternal(bool bAllowCleanNotify);
@@ -148,6 +155,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameplayTags", meta = (EditCondition = "bNotifyTagNewOrClearForAll"))
 	FGameplayTagContainer TagsToNotifyNewOrClear;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameplayTags")
+	bool bBindDelegatesWhenInitialized = true;
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")

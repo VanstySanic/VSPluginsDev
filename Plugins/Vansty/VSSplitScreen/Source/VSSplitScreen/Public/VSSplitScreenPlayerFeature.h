@@ -7,6 +7,7 @@
 #include "Classes/Features/VSObjectFeature.h"
 #include "VSSplitScreenPlayerFeature.generated.h"
 
+class UVSSplitScreenSubsystemW;
 class UVSAlphaBlendFeature;
 /**
  * Put it in pawn or player state.
@@ -27,7 +28,6 @@ public:
 	FVSSplitScreenPlayerData GetSplitScreenPlayerData() const;
 	
 protected:
-
 	UFUNCTION()
 	void OnPlayerStatePawnSet(APlayerState* Player, APawn* NewPawn, APawn* OldPawn);
 

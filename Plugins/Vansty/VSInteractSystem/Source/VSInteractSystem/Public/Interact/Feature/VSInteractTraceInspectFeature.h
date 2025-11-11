@@ -6,6 +6,7 @@
 #include "VSInteractFeature.h"
 #include "VSInteractTraceInspectFeature.generated.h"
 
+class UVSControlRotationFeature;
 /**
  * 
  */
@@ -51,7 +52,10 @@ public:
 	int32 MaxInspectionNum = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
-	bool bTryUseControlDirectionAsBase = true;
+	bool bSortByAngleInsteadOfDistance = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
+	bool bTryUseControlDirectionInsteadOfActor = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interact")
 	bool bControlDirectionUseOnly2D = true;
@@ -63,5 +67,5 @@ public:
 
 private:
 	TArray<TWeakObjectPtr<UVSInteractiveFeatureAgent>> TracedInspectiveTargets;
-	TWeakObjectPtr<AController> Controller;
+	TWeakObjectPtr<UVSControlRotationFeature> ControlRotationFeaturePrivate;
 };

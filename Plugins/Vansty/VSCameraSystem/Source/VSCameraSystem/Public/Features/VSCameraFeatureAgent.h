@@ -6,6 +6,8 @@
 #include "VSCameraFeature.h"
 #include "VSCameraFeatureAgent.generated.h"
 
+class UVSControlRotationFeature;
+
 /**
  * 
  */
@@ -15,18 +17,9 @@ class VSCAMERASYSTEM_API UVSCameraFeatureAgent : public UVSCameraFeature
 	GENERATED_UCLASS_BODY()
 	friend class UVSCameraFeature;
 
-public:
-	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-	
 protected:
 	virtual void Initialize_Implementation() override;
-	virtual void Tick_Implementation(float DeltaTime) override;
-	virtual void BeginPlay_Implementation() override;
 
-private:
-	UFUNCTION(Server, Unreliable)
-	void SyncControlRotation_Server(const FRotator& Rotation);
-	
 public:
 	/** If there is no camera component / actor in the outer chain, will find a camera with this name in the actor. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
@@ -41,15 +34,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	bool bCameraAbsoluteScale = true;
-
-private:
-	UPROPERTY(Replicated)
-	FRotator ReplicatedControlRotation = FRotator::ZeroRotator;
-
+	
 private:
 	UPROPERTY(EditAnywhere, Instanced, Category = "Camera")
 	TObjectPtr<UVSCameraViewData> CameraViewData;
 
 	TWeakObjectPtr<UCameraComponent> CameraComponentPrivate;
-	TWeakObjectPtr<AController> ControllerPrivate;
+	TWeakObjectPtr<UVSControlRotationFeature> ControlRotationFeaturePrivate;
 };

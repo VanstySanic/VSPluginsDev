@@ -54,7 +54,7 @@ void UVSInteractFeatureAgent::TryInspectTarget(UVSInteractiveFeatureAgent* Targe
 {
 	if (!IsActive()) return;
 	if (!bMatchesInspectionEntranceTagQuery) return;
-	if (!TargetAgent || !TargetAgent->IsInteractable(this) || IsInteracting()) return;
+	if (!TargetAgent || !TargetAgent->IsInspectable(this) || IsInteracting()) return;
 	if (IsInspectingOnTarget(TargetAgent)) return;
 	
 	CurrentInspectiveAgentsPrivate.Add(TargetAgent);

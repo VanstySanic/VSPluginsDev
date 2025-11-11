@@ -51,7 +51,7 @@ class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
 	 * @param ToleranceToFloor The vertical height tolerance form the character's capsule lower sphere shape.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Character")
-	static bool IsCharacterOnWalkableFloor(const ACharacter* Character, const float ToleranceToFloor = 0.f, const bool bConsiderCollisionOffset = true);
+	static bool IsCharacterOnWalkableFloor(const ACharacter* Character, const float ToleranceToFloor = 0.f, const bool bConsiderVerticalSpeedPrediction = true, const bool bConsiderCollisionOffset = true);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Character")
 	static FVector GetCharacterRootLocation(const ACharacter* Character, const float VerticalOffset = 0.f /** 2.f */, float UnscaledHalfHeightOverride = 0.f);

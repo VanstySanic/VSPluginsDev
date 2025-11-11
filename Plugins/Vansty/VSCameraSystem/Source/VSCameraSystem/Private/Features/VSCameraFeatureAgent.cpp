@@ -4,8 +4,11 @@
 #include "VSCameraViewData.h"
 #include "Camera/CameraActor.h"
 #include "Camera/CameraComponent.h"
+#include "Classes/Features/VSControlRotationFeature.h"
 #include "Features/VSCameraFeature_ViewData.h"
+#include "Interfaces/VSControlRotationFeatureInterface.h"
 #include "Libraries/VSActorLibrary.h"
+#include "Libraries/VSObjectLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 UVSCameraFeatureAgent::UVSCameraFeatureAgent(const FObjectInitializer& ObjectInitializer)
@@ -14,15 +17,6 @@ UVSCameraFeatureAgent::UVSCameraFeatureAgent(const FObjectInitializer& ObjectIni
 	CameraViewData = CreateDefaultSubobject<UVSCameraViewData>(TEXT("CameraViewData"));
 	AddDefaultSubFeatureByClass(this, UVSCameraFeature_SyncViewData::StaticClass());
 	AddDefaultSubFeatureByClass(this, UVSCameraFeature_ApplyViewData::StaticClass());
-
-	SetIsReplicated(true);
-}
-
-void UVSCameraFeatureAgent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME_CONDITION(UVSCameraFeatureAgent, ReplicatedControlRotation, COND_SimulatedOnly);
 }
 
 void UVSCameraFeatureAgent::Initialize_Implementation()
@@ -46,30 +40,14 @@ void UVSCameraFeatureAgent::Initialize_Implementation()
 		}
 	}
 	check(CameraComponentPrivate.IsValid());
-
-	ControllerPrivate = UVSActorLibrary::GetControllerFromActor(GetOwnerActor());
-	// check(!UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(GetOwnerActor()) && !ControllerPrivate.IsValid());
-}
-
-void UVSCameraFeatureAgent::Tick_Implementation(float DeltaTime)
-{
-	Super::Tick_Implementation(DeltaTime);
-
-	if (ControllerPrivate.IsValid() && ControllerPrivate->IsLocalController())
-	{
-		ReplicatedControlRotation = ControllerPrivate->GetControlRotation();
-		SyncControlRotation_Server(ReplicatedControlRotation);
-	}
-}
-
-void UVSCameraFeatureAgent::BeginPlay_Implementation()
-{
-	Super::BeginPlay_Implementation();
-
 	CameraComponentPrivate->SetAbsolute(bCameraAbsoluteLocation, bCameraAbsoluteRotation, bCameraAbsoluteScale);
-}
 
-void UVSCameraFeatureAgent::SyncControlRotation_Server_Implementation(const FRotator& Rotation)
-{
-	ReplicatedControlRotation = Rotation;
+	if (GetOwnerActor()->GetClass()->ImplementsInterface(UVSControlRotationFeatureInterface::StaticClass()))
+	{
+		ControlRotationFeaturePrivate = IVSControlRotationFeatureInterface::Execute_GetControlRotationFeature(GetOwnerActor());
+	}
+	else
+	{
+		ControlRotationFeaturePrivate = UVSObjectLibrary::FindFeatureByClassFromObject<UVSControlRotationFeature>(GetOwnerActor());
+	}
 }

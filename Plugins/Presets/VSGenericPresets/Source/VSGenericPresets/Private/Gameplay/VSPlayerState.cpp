@@ -4,6 +4,7 @@
 #include "AbilitySystemComponent.h"
 #include "Classes/Features/VSObjectFeatureComponent.h"
 #include "Classes/Framework/VSGameplayTagController.h"
+#include "Libraries/VSActorLibrary.h"
 
 AVSPlayerState::AVSPlayerState(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -24,11 +25,34 @@ UVSObjectFeatureComponent* AVSPlayerState::GetFeatureComponent() const
 	return FeatureComponent;
 }
 
+void AVSPlayerState::SetupAtExpectedTime_Implementation()
+{
+	if (FeatureComponent && !FeatureComponent->bRegisterOnBeginPlay && !FeatureComponent->GetRootFeature()->IsRegistered())
+	{
+		FeatureComponent->GetRootFeature()->RegisterFeature();	
+	}
+}
+
 UVSGameplayTagController* AVSPlayerState::GetGameplayTagController_Implementation() const
 {
 	UVSGameplayTagController* GameplayTagController = FeatureComponent->FindSubFeatureByClass<UVSGameplayTagController>();
 	check(GameplayTagController);
 	return FeatureComponent ? FeatureComponent->FindSubFeatureByClass<UVSGameplayTagController>() : nullptr;
+}
+
+void AVSPlayerState::CheckExpectedTimeToSetup()
+{
+	if (bHasBeenSetupAtExpectedTime || !HasActorBegunPlay()) return;
+	if (UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(this) && !GetOwningController()) return;
+	bHasBeenSetupAtExpectedTime = true;
+	SetupAtExpectedTime();
+}
+
+void AVSPlayerState::BeginPlay()
+{
+	Super::BeginPlay();
+
+	CheckExpectedTimeToSetup();
 }
 
 void AVSPlayerState::PostInitializeComponents()
@@ -37,6 +61,20 @@ void AVSPlayerState::PostInitializeComponents()
 
 	AbilitySystemComponent->SetOwnerActor(this);
 	AbilitySystemComponent->SetAvatarActor(GetPawn());
+}
+
+void AVSPlayerState::SetOwner(AActor* NewOwner)
+{
+	Super::SetOwner(NewOwner);
+
+	CheckExpectedTimeToSetup();
+}
+
+void AVSPlayerState::OnRep_Owner()
+{
+	Super::OnRep_Owner();
+
+	CheckExpectedTimeToSetup();
 }
 
 UAbilitySystemComponent* AVSPlayerState::GetAbilitySystemComponent() const

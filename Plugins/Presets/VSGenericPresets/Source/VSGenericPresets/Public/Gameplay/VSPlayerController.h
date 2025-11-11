@@ -21,7 +21,8 @@ class VSGENERICPRESETS_API AVSPlayerController : public APlayerController, publi
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnRep_PlayerState() override;
-	
+	virtual UVSGameplayTagController* GetGameplayTagController_Implementation() const override;
+
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
@@ -29,9 +30,17 @@ public:
 	UVSObjectFeatureComponent* GetFeatureComponent() const;
 
 protected:
-	virtual UVSGameplayTagController* GetGameplayTagController_Implementation() const override;
+	/** This is call when the actor has begun play, and the player state is valid. */
+	UFUNCTION(BlueprintNativeEvent, Category = "Gameplay")
+	void SetupAtExpectedTime();
+	
+private:
+	void CheckExpectedTimeToSetup();
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UVSObjectFeatureComponent> FeatureComponent;
+
+private:
+	bool bHasBeenSetupAtExpectedTime = false;
 };

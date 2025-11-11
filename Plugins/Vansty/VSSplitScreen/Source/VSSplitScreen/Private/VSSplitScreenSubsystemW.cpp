@@ -8,15 +8,13 @@
 #include "VSSplitScreenSettings.h"
 #include "VSSplitScreenSubsystemGI.h"
 #include "Classes/Features/VSAlphaBlendFeature.h"
+#include "GameFramework/GameModeBase.h"
 #include "GameFramework/PlayerState.h"
 
 VS_DECLARE_PRIVABLIC_MEMBER(UGameViewportClient, SplitscreenInfo, TArray<FSplitscreenData>);
-VS_DECLARE_PRIVABLIC_MEMBER(UWorld, OnBeginPlay, UWorld::FOnBeginPlay);
 
 UVSSplitScreenSubsystemW::UVSSplitScreenSubsystemW()
 {
-	// PlayerLayoutRatioAlphaBlendFeature = CreateDefaultSubobject<UVSAlphaBlendFeature>(TEXT("PlayerLayoutRatioAlphaBlendFeature"));
-	
 	PlayerDatas.Empty();
 	PlayerDatas.Emplace(EVSSplitScreenPlayer::PlayerOne, FVSSplitScreenPlayerData());
 	PlayerDatas.Emplace(EVSSplitScreenPlayer::PlayerTwo, FVSSplitScreenPlayerData());
@@ -32,10 +30,6 @@ void UVSSplitScreenSubsystemW::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
 
-	/** Check the split screen settings. */
-	check(GetDefault<UGameMapsSettings>()->bUseSplitscreen);
-	check(GetDefault<UGameMapsSettings>()->TwoPlayerSplitscreenLayout == ETwoPlayerSplitScreenType::Vertical);
-	
 	bool bIsAvailableMap = false;;
 	for (FName SplitScreenMapName : UVSSplitScreenSettings::Get()->SplitScreenMapNames)
 	{
@@ -45,90 +39,107 @@ void UVSSplitScreenSubsystemW::OnWorldBeginPlay(UWorld& InWorld)
 		}
 	}
 	if (!bIsAvailableMap) return;
-
-	if (InWorld.IsNetMode(NM_Standalone))
+	
+	SplitScreenData = &VS_PRIVABLIC_MEMBER(InWorld.GetGameViewport(), UGameViewportClient, SplitscreenInfo)[ESplitScreenType::TwoPlayer_Vertical];
+	
+	/** Check the split screen settings. */
+	check(GetDefault<UGameMapsSettings>()->bUseSplitscreen);
+	check(GetDefault<UGameMapsSettings>()->TwoPlayerSplitscreenLayout == ETwoPlayerSplitScreenType::Vertical);
+	
+	if (GetWorld()->GetNetMode() == NM_Standalone)
 	{
-		/** Create a local player if the second one not existing. */
-		if (!GEngine->GetLocalPlayerFromPlatformUserId(&InWorld, FVSUserQueryParams(1).GetUserId()))
+		UGameplayStatics::CreatePlayer(this, 1, false);
+		check(GEngine->GetLocalPlayerFromPlatformUserId(&InWorld, FVSUserQueryParams(1).GetUserId()));
+		
+		if (AGameModeBase* GameModeBase = InWorld.GetAuthGameMode())
 		{
-			UGameplayStatics::CreatePlayer(this, 1, true);
-			check(GEngine->GetLocalPlayerFromPlatformUserId(&InWorld, FVSUserQueryParams(1).GetUserId()));
+			FActorSpawnParameters SpawnInfo;
+			SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			SpawnInfo.ObjectFlags |= RF_Transient;
+			
+			LocalController_PlayerID1 = GetWorld()->SpawnActor<APlayerController>(GameModeBase->PlayerControllerClass, SpawnInfo);
+			LocalController_PlayerID1->SetPlayer(GEngine->GetLocalPlayerFromPlatformUserId(GetWorld(), FVSUserQueryParams(1).GetUserId()));
 		}
 	}
+}
 
-	VS_PRIVABLIC_MEMBER(&InWorld, UWorld, OnBeginPlay).AddLambda([&] (bool bBeginPlay)
+void UVSSplitScreenSubsystemW::InitializeSplitScreen()
+{
+	UWorld* World = GetWorld();
+
+	bool bIsAvailableMap = false;;
+	for (FName SplitScreenMapName : UVSSplitScreenSettings::Get()->SplitScreenMapNames)
 	{
-		if (!bBeginPlay) return;
-
-		// TODO Do it in another way.
-		if (!GetWorld()->IsNetMode(NM_Standalone) && !InWorld.IsNetMode(NM_ListenServer))
+		if (SplitScreenMapName == World->GetFName())
 		{
-			UVSSplitScreenSubsystemGI::Get(this)->SetPlayer(0, EVSSplitScreenPlayer::PlayerTwo);
-			UVSSplitScreenSubsystemGI::Get(this)->SetPlayer(1, EVSSplitScreenPlayer::PlayerOne);
+			bIsAvailableMap = true;
 		}
-		
-		EVSSplitScreenPlayer::Type PlayerLocalID0 = UVSSplitScreenSubsystemGI::Get(this)->GetPlayerFormID(0);
-		EVSSplitScreenPlayer::Type PlayerLocalID1 = UVSSplitScreenSubsystemGI::Get(this)->GetPlayerFormID(1);
-		
-		if (!GetWorld()->IsNetMode(NM_Standalone))
-		{
-			if (!GEngine->GetLocalPlayerFromPlatformUserId(&InWorld, FVSUserQueryParams(1).GetUserId()))
-			{
-				UGameplayStatics::CreatePlayer(this, 1, false);
-				check(GEngine->GetLocalPlayerFromPlatformUserId(&InWorld, FVSUserQueryParams(1).GetUserId()));
-			}
-		}
-		
-		PlayerDatas[PlayerLocalID0].LocalPlayer = GEngine->GetLocalPlayerFromPlatformUserId(GetWorld(), FVSUserQueryParams((int32)0).GetUserId());
-		PlayerDatas[PlayerLocalID1].LocalPlayer = GEngine->GetLocalPlayerFromPlatformUserId(GetWorld(), FVSUserQueryParams(1).GetUserId());
-		
+	}
+	if (!bIsAvailableMap) return;
+	
+	if (World->GetNetMode() != NM_Standalone)
+	{
 		/** Create player controller for player two. */
-		if (InWorld.IsNetMode(NM_Standalone))
+		if (!GEngine->GetLocalPlayerFromPlatformUserId(World, FVSUserQueryParams(1).GetUserId()))
 		{
-			LocalController_PlayerID1 = UGameplayStatics::GetPlayerController(this, 1);
-		}
-		else
-		{
+			UGameplayStatics::CreatePlayer(this, 1, false);
+			check(GEngine->GetLocalPlayerFromPlatformUserId(GetWorld(), FVSUserQueryParams(1).GetUserId()));
+			
 			FActorSpawnParameters SpawnInfo;
 			SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 			SpawnInfo.ObjectFlags |= RF_Transient;
-			LocalController_PlayerID1 = InWorld.SpawnActor<APlayerController>(UVSSplitScreenSettings::Get()->SplitScreenLocalPlayerControllerClass.LoadSynchronous(), SpawnInfo);
-		}
-		check(LocalController_PlayerID1);
-
-		/** Assign an empty pawn for non-standalone generated local player. */
-		if (!InWorld.IsNetMode(NM_Standalone))
-		{
-			FActorSpawnParameters SpawnInfo;
-			SpawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-			SpawnInfo.ObjectFlags |= RF_Transient;
-			APawn* LocalPawn = InWorld.SpawnActor<APawn>(APawn::StaticClass(), SpawnInfo);
+			
+			LocalController_PlayerID1 = World->SpawnActor<APlayerController>(UVSSplitScreenSettings::Get()->SplitScreenLocalPlayerControllerClass.LoadSynchronous(), SpawnInfo);
+			LocalController_PlayerID1->SetReplicates(false);
 			LocalController_PlayerID1->SetPlayer(GEngine->GetLocalPlayerFromPlatformUserId(GetWorld(), FVSUserQueryParams(1).GetUserId()));
-			LocalController_PlayerID1->Possess(LocalPawn);
-		}
-		
-		/** Only the second local controller is valid, cause the first one may be on replication. */
-		PlayerDatas[PlayerLocalID0].LocalController = UGameplayStatics::GetPlayerController(this, 0);
-		PlayerDatas[PlayerLocalID1].LocalController = LocalController_PlayerID1;
-		
-		PlayerLayoutRatioAlphaBlendFeature = NewObject<UVSAlphaBlendFeature>(this);
-		PlayerLayoutRatioAlphaBlendFeature->OnUpdated.AddDynamic(this, &UVSSplitScreenSubsystemW::OnPlayerLayoutRatioAlphaBlendFeatureUpdated);
-		PlayerLayoutRatioAlphaBlendFeature->RegisterFeature();
-	});
 
-	OnWorldBeginTearDownDelegateHandle = FWorldDelegates::OnWorldBeginTearDown.AddLambda([&] (UWorld* World)
+			/** Assign a controller and an empty pawn for non-standalone generated local player. */
+			APawn* LocalPawn = World->SpawnActor<APawn>(APawn::StaticClass(), SpawnInfo);
+			LocalPawn->SetReplicates(false);
+			LocalController_PlayerID1->Possess(LocalPawn);
+			check(LocalController_PlayerID1);
+		}
+	}
+	
+	EVSSplitScreenPlayer::Type PlayerLocalID0 = UVSSplitScreenSubsystemGI::Get(this)->GetPlayerFormID(0);
+	EVSSplitScreenPlayer::Type PlayerLocalID1 = UVSSplitScreenSubsystemGI::Get(this)->GetPlayerFormID(1);
+	
+	PlayerDatas[PlayerLocalID0].LocalPlayer = GEngine->GetLocalPlayerFromPlatformUserId(GetWorld(), FVSUserQueryParams((int32)0).GetUserId());
+	PlayerDatas[PlayerLocalID1].LocalPlayer = GEngine->GetLocalPlayerFromPlatformUserId(GetWorld(), FVSUserQueryParams(1).GetUserId());
+	
+	/** Only the second local controller is valid, cause the first one may be on replication. */
+	PlayerDatas[PlayerLocalID0].LocalController = UGameplayStatics::GetPlayerController(this, 0);
+	PlayerDatas[PlayerLocalID1].LocalController = LocalController_PlayerID1;
+	
+	/** Register the feature. */
+	PlayerLayoutRatioAlphaBlendFeature = NewObject<UVSAlphaBlendFeature>(this);
+	PlayerLayoutRatioAlphaBlendFeature->OnUpdated.AddDynamic(this, &UVSSplitScreenSubsystemW::OnPlayerLayoutRatioAlphaBlendFeatureUpdated);
+	PlayerLayoutRatioAlphaBlendFeature->RegisterFeature();
+}
+
+void UVSSplitScreenSubsystemW::DeinitializeSplitScreen()
+{
+	UWorld* World = GetWorld();
+
+	bool bIsAvailableMap = false;;
+	for (FName SplitScreenMapName : UVSSplitScreenSettings::Get()->SplitScreenMapNames)
 	{
-		if (World != &InWorld) return;
-		if (ULocalPlayer* LocalPlayer = GEngine->GetLocalPlayerFromPlatformUserId(World, FVSUserQueryParams(1).GetUserId()))
+		if (SplitScreenMapName == World->GetFName())
 		{
-			World->GetGameInstance()->RemoveLocalPlayer(LocalPlayer);
+			bIsAvailableMap = true;
 		}
-		if (PlayerLayoutRatioAlphaBlendFeature->IsValidLowLevel())
-		{
-			PlayerLayoutRatioAlphaBlendFeature->UnregisterFeature();
-		}
-		FWorldDelegates::OnWorldBeginTearDown.Remove(OnWorldBeginTearDownDelegateHandle);
-	});
+	}
+	if (!bIsAvailableMap) return;
+	
+	if (ULocalPlayer* LocalPlayer = GEngine->GetLocalPlayerFromPlatformUserId(World, FVSUserQueryParams(1).GetUserId()))
+	{
+		GetWorld()->GetGameInstance()->RemoveLocalPlayer(LocalPlayer);
+	}
+	if (PlayerLayoutRatioAlphaBlendFeature->IsValidLowLevel())
+	{
+		PlayerLayoutRatioAlphaBlendFeature->UnregisterFeature();
+	}
+	FWorldDelegates::OnWorldBeginTearDown.Remove(OnWorldBeginTearDownDelegateHandle);
 }
 
 void UVSSplitScreenSubsystemW::SetPlayerState(EVSSplitScreenPlayer::Type Player, APlayerState* PlayerState)
@@ -152,7 +163,7 @@ void UVSSplitScreenSubsystemW::SetPlayerLayoutRatioInternal(float InRatio)
 
 	PlayerLayoutRatio = InRatio;
 
-	FSplitscreenData SplitscreenData = GetTwoPlayerVerticalSplitScreenData(this);
+	FSplitscreenData SplitscreenData = GetTwoPlayerVerticalSplitScreenData();
 
 	int32 PlayerOneID = SubsystemGI->GetIDFormPlayer(EVSSplitScreenPlayer::PlayerOne);
 	int32 PlayerTwoID = SubsystemGI->GetIDFormPlayer(EVSSplitScreenPlayer::PlayerTwo);
@@ -163,7 +174,7 @@ void UVSSplitScreenSubsystemW::SetPlayerLayoutRatioInternal(float InRatio)
 	SplitscreenData.PlayerData[PlayerTwoID].OriginX = PlayerLayoutRatio;
 	SplitscreenData.PlayerData[PlayerTwoID].SizeX = 1.f - PlayerLayoutRatio;
 	
-	SetTwoPlayerVerticalSplitScreenData(this, SplitscreenData);
+	SetTwoPlayerVerticalSplitScreenData(SplitscreenData);
 }
 
 void UVSSplitScreenSubsystemW::SetPlayerLayoutRatioWithBlend(float InRatio, const FAlphaBlendArgs& AlphaBlendArgs)
@@ -190,16 +201,12 @@ void UVSSplitScreenSubsystemW::OnPlayerLayoutRatioAlphaBlendFeatureUpdated(UVSAl
 	SetPlayerLayoutRatioInternal(Ratio);
 }
 
-FSplitscreenData UVSSplitScreenSubsystemW::GetTwoPlayerVerticalSplitScreenData(UObject* WorldContext)
+FSplitscreenData UVSSplitScreenSubsystemW::GetTwoPlayerVerticalSplitScreenData()
 {
-	if (!WorldContext || !WorldContext->GetWorld()) return FSplitscreenData();
-	FSplitscreenData SplitscreenData = VS_PRIVABLIC_MEMBER(WorldContext->GetWorld()->GetGameViewport(), UGameViewportClient, SplitscreenInfo)[ESplitScreenType::TwoPlayer_Vertical];
-	return SplitscreenData;
+	return *SplitScreenData;
 }
 
-void UVSSplitScreenSubsystemW::SetTwoPlayerVerticalSplitScreenData(UObject* WorldContext, const FSplitscreenData& Data)
+void UVSSplitScreenSubsystemW::SetTwoPlayerVerticalSplitScreenData(const FSplitscreenData& Data)
 {
-	if (!WorldContext || !WorldContext->GetWorld()) return;
-	FSplitscreenData& SplitscreenDataRef = VS_PRIVABLIC_MEMBER(WorldContext->GetWorld()->GetGameViewport(), UGameViewportClient, SplitscreenInfo)[ESplitScreenType::TwoPlayer_Vertical];
-	SplitscreenDataRef = Data;
+	*SplitScreenData = Data;
 }

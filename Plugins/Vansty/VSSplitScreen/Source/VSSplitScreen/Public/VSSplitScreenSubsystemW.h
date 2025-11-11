@@ -9,7 +9,6 @@
 
 class UVSObjectFeature;
 class UVSAlphaBlendFeature;
-class AVSSplitScreenManager;
 
 /**
  * 
@@ -22,8 +21,16 @@ class VSSPLITSCREEN_API UVSSplitScreenSubsystemW : public UWorldSubsystem
 public:
 	UVSSplitScreenSubsystemW();
 	static UVSSplitScreenSubsystemW* Get(const UObject* WorldContext);
-	
+
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
+
+	/** Manual call in GameState's StartPlay or similar position. */
+	UFUNCTION(BlueprintCallable, Category = "Split Screen")
+	void InitializeSplitScreen();
+
+	/** Manual call in GameState's endplay. */
+	UFUNCTION(BlueprintCallable, Category = "Split Screen")
+	void DeinitializeSplitScreen();
 
 	UFUNCTION(BlueprintCallable, Category = "Split Screen")
 	void SetPlayerState(EVSSplitScreenPlayer::Type Player, APlayerState* PlayerState);
@@ -43,8 +50,8 @@ public:
 	
 private:
 	void SetPlayerLayoutRatioInternal(float InRatio = 0.5f);
-	static FSplitscreenData GetTwoPlayerVerticalSplitScreenData(UObject* WorldContext);
-	static void SetTwoPlayerVerticalSplitScreenData(UObject* WorldContext, const FSplitscreenData& Data);
+	FSplitscreenData GetTwoPlayerVerticalSplitScreenData();
+	void SetTwoPlayerVerticalSplitScreenData(const FSplitscreenData& Data);
 
 	UFUNCTION()
 	void OnPlayerLayoutRatioAlphaBlendFeatureUpdated(UVSAlphaBlendFeature* Feature, float Alpha, float UpdatedTime);
@@ -64,4 +71,6 @@ private:
 	float DesiredPlayerLayoutRatio = 0.5f;
 	float BlendStartPlayerLayoutRatio = 0.5f;
 	FDelegateHandle OnWorldBeginTearDownDelegateHandle;
+
+	FSplitscreenData* SplitScreenData = nullptr;
 };

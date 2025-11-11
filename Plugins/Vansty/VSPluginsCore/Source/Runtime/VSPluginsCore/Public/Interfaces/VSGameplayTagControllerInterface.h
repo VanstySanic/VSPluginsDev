@@ -22,6 +22,12 @@ class VSPLUGINSCORE_API IVSGameplayTagControllerInterface
 	GENERATED_BODY()
 
 protected:
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, DisplayName = "GetGameplayTagController", Category = "GameplayTags")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "GameplayTags")
 	UVSGameplayTagController* GetGameplayTagController() const;
+
+	UFUNCTION(BlueprintNativeEvent, Category = "GameplayTags")
+	void OnGameplayTagsUpdated() const;
+
+	UFUNCTION(BlueprintNativeEvent, Category = "GameplayTags")
+	void OnGameplayTagEventNotified();
 };

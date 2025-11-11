@@ -5,6 +5,7 @@
 #include "VSCharacterMovementUtils.h"
 #include "VSChrMovCapsuleComponent.h"
 #include "VSMovementSystemSettings.h"
+#include "Classes/Features/VSControlRotationFeature.h"
 #include "Classes/Framework/VSGameplayTagController.h"
 #include "Features/VSCharacterMovementFeatureAgent.h"
 #include "GameFramework/Character.h"
@@ -200,7 +201,9 @@ FVector UVSCharacterMovementFeature::GetGravityDirection() const
 FRotator UVSCharacterMovementFeature::GetControlRotation() const
 {
 	if (GetController()) { return GetController()->GetControlRotation().GetNormalized(); }
-	return ChrMovFeatureAgentPrivate.IsValid() ? ChrMovFeatureAgentPrivate->ReplicatedControlRotation.GetNormalized() : FRotator::ZeroRotator;
+	return ChrMovFeatureAgentPrivate.IsValid() && ChrMovFeatureAgentPrivate->ControlRotationFeaturePrivate.IsValid()
+		? ChrMovFeatureAgentPrivate->ControlRotationFeaturePrivate->GetControlRotation()
+		: FRotator::ZeroRotator;
 }
 
 FVector UVSCharacterMovementFeature::GetRootLocation() const

@@ -159,7 +159,9 @@ void UVSChrMovFeature_FixedPointLeap::StopFixPointLeap()
 	{
 		GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(GetMovementCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - MovementData.CapsuleHalfHeightOffsetUSCZ);
 	}
-	MovementData = FMovementData();
+	MovementData.SettingsPtr = nullptr;
+	MovementData.AnimPtr = nullptr;
+	MovementData.SnappedParams = FVSFixedPointLeapSnappedParams();
 	
 	if (UVSActorLibrary::IsCharacterOnWalkableFloor(GetCharacter()))
 	{
@@ -186,6 +188,7 @@ bool UVSChrMovFeature_FixedPointLeap::TryFixedPointLeapInternal(const TArray<FDa
 	PredictProjectilePathParams.TraceChannel = ECC_Pawn;
 	PredictProjectilePathParams.ActorsToIgnore.Emplace(GetCharacter());
 	PredictProjectilePathParams.bTraceWithCollision = true;
+	PredictProjectilePathParams.ProjectileRadius = 1.f;
 	FPredictProjectilePathResult PredictProjectilePathResult;
 	
 	for (const FDataTableRowHandle& SettingRow : SettingRowsToUse)
@@ -206,9 +209,9 @@ bool UVSChrMovFeature_FixedPointLeap::TryFixedPointLeapInternal(const TArray<FDa
 		if (AvailableAnimRows.IsEmpty()) continue;
 		Algo::RandomShuffle(AvailableAnimRows);
 		
-		const float TargetHalfHeightSC = Settings->CapsuleHalfHeight > 0.f ? (Settings->CapsuleHalfHeight * GetScale3D().Z) : GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+		// const float TargetHalfHeightSC = Settings->CapsuleHalfHeight > 0.f ? (Settings->CapsuleHalfHeight * GetScale3D().Z) : GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 		const FVector& RootLocationWS = GetRootLocation();
-		PredictProjectilePathParams.StartLocation = RootLocationWS + GetUpDirection() * TargetHalfHeightSC;
+		PredictProjectilePathParams.StartLocation = RootLocationWS + PredictProjectilePathParams.ProjectileRadius;
 
 		for (const FDataTableRowHandle& AnimRow : AvailableAnimRows)
 		{
@@ -220,7 +223,7 @@ bool UVSChrMovFeature_FixedPointLeap::TryFixedPointLeapInternal(const TArray<FDa
 			if (!UGameplayStatics::PredictProjectilePath(this, PredictProjectilePathParams, PredictProjectilePathResult)) continue;
 			if (PredictProjectilePathResult.HitResult.bBlockingHit)
 			{
-				if (!GetCharacterMovement()->IsWalkable(PredictProjectilePathResult.HitResult) || !PredictProjectilePathResult.HitResult.ImpactPoint.Equals(PredictProjectilePathResult.HitResult.ImpactPoint, 8.f)) continue;
+				if (!GetCharacterMovement()->IsWalkable(PredictProjectilePathResult.HitResult)) continue;
 			}
 			
 			/** This is a valid process. */
@@ -257,7 +260,6 @@ void UVSChrMovFeature_FixedPointLeap::FixedPointLeapBySnappedParams(const FVSFix
 	MovementData.CachedParams.AnimPlayRate = MovementData.AnimPtr->PlayRate;
 	MovementData.CachedParams.ClientSideServerStartTime = UVSGameplayLibrary::GetServerTimeSeconds(this);
 	MovementData.CachedParams.ActionID = FMath::RandRange(0, INT16_MAX);
-	
 	
 	if (!IsFixedPointLeapMode())
 	{

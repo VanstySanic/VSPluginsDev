@@ -195,7 +195,7 @@ AController* UVSActorLibrary::GetControllerFromActor(AActor* Actor)
 	return GetControllerFromActor(Actor->GetOwner());
 }
 
-bool UVSActorLibrary::IsCharacterOnWalkableFloor(const ACharacter* Character, const float ToleranceToFloor, const bool bConsiderCollisionOffset)
+bool UVSActorLibrary::IsCharacterOnWalkableFloor(const ACharacter* Character, const float ToleranceToFloor, const bool bConsiderVerticalSpeedPrediction, const bool bConsiderCollisionOffset)
 {
 	if (!Character) return false;
 
@@ -206,7 +206,9 @@ bool UVSActorLibrary::IsCharacterOnWalkableFloor(const ACharacter* Character, co
 	const float CapsuleRadius = Character->GetCapsuleComponent()->GetScaledCapsuleRadius();
 	const FVector& LowerSphereCenter = Character->GetActorLocation() - Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight_WithoutHemisphere() * CharacterUpVector;
 
-	float DownTraceDistance = (bConsiderCollisionOffset ? 2.56f : 0.f) + (ToleranceToFloor * CharacterScaleZ) / UKismetMathLibrary::DegCos(WalkableAngle);
+	float DownTraceDistance = (bConsiderCollisionOffset ? 2.56f : 0.f)
+		+ ((bConsiderVerticalSpeedPrediction && Character->GetVelocity().Dot(CharacterUpVector) < 0.f) ? (Character->GetVelocity().ProjectOnToNormal(CharacterUpVector).Size() * Character->GetWorld()->GetDeltaSeconds()) : 0.f)
+		+ ((ToleranceToFloor * CharacterScaleZ) / UKismetMathLibrary::DegCos(WalkableAngle));
 	const FVector& TraceEnd = LowerSphereCenter - DownTraceDistance * CharacterUpVector;
 
 	const FCollisionShape& TraceShape = FCollisionShape::MakeSphere(CapsuleRadius);

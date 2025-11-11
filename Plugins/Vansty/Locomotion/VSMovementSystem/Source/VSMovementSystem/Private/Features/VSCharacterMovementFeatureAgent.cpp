@@ -11,6 +11,9 @@
 #include "Libraries/VSActorLibrary.h"
 #include "Libraries/VSGameplayLibrary.h"
 #include "VSPrivablic.h"
+#include "Classes/Features/VSControlRotationFeature.h"
+#include "Interfaces/VSControlRotationFeatureInterface.h"
+#include "Libraries/VSObjectLibrary.h"
 #include "Net/UnrealNetwork.h"
 #include "Types/VSCharacterMovementTags.h"
 
@@ -26,7 +29,6 @@ void UVSCharacterMovementFeatureAgent::GetLifetimeReplicatedProps(TArray<class F
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION(UVSCharacterMovementFeatureAgent, ReplicatedControlRotation, COND_SimulatedOnly);
 	DOREPLIFETIME_CONDITION(UVSCharacterMovementFeatureAgent, ReplicatedMovementInput, COND_SimulatedOnly);
 }
 
@@ -38,6 +40,15 @@ void UVSCharacterMovementFeatureAgent::Initialize_Implementation()
 
 	CharacterPrivate = Cast<ACharacter>(UVSActorLibrary::GetPawnFromActor(GetOwnerActor()));
 	check(CharacterPrivate.IsValid());
+
+	if (CharacterPrivate->GetClass()->ImplementsInterface(UVSControlRotationFeatureInterface::StaticClass()))
+	{
+		ControlRotationFeaturePrivate = IVSControlRotationFeatureInterface::Execute_GetControlRotationFeature(CharacterPrivate.Get());
+	}
+	else
+	{
+		ControlRotationFeaturePrivate = UVSObjectLibrary::FindFeatureByClassFromObject<UVSControlRotationFeature>(CharacterPrivate.Get());
+	}
 	
 	CharacterMovementComponentPrivate = CharacterPrivate->GetCharacterMovement();
 	check(CharacterMovementComponentPrivate.IsValid() );
@@ -67,8 +78,6 @@ void UVSCharacterMovementFeatureAgent::Uninitialize_Implementation()
 void UVSCharacterMovementFeatureAgent::BeginPlay_Implementation()
 {
 	Super::BeginPlay_Implementation();
-
-	if (CharacterPrivate->HasAuthority()) { ReplicatedControlRotation = CharacterPrivate->GetControlRotation(); }
 	
 	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
 	GameplayTagController->SetTagCount(GetMovementMode(), 1);
@@ -99,7 +108,6 @@ void UVSCharacterMovementFeatureAgent::UpdateMovement_Implementation(float Delta
 	
 	if (GetOwnerActor()->HasAuthority())
 	{
-		ReplicatedControlRotation = CharacterPrivate->GetControlRotation();
 		ReplicatedMovementInput = GetCharacterMovement()->GetCurrentAcceleration();
 	}
 	else if (!UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(GetOwnerActor()))

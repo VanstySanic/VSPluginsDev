@@ -67,14 +67,16 @@ void UVSChrMovFeature_MantleVaultMovement::StopMantleVault()
 {
 	if (UVSActorLibrary::IsCharacterOnWalkableFloor(GetCharacter()))
 	{
-		GetCharacterMovement()->StopMovementImmediately();
+		// GetCharacterMovement()->StopMovementImmediately();
 	}
 	if (!FMath::IsNearlyZero(MovementData.CapsuleHalfHeightOffsetUSCZ, 0.01f))
 	{
 		GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(GetMovementCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - MovementData.CapsuleHalfHeightOffsetUSCZ);
 		MovementData.CapsuleHalfHeightOffsetUSCZ = 0.f;
 	}
-	MovementData = FMovementData();
+	MovementData.SettingsPtr = nullptr;
+	MovementData.AnimSettingsPtr = nullptr;
+	MovementData.SnappedParams = FVSMantleVaultSnappedParams();
 
 	if (IsMantlingOrVaultingMode())
 	{
@@ -261,7 +263,7 @@ void UVSChrMovFeature_MantleVaultMovement::OnMovementTagEventNotified_Implementa
 			StopMantleVault();
 		}
 	}
-	else if (IsMantlingOrVaultingMode() && AutoBreakTagQuery.Matches(TagEvent, GameplayTags))
+	if (IsMantlingOrVaultingMode() && AutoBreakTagQuery.Matches(TagEvent, GameplayTags))
 	{
 		StopMantleVault();
 	}

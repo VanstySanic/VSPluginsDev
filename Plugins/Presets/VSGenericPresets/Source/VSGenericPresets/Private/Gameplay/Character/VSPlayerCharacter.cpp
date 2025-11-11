@@ -4,7 +4,7 @@
 #include "Classes/Features/VSObjectFeature.h"
 #include "Classes/Features/VSObjectFeatureComponent.h"
 #include "GameFramework/PlayerState.h"
-#include "Kismet/GameplayStatics.h"
+#include "Libraries/VSActorLibrary.h"
 
 AVSPlayerCharacter::AVSPlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -18,26 +18,28 @@ void AVSPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (GetPlayerState())
-	{
-		if (FeatureComponent && !FeatureComponent->bRegisterOnBeginPlay && !FeatureComponent->GetRootFeature()->IsRegistered())
-		{
-			FeatureComponent->GetRootFeature()->RegisterFeature();	
-		}
-	}
+	CheckExpectedTimeToSetup();
 }
 
 void AVSPlayerCharacter::OnPlayerStateChanged(APlayerState* NewPlayerState, APlayerState* OldPlayerState)
 {
 	Super::OnPlayerStateChanged(NewPlayerState, OldPlayerState);
 
-	if (HasActorBegunPlay())
-	{
-		if (FeatureComponent && !FeatureComponent->bRegisterOnBeginPlay && !FeatureComponent->GetRootFeature()->IsRegistered())
-		{
-			FeatureComponent->GetRootFeature()->RegisterFeature();	
-		}
-	}
+	CheckExpectedTimeToSetup();
+}
+
+void AVSPlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	CheckExpectedTimeToSetup();
+}
+
+void AVSPlayerCharacter::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+
+	CheckExpectedTimeToSetup();
 }
 
 UAbilitySystemComponent* AVSPlayerCharacter::GetAbilitySystemComponent() const
@@ -48,6 +50,22 @@ UAbilitySystemComponent* AVSPlayerCharacter::GetAbilitySystemComponent() const
 	}
 	
 	return nullptr;
+}
+
+void AVSPlayerCharacter::SetupAtExpectedTime_Implementation()
+{
+	if (FeatureComponent && !FeatureComponent->bRegisterOnBeginPlay && !FeatureComponent->GetRootFeature()->IsRegistered())
+	{
+		FeatureComponent->GetRootFeature()->RegisterFeature();	
+	}
+}
+
+void AVSPlayerCharacter::CheckExpectedTimeToSetup()
+{
+	if (bHasBeenSetupAtTheBestTime && !HasActorBegunPlay() || !GetPlayerState()) return;
+	if (UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(this) && !GetController()) return;
+	bHasBeenSetupAtTheBestTime = true;
+	SetupAtExpectedTime();
 }
 
 UVSGameplayTagController* AVSPlayerCharacter::GetGameplayTagController_Implementation() const

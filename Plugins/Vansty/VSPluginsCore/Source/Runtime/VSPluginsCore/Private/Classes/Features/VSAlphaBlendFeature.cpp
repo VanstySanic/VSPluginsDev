@@ -104,12 +104,12 @@ void UVSAlphaBlendFeature::SetUpdateTimeInterval(float Interval)
 
 void UVSAlphaBlendFeature::DoFinishedLogic()
 {
-	OnFinished.Broadcast(this, Alpha, UpdatedTime);
-		
 	if (bStopAutoUpdateWhenFinished)
 	{
 		SetAutoUpdate(false);
 	}
+	
+	OnFinished.Broadcast(this, Alpha, UpdatedTime);
 }
 
 void UVSAlphaBlendFeature::Update(float DeltaTime)

@@ -145,6 +145,12 @@ APostProcessVolume* UVSGameplayLibrary::GetPostProcessVolumeAtLocation(UObject* 
 	return BestVolume;
 }
 
+ULocalPlayer* UVSGameplayLibrary::GetLocalPlayerFromID(const UObject* WorldContext, const int32 PlayerID)
+{
+	if (!GEngine || !WorldContext || !WorldContext->GetWorld()) return nullptr;
+	return GEngine->GetLocalPlayerFromPlatformUserId(WorldContext->GetWorld(), FVSUserQueryParams(PlayerID).GetUserId());
+}
+
 FText UVSGameplayLibrary::GetRichStyledText(const FVSRichStyledText& RichStyledText)
 {
 	return RichStyledText.GetText();

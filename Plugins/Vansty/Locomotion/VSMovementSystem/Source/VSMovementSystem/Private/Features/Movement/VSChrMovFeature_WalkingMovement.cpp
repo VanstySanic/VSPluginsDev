@@ -1,329 +1,151 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
-#include "Features/Movement/VSChrMovFeature_WalkingMovement.h"
-#include "VSChrMovCapsuleComponent.h"
-#include "Classes/Framework/VSGameplayTagController.h"
-#include "Components/CapsuleComponent.h"
-#include "Features/VSCharacterMovementFeatureAgent.h"
-#include "GameFramework/Character.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "Libraries/VSActorLibrary.h"
-#include "Net/UnrealNetwork.h"
-#include "Net/Core/PushModel/PushModel.h"
-#include "Types/VSCharacterMovementTags.h"
+#pragma once
 
-UVSChrMovFeature_WalkingMovement::UVSChrMovFeature_WalkingMovement(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer)
+#include "CoreMinimal.h"
+#include "Features/VSCharacterMovementFeature.h"
+#include "Types/VSCharacterMovementTypes.h"
+#include "Types/VSGameplayTypes.h"
+#include "VSChrMovFeature_WalkingMovement.generated.h"
+
+/**
+ * 
+ */
+UCLASS(DisplayName = "Feature.ChrMov.Movement.Walking")
+class VSMOVEMENTSYSTEM_API UVSChrMovFeature_WalkingMovement : public UVSCharacterMovementFeature
 {
-	DefaultStance = EVSStance::Standing;
-	DefaultGaits = {
-		{EVSStance::Standing, EVSGait::Running},
-		{EVSStance::Squatting, EVSGait::Walking},
-		{EVSStance::Crouching, EVSGait::Walking}
-	};
+	GENERATED_UCLASS_BODY()
 
-	DefaultUncrouchedStance = EVSStance::Standing;
-	StancedHalfHeights.Emplace(EVSStance::Squatting, 60.f);
-	StancedHalfHeights.Emplace(EVSStance::Crouching, 60.f);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnStanceChangedSignature, const FGameplayTag&, NewStance, const FGameplayTag&, PrevStance);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGaitChangedSignature, const FGameplayTag&, NewGait, const FGameplayTag&, PrevGait);
 
-	DefaultMovementBaseSettings.MaxSpeed = 600.f;
-	DefaultCrouchedMovementBaseSettings.MaxSpeed = 240.f;
+public:
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
-	SetIsReplicated(true);
-}
+protected:
+	virtual void BeginPlay_Implementation() override;
+	virtual void EndPlay_Implementation() override;
+	virtual void Tick_Implementation(float DeltaTime) override;
+	virtual bool CanUpdateMovement_Implementation() const override;
+	virtual void UpdateMovement_Implementation(float DeltaTime) override;
+	virtual void OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent) override;
 
+public:
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	bool IsWalkingMode() const;
 
-void UVSChrMovFeature_WalkingMovement::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	bool IsPrevWalkingMode() const;
 
-	FDoRepLifetimeParams SharedParams;
-	SharedParams.bIsPushBased = true;
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	FGameplayTag GetStance() const { return MovementData.Stance; }
 
-	DOREPLIFETIME_WITH_PARAMS_FAST(UVSChrMovFeature_WalkingMovement, ReplicatedStance, SharedParams);
-}
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	FGameplayTag GetPrevStance() const { return MovementData.PrevStance; }
 
-void UVSChrMovFeature_WalkingMovement::BeginPlay_Implementation()
-{
-	Super::BeginPlay_Implementation();
+	/**
+	 * Get the gait for the specified stance.
+	 * If InStance is empty, return the gait in the current stance.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "InStance"))
+	FGameplayTag GetGait(const FGameplayTag& InStance = FGameplayTag()) const;
 
-	MovementData.Gaits = DefaultGaits;
-	MovementData.CurrentMovementBaseSettings = MovementData.Stance == EVSStance::Crouching ? DefaultCrouchedMovementBaseSettings : DefaultMovementBaseSettings;
-	SetStance(DefaultStance);
-}
+	/**
+	 * Get the prev gait for the specified stance.
+	 * If InStance is empty, return the gait in the current stance.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "InStance"))
+	FGameplayTag GetPrevGait(const FGameplayTag& InStance = FGameplayTag()) const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "InStance"))
+	void SetStance(const FGameplayTag& InStance, bool bReplicated = false);
 
-void UVSChrMovFeature_WalkingMovement::EndPlay_Implementation()
-{
-	if (UVSGameplayTagController* GameplayTagController = GetGameplayTagController())
-	{
-		GameplayTagController->SetTagCount(MovementData.PrevStance, 0);
-		GameplayTagController->SetTagCount(GetGait(MovementData.PrevStance), 0);
-		GameplayTagController->NotifyTagsUpdated();
-	}
+	/**
+	 * Set the gait for the specified stance.
+	 * If InStance is empty, set the gait for the current stance.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Movement", meta = (AutoCreateRefTerm = "InGait, InStance"))
+	void SetGait(const FGameplayTag& InGait, const FGameplayTag& InStance = FGameplayTag(), bool bReplicated = false);
 
-	Super::EndPlay_Implementation();
-}
-
-void UVSChrMovFeature_WalkingMovement::Tick_Implementation(float DeltaTime)
-{
-	Super::Tick_Implementation(DeltaTime);
-
-	ListenToCrouchState();
-}
-
-void UVSChrMovFeature_WalkingMovement::OnMovementTagEventNotified_Implementation(const FGameplayTag& TagEvent)
-{
-	Super::OnMovementTagEventNotified_Implementation(TagEvent);
-
-	if (TagEvent == EVSMovementEvent::StateChange_MovementMode)
-	{
-		if (IsWalkingMode() && !IsPrevWalkingMode())
-		{
-			RefreshHalfHeight();
-			ApplyMovementBaseSettings(MovementData.CurrentMovementBaseSettings);
-		}
-		else if (!IsWalkingMode() && IsPrevWalkingMode())
-		{
-			if (GetStance() == EVSStance::Crouching)
-			{
-				GetCharacterMovement()->UnCrouch();
-			}
-			else if (!FMath::IsNearlyZero(MovementData.CapsuleHalfHeightOffsetUSCZ, 0.01f))
-			{
-				GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(GetMovementCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - MovementData.CapsuleHalfHeightOffsetUSCZ);
-			}
-			MovementData.CapsuleHalfHeightOffsetUSCZ = 0.f;
-		}
-	}
-	else if (TagEvent == EVSMovementEvent::StateChange_Stance)
-	{
-		if (IsWalkingMode())
-		{
-			RefreshHalfHeight();
-		}
-	}
-	if (IsWalkingMode())
-	{
-		RefreshMovementBaseSettings(TagEvent);
-	}
-}
-
-bool UVSChrMovFeature_WalkingMovement::IsWalkingMode() const
-{
-	return GetMovementMode() == EVSMovementMode::Walking || GetMovementMode() == EVSMovementMode::NavWalking;
-}
-
-bool UVSChrMovFeature_WalkingMovement::IsPrevWalkingMode() const
-{
-	return GetPrevMovementMode() == EVSMovementMode::Walking || GetPrevMovementMode() == EVSMovementMode::NavWalking;
-}
-
-FGameplayTag UVSChrMovFeature_WalkingMovement::GetGait(const FGameplayTag& InStance) const
-{
-	const FGameplayTag& StanceToFind = InStance == FGameplayTag::EmptyTag ? GetStance() : InStance;
-	if (const FGameplayTag* GaitPtr = MovementData.Gaits.Find(StanceToFind))
-	{
-		return *GaitPtr;
-	}
-
-	return FGameplayTag::EmptyTag;
-}
-
-FGameplayTag UVSChrMovFeature_WalkingMovement::GetPrevGait(const FGameplayTag& InStance) const
-{
-	const FGameplayTag& StanceToFind = InStance == FGameplayTag::EmptyTag ? GetStance() : InStance;
-	if (const FGameplayTag* GaitPtr = MovementData.PrevGaits.Find(StanceToFind))
-	{
-		return *GaitPtr;
-	}
-
-	return FGameplayTag::EmptyTag;
-}
-
-void UVSChrMovFeature_WalkingMovement::SetStance(const FGameplayTag& InStance, bool bReplicated)
-{
-	if (bReplicated && GetIsReplicated() && UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
-	{
-		SetStance_Server(InStance);
-	}
-	else
-	{
-		SetStanceInternal(InStance);
-	}
-}
-
-void UVSChrMovFeature_WalkingMovement::SetStance_Server_Implementation(const FGameplayTag& InStance)
-{
-	ReplicatedStance = InStance;
-	MARK_PROPERTY_DIRTY_FROM_NAME(UVSChrMovFeature_WalkingMovement, ReplicatedStance, this);
-	if (GetOwnerActor() && GetOwnerActor()->HasAuthority())
-	{
-		OnRep_ReplicatedStance();
-	}
-}
-
-void UVSChrMovFeature_WalkingMovement::SetGait(const FGameplayTag& InGait, const FGameplayTag& InStance, bool bReplicated)
-{
-	if (bReplicated && GetIsReplicated() && UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(GetOwnerActor()))
-	{
-		SetGait_Server(InGait, InStance);
-	}
-	else
-	{
-		SetGaitInternal(InGait, InStance);
-	}
-}
-
-void UVSChrMovFeature_WalkingMovement::ListenToCrouchState()
-{
+private:
 	/* Listen to the crouch state here, so user needn't do it in the character. Sync the stance and crouch state. */
-	const bool bIsOriginalCrouching = GetCharacterMovement()->IsCrouching();
-	if (MovementData.Stance == EVSStance::Crouching && (!bIsOriginalCrouching && !GetCharacterMovement()->bWantsToCrouch))
+	void ListenToCrouchState();
+	void RefreshHalfHeight();
+	void ApplyMovementBaseSettings(const FVSMovementBaseSettings& Settings);
+	void RefreshMovementBaseSettings(const FGameplayTag& TagEvent);
+	void SetStanceInternal(const FGameplayTag& InStance);
+	void SetGaitInternal(const FGameplayTag& InGait, const FGameplayTag& InStance);
+	void AdjustFloorHeight();
+	
+	UFUNCTION(Server, Reliable)
+	void SetStance_Server(const FGameplayTag& InStance);
+
+	UFUNCTION(Server, Reliable)
+	void SetGait_Server(const FGameplayTag& InGait, const FGameplayTag& InStance = FGameplayTag());
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void SetGait_Multicast(const FGameplayTag& InGait, const FGameplayTag& InStance);
+	
+	UFUNCTION()
+	void OnRep_ReplicatedStance();
+	
+
+public:
+	UPROPERTY(BlueprintReadOnly, BlueprintAssignable, Category = "Movement")
+	FOnStanceChangedSignature OnStanceChanged;
+
+	UPROPERTY(BlueprintReadOnly, BlueprintAssignable, Category = "Movement")
+	FOnGaitChangedSignature OnGaitChanged;
+	
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	FGameplayTag DefaultStance;
+
+	/** Stance will be set to that after the character is uncrouched by default. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	FGameplayTag DefaultUncrouchedStance;
+	
+	/** <Stance, Gait> */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	TMap<FGameplayTag, FGameplayTag> DefaultGaits;
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	TMap<FGameplayTag, float> StancedHalfHeights;
+
+	/** Used when movement settings is refreshed and no valid one is selected. */
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	FVSMovementBaseSettings DefaultMovementBaseSettings;
+	
+	/** Used when movement settings is refreshed and no valid one is selected. */
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	FVSMovementBaseSettings DefaultCrouchedMovementBaseSettings;
+	
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	TMap<FVSMovementBaseSettings, FVSGameplayTagEventQuery> TagQueriedMovementBaseSettings;
+
+	/** Works as an entry to define when to refresh the tagged movement base settings. */
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	FVSGameplayTagEventQuery RefreshMovementBaseSettingsTagQuery;
+
+private:
+	UPROPERTY(ReplicatedUsing = "OnRep_ReplicatedStance")
+	FGameplayTag ReplicatedStance;
+	
+	struct FMovementData
 	{
-		if (MovementData.DesiredUncrouchedStance != FGameplayTag::EmptyTag)
+		FMovementData()
 		{
-			SetStanceInternal(MovementData.DesiredUncrouchedStance);
-			MovementData.DesiredUncrouchedStance = FGameplayTag::EmptyTag;
 		}
-		else
-		{
-			SetStanceInternal(DefaultUncrouchedStance);
-		}
-	}
-	else if (MovementData.Stance != EVSStance::Crouching && (bIsOriginalCrouching && GetCharacterMovement()->bWantsToCrouch))
-	{
-		SetStanceInternal(EVSStance::Crouching);
-	}
-}
-
-void UVSChrMovFeature_WalkingMovement::RefreshHalfHeight()
-{
-	if (!GetCharacter() || !IsWalkingMode()) return;
-
-	const UCapsuleComponent* DefaultCapsule =  GetCharacter()->GetClass()->GetDefaultObject<ACharacter>()->GetCapsuleComponent();
-
-	const float LastUnscaledHalfHeight = GetCharacter()->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
-	const float NewUnscaledHalfHeight = StancedHalfHeights.Contains(MovementData.Stance) ? StancedHalfHeights.FindRef(MovementData.Stance)
-		: (MovementData.Stance == EVSStance::Crouching ? GetCharacterMovement()->GetCrouchedHalfHeight() : DefaultCapsule->GetUnscaledCapsuleHalfHeight());
-	
-	/** The crouching state is handled by the character movement. */
-	if (GetStance() == EVSStance::Crouching || (GetStance() == EVSStance::Standing && GetPrevStance() == EVSStance::Crouching))
-	{
-		GetMovementCapsuleComponent()->SetCapsuleCenterOffsetZ(0.f);
-		GetCharacter()->GetCapsuleComponent()->SetCapsuleHalfHeight(NewUnscaledHalfHeight);
-		MovementData.CapsuleHalfHeightOffsetUSCZ = NewUnscaledHalfHeight - DefaultCapsule->GetUnscaledCapsuleHalfHeight();
-		return;
-	}
-	
-	const float DeltaUnscaledHalfHeight = NewUnscaledHalfHeight - LastUnscaledHalfHeight;
-	if (!FMath::IsNearlyZero(DeltaUnscaledHalfHeight, 0.01f))
-	{
-		GetMovementCapsuleComponent()->SetCapsuleHalfHeightAndKeepRoot(NewUnscaledHalfHeight);
-		MovementData.CapsuleHalfHeightOffsetUSCZ += DeltaUnscaledHalfHeight;
-	}
-}
-
-void UVSChrMovFeature_WalkingMovement::ApplyMovementBaseSettings(const FVSMovementBaseSettings& Settings)
-{
-	if (!IsWalkingMode()) return;
-	
-	GetCharacterMovement()->MaxWalkSpeed = Settings.MaxSpeed * GetScale3D().X;
-	GetCharacterMovement()->MaxWalkSpeedCrouched = Settings.MaxSpeed * GetScale3D().X;
 		
-	GetCharacterMovement()->MaxAcceleration = Settings.MaxAcceleration * GetScale3D().X;
-	GetCharacterMovement()->BrakingDecelerationWalking = Settings.BrakingDeceleration * GetScale3D().X;
+		FGameplayTag Stance;
+		FGameplayTag PrevStance;
+		/** <Stance, Gait> */
+		TMap<FGameplayTag, FGameplayTag> Gaits;
+		TMap<FGameplayTag, FGameplayTag> PrevGaits;
+		FVSMovementBaseSettings CurrentMovementBaseSettings;
 		
-	GetCharacterMovement()->BrakingFriction = Settings.BrakingFriction * GetScale3D().X;
-	GetCharacterMovement()->bUseSeparateBrakingFriction = Settings.bUseSeparateBrakingFriction;
-	GetCharacterMovement()->BrakingFrictionFactor = Settings.BrakingFrictionFactor;
-}
-
-void UVSChrMovFeature_WalkingMovement::RefreshMovementBaseSettings(const FGameplayTag& TagEvent)
-{
-	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
-	FGameplayTagContainer GameplayTags;
-	GameplayTagController->GetOwnedGameplayTags(GameplayTags);
-	
-	if (RefreshMovementBaseSettingsTagQuery.Matches(TagEvent, GameplayTags))
-	{
-		MovementData.CurrentMovementBaseSettings = MovementData.Stance == EVSStance::Crouching ? DefaultCrouchedMovementBaseSettings : DefaultMovementBaseSettings;
-		for (auto& Settings : TagQueriedMovementBaseSettings)
-		{
-			if (Settings.Value.Matches(TagEvent, GameplayTags))
-			{
-				MovementData.CurrentMovementBaseSettings = Settings.Key;
-				break;
-			}
-		}
-	}
-	ApplyMovementBaseSettings(MovementData.CurrentMovementBaseSettings);
-}
-
-void UVSChrMovFeature_WalkingMovement::SetStanceInternal(const FGameplayTag& InStance)
-{
-	if (!GetCharacter()) return;
-
-	/* Special judges for crouching. Process some crouch logic here. Sync the stance and crouch state. */
-	const bool bIsOriginalCrouching = GetCharacterMovement()->IsCrouching();
-	if (InStance == EVSStance::Crouching && (!bIsOriginalCrouching && !GetCharacterMovement()->bWantsToCrouch))
-	{
-		GetCharacter()->Crouch();
-		return;
-	}
-	if (InStance != EVSStance::Crouching && (bIsOriginalCrouching && GetCharacterMovement()->bWantsToCrouch))
-	{
-		GetCharacter()->UnCrouch();
-		MovementData.DesiredUncrouchedStance = InStance;
-		return;
-	}
-	
-	const FGameplayTag& CurrentStance = GetStance();
-	if (CurrentStance == InStance) return;
-
-	MovementData.PrevStance = CurrentStance;
-	MovementData.Stance = InStance;
-
-	UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
-	GameplayTagController->SetTagCount(MovementData.PrevStance, 0);
-	GameplayTagController->SetTagCount(MovementData.Stance, 1);
-	GameplayTagController->SetTagCount(GetGait(MovementData.PrevStance), 0);
-	GameplayTagController->SetTagCount(GetGait(MovementData.Stance), 1);
-	GameplayTagController->NotifyTagsUpdated();
-	GameplayTagController->NotifyTagEvent(EVSMovementEvent::StateChange_Stance);
-
-	OnStanceChanged.Broadcast(MovementData.Stance, MovementData.PrevStance);
-}
-
-void UVSChrMovFeature_WalkingMovement::SetGaitInternal(const FGameplayTag& InGait, const FGameplayTag& InStance)
-{
-	const FGameplayTag& StanceToFind = InStance == FGameplayTag::EmptyTag ? GetStance() : InStance;
-	const FGameplayTag& PrevGait = GetGait(InStance);
-	if (PrevGait == InGait) return;
-
-	MovementData.PrevGaits.Emplace(InStance, PrevGait);
-	MovementData.Gaits.Emplace(StanceToFind, InGait);
-	if (InStance == MovementData.Stance && InGait == GetGait())
-	{
-		UVSGameplayTagController* GameplayTagController = GetGameplayTagController();
-		GameplayTagController->SetTagCount(PrevGait, 0);
-		GameplayTagController->SetTagCount(InGait, 1);
-		GameplayTagController->NotifyTagsUpdated();
-		GameplayTagController->NotifyTagEvent(EVSMovementEvent::StateChange_Gait);
-		OnGaitChanged.Broadcast(InGait, PrevGait);
-	}
-}
-
-void UVSChrMovFeature_WalkingMovement::SetGait_Server_Implementation(const FGameplayTag& InGait, const FGameplayTag& InStance)
-{
-	SetGait_Multicast(InGait, InStance);
-}
-
-void UVSChrMovFeature_WalkingMovement::SetGait_Multicast_Implementation(const FGameplayTag& InGait, const FGameplayTag& InStance)
-{
-	SetGaitInternal(InGait, InStance);
-}
-
-void UVSChrMovFeature_WalkingMovement::OnRep_ReplicatedStance()
-{
-	SetStanceInternal(ReplicatedStance);
-}
+		/** Only use once and reset. */
+		FGameplayTag DesiredUncrouchedStance = FGameplayTag::EmptyTag;
+		float CapsuleHalfHeightOffsetUSCZ = 0.f;
+	} MovementData;
+};

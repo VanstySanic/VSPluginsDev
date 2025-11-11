@@ -6,6 +6,7 @@
 #include "Classes/Framework/VSGameplayTagController.h"
 #include "Gameplay/VSPlayerState.h"
 #include "Kismet/GameplayStatics.h"
+#include "Libraries/VSActorLibrary.h"
 
 AVSPlayerController::AVSPlayerController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -22,26 +23,14 @@ void AVSPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (PlayerState)
-	{
-		if (FeatureComponent && !FeatureComponent->bRegisterOnBeginPlay && !FeatureComponent->GetRootFeature()->IsRegistered())
-		{
-			FeatureComponent->GetRootFeature()->RegisterFeature();	
-		}
-	}
+	CheckExpectedTimeToSetup();
 }
 
 void AVSPlayerController::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
 
-	if (HasActorBegunPlay())
-	{
-		if (FeatureComponent && !FeatureComponent->bRegisterOnBeginPlay && !FeatureComponent->GetRootFeature()->IsRegistered())
-		{
-			FeatureComponent->GetRootFeature()->RegisterFeature();
-		}
-	}
+	CheckExpectedTimeToSetup();
 }
 
 UAbilitySystemComponent* AVSPlayerController::GetAbilitySystemComponent() const
@@ -58,6 +47,14 @@ UVSObjectFeatureComponent* AVSPlayerController::GetFeatureComponent() const
 	return FeatureComponent;
 }
 
+void AVSPlayerController::SetupAtExpectedTime_Implementation()
+{
+	if (FeatureComponent && !FeatureComponent->bRegisterOnBeginPlay && !FeatureComponent->GetRootFeature()->IsRegistered())
+	{
+		FeatureComponent->GetRootFeature()->RegisterFeature();	
+	}
+}
+
 UVSGameplayTagController* AVSPlayerController::GetGameplayTagController_Implementation() const
 {
 	if (PlayerState && PlayerState.GetClass()->ImplementsInterface(UVSGameplayTagControllerInterface::StaticClass()))
@@ -66,4 +63,11 @@ UVSGameplayTagController* AVSPlayerController::GetGameplayTagController_Implemen
 	}
 	
 	return nullptr;
+}
+
+void AVSPlayerController::CheckExpectedTimeToSetup()
+{
+	if (bHasBeenSetupAtExpectedTime || !HasActorBegunPlay() || !PlayerState) return;
+	bHasBeenSetupAtExpectedTime = true;
+	SetupAtExpectedTime();
 }

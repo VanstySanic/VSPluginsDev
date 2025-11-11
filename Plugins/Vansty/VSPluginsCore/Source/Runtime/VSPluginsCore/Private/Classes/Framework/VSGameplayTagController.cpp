@@ -4,6 +4,7 @@
 #include "AbilitySystemComponent.h"
 #include "Libraries/VSActorLibrary.h"
 #include "VSPrivablic.h"
+#include "GameFramework/PlayerState.h"
 #include "Types/VSGameplayTypes.h"
 
 VS_DECLARE_PRIVABLIC_MEMBER(UAbilitySystemComponent, GameplayTagCountContainer, FGameplayTagCountContainer);
@@ -23,6 +24,33 @@ void UVSGameplayTagController::Initialize_Implementation()
 	check(AbilitySystemComponentPrivate.IsValid());
 	FGameplayTagCountContainer& GameplayTagCountContainer = VS_PRIVABLIC_MEMBER(AbilitySystemComponentPrivate.Get(), UAbilitySystemComponent, GameplayTagCountContainer);
 	OnAnyTagChangeDelegateHandle = VS_PRIVABLIC_MEMBER(&GameplayTagCountContainer, FGameplayTagCountContainer, OnAnyTagChangeDelegate).AddUObject(this, &UVSGameplayTagController::OnAnyTagChange);
+
+	/** Auto bind delegates. */
+	if (bBindDelegatesWhenInitialized)
+	{
+		if (APlayerState* PlayerState = Cast<APlayerState>(GetOwnerActor()))
+		{
+			BindDelegateForObject(PlayerState);
+			BindDelegateForObject(PlayerState->GetOwningController());
+			BindDelegateForObject(PlayerState->GetPawn());
+		}
+		else if (APawn* Pawn = UVSActorLibrary::GetPawnFromActor(GetOwnerActor()))
+		{
+			BindDelegateForObject(Pawn->GetPlayerState());
+			BindDelegateForObject(Pawn->GetController());
+			BindDelegateForObject(Pawn);
+		}
+		else if (AController* Controller = UVSActorLibrary::GetControllerFromActor(GetOwnerActor()))
+		{
+			BindDelegateForObject(Controller->GetPlayerState<APlayerState>());
+			BindDelegateForObject(Controller);
+			BindDelegateForObject(Controller->GetPawn());
+		}
+		else
+		{
+			BindDelegateForObject(GetOwnerActor());
+		}
+	}
 }
 
 void UVSGameplayTagController::Uninitialize_Implementation()
@@ -239,6 +267,32 @@ FString UVSGameplayTagController::ToDebugString()
 #endif
 }
 
+void UVSGameplayTagController::BindDelegateForObject(UObject* Object)
+{
+	if (!Object || !Object->GetClass()->ImplementsInterface(UVSGameplayTagControllerInterface::StaticClass())) return;
+	
+	TScriptDelegate Delegate;
+	Delegate.BindUFunction(Object, "OnGameplayTagsUpdated");
+	OnTagsUpdated.Add(Delegate);
+	
+	Delegate.Unbind();
+	Delegate.BindUFunction(Object, "OnGameplayTagEventNotified");
+	OnTagEventNotified.Add(Delegate);
+}
+
+void UVSGameplayTagController::UnbindDelegateForObject(UObject* Object)
+{
+	if (!Object || !Object->GetClass()->ImplementsInterface(UVSGameplayTagControllerInterface::StaticClass())) return;
+	
+	TScriptDelegate Delegate;
+	Delegate.BindUFunction(GetOwnerActor(), "OnGameplayTagsUpdated");
+	OnTagsUpdated.Remove(Delegate);
+	
+	Delegate.Unbind();
+	Delegate.BindUFunction(Object, "OnGameplayTagEventNotified");
+	OnTagEventNotified.Remove(Delegate);
+}
+
 UAbilitySystemComponent* UVSGameplayTagController::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponentPrivate.IsValid()
@@ -334,4 +388,3 @@ void UVSGameplayTagController::NotifyTagEvent_Multicast_Implementation(const FGa
 		NotifyTagEventInternal(TagEvent);
 	}
 }
-

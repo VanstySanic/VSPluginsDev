@@ -3,6 +3,7 @@
 #include "Features/VSCameraFeature.h"
 #include "VSCameraViewData.h"
 #include "Camera/CameraComponent.h"
+#include "Classes/Features/VSControlRotationFeature.h"
 #include "Features/VSCameraFeatureAgent.h"
 #include "Libraries/VSObjectLibrary.h"
 
@@ -54,8 +55,8 @@ UCameraComponent* UVSCameraFeature::GetCameraComponent() const
 
 FRotator UVSCameraFeature::GetControlRotation() const
 {
-	return CameraFeatureAgentPrivate.IsValid()
-		? CameraFeatureAgentPrivate->ReplicatedControlRotation
+	return CameraFeatureAgentPrivate.IsValid() && CameraFeatureAgentPrivate->ControlRotationFeaturePrivate.IsValid()
+		? CameraFeatureAgentPrivate->ControlRotationFeaturePrivate->GetControlRotation()
 		: FRotator::ZeroRotator;
 }
 
