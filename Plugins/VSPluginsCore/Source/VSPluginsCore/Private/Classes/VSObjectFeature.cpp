@@ -1,0 +1,499 @@
+﻿// Copyright VanstySanic. All Rights Reserved.
+
+#include "Classes/VSObjectFeature.h"
+#include "Classes/VSTickableObject.h"
+#include "Net/UnrealNetwork.h"
+#include "Net/Core/PushModel/PushModel.h"
+
+DEFINE_LOG_CATEGORY(LogObjectFeature);
+
+UVSObjectFeature::UVSObjectFeature(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	OwnerActorPrivate = GetTypedOuter<AActor>();
+	OwnerComponentPrivate = GetTypedOuter<UActorComponent>();
+	OwnerFeaturePrivate = GetTypedOuter<UVSObjectFeature>();
+
+	TickProxy = CreateDefaultSubobject<UVSObjectTickProxy>(TEXT("TickProxy"));
+}
+
+void UVSObjectFeature::BeginDestroy()
+{
+	DestroyFeature();
+	
+	Super::BeginDestroy();
+}
+
+void UVSObjectFeature::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	UBlueprintGeneratedClass* BPClass = Cast<UBlueprintGeneratedClass>(GetClass());
+	if (BPClass != nullptr) { BPClass->GetLifetimeBlueprintReplicationList(OutLifetimeProps); }
+
+	FDoRepLifetimeParams SharedParams;
+	SharedParams.bIsPushBased = true;
+
+	DOREPLIFETIME_WITH_PARAMS_FAST(UVSObjectFeature, bIsActive, SharedParams);
+	DOREPLIFETIME(UVSObjectFeature, SubFeatures);
+	DOREPLIFETIME(UVSObjectFeature, OwnerFeaturePrivate);
+}
+
+void UVSObjectFeature::RegisterFeature()
+{
+	if(!IsValid(this))
+	{
+		UE_LOG(LogObjectFeature, Log, TEXT("RegisterFeature: (%s) Trying to register feature with IsValid() == false. Aborting."), *GetPathName());
+		return;
+	}
+
+	if(IsRegistered())
+	{
+		UE_LOG(LogObjectFeature, Log, TEXT("RegisterFeature: (%s) Already registered. Aborting."), *GetPathName());
+		return;
+	}
+	
+	bIsRegistered = true;
+
+	OwnerActorPrivate = GetTypedOuter<AActor>();
+	OwnerComponentPrivate = GetTypedOuter<UActorComponent>();
+	if (!OwnerFeaturePrivate)
+	{
+		OwnerFeaturePrivate = GetTypedOuter<UVSObjectFeature>();
+	}
+
+	/**
+	 * If not in a game world register ticks now, otherwise defer until BeginPlay.
+	 * If no owner we won't trigger BeginPlay either so register now in that case as well.
+	 */
+	{
+		const bool bOwnerActorBeginPlayStarted = OwnerActorPrivate.IsValid() ? (OwnerActorPrivate->HasActorBegunPlay() || OwnerActorPrivate->IsActorBeginningPlay()) : true;
+		const bool bOwnerFeatureBeginPlayStarted = OwnerFeaturePrivate ? (OwnerFeaturePrivate->HasBeenInitialized() || OwnerFeaturePrivate->HasBegunPlay()) : true;
+		
+		if (OwnerActorPrivate.IsValid() && GetIsReplicated() && OwnerActorPrivate->IsActorInitialized())
+		{
+			BeginReplication();
+		}
+
+		if (bOwnerActorBeginPlayStarted && bOwnerFeatureBeginPlayStarted)
+		{
+			if (!HasBeenInitialized())
+			{
+				Initialize();
+				bHasBeenInitialized = true;
+			}
+			if (!HasBegunPlay())
+			{
+				BeginPlay();
+				bHasBegunPlay = true;
+				SetActive(bAutoActivate);
+			}
+
+			if (TickProxy)
+			{
+				SetTickEnabledState(true);
+			}
+		}
+	}
+
+	/** Register sub features. */
+	TArray<TObjectPtr<UVSObjectFeature>> CurrentSubFeatures = SubFeatures;
+	for (UVSObjectFeature* SubFeature : CurrentSubFeatures)
+	{
+		if (SubFeature && !SubFeature->IsRegistered())
+		{
+			SubFeature->RegisterFeature();
+		}
+	}
+}
+
+void UVSObjectFeature::UnregisterFeature()
+{
+	/** Unregister sub features. */
+	TArray<UVSObjectFeature*> CopiedSubFeatures = SubFeatures;
+	for (UVSObjectFeature* SubFeature : CopiedSubFeatures)
+	{
+		if (SubFeature && SubFeature->IsRegistered())
+		{
+			SubFeature->UnregisterFeature();
+		}
+	}
+
+	if(!IsValid(this))
+	{
+		if (IsValid(GetWorld()) && !GetWorld()->bIsTearingDown)
+		{
+			UE_LOG(LogObjectFeature, Log, TEXT("UnregisterFeature: (%s) Trying to unregister feature with IsValid() == false. Aborting."), *GetPathName());
+		}
+
+		return;
+	}
+	
+	if(!IsRegistered())
+	{
+		UE_LOG(LogObjectFeature, Log, TEXT("UnregisterFeature: (%s) Not registered. Aborting."), *GetPathName());
+		return;
+	}
+	
+	bIsRegistered = false;
+
+	if (bIsActive) { SetActive(false); }
+	if (bHasBegunPlay)
+	{
+		EndPlay();
+		bHasBegunPlay = false;
+	}
+	if (bHasBeenInitialized)
+	{
+		Uninitialize();
+		bHasBeenInitialized = false;
+	}
+	if (GetIsReplicated()) { EndReplication(); }
+
+	if (TickProxy)
+	{
+		SetTickEnabledState(false);
+	}
+}
+
+void UVSObjectFeature::DestroyFeature()
+{
+	if (bIsBeingDestroyed) return;
+	bIsBeingDestroyed = true;
+
+	/** Destroy sub features. */
+	TArray<UVSObjectFeature*> SubFeaturesToDestroy = SubFeatures;
+	for (UVSObjectFeature* SubFeature : SubFeaturesToDestroy)
+	{
+		if (SubFeature)
+		{
+			SubFeature->DestroyFeature();
+		}
+	}
+	
+	if (bIsRegistered) { UnregisterFeature(); }
+
+	if (OwnerFeaturePrivate)
+	{
+		OwnerFeaturePrivate->SubFeatures.Remove(this);
+	}
+	
+	if (IsRooted())
+	{
+		RemoveFromRoot();
+	}
+	MarkAsGarbage();
+}
+
+void UVSObjectFeature::SetActive(bool bNewActive)
+{
+	if (bIsActive == bNewActive) return;
+	bIsActive = bNewActive;
+	MARK_PROPERTY_DIRTY_FROM_NAME(UVSObjectFeature, bIsActive, this);
+	bIsActive ? OnFeatureActivated() : OnFeatureDeactivated();
+}
+
+TArray<UVSObjectFeature*> UVSObjectFeature::GetSubFeatures() const
+{
+	TArray<UVSObjectFeature*> Features = SubFeatures;
+	for (UVSObjectFeature* SubFeature : SubFeatures)
+	{
+		if (SubFeature)
+		{
+			Features.Append(SubFeature->GetSubFeatures());
+		}
+	}
+	return Features;
+}
+
+bool UVSObjectFeature::HasSubFeature(UVSObjectFeature* Feature) const
+{
+	if (SubFeatures.Contains(Feature)) return true;
+	for (UVSObjectFeature* SubFeature : SubFeatures)
+	{
+		if (SubFeature && SubFeature->HasSubFeature(Feature)) return true;
+	}
+
+	return false;
+}
+
+void UVSObjectFeature::AddInstancedFeature(UVSObjectFeature* Feature)
+{
+	if (!Feature || Feature->OwnerFeaturePrivate == this) return;
+	
+	if (Feature == this)
+	{
+		UE_LOG(LogObjectFeature, Warning, TEXT("AddInstancedFeature: (%s) trying to set it self as sub feature. Aborting."), *GetPathName());
+		return;
+	}
+
+	if (HasOwnerFeature(Feature))
+	{
+		UE_LOG(LogObjectFeature, Warning, TEXT("AddInstancedFeature: (%s) trying to set it's owner feature as child. Aborting."), *GetPathName());
+		return;
+	}
+	
+	if (Feature->OwnerActorPrivate.IsValid() && Feature->OwnerActorPrivate != OwnerActorPrivate)
+	{
+		UE_LOG(LogObjectFeature, Warning, TEXT("AddInstancedFeature: (%s) has different owner actor from (%s). Aborting."), *GetPathName(), *Feature->GetPathName());
+		return;
+	}
+	
+	SubFeatures.Add(Feature);
+	Feature->OwnerFeaturePrivate = this;
+
+	/** Force re-register sub feature when reparenting. */
+	if (Feature->IsRegistered())
+	{
+		Feature->UnregisterFeature();
+	}
+	
+	if (IsRegistered())
+	{
+		Feature->RegisterFeature();
+	}
+}
+
+UVSObjectFeature* UVSObjectFeature::AddSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, bool bDeferRegister)
+{
+	if (!Class) return nullptr;
+	UVSObjectFeature* ObjectFeature = NewObject<UVSObjectFeature>(this, Class);
+	
+	SubFeatures.Add(ObjectFeature);
+	ObjectFeature->OwnerFeaturePrivate = this;
+
+	/** Force re-register sub feature when reparenting. */
+	if (ObjectFeature->IsRegistered())
+	{
+		ObjectFeature->UnregisterFeature();
+	}
+	
+	if (!bDeferRegister && IsRegistered())
+	{
+		ObjectFeature->RegisterFeature();
+	}
+	
+	return ObjectFeature;
+}
+
+void UVSObjectFeature::RemoveSubFeature(UVSObjectFeature* Feature)
+{
+	if (!Feature || Feature == this || !HasSubFeature(Feature)) return;
+
+	if (Feature->IsRegistered())
+	{
+		Feature->UnregisterFeature();
+	}
+
+	Feature->OwnerFeaturePrivate->SubFeatures.RemoveSingle(Feature);
+	Feature->OwnerFeaturePrivate = nullptr;
+}
+
+void UVSObjectFeature::SetOwnerFeature(UVSObjectFeature* Feature)
+{
+	if (!Feature || Feature == OwnerFeaturePrivate) return;
+
+	if (Feature == this)
+	{
+		UE_LOG(LogObjectFeature, Warning, TEXT("SetOwnerFeature: (%s) trying to set it self as owner. Aborting."), *GetPathName());
+		return;
+	}
+
+	if (HasSubFeature(Feature))
+	{
+		UE_LOG(LogObjectFeature, Warning, TEXT("SetOwnerFeature: (%s) trying to set it's sub feature as owner. Aborting."), *GetPathName());
+		return;
+	}
+	
+	if (Feature->OwnerActorPrivate.IsValid() && Feature->OwnerActorPrivate != OwnerActorPrivate)
+	{
+		UE_LOG(LogObjectFeature, Warning, TEXT("SetOwnerFeature: (%s) has different owner actor from (%s). Aborting."), *GetPathName(), *Feature->GetPathName());
+		return;
+	}
+
+	if (OwnerFeaturePrivate)
+	{
+		OwnerFeaturePrivate->RemoveSubFeature(this);
+	}
+	
+	Feature->SubFeatures.Add(this);
+	OwnerFeaturePrivate = Feature;
+
+	if (Feature->IsRegistered())
+	{
+		/** Force re-register feature when reparenting. */
+		if (IsRegistered())
+		{
+			UnregisterFeature();
+		}
+		RegisterFeature();
+	}
+}
+
+bool UVSObjectFeature::HasOwnerFeature(UVSObjectFeature* Feature) const
+{
+	if (!Feature) return false;
+	if (OwnerFeaturePrivate == Feature) return true;
+	if (OwnerFeaturePrivate)
+	{
+		return OwnerFeaturePrivate->HasOwnerFeature(Feature);
+	}
+	return false;
+}
+
+UVSObjectFeature* UVSObjectFeature::GetOwnerFeatureByClass(TSubclassOf<UVSObjectFeature> Class) const
+{
+	if (!OwnerFeaturePrivate) return nullptr;
+	if (OwnerFeaturePrivate->IsA(Class))
+	{
+		return OwnerFeaturePrivate.Get();
+	}
+
+	return OwnerFeaturePrivate->GetOwnerFeatureByClass(Class);
+}
+
+UVSObjectFeature* UVSObjectFeature::GetSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class) const
+{
+	for (UVSObjectFeature* SubFeature : GetSubFeatures())
+	{
+		if (SubFeature->IsA(Class))
+		{
+			return SubFeature;
+		}
+	}
+	return nullptr;
+}
+
+TArray<UVSObjectFeature*> UVSObjectFeature::GetSubFeaturesByClass(TSubclassOf<UVSObjectFeature> Class) const
+{
+	TArray<UVSObjectFeature*> OutSubFeatures;
+	for (UVSObjectFeature* SubFeature : GetSubFeatures())
+	{
+		if (SubFeature->IsA(Class))
+		{
+			OutSubFeatures.Add(SubFeature);
+		}
+	}
+	return OutSubFeatures;
+}
+
+UVSObjectFeature* UVSObjectFeature::GetSubFeatureByName(FName Name) const
+{
+	if (Name.IsNone()) return nullptr;
+	for (UVSObjectFeature* SubFeature : GetSubFeatures())
+	{
+		if (SubFeature->FeatureName == Name)
+		{
+			return SubFeature;
+		}
+	}
+	return nullptr;
+}
+
+void UVSObjectFeature::Initialize_Implementation()
+{
+}
+
+void UVSObjectFeature::Uninitialize_Implementation()
+{
+}
+
+void UVSObjectFeature::BeginPlay_Implementation()
+{
+
+}
+
+void UVSObjectFeature::EndPlay_Implementation()
+{
+}
+
+bool UVSObjectFeature::CanTick_Implementation() const
+{
+	return TickProxy && TickProxy->PrimaryObjectTick.bCanEverTick && TickProxy->IsTickFunctionRegistered() && TickProxy->PrimaryObjectTick.IsTickFunctionEnabled()
+		&& IsActive();
+}
+
+void UVSObjectFeature::OnCreatedFromReplication()
+{
+	Super::OnCreatedFromReplication();
+}
+
+void UVSObjectFeature::OnDestroyedFromReplication()
+{
+	DestroyFeature();
+	Super::OnDestroyedFromReplication();
+}
+
+bool UVSObjectFeature::CanTickWrapper()
+{
+	return CanTick();
+}
+
+void UVSObjectFeature::SetTickEnabledState(bool bEnabled)
+{
+	if (!TickProxy) return;
+	if (bEnabled && !TickProxy->IsTickFunctionRegistered())
+	{
+		TickProxy->RegisterTickFunction();
+		TickProxy->OnTick.AddUObject(this, &UVSObjectFeature::TickFeature);
+		TickProxy->EventCanTick.BindDynamic(this, &UVSObjectFeature::CanTickWrapper);
+	}
+	else if (!bEnabled && TickProxy->IsTickFunctionRegistered())
+	{
+		TickProxy->OnTick.RemoveAll(this);
+		TickProxy->EventCanTick.Unbind();
+		TickProxy->UnregisterTickFunction();
+	}
+}
+
+void UVSObjectFeature::TickFeature(float DeltaTime, ELevelTick TickType, FVSObjectTickFunction* TickFunction)
+{
+	Tick(DeltaTime);
+}
+
+void UVSObjectFeature::Tick_Implementation(float DeltaTime)
+{
+	
+}
+
+void UVSObjectFeature::OnFeatureActivated_Implementation()
+{
+
+}
+
+void UVSObjectFeature::OnFeatureDeactivated_Implementation()
+{
+
+}
+
+void UVSObjectFeature::OnRep_bIsActive()
+{
+	bIsActive ? OnFeatureActivated() : OnFeatureDeactivated();
+}
+
+void UVSObjectFeature::OnRep_OwnerFeaturePrivate(UVSObjectFeature* PrevOwnerFeature)
+{
+	if (OwnerFeaturePrivate == PrevOwnerFeature) return;
+	if (PrevOwnerFeature)
+	{
+		if (PrevOwnerFeature->HasSubFeature(this))
+		{
+			PrevOwnerFeature->RemoveSubFeature(this);
+		}
+		else if (IsRegistered())
+		{
+			UnregisterFeature();
+		}
+	}
+	if (OwnerFeaturePrivate)
+	{
+		if (!OwnerFeaturePrivate->HasSubFeature(this))
+		{
+			OwnerFeaturePrivate->AddInstancedFeature(this);
+		}
+		else if (!IsRegistered())
+		{
+			RegisterFeature();
+		}
+	}
+}

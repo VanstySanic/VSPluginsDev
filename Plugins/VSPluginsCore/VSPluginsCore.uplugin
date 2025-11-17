@@ -1,0 +1,28 @@
+﻿{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "VSPluginsCore",
+	"Description": "Core plugin for Vansty's plugin group.",
+	"Category": "Other",
+	"CreatedBy": "VanstySanic",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "VSPluginsCore",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "VSPluginsCoreCpp",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
