@@ -8,6 +8,12 @@ UVSReplicatableObject::UVSReplicatableObject(const FObjectInitializer& ObjectIni
 	: Super(ObjectInitializer)
 {
 	bReplicates = false;
+}
+
+void UVSReplicatableObject::PostInitProperties()
+{
+	UObject::PostInitProperties();
+
 	OuterActorPrivate = GetTypedOuter<AActor>();
 }
 
@@ -86,7 +92,9 @@ void UVSReplicatableObject::SetIsReplicated(bool bShouldReplicate)
 	if (bReplicates == bShouldReplicate) return;
 	bReplicates = bShouldReplicate;
 
-	if (OuterActorPrivate.IsValid() && OuterActorPrivate->HasAuthority())
+	if (IsTemplate()) return;
+
+	if (OuterActorPrivate.IsValid() && !OuterActorPrivate->HasAnyFlags(RF_NeedInitialization) && OuterActorPrivate->HasAuthority())
 	{
 #if UE_WITH_IRIS
 		bReplicates ? BeginReplication() : EndReplication();

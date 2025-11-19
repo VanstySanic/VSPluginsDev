@@ -27,6 +27,10 @@ public class VSPluginsCore : ModuleRules
 			{
 				"Core",
 				"NetCore",
+				"ApplicationCore",
+				"GameplayTags",
+				"GameplayAbilities",
+				"DeveloperSettings",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

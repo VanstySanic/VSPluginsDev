@@ -153,13 +153,13 @@ public:
 	virtual void TickObject(float DeltaTime, ELevelTick TickType, FVSObjectTickFunction* TickFunction) override;
 
 public:
-	FOnTickDelegate OnTick;
+	FOnTickDelegate OnTick_Native;
 
 	/** If not bound, returns as true. */
 	UPROPERTY(BlueprintReadOnly, DisplayName = "CanTick")
-	FCanTickEvent EventCanTick;
+	FCanTickEvent CanTick;
 	
 	/** Event broadcast every tick. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable, DisplayName = "OnTick")
-	FOnTickEvent EventOnTick;
+	FOnTickEvent OnTick;
 };

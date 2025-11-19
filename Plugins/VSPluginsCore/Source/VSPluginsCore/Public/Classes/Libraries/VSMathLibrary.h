@@ -6,6 +6,8 @@
 #include "Types/VSMathTypes.h"
 #include "VSMathLibrary.generated.h"
 
+#define VS_MATH_INLINE_ENABLED	(!UE_BUILD_DEBUG)
+
 /**
  * UVSMathLibrary
  *

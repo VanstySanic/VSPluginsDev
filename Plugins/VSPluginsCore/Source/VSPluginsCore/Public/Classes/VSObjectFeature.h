@@ -13,94 +13,62 @@ class UVSObjectTickProxy;
 DECLARE_LOG_CATEGORY_EXTERN(LogObjectFeature, Log, All);
 
 /**
- * UVSObjectFeature
+ * UVSGameplayTagFeature
  *
- * A modular, hierarchical, and replicatable UObject-based feature unit
- * designed to provide ActorComponent-like behavior to any UObject. Features
- * support lifecycle events, ticking, activation, and network replication,
- * while allowing construction of arbitrarily deep sub-feature trees.
+ * A flexible, replicatable, and ASC-compatible gameplay-tag management feature
+ * that allows any Actor to own, modify, and react to GameplayTags with full
+ * count-based semantics — whether or not the Actor uses an AbilitySystemComponent.
  *
  * -------------------------------------------------------------------------
- * Key Features
+ * Core Functionality
  * -------------------------------------------------------------------------
- * - Modular hierarchy:
- *   Features may contain other Features, forming a structured tree with
- *   automatic registration, unregistration, and lifecycle propagation.
+ * - Tag ownership:
+ *   Supports explicit & implicit tag tracking with count-based add/remove/set.
  *
- * - Lifecycle model:
- *   Provides Initialize → BeginPlay → Tick → EndPlay → Uninitialize
- *   similar to Actors/Components, but available to any UObject.
+ * - Hybrid source model:
+ *   Tags may be stored locally or pulled directly from an ASC’s internal
+ *   FGameplayTagCountContainer when bUseAbilitySystemComponentSource is enabled.
  *
- * - Activation:
- *   Features can be toggled active/inactive, and expose both C++ and
- *   Blueprint events for activation/deactivation.
+ * - Replication model:
+ *   - Supports InitialOnly replication for predefined autonomous/simulated tags.
+ *   - Rich RPC policy system (Client/Server/Multicast) for tag modification.
+ *   - Explicit and implicit tag counts kept consistent across network roles.
  *
- * - Ticking support:
- *   Uses UVSObjectTickProxy for conditional per-frame updates without
- *   requiring Tickable inheritance. Supports:
- *   - Per-frame native TickFeature()
- *   - Blueprint Tick() event
- *   - CanTick() predicate (Blueprint or C++)
- *
- * - Replication-ready:
- *   - Supports push-model replication
- *   - Replicates activation state and parent-feature ownership
- *   - Compatible with Blueprint replication expansions
+ * - Event dispatching:
+ *   - OnTagsUpdated (count changes)
+ *   - OnTagEventsNotified (user-defined tag events)
+ *   Includes native + Blueprint multicast delegates and optional auto-binding.
  *
  * -------------------------------------------------------------------------
  * Usage
  * -------------------------------------------------------------------------
- * - Instance this Feature under an Actor, Component, or another Feature.
- * - Call RegisterFeature() at runtime to initialize and activate it.
- * - Bind to Tick() or override TickFeature() for per-frame logic.
- * - Add sub-features dynamically via AddSubFeatureByClass().
- * - Use SetActive() to enable/disable behavior at runtime.
- * - Call DestroyFeature() for safe hierarchical teardown.
- *
- * -------------------------------------------------------------------------
- * Typical Flow
- * -------------------------------------------------------------------------
- * 1. Feature is instantiated (C++ or Blueprint)
- * 2. RegisterFeature() is called
- * 3. Initialize() is executed
- * 4. BeginPlay() is triggered
- * 5. Tick() / TickFeature() runs every frame if allowed
- * 6. EndPlay() + Uninitialize() occur when unregistered or destroyed
- *
- * -------------------------------------------------------------------------
- * Notes
- * -------------------------------------------------------------------------
- * - Registration state, lifecycle state, and activation state are fully
- *   independent and carefully ordered to avoid invalid transitions.
- * - Sub-features inherit registration/lifecycle behavior from parents.
- * - Features may be dynamically re-parented with full safety checks.
+ * - Add/remove/set tag counts locally or through RPC policies.
+ * - Bind other objects to tag update events (auto or manual).
+ * - Use MatchesTagQuery / MatchesEventQuery for hierarchical logic.
+ * - Use optional automatic tick-based notifications.
  */
-UCLASS(Abstract, DefaultToInstanced, EditInlineNew)
+UCLASS(DefaultToInstanced, EditInlineNew, DisplayName = "VS.Feature.Base")
 class VSPLUGINSCORE_API UVSObjectFeature : public UVSReplicatableObject
 {
 	GENERATED_UCLASS_BODY()
 
 public:
+	//~ Begin UObject Interface.
+	virtual void PostInitProperties() override;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void BeginDestroy() override;
+	//~ End UObject Interface.
 	
 protected:
-	//~ Begin UObject Interface.
-	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-	//~ End UObject Interface.
-
 	//~ Begin IInterface_ActorSubobject Interface
 	virtual void OnCreatedFromReplication() override;
 	virtual void OnDestroyedFromReplication() override;
 	//~ End IInterface_ActorSubobject Interface
 
 public:
-	/** Get the actor that actually owes this feature. Must in outer. */
+	/** Get the actor that actually owes this feature. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	AActor* GetOwnerActor() const { return OwnerActorPrivate.Get(); }
-	
-	/** Get the component that owes this feature. Must in outer. */
-	UFUNCTION(BlueprintCallable, Category = "Feature")
-	UActorComponent* GetOwnerComponent() const { return OwnerComponentPrivate.Get(); }
 	
 	/** Get the feature that directly contain this feature as sub feature. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
@@ -114,7 +82,7 @@ public:
 	 * Register the feature, set up the tick function and replication.
 	 * This will be automatically called when in blueprint editor, and should be manually called when in game.
 	 * This will call the initialize and begin play process.
-	 * Will register sub features if possible. Don't call on sub features.
+	 * Will register sub features if possible.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Features")
 	void RegisterFeature();
@@ -123,7 +91,7 @@ public:
 	 * Unregister the feature, clean up the tick function and replication.
 	 * This will be automatically called and need not be called manually.
 	 * This will call the uninitialize and end play process.
-	 * Will uninitialize sub features if possible. Don't call on sub features.
+	 * Will uninitialize sub features if possible.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Features")
 	void UnregisterFeature();
@@ -161,14 +129,15 @@ public:
 	/**
 	 * Attach an already instanced feature as a sub feature of this feature.
 	 * Will re-parent and (re)register the feature if needed.
+	 * @param bDeferRegister If true, the feature will be forced not be registered automatically even bRegisterWithOwner is true.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Features")
-	void AddInstancedFeature(UVSObjectFeature* Feature);
+	void AddInstancedFeature(UVSObjectFeature* Feature, bool bDeferRegister = false);
 
 	/**
 	 * Create a new feature instance of the specified class and add it as a sub feature.
 	 * @param Class Class of the feature to create and attach.
-	 * @param bDeferRegister If true, the feature will not be registered automatically even if the owner is registered.
+	 * @param bDeferRegister If true, the feature will be forced not be registered automatically even if bRegisterWithOwner is true.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Features")
 	UVSObjectFeature* AddSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, bool bDeferRegister = false);
@@ -185,7 +154,7 @@ public:
 	 * This will re-parent the feature in the hierarchy and adjust registration if necessary.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Features")
-	void SetOwnerFeature(UVSObjectFeature* Feature);
+	void SetOwnerFeature(UVSObjectFeature* Feature, bool bDeferRegister = false);
 
 	/** Whether the given feature appears in this feature's owner chain. */
 	UFUNCTION(BlueprintCallable, Category = "Features")
@@ -233,7 +202,7 @@ protected:
 	void EndPlay();
 
 	UFUNCTION(BlueprintCallable, Category = "Features")
-	void SetTickEnabledState(bool bEnabled);
+	void SetTickEnabled(bool bEnabled);
 
 	/** Whether the tick function can be executed at this frame. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Features")
@@ -286,6 +255,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Features")
 	bool bAutoActivate = true;
 
+	/**
+	 * If true, feature will be registered when its owner feature is registered or reparenting.
+	 * Otherwise, you should manually register the feature.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Features")
+	bool bRegisterWithOwner = true;
+
 protected:
 	/** All direct sub features owned by this feature. May contain nested hierarchies. */
 	UPROPERTY(EditAnywhere, Replicated, Instanced, Category = "Features")
@@ -314,9 +290,6 @@ private:
 
 	/** Actor that owes this feature. */
 	TWeakObjectPtr<AActor> OwnerActorPrivate;
-
-	/** Component that owes this feature. */
-	TWeakObjectPtr<UActorComponent> OwnerComponentPrivate;
 };
 
 template <typename T>

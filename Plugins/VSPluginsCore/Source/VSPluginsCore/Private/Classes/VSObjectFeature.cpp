@@ -10,10 +10,6 @@ DEFINE_LOG_CATEGORY(LogObjectFeature);
 UVSObjectFeature::UVSObjectFeature(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	OwnerActorPrivate = GetTypedOuter<AActor>();
-	OwnerComponentPrivate = GetTypedOuter<UActorComponent>();
-	OwnerFeaturePrivate = GetTypedOuter<UVSObjectFeature>();
-
 	TickProxy = CreateDefaultSubobject<UVSObjectTickProxy>(TEXT("TickProxy"));
 }
 
@@ -22,6 +18,14 @@ void UVSObjectFeature::BeginDestroy()
 	DestroyFeature();
 	
 	Super::BeginDestroy();
+}
+
+void UVSObjectFeature::PostInitProperties()
+{
+	Super::PostInitProperties();
+
+	OwnerActorPrivate = GetTypedOuter<AActor>();
+	OwnerFeaturePrivate = GetTypedOuter<UVSObjectFeature>();
 }
 
 void UVSObjectFeature::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -56,7 +60,6 @@ void UVSObjectFeature::RegisterFeature()
 	bIsRegistered = true;
 
 	OwnerActorPrivate = GetTypedOuter<AActor>();
-	OwnerComponentPrivate = GetTypedOuter<UActorComponent>();
 	if (!OwnerFeaturePrivate)
 	{
 		OwnerFeaturePrivate = GetTypedOuter<UVSObjectFeature>();
@@ -91,7 +94,7 @@ void UVSObjectFeature::RegisterFeature()
 
 			if (TickProxy)
 			{
-				SetTickEnabledState(true);
+				SetTickEnabled(true);
 			}
 		}
 	}
@@ -100,7 +103,7 @@ void UVSObjectFeature::RegisterFeature()
 	TArray<TObjectPtr<UVSObjectFeature>> CurrentSubFeatures = SubFeatures;
 	for (UVSObjectFeature* SubFeature : CurrentSubFeatures)
 	{
-		if (SubFeature && !SubFeature->IsRegistered())
+		if (SubFeature && SubFeature->bRegisterWithOwner && !SubFeature->IsRegistered())
 		{
 			SubFeature->RegisterFeature();
 		}
@@ -152,7 +155,7 @@ void UVSObjectFeature::UnregisterFeature()
 
 	if (TickProxy)
 	{
-		SetTickEnabledState(false);
+		SetTickEnabled(false);
 	}
 }
 
@@ -200,6 +203,7 @@ TArray<UVSObjectFeature*> UVSObjectFeature::GetSubFeatures() const
 	{
 		if (SubFeature)
 		{
+			Features.Add(SubFeature);
 			Features.Append(SubFeature->GetSubFeatures());
 		}
 	}
@@ -217,7 +221,7 @@ bool UVSObjectFeature::HasSubFeature(UVSObjectFeature* Feature) const
 	return false;
 }
 
-void UVSObjectFeature::AddInstancedFeature(UVSObjectFeature* Feature)
+void UVSObjectFeature::AddInstancedFeature(UVSObjectFeature* Feature, bool bDeferRegister)
 {
 	if (!Feature || Feature->OwnerFeaturePrivate == this) return;
 	
@@ -238,6 +242,30 @@ void UVSObjectFeature::AddInstancedFeature(UVSObjectFeature* Feature)
 		UE_LOG(LogObjectFeature, Warning, TEXT("AddInstancedFeature: (%s) has different owner actor from (%s). Aborting."), *GetPathName(), *Feature->GetPathName());
 		return;
 	}
+
+	if (Feature->OwnerFeaturePrivate)
+	{
+		Feature->OwnerFeaturePrivate->RemoveSubFeature(Feature);
+	}
+	/** Force re-register sub feature when reparenting. */
+	else if (Feature->IsRegistered())
+	{
+		Feature->UnregisterFeature();
+	}
+	
+	SubFeatures.Add(Feature);
+	Feature->OwnerFeaturePrivate = this;
+	
+	if (!bDeferRegister && Feature->bRegisterWithOwner &&  IsRegistered())
+	{
+		Feature->RegisterFeature();
+	}
+}
+
+UVSObjectFeature* UVSObjectFeature::AddSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, bool bDeferRegister)
+{
+	if (!Class) return nullptr;
+	UVSObjectFeature* Feature = NewObject<UVSObjectFeature>(this, Class);
 	
 	SubFeatures.Add(Feature);
 	Feature->OwnerFeaturePrivate = this;
@@ -248,32 +276,12 @@ void UVSObjectFeature::AddInstancedFeature(UVSObjectFeature* Feature)
 		Feature->UnregisterFeature();
 	}
 	
-	if (IsRegistered())
+	if (!bDeferRegister && Feature->bRegisterWithOwner && IsRegistered())
 	{
 		Feature->RegisterFeature();
 	}
-}
-
-UVSObjectFeature* UVSObjectFeature::AddSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, bool bDeferRegister)
-{
-	if (!Class) return nullptr;
-	UVSObjectFeature* ObjectFeature = NewObject<UVSObjectFeature>(this, Class);
 	
-	SubFeatures.Add(ObjectFeature);
-	ObjectFeature->OwnerFeaturePrivate = this;
-
-	/** Force re-register sub feature when reparenting. */
-	if (ObjectFeature->IsRegistered())
-	{
-		ObjectFeature->UnregisterFeature();
-	}
-	
-	if (!bDeferRegister && IsRegistered())
-	{
-		ObjectFeature->RegisterFeature();
-	}
-	
-	return ObjectFeature;
+	return Feature;
 }
 
 void UVSObjectFeature::RemoveSubFeature(UVSObjectFeature* Feature)
@@ -289,7 +297,7 @@ void UVSObjectFeature::RemoveSubFeature(UVSObjectFeature* Feature)
 	Feature->OwnerFeaturePrivate = nullptr;
 }
 
-void UVSObjectFeature::SetOwnerFeature(UVSObjectFeature* Feature)
+void UVSObjectFeature::SetOwnerFeature(UVSObjectFeature* Feature, bool bDeferRegister)
 {
 	if (!Feature || Feature == OwnerFeaturePrivate) return;
 
@@ -315,17 +323,18 @@ void UVSObjectFeature::SetOwnerFeature(UVSObjectFeature* Feature)
 	{
 		OwnerFeaturePrivate->RemoveSubFeature(this);
 	}
+	/** Force re-register feature when reparenting. */
+	else if (IsRegistered())
+	{
+		UnregisterFeature();
+	}
 	
 	Feature->SubFeatures.Add(this);
 	OwnerFeaturePrivate = Feature;
-
-	if (Feature->IsRegistered())
+	
+	if (!bDeferRegister && Feature->IsRegistered())
 	{
-		/** Force re-register feature when reparenting. */
-		if (IsRegistered())
-		{
-			UnregisterFeature();
-		}
+
 		RegisterFeature();
 	}
 }
@@ -356,7 +365,7 @@ UVSObjectFeature* UVSObjectFeature::GetSubFeatureByClass(TSubclassOf<UVSObjectFe
 {
 	for (UVSObjectFeature* SubFeature : GetSubFeatures())
 	{
-		if (SubFeature->IsA(Class))
+		if (SubFeature && SubFeature->IsA(Class))
 		{
 			return SubFeature;
 		}
@@ -429,19 +438,19 @@ bool UVSObjectFeature::CanTickWrapper()
 	return CanTick();
 }
 
-void UVSObjectFeature::SetTickEnabledState(bool bEnabled)
+void UVSObjectFeature::SetTickEnabled(bool bEnabled)
 {
 	if (!TickProxy) return;
 	if (bEnabled && !TickProxy->IsTickFunctionRegistered())
 	{
 		TickProxy->RegisterTickFunction();
-		TickProxy->OnTick.AddUObject(this, &UVSObjectFeature::TickFeature);
-		TickProxy->EventCanTick.BindDynamic(this, &UVSObjectFeature::CanTickWrapper);
+		TickProxy->OnTick_Native.AddUObject(this, &UVSObjectFeature::TickFeature);
+		TickProxy->CanTick.BindDynamic(this, &UVSObjectFeature::CanTickWrapper);
 	}
 	else if (!bEnabled && TickProxy->IsTickFunctionRegistered())
 	{
-		TickProxy->OnTick.RemoveAll(this);
-		TickProxy->EventCanTick.Unbind();
+		TickProxy->OnTick_Native.RemoveAll(this);
+		TickProxy->CanTick.Unbind();
 		TickProxy->UnregisterTickFunction();
 	}
 }

@@ -86,12 +86,12 @@ void UVSObjectTickProxy::TickObject(float DeltaTime, ELevelTick TickType, FVSObj
 	UWorld* World = GetWorld();
 	if (!World) return;
 
+	if (OnTick_Native.IsBound())
+	{
+		OnTick_Native.Broadcast(DeltaTime, TickType, TickFunction);
+	}
 	if (OnTick.IsBound())
 	{
-		OnTick.Broadcast(DeltaTime, TickType, TickFunction);
-	}
-	if (EventOnTick.IsBound())
-	{
-		EventOnTick.Broadcast(DeltaTime);
+		OnTick.Broadcast(DeltaTime);
 	}
 }
