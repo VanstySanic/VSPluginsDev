@@ -2,7 +2,7 @@
 
 #include "Interfaces/VSGameplayTagFeatureInterface.h"
 
-UVSGameplayTagFeature* IVSGameplayTagFeatureInterface::GetPrimaryGameplayTagFeature_Native() const
+UVSGameplayTagFeatureBase* IVSGameplayTagFeatureInterface::GetPrimaryGameplayTagFeature_Native() const
 {
 	UObject* Object = _getUObject();
 	if (!Object) return nullptr;

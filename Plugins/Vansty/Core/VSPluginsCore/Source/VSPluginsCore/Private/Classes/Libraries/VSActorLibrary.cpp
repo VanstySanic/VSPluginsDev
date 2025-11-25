@@ -1,8 +1,6 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Classes/Libraries/VSActorLibrary.h"
-#include "AbilitySystemComponent.h"
-#include "AbilitySystemInterface.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerState.h"
@@ -154,21 +152,21 @@ UCameraComponent* UVSActorLibrary::GetActiveCameraFromActor(const AActor* Actor)
 	return nullptr;
 }
 
-UAbilitySystemComponent* UVSActorLibrary::GetAbilitySystemComponentFormActor(AActor* Actor)
-{
-	if (!Actor) return nullptr;
-	if (IAbilitySystemInterface* Interface = Cast<IAbilitySystemInterface>(Actor))
-	{
-		if (UAbilitySystemComponent* AbilitySystemComponent = Interface->GetAbilitySystemComponent())
-		{
-			return AbilitySystemComponent;
-		}
-	}
-
-	if (UAbilitySystemComponent* AbilitySystemComponent = Actor->FindComponentByClass<UAbilitySystemComponent>())
-	{
-		return AbilitySystemComponent;
-	}
-	
-	return nullptr;
-}
+// UAbilitySystemComponent* UVSActorLibrary::GetAbilitySystemComponentFormActor(AActor* Actor)
+// {
+// 	if (!Actor) return nullptr;
+// 	if (IAbilitySystemInterface* Interface = Cast<IAbilitySystemInterface>(Actor))
+// 	{
+// 		if (UAbilitySystemComponent* AbilitySystemComponent = Interface->GetAbilitySystemComponent())
+// 		{
+// 			return AbilitySystemComponent;
+// 		}
+// 	}
+//
+// 	if (UAbilitySystemComponent* AbilitySystemComponent = Actor->FindComponentByClass<UAbilitySystemComponent>())
+// 	{
+// 		return AbilitySystemComponent;
+// 	}
+// 	
+// 	return nullptr;
+// }

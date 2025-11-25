@@ -6,7 +6,6 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "VSActorLibrary.generated.h"
 
-class UAbilitySystemComponent;
 class UCameraComponent;
 class UVSObjectFeature;
 
@@ -41,9 +40,6 @@ class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
 	
 	UFUNCTION(BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
 	static UCameraComponent* GetActiveCameraFromActor(const AActor* Actor);
-
-	UFUNCTION(BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
-	static UAbilitySystemComponent* GetAbilitySystemComponentFormActor(AActor* Actor);
 
 public:
 	template<typename T>

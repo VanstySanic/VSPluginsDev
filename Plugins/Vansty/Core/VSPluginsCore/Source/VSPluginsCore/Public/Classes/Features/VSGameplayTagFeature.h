@@ -3,8 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystemInterface.h"
-#include "GameplayEffectTypes.h"
 #include "GameplayTagAssetInterface.h"
 #include "Classes/VSObjectFeature.h"
 #include "Types/VSGameplayTypes.h"
@@ -39,73 +37,68 @@ struct FVSGameplayTagFeatureReplicatedTagCounts
 };
 
 /**
- * UVSGameplayTagFeature
+ * UVSGameplayTagFeatureBase
  *
- * A feature-layer wrapper around AbilitySystemComponent gameplay tags that
- * provides:
- * - Centralized tag count access (including non-replicated count map)
- * - Configurable initial replication of specific tag counts
- * - Blueprint-friendly add/remove/set APIs with net execution policies
- * - Query helpers and tag-based event notification
- *
- * This class bridges the internal FGameplayTagCountContainer on the ASC and
- * the outside world, exposing a consistent, feature-style API that can be
- * attached to arbitrary owners (PlayerState, Pawn, Controller, etc.).
+ * Feature-style wrapper around a gameplay tag container and its count map.
+ * Provides:
+ * - Centralized access to owned gameplay tags (explicit + implicit)
+ * - Network-aware mutation APIs
+ * - Tag-based event dispatch and high-level update notifications
+ * - Initial replication of selected tag counts
  *
  * -------------------------------------------------------------------------
  * Key Features
  * -------------------------------------------------------------------------
- * - ASC integration:
- *   - Privablic access to UAbilitySystemComponent::GameplayTagCountContainer
- *   - Read/write access to full tag count map (explicit + inherited)
- *   - Tag count–based queries (exact / non-exact) and TagQuery helpers
- *
- * - Initial replication:
- *   - Configurable set of tags to replicate once on client join/spawn
- *   - Separate sets for autonomous and simulated proxies
- *   - Uses FVSGameplayTagFeatureReplicatedTagCounts + COND_InitialOnly
- *   - OnRep_ handlers re-apply counts via internal ASC tag map API
+ * - Tag storage abstraction:
+ *   - Subclasses override GetGameplayTagContainerSourceReference() and
+ *     GetGameplayTagCountMapSourceReference() to supply their own backing data.
+ *   - LocalImplicitTagCounts is maintained to support non-exact parent counts.
  *
  * - Network-aware mutation:
- *   - Add / Remove / Set tag counts with FVSNetMethodExecutionPolicies
- *   - Supports client-only, server-only, multicast, and simulated-only paths
- *   - Uses server/client/multicast RPCs to drive authoritative tag changes
+ *   - Add/Remove/Set tag counts with FVSNetMethodExecutionPolicies.
+ *   - Server/Client/Multicast RPCs drive authoritative changes.
+ *   - Optional simulated-proxy local execution.
  *
- * - Event dispatch:
- *   - OnTagsUpdated: high-level "tags changed" signal with dirty tracking
- *   - OnTagEventsNotified: tag container–based event channel for listeners
- *   - Optional per-frame polling or instant notification on count changes
+ * - Initial replication:
+ *   - Uses FVSGameplayTagFeatureReplicatedTagCounts + COND_InitialOnly.
+ *   - Separate snapshots for autonomous and simulated proxies.
+ *   - OnRep handlers reapply the replicated counts immediately.
+ *
+ * - Events & update notifications:
+ *   - bTagsDirty tracks incremental changes.
+ *   - NotifyTagsUpdated sends OnTagsUpdated and a tag-event bundle.
+ *   - Instant or per-tick notification modes.
+ *   - NotifyTagEvent(s) dispatch lightweight tag-based signals.
  *
  * -------------------------------------------------------------------------
  * Usage
  * -------------------------------------------------------------------------
- * - Attach this Feature to an owner with an AbilitySystemComponent.
- * - Call AddTag / RemoveTag / SetTagCount to modify counts in a net-aware way.
- * - Use HasTag / GetTagCount / MatchesTagQuery for fast runtime checks.
- * - Bind to OnTagsUpdated / OnTagEventsNotified from gameplay objects
- *   implementing UVSGameplayTagFeatureInterface.
- * - Configure which tags are initially replicated via UVSPluginsCoreSettings.
+ * - Implement backing storage in a subclass.
+ * - Use AddTag / RemoveTag / SetTagCount for net-aware mutation.
+ * - Use HasTag / GetTagCount / TagQuery helpers for fast checks.
+ * - Bind to OnTagsUpdated / OnTagEventsNotified or implement
+ *   UVSGameplayTagFeatureInterface for pull-style integration.
  *
  * -------------------------------------------------------------------------
  * Notes
  * -------------------------------------------------------------------------
- * - This Feature does not own the ASC; it only references it.
- * - Initial replication snapshot is meant for "stateful" tags where the
- *   client must know the count immediately on join, without waiting for GE.
- * - Runtime tag state is still driven by ASC; this Feature is a façade
- *   around the underlying FGameplayTagCountContainer.
+ * - This base feature does NOT own gameplay tag storage.
+ *   It only forwards to the subclass-defined container/count map.
+ * - Initial replication is intended for persistent state that clients
+ *   must know immediately when joining or spawning.
  */
-UCLASS(Abstract, DefaultToInstanced, EditInlineNew, DisplayName = "VS.Feature.Gameplay.GameplayTags")
-class VSPLUGINSCORE_API UVSGameplayTagFeature : public UVSObjectFeature, public IGameplayTagAssetInterface
+
+UCLASS(Abstract, DefaultToInstanced, EditInlineNew, DisplayName = "VS.Feature.GameplayTags.Base")
+class VSPLUGINSCORE_API UVSGameplayTagFeatureBase : public UVSObjectFeature, public IGameplayTagAssetInterface
 {
 	GENERATED_UCLASS_BODY()
 
 public:
-	DECLARE_MULTICAST_DELEGATE_OneParam(FGameplayTagsUpdateDelegate, UVSGameplayTagFeature* /** GameplayTagFeature */);
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FGameplayTagNotifyDelegate, UVSGameplayTagFeature* /** GameplayTagFeature */, const FGameplayTagContainer& /** TagEvents */);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FGameplayTagsUpdateDelegate, UVSGameplayTagFeatureBase* /** GameplayTagFeature */);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FGameplayTagNotifyDelegate, UVSGameplayTagFeatureBase* /** GameplayTagFeature */, const FGameplayTagContainer& /** TagEvents */);
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGameplayTagsUpdateEvent, UVSGameplayTagFeature*, GameplayTagFeature);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FGameplayTagNotifyEvent, UVSGameplayTagFeature*, GameplayTagFeature, const FGameplayTagContainer&, TagEvents);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGameplayTagsUpdateEvent, UVSGameplayTagFeatureBase*, GameplayTagFeature);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FGameplayTagNotifyEvent, UVSGameplayTagFeatureBase*, GameplayTagFeature, const FGameplayTagContainer&, TagEvents);
 
 public:
 	//~ Begin UObject Interface.
@@ -153,7 +146,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags", meta = (AutoCreateRefTerm = "TagsToCheck"))
 	bool HasAllTags(const FGameplayTagContainer& TagsToCheck, bool bExact = true) const;
-
+	
 	/**
 	 * Returns the count for a given tag.
 	 * @param bExact If true, reads explicit count; otherwise reads total count.
@@ -200,6 +193,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags")
 	bool IsDirty() const { return bTagsDirty; }
 
+	UFUNCTION(BlueprintCallable, Category = "GameplayTags")
+	void MarkTagsDirty() { bTagsDirty = true; }
+
 	/**
 	 * Marks tags as updated and broadcasts OnTagsUpdated / OnTagEventsNotified.
 	 * Intended for local execution.
@@ -233,7 +229,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GameplayTags")
 	FString GetDebugString();
 
+protected:
+	virtual FGameplayTagContainer& GetGameplayTagContainerSourceReference();
+	virtual TMap<FGameplayTag, int32>& GetGameplayTagCountMapSourceReference();
+	virtual void ModifyTagCount(const FGameplayTag& GameplayTag, int32 NewCount);
+	
 private:
+	const FGameplayTagContainer& GetGameplayTagContainerConstReference() const;
+	const TMap<FGameplayTag, int32>& GetGameplayTagCountMapConstReference() const;
 	void DeltaTagCountInternal(const FGameplayTag& GameplayTag, int32 DeltaCount);
 	void DeltaTagsCountInternal(const FGameplayTagContainer& GameplayTags, int32 DeltaCount);
 	void SetTagCountInternal(const FGameplayTag& GameplayTag, int32 Count);
@@ -242,6 +245,7 @@ private:
 	void NotifyTagEventsInternal(const FGameplayTagContainer& TagEvents);
 	void UpdateInitialReplicatedTag(const FGameplayTag& GameplayTag);
 	void UpdateInitialReplicatedTags(const FGameplayTagContainer& GameplayTags);
+
 	
 	UFUNCTION(Server, Reliable)
 	void DeltaTagCount_Server(const FGameplayTag& GameplayTag, int32 DeltaCount, EVSNetAuthorityMethodExecPolicy::Type NetExecPolicy);
@@ -302,9 +306,6 @@ private:
 
 	UFUNCTION()
 	void OnRep_InitialSimulationReplicatedTagCounts();
-
-	UFUNCTION()
-	void OnAbilitySystemComponentListeningTagsUpdated(const FGameplayTag Tag, int32 Count);
 	
 public:
 	FGameplayTagsUpdateDelegate OnTagsUpdated_Native;
@@ -334,13 +335,6 @@ public:
 	bool bBindDelegatesWhenInitialized = true;
 
 protected:
-	/**
-	 * If true, feature will use ability system component source instead of local source.
-	 * This will also bind its updating delegates to the feature.
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameplayTags")
-	bool bUseAbilitySystemComponentSource = false;
-	
 #if WITH_EDITORONLY_DATA
 	/** If true, prints a debug description of owned tags every tick. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameplayTags|Debug")
@@ -358,11 +352,36 @@ private:
 
 	/** True when internal tag counts have changed since last NotifyTagsUpdated. */
 	bool bTagsDirty = false;
-
-	FGameplayTagContainer LocalGameplayTags;
-	TMap<FGameplayTag, int32> LocalExplicitTagCounts;
+	
 	TMap<FGameplayTag, int32> LocalImplicitTagCounts;
-	TWeakObjectPtr<UAbilitySystemComponent> AbilitySystemComponentPrivate;
-	FGameplayTagCountContainer* GameplayTagCountContainerPtr = nullptr;
-	TMap<FGameplayTag, FDelegateHandle> AbilitySystemComponentRegisteredDelegateHandles;
+};
+
+
+/** ------------------------------------------------------------------------- **/
+
+
+/**
+ * UVSLocalSourceGameplayTagFeature
+ *
+ * A simple gameplay-tag feature that stores its tag container
+ * and tag count map locally inside the feature itself.
+ *
+ * - Provides a self-contained tag source (no external system required).
+ * - Useful for lightweight or isolated tag sets that still benefit
+ *   from the network-aware APIs and event system in the base class.
+ */
+UCLASS(DisplayName = "VS.Feature.GameplayTags.LocalSource")
+class UVSLocalSourceGameplayTagFeature : public UVSGameplayTagFeatureBase
+{
+	GENERATED_UCLASS_BODY()
+
+protected:
+	//~ Begin UVSGameplayTagFeature Interface.
+	virtual FGameplayTagContainer& GetGameplayTagContainerSourceReference() override;
+	virtual TMap<FGameplayTag, int32>& GetGameplayTagCountMapSourceReference() override;
+	//~ End UVSGameplayTagFeature Interface.
+
+private:
+	FGameplayTagContainer LocalSourceGameplayTagContainer;
+	TMap<FGameplayTag, int32> LocalSourceGameplayTagCountMap;
 };

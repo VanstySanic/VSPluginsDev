@@ -7,7 +7,7 @@
 #include "VSGameplayTagFeatureInterface.generated.h"
 
 struct FGameplayTagContainer;
-class UVSGameplayTagFeature;
+class UVSGameplayTagFeatureBase;
 
 UINTERFACE()
 class UVSGameplayTagFeatureInterface : public UInterface
@@ -23,15 +23,15 @@ class VSPLUGINSCORE_API IVSGameplayTagFeatureInterface
 	GENERATED_BODY()
 
 public:
-	UVSGameplayTagFeature* GetPrimaryGameplayTagFeature_Native() const;
+	UVSGameplayTagFeatureBase* GetPrimaryGameplayTagFeature_Native() const;
 	
 protected:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, DisplayName = "Get Primary Gameplay Tag Feature", Category = "GameplayTags")
-	UVSGameplayTagFeature* GetPrimaryGameplayTagFeature() const;
+	UVSGameplayTagFeatureBase* GetPrimaryGameplayTagFeature() const;
 
 	UFUNCTION(BlueprintNativeEvent, Category = "GameplayTags")
-	void OnGameplayTagFeatureTagsUpdated(UVSGameplayTagFeature* GameplayTagFeature);
+	void OnGameplayTagFeatureTagsUpdated(UVSGameplayTagFeatureBase* GameplayTagFeature);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "GameplayTags")
-	void OnGameplayTagFeatureTagEventsNotified(UVSGameplayTagFeature* GameplayTagFeature, const FGameplayTagContainer& TagEvents);
+	void OnGameplayTagFeatureTagEventsNotified(UVSGameplayTagFeatureBase* GameplayTagFeature, const FGameplayTagContainer& TagEvents);
 };

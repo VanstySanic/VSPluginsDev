@@ -25,15 +25,15 @@ public:
 	
 
 public:
-	/** Explicit tags. */
+	/** Gameplay tags whose initial explicit counts should be captured on the server and replicated once to autonomous proxies. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags|Feature")
 	FGameplayTagContainer InitialAutonomousReplicatedGameplayTags;
 
-	/** Explicit tags. */
+	/** Gameplay tags whose initial explicit counts should be captured on the server and replicated once to simulated proxies. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags|Feature")
 	FGameplayTagContainer InitialSimulationReplicatedGameplayTags;
 
-	/** Explicit tags. */
+	/** Gameplay tags on the AbilitySystemComponent to listen to for AnyCountChange events when using the ASC as the tag source. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags|Feature")
 	FGameplayTagContainer AbilitySystemComponentListeningTags;
 };

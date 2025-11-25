@@ -21,6 +21,18 @@
 		{
 			"Name": "GameplayAbilities",
 			"Enabled": true
+		},
+		{
+			"Name": "NetworkPrediction",
+			"Enabled": true
+		},
+		{
+			"Name": "Mover",
+			"Enabled": true
+		},
+		{
+			"Name": "MoverExamples",
+			"Enabled": true
 		}
 	]
 }

@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class VSPluginsCore : ModuleRules
+public class VSPluginsCorePresets : ModuleRules
 {
-	public VSPluginsCore(ReadOnlyTargetRules Target) : base(Target)
+	public VSPluginsCorePresets(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
@@ -26,12 +26,11 @@ public class VSPluginsCore : ModuleRules
 			new string[]
 			{
 				"Core",
-				"NetCore",
-				"ApplicationCore",
 				"GameplayTags",
 				"GameplayAbilities",
 				"DeveloperSettings",
 				// ... add other public dependencies that you statically link with here ...
+				"VSPluginsCore",
 			}
 			);
 			
