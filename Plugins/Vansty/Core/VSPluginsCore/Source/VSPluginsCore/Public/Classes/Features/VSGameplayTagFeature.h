@@ -107,8 +107,6 @@ public:
 
 protected:
 	//~ Begin UVSObjectFeature Interface.
-	virtual void Initialize_Implementation() override;
-	virtual void Uninitialize_Implementation() override;
 	virtual void BeginPlay_Implementation() override;
 	virtual void Tick_Implementation(float DeltaTime) override;
 	//~ End UVSObjectFeature Interface.
@@ -330,9 +328,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameplayTags")
 	bool bNotifyTagsUpdateDuringTicks = true;
 	
-	/** If true, feature will automatically bind delegates to common owner objects during initialization. */
+	/** If true, feature will automatically bind delegates to common owner objects during BeginPlay. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameplayTags")
-	bool bBindDelegatesWhenInitialized = true;
+	bool bBindDelegatesDuringBeginPlay = true;
 
 protected:
 #if WITH_EDITORONLY_DATA
@@ -352,7 +350,8 @@ private:
 
 	/** True when internal tag counts have changed since last NotifyTagsUpdated. */
 	bool bTagsDirty = false;
-	
+
+	/** Saves all tags and their parents when tags added or removed. Used to match tags faster. */
 	TMap<FGameplayTag, int32> LocalImplicitTagCounts;
 };
 

@@ -27,27 +27,15 @@ void UVSGameplayTagFeatureBase::GetLifetimeReplicatedProps(TArray<class FLifetim
 	DOREPLIFETIME_CONDITION(UVSGameplayTagFeatureBase, InitialSimulationReplicatedTagCounts, COND_InitialOnly);
 }
 
-void UVSGameplayTagFeatureBase::Initialize_Implementation()
-{
-	Super::Initialize_Implementation();
-	
-	/** Auto bind delegates. */
-	if (bBindDelegatesWhenInitialized)
-	{
-		BindDelegateForObject(GetOwnerActor());
-	}
-}
-
-void UVSGameplayTagFeatureBase::Uninitialize_Implementation()
-{
-
-	
-	Super::Uninitialize_Implementation();
-}
-
 void UVSGameplayTagFeatureBase::BeginPlay_Implementation()
 {
 	Super::BeginPlay_Implementation();
+
+	/** Auto bind delegates. */
+	if (bBindDelegatesDuringBeginPlay)
+	{
+		BindDelegateForObject(GetOwnerActor());
+	}
 
 	/** Refresh from replication for safety. */
 	OnRep_InitialAutonomousReplicatedTagCounts();
