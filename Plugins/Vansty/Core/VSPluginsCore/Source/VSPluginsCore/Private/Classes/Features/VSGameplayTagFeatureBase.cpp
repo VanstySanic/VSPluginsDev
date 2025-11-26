@@ -8,7 +8,7 @@
 static FGameplayTagContainer EmptyGameplayTagContainer = FGameplayTagContainer();
 static TMap<FGameplayTag, int32> EmptyGameplayTagCountMap = TMap<FGameplayTag, int32>();
 
-UE_DEFINE_GAMEPLAY_TAG(VS_PLUGINSCORE_GAMEPAYTAGFEATURE_ONTAGSUPDATED, "VS.PluginsCore.GameplayTagFeature.OnTagsUpdated")
+UE_DEFINE_GAMEPLAY_TAG(VS_PLUGINSCORE_GAMEPAYTAGFEATURE_ONTAGSUPDATED, "VS.Feature.GameplayTags.OnTagsUpdated")
 
 UVSGameplayTagFeatureBase::UVSGameplayTagFeatureBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -30,16 +30,20 @@ void UVSGameplayTagFeatureBase::GetLifetimeReplicatedProps(TArray<class FLifetim
 void UVSGameplayTagFeatureBase::BeginPlay_Implementation()
 {
 	Super::BeginPlay_Implementation();
+	
+	InitDefaultGameplayTags();
+
+	/** Refresh from replication for safety. */
+	OnRep_InitialAutonomousReplicatedTagCounts();
+	OnRep_InitialSimulationReplicatedTagCounts();
+	
+	NotifyTagsUpdated();
 
 	/** Auto bind delegates. */
 	if (bBindDelegatesDuringBeginPlay)
 	{
 		BindDelegateForObject(GetOwnerActor());
 	}
-
-	/** Refresh from replication for safety. */
-	OnRep_InitialAutonomousReplicatedTagCounts();
-	OnRep_InitialSimulationReplicatedTagCounts();
 }
 
 void UVSGameplayTagFeatureBase::Tick_Implementation(float DeltaTime)
@@ -71,7 +75,6 @@ bool UVSGameplayTagFeatureBase::HasMatchingGameplayTag(FGameplayTag TagToCheck) 
 
 bool UVSGameplayTagFeatureBase::HasAllMatchingGameplayTags(const FGameplayTagContainer& TagContainer) const
 {
-	
 	return const_cast<UVSGameplayTagFeatureBase*>(this)->GetGameplayTagContainerSourceReference().HasAll(TagContainer);
 }
 
@@ -85,45 +88,102 @@ FGameplayTagContainer UVSGameplayTagFeatureBase::GetGameplayTags() const
 	return const_cast<UVSGameplayTagFeatureBase*>(this)->GetGameplayTagContainerSourceReference();
 }
 
-const FGameplayTagContainer& UVSGameplayTagFeatureBase::GetGameplayTagContainerConstReference() const
+const FGameplayTagContainer& UVSGameplayTagFeatureBase::GetGameplayTagContainerSourceConstReference() const
 {
 	return const_cast<UVSGameplayTagFeatureBase*>(this)->GetGameplayTagContainerSourceReference();
 }
 
-const TMap<FGameplayTag, int32>& UVSGameplayTagFeatureBase::GetGameplayTagCountMapConstReference() const
+const TMap<FGameplayTag, int32>& UVSGameplayTagFeatureBase::GetGameplayTagCountMapSourceConstReference() const
 {
 	return const_cast<UVSGameplayTagFeatureBase*>(this)->GetGameplayTagCountMapSourceReference();
 }
 
+void UVSGameplayTagFeatureBase::InitDefaultGameplayTags()
+{
+	for (const FGameplayTag& GameplayTag : DefaultGameplayTags.GetGameplayTagArray())
+	{
+		if (!DefaultGameplayTagCounts.Contains(GameplayTag))
+		{
+			DefaultGameplayTagCounts.Add(GameplayTag, 1);
+		}
+	}
+
+	/** Filter the map to skip replicated tags. */
+	TMap<FGameplayTag, int> FilteredDefaultMap = DefaultGameplayTagCounts;
+	for (const TPair<FGameplayTag, int>& GameplayTagCountMap : DefaultGameplayTagCounts)
+	{
+		bool bShouldRemove = false;
+		if (GameplayTagCountMap.Value <= 0)
+		{
+			bShouldRemove = true;
+		}
+		else if (GetOwnerActor()->GetLocalRole() == ROLE_AutonomousProxy)
+		{
+			if (UVSPluginsCoreSettings::Get()->InitialAutonomousReplicatedGameplayTags.HasTagExact(GameplayTagCountMap.Key))
+			{
+				bShouldRemove = true;
+			}
+		}
+		else if (GetOwnerActor()->GetLocalRole() == ROLE_SimulatedProxy)
+		{
+			if (UVSPluginsCoreSettings::Get()->InitialSimulationReplicatedGameplayTags.HasTagExact(GameplayTagCountMap.Key))
+			{
+				bShouldRemove = true;
+			}
+		}
+		if (bShouldRemove)
+		{
+			FilteredDefaultMap.Remove(GameplayTagCountMap.Key);
+		}
+	}
+
+	if (!FilteredDefaultMap.IsEmpty())
+	{
+		bool bCachedNotifyInstantly = bNotifyTagsUpdateInstantly;
+		bNotifyTagsUpdateInstantly = false;
+		
+		for (const TPair<FGameplayTag, int>& DefaultMap : FilteredDefaultMap)
+		{
+			SetTagCountInternal(DefaultMap.Key, DefaultMap.Value);
+		}
+		
+		bNotifyTagsUpdateInstantly = bCachedNotifyInstantly;
+		if (bNotifyTagsUpdateInstantly)
+		{
+			NotifyTagsUpdated();
+		}
+	}
+}
+
 bool UVSGameplayTagFeatureBase::HasTag(const FGameplayTag& TagToCheck, bool bExact) const
 {
-	return bExact ? GetGameplayTagContainerConstReference().HasTagExact(TagToCheck) : GetGameplayTagContainerConstReference().HasTag(TagToCheck);
+	return bExact ? GetGameplayTagCountMapSourceConstReference().Contains(TagToCheck) : LocalImplicitTagCounts.Contains(TagToCheck);
 }
 
 bool UVSGameplayTagFeatureBase::HasAnyTag(const FGameplayTagContainer& TagsToCheck, bool bExact) const
 {
-	return bExact ? GetGameplayTagContainerConstReference().HasAnyExact(TagsToCheck) : GetGameplayTagContainerConstReference().HasAny(TagsToCheck);
+	return bExact ? GetGameplayTagContainerSourceConstReference().HasAnyExact(TagsToCheck) : GetGameplayTagContainerSourceConstReference().HasAny(TagsToCheck);
 }
 
 bool UVSGameplayTagFeatureBase::HasAllTags(const FGameplayTagContainer& TagsToCheck, bool bExact) const
 {
-	return bExact ? GetGameplayTagContainerConstReference().HasAllExact(TagsToCheck) : GetGameplayTagContainerConstReference().HasAll(TagsToCheck);
+	return bExact ? GetGameplayTagContainerSourceConstReference().HasAllExact(TagsToCheck) : GetGameplayTagContainerSourceConstReference().HasAll(TagsToCheck);
 }
 
 int32 UVSGameplayTagFeatureBase::GetTagCount(const FGameplayTag& TagToCheck, bool bExact) const
 {
-	return bExact ? GetGameplayTagCountMapConstReference().FindRef(TagToCheck) : LocalImplicitTagCounts.FindRef(TagToCheck);
+	return bExact ? GetGameplayTagCountMapSourceConstReference().FindRef(TagToCheck) : LocalImplicitTagCounts.FindRef(TagToCheck);
 }
 
 bool UVSGameplayTagFeatureBase::MatchesTagQuery(const FGameplayTagQuery& TagQuery, bool bEmptyQueryPass) const
 {
 	if (TagQuery.IsEmpty() && bEmptyQueryPass) return true;
-	return TagQuery.Matches(GetGameplayTagContainerConstReference());
+	return TagQuery.Matches(GetGameplayTagContainerSourceConstReference());
 }
 
 bool UVSGameplayTagFeatureBase::MatchesEventQuery(const FVSGameplayTagEventQuery& EventQuery, const FGameplayTagContainer& TagEvents) const
 {
-	return EventQuery.Matches(TagEvents, GetGameplayTagContainerConstReference());
+	return EventQuery.Matches(TagEvents, GetGameplayTagContainerSourceConstReference());
 }
 
 void UVSGameplayTagFeatureBase::AddTag(const FGameplayTag& GameplayTag, int32 AddCount, const FVSNetMethodExecutionPolicies& NetExecPolicies)
@@ -636,6 +696,7 @@ void UVSGameplayTagFeatureBase::DeltaTagCount_Server_Implementation(const FGamep
 
 void UVSGameplayTagFeatureBase::DeltaTagCount_Client_Implementation(const FGameplayTag& GameplayTag, int32 DeltaCount)
 {
+	if (GetOwnerActor()->GetLocalRole() != ROLE_AutonomousProxy) return;
 	DeltaTagCountInternal(GameplayTag, DeltaCount);
 }
 
@@ -663,6 +724,7 @@ void UVSGameplayTagFeatureBase::DeltaTagsCount_Server_Implementation(const FGame
 
 void UVSGameplayTagFeatureBase::DeltaTagsCount_Client_Implementation(const FGameplayTagContainer& GameplayTags, int32 DeltaCount)
 {
+	if (GetOwnerActor()->GetLocalRole() != ROLE_AutonomousProxy) return;
 	DeltaTagsCountInternal(GameplayTags, DeltaCount);
 }
 
@@ -690,6 +752,7 @@ void UVSGameplayTagFeatureBase::SetTagCount_Server_Implementation(const FGamepla
 
 void UVSGameplayTagFeatureBase::SetTagCount_Client_Implementation(const FGameplayTag& GameplayTag, int32 Count)
 {
+	if (GetOwnerActor()->GetLocalRole() != ROLE_AutonomousProxy) return;
 	SetTagCountInternal(GameplayTag, Count);
 }
 
@@ -717,6 +780,7 @@ void UVSGameplayTagFeatureBase::SetTagsCount_Server_Implementation(const FGamepl
 
 void UVSGameplayTagFeatureBase::SetTagsCount_Client_Implementation(const FGameplayTagContainer& GameplayTags, int32 Count)
 {
+	if (GetOwnerActor()->GetLocalRole() != ROLE_AutonomousProxy) return;
 	SetTagsCountInternal(GameplayTags, Count);
 }
 
@@ -744,6 +808,7 @@ void UVSGameplayTagFeatureBase::NotifyTagEvent_Server_Implementation(const FGame
 
 void UVSGameplayTagFeatureBase::NotifyTagEvent_Client_Implementation(const FGameplayTag& GameplayTag)
 {
+	if (GetOwnerActor()->GetLocalRole() != ROLE_AutonomousProxy) return;
 	NotifyTagEventInternal(GameplayTag);
 }
 
@@ -771,6 +836,7 @@ void UVSGameplayTagFeatureBase::NotifyTagEvents_Server_Implementation(const FGam
 
 void UVSGameplayTagFeatureBase::NotifyTagEvents_Client_Implementation(const FGameplayTagContainer& GameplayTags)
 {
+	if (GetOwnerActor()->GetLocalRole() != ROLE_AutonomousProxy) return;
 	NotifyTagEventsInternal(GameplayTags);
 }
 
@@ -791,8 +857,11 @@ void UVSGameplayTagFeatureBase::OnRep_InitialAutonomousReplicatedTagCounts()
 	{
 		SetTagCountInternal(InitialAutonomousReplicatedTagCounts.Tags[i], InitialAutonomousReplicatedTagCounts.Counts[i]);
 	}
-	NotifyTagsUpdated();
 	bNotifyTagsUpdateInstantly = bCachedNotifyInstantly;
+	if (bNotifyTagsUpdateInstantly)
+	{
+		NotifyTagsUpdated();
+	}
 }
 
 void UVSGameplayTagFeatureBase::OnRep_InitialSimulationReplicatedTagCounts()
@@ -806,8 +875,11 @@ void UVSGameplayTagFeatureBase::OnRep_InitialSimulationReplicatedTagCounts()
 	{
 		SetTagCountInternal(InitialSimulationReplicatedTagCounts.Tags[i], InitialSimulationReplicatedTagCounts.Counts[i]);
 	}
-	NotifyTagsUpdated();
 	bNotifyTagsUpdateInstantly = bCachedNotifyInstantly;
+	if (bCachedNotifyInstantly)
+	{
+		NotifyTagsUpdated();
+	}
 }
 
 

@@ -96,9 +96,7 @@ void UVSReplicatableObject::SetIsReplicated(bool bShouldReplicate)
 
 	if (OuterActorPrivate.IsValid() && !OuterActorPrivate->HasAnyFlags(RF_NeedInitialization) && OuterActorPrivate->HasAuthority())
 	{
-#if UE_WITH_IRIS
 		bReplicates ? BeginReplication() : EndReplication();
-#endif
 	}
 
 	MARK_PROPERTY_DIRTY_FROM_NAME(UVSReplicatableObject, bReplicates, this);
@@ -108,11 +106,11 @@ void UVSReplicatableObject::BeginReplication()
 {
 #if UE_WITH_IRIS
 	UActorComponent* OuterComponent = GetTypedOuter<UActorComponent>();
-	if (OuterComponent && OuterComponent->GetIsReplicated() && OuterComponent->IsUsingRegisteredSubObjectList())
+	if (OuterComponent && OuterComponent->GetIsReplicated() && OuterComponent->IsSupportedForNetworking() && OuterComponent->IsUsingRegisteredSubObjectList())
 	{
 		OuterComponent->AddReplicatedSubObject(this);
 	}
-	else
+	else if (OuterActorPrivate.IsValid() && OuterActorPrivate->GetIsReplicated() && OuterActorPrivate->IsSupportedForNetworking() && OuterActorPrivate->IsUsingRegisteredSubObjectList())
 	{
 		OuterActorPrivate->AddReplicatedSubObject(this);
 	}

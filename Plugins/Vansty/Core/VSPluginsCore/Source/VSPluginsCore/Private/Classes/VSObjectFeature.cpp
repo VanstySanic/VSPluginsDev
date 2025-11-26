@@ -9,6 +9,8 @@ DEFINE_LOG_CATEGORY(LogObjectFeature);
 
 UVSObjectFeature::UVSObjectFeature(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, bAutoActivate(true)
+	, bRegisterWithOwner(true)
 {
 	TickProxy = CreateDefaultSubobject<UVSObjectTickProxy>(TEXT("TickProxy"));
 }
@@ -73,7 +75,8 @@ void UVSObjectFeature::RegisterFeature()
 		const bool bOwnerActorBeginPlayStarted = OwnerActorPrivate.IsValid() ? (OwnerActorPrivate->HasActorBegunPlay() || OwnerActorPrivate->IsActorBeginningPlay()) : true;
 		const bool bOwnerFeatureBeginPlayStarted = OwnerFeaturePrivate ? (OwnerFeaturePrivate->HasBeenInitialized() || OwnerFeaturePrivate->HasBegunPlay()) : true;
 		
-		if (OwnerActorPrivate.IsValid() && GetIsReplicated() && OwnerActorPrivate->IsActorInitialized())
+		if (OwnerActorPrivate.IsValid() && OwnerActorPrivate->IsActorInitialized() && OwnerActorPrivate->GetIsReplicated()
+			&& GetIsReplicated() && IsSupportedForNetworking())
 		{
 			BeginReplication();
 		}
@@ -100,7 +103,7 @@ void UVSObjectFeature::RegisterFeature()
 	}
 
 	/** Register sub features. */
-	TArray<TObjectPtr<UVSObjectFeature>> CurrentSubFeatures = SubFeatures;
+	TArray<UVSObjectFeature*> CurrentSubFeatures = SubFeatures;
 	for (UVSObjectFeature* SubFeature : CurrentSubFeatures)
 	{
 		if (SubFeature && SubFeature->bRegisterWithOwner && !SubFeature->IsRegistered())
@@ -221,7 +224,7 @@ bool UVSObjectFeature::HasSubFeature(UVSObjectFeature* Feature) const
 	return false;
 }
 
-void UVSObjectFeature::AddInstancedFeature(UVSObjectFeature* Feature, bool bDeferRegister)
+void UVSObjectFeature::AddSubFeatureInstance(UVSObjectFeature* Feature, bool bDeferRegister)
 {
 	if (!Feature || Feature->OwnerFeaturePrivate == this) return;
 	
@@ -254,7 +257,6 @@ void UVSObjectFeature::AddInstancedFeature(UVSObjectFeature* Feature, bool bDefe
 	}
 	
 	SubFeatures.Add(Feature);
-	Feature->OwnerFeaturePrivate = this;
 	
 	if (!bDeferRegister && Feature->bRegisterWithOwner &&  IsRegistered())
 	{
@@ -269,12 +271,6 @@ UVSObjectFeature* UVSObjectFeature::AddSubFeatureByClass(TSubclassOf<UVSObjectFe
 	
 	SubFeatures.Add(Feature);
 	Feature->OwnerFeaturePrivate = this;
-
-	/** Force re-register sub feature when reparenting. */
-	if (Feature->IsRegistered())
-	{
-		Feature->UnregisterFeature();
-	}
 	
 	if (!bDeferRegister && Feature->bRegisterWithOwner && IsRegistered())
 	{
@@ -299,8 +295,8 @@ void UVSObjectFeature::RemoveSubFeature(UVSObjectFeature* Feature)
 
 void UVSObjectFeature::SetOwnerFeature(UVSObjectFeature* Feature, bool bDeferRegister)
 {
-	if (!Feature || Feature == OwnerFeaturePrivate) return;
-
+	if (Feature == OwnerFeaturePrivate) return;
+	
 	if (Feature == this)
 	{
 		UE_LOG(LogObjectFeature, Warning, TEXT("SetOwnerFeature: (%s) trying to set it self as owner. Aborting."), *GetPathName());
@@ -328,13 +324,16 @@ void UVSObjectFeature::SetOwnerFeature(UVSObjectFeature* Feature, bool bDeferReg
 	{
 		UnregisterFeature();
 	}
+
+	if (Feature)
+	{
+		Feature->SubFeatures.Add(this);
+	}
 	
-	Feature->SubFeatures.Add(this);
 	OwnerFeaturePrivate = Feature;
 	
-	if (!bDeferRegister && Feature->IsRegistered())
+	if (!bDeferRegister && Feature && Feature->IsRegistered())
 	{
-
 		RegisterFeature();
 	}
 }
@@ -363,13 +362,25 @@ UVSObjectFeature* UVSObjectFeature::GetOwnerFeatureByClass(TSubclassOf<UVSObject
 
 UVSObjectFeature* UVSObjectFeature::GetSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class) const
 {
-	for (UVSObjectFeature* SubFeature : GetSubFeatures())
+	for (UVSObjectFeature* SubFeature : SubFeatures)
 	{
 		if (SubFeature && SubFeature->IsA(Class))
 		{
 			return SubFeature;
 		}
 	}
+
+	for (UVSObjectFeature* SubFeature : SubFeatures)
+	{
+		if (SubFeature)
+		{
+			if (UVSObjectFeature* Feature = SubFeature->GetSubFeatureByClass(Class))
+			{
+				return Feature;
+			}
+		}
+	}
+	
 	return nullptr;
 }
 
@@ -389,13 +400,25 @@ TArray<UVSObjectFeature*> UVSObjectFeature::GetSubFeaturesByClass(TSubclassOf<UV
 UVSObjectFeature* UVSObjectFeature::GetSubFeatureByName(FName Name) const
 {
 	if (Name.IsNone()) return nullptr;
-	for (UVSObjectFeature* SubFeature : GetSubFeatures())
+	for (UVSObjectFeature* SubFeature : SubFeatures)
 	{
-		if (SubFeature->FeatureName == Name)
+		if (SubFeature && SubFeature->FeatureName == Name)
 		{
 			return SubFeature;
 		}
 	}
+
+	for (UVSObjectFeature* SubFeature : SubFeatures)
+	{
+		if (SubFeature)
+		{
+			if (UVSObjectFeature* Feature = SubFeature->GetSubFeatureByName(Name))
+			{
+				return Feature;
+			}
+		}
+	}
+	
 	return nullptr;
 }
 
@@ -498,7 +521,7 @@ void UVSObjectFeature::OnRep_OwnerFeaturePrivate(UVSObjectFeature* PrevOwnerFeat
 	{
 		if (!OwnerFeaturePrivate->HasSubFeature(this))
 		{
-			OwnerFeaturePrivate->AddInstancedFeature(this);
+			OwnerFeaturePrivate->AddSubFeatureInstance(this);
 		}
 		else if (!IsRegistered())
 		{

@@ -35,5 +35,5 @@ public:
 
 	/** Gameplay tags on the AbilitySystemComponent to listen to for AnyCountChange events when using the ASC as the tag source. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags|Feature")
-	FGameplayTagContainer AbilitySystemComponentListeningTags;
+	FGameplayTagContainer AbilitySystemListeningTags;
 };

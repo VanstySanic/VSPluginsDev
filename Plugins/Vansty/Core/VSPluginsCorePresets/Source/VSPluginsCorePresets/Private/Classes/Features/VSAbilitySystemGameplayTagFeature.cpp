@@ -28,7 +28,7 @@ void UVSAbilitySystemGameplayTagFeature::Initialize_Implementation()
 	AbilitySystemGameplayTagCountContainerPtr = &VS_PRIVABLIC_MEMBER(AbilitySystemComponentPrivate.Get(), UAbilitySystemComponent, GameplayTagCountContainer);
 	check(AbilitySystemGameplayTagCountContainerPtr);
 
-	for (const FGameplayTag& GameplayTag : UVSPluginsCoreSettings::Get()->AbilitySystemComponentListeningTags.GetGameplayTagArray())
+	for (const FGameplayTag& GameplayTag : UVSPluginsCoreSettings::Get()->AbilitySystemListeningTags.GetGameplayTagArray())
 	{
 		FDelegateHandle DelegateHandle = AbilitySystemComponentPrivate->RegisterGameplayTagEvent(GameplayTag, EGameplayTagEventType::AnyCountChange)
 			.AddUObject(this, &UVSAbilitySystemGameplayTagFeature::OnAbilitySystemListeningTagsUpdated);
@@ -48,6 +48,7 @@ void UVSAbilitySystemGameplayTagFeature::Uninitialize_Implementation()
 			}
 		}
 	}
+	
 	AbilitySystemGameplayTagCountContainerPtr = nullptr;
 	AbilitySystemComponentPrivate.Reset();
 	AbilitySystemRegisteredDelegateHandles.Empty();

@@ -1,6 +1,6 @@
 ﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "VSPluginsCorePresets.h"
+#include "VSPluginsCorePresetsModule.h"
 
 #define LOCTEXT_NAMESPACE "FVSPluginsCorePresetsModule"
 

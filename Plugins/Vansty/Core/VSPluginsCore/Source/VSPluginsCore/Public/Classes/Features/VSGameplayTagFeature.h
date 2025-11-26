@@ -233,8 +233,9 @@ protected:
 	virtual void ModifyTagCount(const FGameplayTag& GameplayTag, int32 NewCount);
 	
 private:
-	const FGameplayTagContainer& GetGameplayTagContainerConstReference() const;
-	const TMap<FGameplayTag, int32>& GetGameplayTagCountMapConstReference() const;
+	const FGameplayTagContainer& GetGameplayTagContainerSourceConstReference() const;
+	const TMap<FGameplayTag, int32>& GetGameplayTagCountMapSourceConstReference() const;
+	void InitDefaultGameplayTags();
 	void DeltaTagCountInternal(const FGameplayTag& GameplayTag, int32 DeltaCount);
 	void DeltaTagsCountInternal(const FGameplayTagContainer& GameplayTags, int32 DeltaCount);
 	void SetTagCountInternal(const FGameplayTag& GameplayTag, int32 Count);
@@ -332,6 +333,21 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameplayTags")
 	bool bBindDelegatesDuringBeginPlay = true;
 
+	/**
+	 * Default tags that will be added to the feature during BeginPlay.
+	 * If a tag is here but its count is not assigned in the count map, then the count will be 1 by default.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameplayTags")
+	FGameplayTagContainer DefaultGameplayTags;
+	
+	/**
+	 * Default tags counts that will be set to the feature during BeginPlay.
+	 * If a tag is in DefaultGameplayTags but its count is not assigned here, then the count will be 1 by default.
+	 * If a tag is not in DefaultGameplayTags but in the count map, the tag will also be added with a count of 1.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameplayTags")
+	TMap<FGameplayTag, int32> DefaultGameplayTagCounts;
+
 protected:
 #if WITH_EDITORONLY_DATA
 	/** If true, prints a debug description of owned tags every tick. */
@@ -348,11 +364,11 @@ private:
 	UPROPERTY(ReplicatedUsing = "OnRep_InitialSimulationReplicatedTagCounts")
 	FVSGameplayTagFeatureReplicatedTagCounts InitialSimulationReplicatedTagCounts;
 
-	/** True when internal tag counts have changed since last NotifyTagsUpdated. */
-	bool bTagsDirty = false;
-
-	/** Saves all tags and their parents when tags added or removed. Used to match tags faster. */
+	/** Saves all tags and their parents when tags added or removed. Used to query get tag counts faster. */
 	TMap<FGameplayTag, int32> LocalImplicitTagCounts;
+	
+	/** True when internal tag counts have changed since last NotifyTagsUpdated. */
+	uint8 bTagsDirty : 1;
 };
 
 

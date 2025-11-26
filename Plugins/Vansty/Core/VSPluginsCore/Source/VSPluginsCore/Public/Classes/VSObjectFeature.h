@@ -80,18 +80,14 @@ public:
 	
 	/**
 	 * Register the feature, set up the tick function and replication.
-	 * This will be automatically called when in blueprint editor, and should be manually called when in game.
-	 * This will call the initialize and begin play process.
-	 * Will register sub features if possible.
+	 * This will call the initialize and begin play process, and will register sub features if possible.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Features")
 	void RegisterFeature();
 
 	/**
 	 * Unregister the feature, clean up the tick function and replication.
-	 * This will be automatically called and need not be called manually.
-	 * This will call the uninitialize and end play process.
-	 * Will uninitialize sub features if possible.
+	 * This will call the uninitialize and end play process, and will uninitialize sub features if possible.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Features")
 	void UnregisterFeature();
@@ -132,7 +128,7 @@ public:
 	 * @param bDeferRegister If true, the feature will be forced not be registered automatically even bRegisterWithOwner is true.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Features")
-	void AddInstancedFeature(UVSObjectFeature* Feature, bool bDeferRegister = false);
+	void AddSubFeatureInstance(UVSObjectFeature* Feature, bool bDeferRegister = false);
 
 	/**
 	 * Create a new feature instance of the specified class and add it as a sub feature.
@@ -253,14 +249,14 @@ public:
 
 	/** Whether the feature should activate automatically after BeginPlay. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Features")
-	bool bAutoActivate = true;
+	uint8 bAutoActivate : 1;
 
 	/**
 	 * If true, feature will be registered when its owner feature is registered or reparenting.
 	 * Otherwise, you should manually register the feature.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Features")
-	bool bRegisterWithOwner = true;
+	uint8 bRegisterWithOwner : 1;
 
 protected:
 	/** All direct sub features owned by this feature. May contain nested hierarchies. */
