@@ -164,7 +164,7 @@ void UVSObjectFeature::UnregisterFeature()
 
 void UVSObjectFeature::DestroyFeature()
 {
-	if (bIsBeingDestroyed) return;
+	if (bIsBeingDestroyed || !IsValid(this)) return;
 	bIsBeingDestroyed = true;
 
 	/** Destroy sub features. */
@@ -234,7 +234,7 @@ void UVSObjectFeature::AddSubFeatureInstance(UVSObjectFeature* Feature, bool bDe
 		return;
 	}
 
-	if (HasOwnerFeature(Feature))
+	if (HasOwnerFeature(Feature) || IsInOuter(Feature))
 	{
 		UE_LOG(LogObjectFeature, Warning, TEXT("AddInstancedFeature: (%s) trying to set it's owner feature as child. Aborting."), *GetPathName());
 		return;
@@ -303,7 +303,7 @@ void UVSObjectFeature::SetOwnerFeature(UVSObjectFeature* Feature, bool bDeferReg
 		return;
 	}
 
-	if (HasSubFeature(Feature))
+	if (HasSubFeature(Feature) || Feature->IsInOuter(this))
 	{
 		UE_LOG(LogObjectFeature, Warning, TEXT("SetOwnerFeature: (%s) trying to set it's sub feature as owner. Aborting."), *GetPathName());
 		return;
@@ -441,7 +441,7 @@ void UVSObjectFeature::EndPlay_Implementation()
 
 bool UVSObjectFeature::CanTick_Implementation() const
 {
-	return TickProxy && TickProxy->PrimaryObjectTick.bCanEverTick && TickProxy->IsTickFunctionRegistered() && TickProxy->PrimaryObjectTick.IsTickFunctionEnabled()
+	return TickProxy && TickProxy->PrimaryObjectTick.bCanEverTick && TickProxy->IsTickFunctionRegistered() && TickProxy->IsTickFunctionEnabled()
 		&& IsActive();
 }
 
@@ -456,9 +456,9 @@ void UVSObjectFeature::OnDestroyedFromReplication()
 	Super::OnDestroyedFromReplication();
 }
 
-bool UVSObjectFeature::CanTickWrapper()
+AActor* UVSObjectFeature::GetOwnerActor() const
 {
-	return CanTick();
+	return OwnerActorPrivate.IsValid() ? OwnerActorPrivate.Get() : GetTypedOuter<AActor>();
 }
 
 void UVSObjectFeature::SetTickEnabled(bool bEnabled)
@@ -466,9 +466,15 @@ void UVSObjectFeature::SetTickEnabled(bool bEnabled)
 	if (!TickProxy) return;
 	if (bEnabled && !TickProxy->IsTickFunctionRegistered())
 	{
+		TickProxy->OnTick_Native.AddLambda([this] (UVSObjectTickProxy* PrimaryTickProxy, float DeltaTime, ELevelTick TickType, FVSObjectTickFunction* TickFunction)
+		{
+			TickFeature(DeltaTime, TickType, TickFunction);
+		});
+		TickProxy->CanTick_Native.BindLambda([this] (UVSObjectTickProxy* PrimaryTickProxy)
+		{
+			return CanTick();
+		});
 		TickProxy->RegisterTickFunction();
-		TickProxy->OnTick_Native.AddUObject(this, &UVSObjectFeature::TickFeature);
-		TickProxy->CanTick.BindDynamic(this, &UVSObjectFeature::CanTickWrapper);
 	}
 	else if (!bEnabled && TickProxy->IsTickFunctionRegistered())
 	{

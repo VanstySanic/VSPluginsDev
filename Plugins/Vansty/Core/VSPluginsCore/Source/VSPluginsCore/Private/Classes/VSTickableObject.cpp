@@ -28,7 +28,7 @@ void UVSTickableObject::RegisterTickFunction()
 	if (!GetWorld()) return;
 	if (IsTickFunctionRegistered()) return;
 	PrimaryObjectTick.RegisterAndSetup(GetTypedOuter<AActor>());
-	if (!PrimaryObjectTick.IsTickFunctionRegistered()) return;
+	if (!IsTickFunctionRegistered()) return;
 	PrimaryObjectTick.CanExecuteTick.BindUObject(this, &UVSTickableObject::CanExecuteTick);
 	PrimaryObjectTick.OnExecuteTick.BindUObject(this, &UVSTickableObject::TickObject);
 }
@@ -46,6 +46,26 @@ bool UVSTickableObject::IsTickFunctionRegistered() const
 	return PrimaryObjectTick.IsTickFunctionRegistered();
 }
 
+bool UVSTickableObject::IsTickFunctionEnabled() const
+{
+	return PrimaryObjectTick.IsTickFunctionEnabled();
+}
+
+void UVSTickableObject::SetTickFunctionEnabled(bool bEnabled)
+{
+	PrimaryObjectTick.SetTickFunctionEnable(bEnabled);
+}
+
+void UVSTickableObject::SetTickGroup(ETickingGroup TickingGroup)
+{
+	PrimaryObjectTick.TickGroup = TickingGroup;
+}
+
+void UVSTickableObject::SetEndTickGroup(ETickingGroup TickingGroup)
+{
+	PrimaryObjectTick.EndTickGroup = TickingGroup;
+}
+
 bool UVSTickableObject::CanExecuteTick_Implementation() const
 {
 	return true;
@@ -53,6 +73,16 @@ bool UVSTickableObject::CanExecuteTick_Implementation() const
 
 void UVSTickableObject::Tick_Implementation(float DeltaTime)
 {
+}
+
+void UVSTickableObject::SetTickTimeInterval(float Interval)
+{
+	PrimaryObjectTick.TickInterval = Interval;
+}
+
+void UVSTickableObject::SetTickableWhenPaused(bool bEnabled)
+{
+	PrimaryObjectTick.bTickEvenWhenPaused = bEnabled;
 }
 
 void UVSTickableObject::TickObject(float DeltaTime, ELevelTick TickType, FVSObjectTickFunction* TickFunction)
@@ -88,10 +118,15 @@ void UVSObjectTickProxy::TickObject(float DeltaTime, ELevelTick TickType, FVSObj
 
 	if (OnTick_Native.IsBound())
 	{
-		OnTick_Native.Broadcast(DeltaTime, TickType, TickFunction);
+		OnTick_Native.Broadcast(this, DeltaTime, TickType, TickFunction);
 	}
 	if (OnTick.IsBound())
 	{
-		OnTick.Broadcast(DeltaTime);
+		OnTick.Broadcast(this, DeltaTime);
 	}
+}
+
+bool UVSObjectTickProxy::CanExecuteTick_Implementation() const
+{
+	return (!CanTick_Native.IsBound() || CanTick_Native.Execute(const_cast<UVSObjectTickProxy*>(this))) && (!CanTick.IsBound() || CanTick.Execute(const_cast<UVSObjectTickProxy*>(this)));
 }

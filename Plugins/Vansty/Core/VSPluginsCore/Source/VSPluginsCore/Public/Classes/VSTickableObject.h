@@ -74,7 +74,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Tick")
 	virtual void UnregisterTickFunction();
-
+	
 	/** Whether the primary tick function is registered. */
 	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Tick")
 	bool IsTickFunctionRegistered() const;
@@ -83,6 +83,30 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Tick")
 	bool CanExecuteTick() const;
 
+	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Tick")
+	bool IsTickFunctionEnabled() const;
+	
+	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Tick")
+	void SetTickFunctionEnabled(bool bEnabled);
+	
+	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Tick")
+	void SetTickGroup(ETickingGroup TickingGroup);
+	
+	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Tick")
+	void SetEndTickGroup(ETickingGroup TickingGroup);
+	
+	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Tick")
+	float GetTickTimeInterval() const { return PrimaryObjectTick.TickInterval; }
+
+	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Tick")
+	void SetTickTimeInterval(float Interval = 0.f);
+
+	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Tick")
+	bool GetTickableWhenPaused() const { return PrimaryObjectTick.bTickEvenWhenPaused; }
+
+	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Tick")
+	void SetTickableWhenPaused(bool bEnabled);
+	
 protected:
 	/**
 	 * Function called every frame on this object.
@@ -145,14 +169,20 @@ class VSPLUGINSCORE_API UVSObjectTickProxy final : public UVSTickableObject
 {
 	GENERATED_UCLASS_BODY()
 
-	DECLARE_DYNAMIC_DELEGATE_RetVal(bool, FCanTickEvent);
-	DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnTickDelegate, float /** DeltaTime */, ELevelTick /** TickType */, FVSObjectTickFunction* /** TickFunction */);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTickEvent, float, DeltaTime);
+	DECLARE_DELEGATE_RetVal_OneParam(bool, FCanTickDelegate, UVSObjectTickProxy* /** TickProxy */);
+	DECLARE_DYNAMIC_DELEGATE_RetVal_OneParam(bool, FCanTickEvent, UVSObjectTickProxy*, TickProxy);
+	DECLARE_MULTICAST_DELEGATE_FourParams(FOnTickDelegate, UVSObjectTickProxy* /** TickProxy */, float /** DeltaTime */, ELevelTick /** TickType */, FVSObjectTickFunction* /** TickFunction */);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTickEvent, UVSObjectTickProxy*, TickProxy, float, DeltaTime);
 
 public:
 	virtual void TickObject(float DeltaTime, ELevelTick TickType, FVSObjectTickFunction* TickFunction) override;
 
+	/** Requires both CanTick_Native and CanTick return true. */
+	virtual bool CanExecuteTick_Implementation() const override;
+
 public:
+	/** If not bound, returns as true. */
+	FCanTickDelegate CanTick_Native;
 	FOnTickDelegate OnTick_Native;
 
 	/** If not bound, returns as true. */

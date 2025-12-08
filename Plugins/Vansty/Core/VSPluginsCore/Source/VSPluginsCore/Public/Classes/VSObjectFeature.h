@@ -68,7 +68,7 @@ protected:
 public:
 	/** Get the actor that actually owes this feature. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
-	AActor* GetOwnerActor() const { return OwnerActorPrivate.Get(); }
+	AActor* GetOwnerActor() const;
 	
 	/** Get the feature that directly contain this feature as sub feature. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
@@ -232,10 +232,6 @@ protected:
 	void OnFeatureDeactivated();
 	
 private:
-	/** Wrapper for CanTick so it can be used with dynamic delegates on the tick proxy. */
-	UFUNCTION()
-	bool CanTickWrapper();
-	
 	UFUNCTION()
 	void OnRep_bIsActive();
 
