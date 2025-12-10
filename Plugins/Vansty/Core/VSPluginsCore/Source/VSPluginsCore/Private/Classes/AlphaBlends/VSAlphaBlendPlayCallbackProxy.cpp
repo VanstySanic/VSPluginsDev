@@ -28,11 +28,14 @@ void UVSAlphaBlendPlayCallBackProxy::Activate()
 	if (!Proxy)
 	{
 		SetReadyToDestroy();
+		return;
 	}
 
 	if (UGameInstance* GI = GetWorld() ? GetWorld()->GetWorld()->GetGameInstance() : nullptr)
 	{
 		RegisterWithGameInstance(GI);
+
+		OnProxyCreate.Broadcast(Proxy, Proxy->GetAlpha(), Proxy->GetLoopCount());
 	}
 }
 

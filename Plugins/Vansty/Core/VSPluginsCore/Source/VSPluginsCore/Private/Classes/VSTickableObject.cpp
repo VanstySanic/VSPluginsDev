@@ -23,6 +23,11 @@ UWorld* UVSTickableObject::GetWorld() const
 	return nullptr;
 }
 
+FTickFunction* UVSTickableObject::GetPrimaryTickFunctionPtr() const
+{
+	return const_cast<FVSObjectTickFunction*>(&PrimaryObjectTick);
+}
+
 void UVSTickableObject::RegisterTickFunction()
 {
 	if (!GetWorld()) return;

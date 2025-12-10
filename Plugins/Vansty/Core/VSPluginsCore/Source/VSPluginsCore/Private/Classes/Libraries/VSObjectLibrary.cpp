@@ -19,10 +19,10 @@ bool UVSObjectLibrary::IsValidThreadSafe(const UObject* Object)
 	return IsValid(Object);
 }
 
-bool UVSObjectLibrary::IsObjectInOuter(const UObject* Source, const UObject* PossibleOuterObject)
+bool UVSObjectLibrary::HasOuterObject(const UObject* Source, const UObject* Outer)
 {
 	if (!Source) return false;
-	return Source->IsInOuter(PossibleOuterObject);
+	return Source->IsInOuter(Outer);
 }
 
 UObject* UVSObjectLibrary::GetTypedOuterObject(const UObject* Object, const TSubclassOf<UObject> Class)
@@ -34,6 +34,26 @@ UObject* UVSObjectLibrary::GetImplementingOuterObject(const UObject* Object, con
 {
 	if (!Object) return nullptr;
 	return static_cast<UObject*>(Object->GetImplementingOuterObject(Interface));
+}
+
+void UVSObjectLibrary::AddTickPrerequisiteObject(UObject* Source, UObject* PrerequisiteObject)
+{
+	if (!Source || !PrerequisiteObject || Source == PrerequisiteObject) return;
+	FTickFunction* TargetTickFunction = GetTickFunctionPtrFromObject(Source);
+	FTickFunction* PrerequisiteObjectTickFunction = GetTickFunctionPtrFromObject(PrerequisiteObject);
+	if (TargetTickFunction == PrerequisiteObjectTickFunction) return;
+	if (!TargetTickFunction || !PrerequisiteObjectTickFunction) return;
+	TargetTickFunction->AddPrerequisite(PrerequisiteObject, *PrerequisiteObjectTickFunction);
+}
+
+void UVSObjectLibrary::RemoveTickPrerequisiteObject(UObject* Source, UObject* PrerequisiteObject)
+{
+	if (!Source || !PrerequisiteObject || Source == PrerequisiteObject) return;
+	FTickFunction* TargetTickFunction = GetTickFunctionPtrFromObject(Source);
+	FTickFunction* PrerequisiteObjectTickFunction = GetTickFunctionPtrFromObject(PrerequisiteObject);
+	if (TargetTickFunction == PrerequisiteObjectTickFunction) return;
+	if (!TargetTickFunction || !PrerequisiteObjectTickFunction) return;
+	TargetTickFunction->RemovePrerequisite(PrerequisiteObject, *PrerequisiteObjectTickFunction);
 }
 
 UVSObjectFeature* UVSObjectLibrary::GetFeatureByClassFromObject(UObject* Object, TSubclassOf<UVSObjectFeature> Class)
@@ -134,6 +154,39 @@ UVSObjectFeature* UVSObjectLibrary::GetFeatureByNameFromObject(UObject* Object, 
 			if (UVSObjectFeature* SubFeature = Feature->GetSubFeatureByName(Name))
 			{
 				return SubFeature;
+			}
+		}
+	}
+	
+	return nullptr;
+}
+
+FTickFunction* UVSObjectLibrary::GetTickFunctionPtrFromObject(UObject* Object)
+{
+	if (!Object) return nullptr;
+
+	/** Get from ordinary types. */
+	if (AActor* Actor = Cast<AActor>(Object))
+	{
+		return &Actor->PrimaryActorTick;
+	}
+	if (UActorComponent* ActorComponent = Cast<UActorComponent>(Object))
+	{
+		return &ActorComponent->PrimaryComponentTick;
+	}
+	if (IVSTickFunctionInterface* TickFunctionInterface = Cast<IVSTickFunctionInterface>(Object))
+	{
+		return TickFunctionInterface->GetPrimaryTickFunctionPtr();
+	}
+
+	/** Find a tick function in properties. */
+	for(FProperty* Property = Object->GetClass()->PropertyLink; Property; Property = Property->PropertyLinkNext)
+	{
+		if(FStructProperty* StructProperty = CastField<FStructProperty>(Property))
+		{
+			if (FTickFunction* TickFunction = StructProperty->ContainerPtrToValuePtr<FTickFunction>(Object))
+			{
+				return TickFunction;
 			}
 		}
 	}

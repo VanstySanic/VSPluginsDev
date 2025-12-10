@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "VSReplicatableObject.h"
+#include "Interfaces/VSTickFunctionInterface.h"
 #include "Types/VSObjectTickFunction.h"
 #include "UObject/Object.h"
 #include "VSObjectFeature.generated.h"
@@ -48,7 +49,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogObjectFeature, Log, All);
  * - Use optional automatic tick-based notifications.
  */
 UCLASS(DefaultToInstanced, EditInlineNew, DisplayName = "VS.Feature.Base")
-class VSPLUGINSCORE_API UVSObjectFeature : public UVSReplicatableObject
+class VSPLUGINSCORE_API UVSObjectFeature : public UVSReplicatableObject, public IVSTickFunctionInterface
 {
 	GENERATED_UCLASS_BODY()
 
@@ -58,6 +59,10 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void BeginDestroy() override;
 	//~ End UObject Interface.
+	
+	//~ Begin IVSTickFunctionInterface.
+	virtual FTickFunction* GetPrimaryTickFunctionPtr() const override;
+	//~ End IVSTickFunctionInterface.
 	
 protected:
 	//~ Begin IInterface_ActorSubobject Interface

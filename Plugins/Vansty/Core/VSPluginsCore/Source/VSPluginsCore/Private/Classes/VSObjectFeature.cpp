@@ -22,6 +22,11 @@ void UVSObjectFeature::BeginDestroy()
 	Super::BeginDestroy();
 }
 
+FTickFunction* UVSObjectFeature::GetPrimaryTickFunctionPtr() const
+{
+	return TickProxy ? &TickProxy->PrimaryObjectTick : nullptr;
+}
+
 void UVSObjectFeature::PostInitProperties()
 {
 	Super::PostInitProperties();

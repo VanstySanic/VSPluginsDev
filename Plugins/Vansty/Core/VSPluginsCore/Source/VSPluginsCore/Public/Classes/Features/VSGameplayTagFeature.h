@@ -87,7 +87,6 @@ struct FVSGameplayTagFeatureReplicatedTagCounts
  * - Initial replication is intended for persistent state that clients
  *   must know immediately when joining or spawning.
  */
-
 UCLASS(Abstract, DefaultToInstanced, EditInlineNew, DisplayName = "VS.Feature.GameplayTags.Base")
 class VSPLUGINSCORE_API UVSGameplayTagFeatureBase : public UVSObjectFeature, public IGameplayTagAssetInterface
 {

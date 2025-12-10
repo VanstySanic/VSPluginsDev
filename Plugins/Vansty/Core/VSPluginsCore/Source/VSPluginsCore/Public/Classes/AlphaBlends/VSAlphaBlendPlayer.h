@@ -7,6 +7,16 @@
 #include "Components/TimelineComponent.h"
 #include "VSAlphaBlendPlayer.generated.h"
 
+/**
+ * EVSAlphaBlendFinishAction
+ *
+ * High-level action set describing what UVSAlphaBlendPlayer should do when a
+ * blend reaches its end. Used by FinishInternal() to drive post-blend flow.
+ *
+ * Notes
+ * - Multiple actions may be executed in sequence.
+ * - Individual entries are not explained here; see player behavior for usage.
+ */
 UENUM(BlueprintType)
 namespace EVSAlphaBlendFinishAction
 {
@@ -21,7 +31,31 @@ namespace EVSAlphaBlendFinishAction
 }
 
 /**
- * 
+ * UVSAlphaBlendPlayer
+ *
+ * Tickable wrapper around FAlphaBlend providing a reusable time-based alpha
+ * track with events, direction control, and auto-update support.
+ *
+ * -------------------------------------------------------------------------
+ * Key Features
+ * -------------------------------------------------------------------------
+ * - Runtime blend control:
+ *   - Manual or auto-updated alpha progression.
+ *   - Forward / backward direction switching.
+ *   - Reset, SetAlpha, SetBlendTime, SetAlphaBlendArgs.
+ *
+ * - Events:
+ *   - OnUpdated / OnFinished (native + Blueprint).
+ *
+ * - Finish actions:
+ *   - Executes EVSAlphaBlendFinishAction policies when blend completes.
+ *
+ * -------------------------------------------------------------------------
+ * Usage
+ * -------------------------------------------------------------------------
+ * - Call Initialize() before use (applies defaults).
+ * - Drive via Update(DeltaTime) or enable auto-update.
+ * - Bind to OnUpdated / OnFinished for notifications.
  */
 UCLASS(BlueprintType, DefaultToInstanced, EditInlineNew)
 class VSPLUGINSCORE_API UVSAlphaBlendPlayer : public UVSTickableObject
@@ -144,16 +178,38 @@ private:
 /** ------------------------------------------------------------------------- **/
 
 
+/**
+ * FVSAlphaBlendProxyParams
+ *
+ * Parameter set describing how a UVSAlphaBlendPlayProxy should run its blend
+ * sequence: timing, loops, reversing rules, and finish behavior.
+ *
+ * -------------------------------------------------------------------------
+ * Core Settings
+ * -------------------------------------------------------------------------
+ * - AlphaBlendArgs: Blend time + curve.
+ * - StartAlpha / StartDirection: First-cycle initialization.
+ * - LoopCount: <=0 means infinite cycles.
+ * - InitialDelay / LoopTimeInterval: Cycle timing control.
+ * - UpdateTimeInterval: Optional update throttling.
+ * - Direction reversing: Optional second pass per cycle.
+ * - Finish rules: Pause or destroy on completion.
+ *
+ * -------------------------------------------------------------------------
+ * Usage
+ * -------------------------------------------------------------------------
+ * - Populate this struct and pass to CreateAlphaBlendPlayProxy().
+ */
 USTRUCT(BlueprintType)
 struct FVSAlphaBlendProxyParams
 {
 	GENERATED_USTRUCT_BODY()
 
 	FVSAlphaBlendProxyParams()
-		: bStartPaused(false)
-		, bLoopCycleRequiresReversingDirection(false)
+		: bLoopCycleRequiresReversingDirection(false)
 		, bPauseWhenFinished(true)
 		, bDestroyWhenFinished(true)
+		, bStartPaused(false)
 	{
 		
 	}
@@ -173,13 +229,15 @@ struct FVSAlphaBlendProxyParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 LoopCount = 0;
 
+	/** The time to delay before the blending starts. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float InitialDelay = 0.f;
 
 	/** The time interval to delay the start for the next cycle when the previous cycle finishes. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float LoopTimeInterval = 0.f;
-	
+
+	/** Used to optimize performance. If 0.f, update every frame. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float UpdateTimeInterval = 0.f;
 
@@ -190,19 +248,45 @@ struct FVSAlphaBlendProxyParams
 	/** If true, a full cycle will include an update reversed from the start direction. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bLoopCycleRequiresReversingDirection : 1;
-	
+
+	/** Whether to pause when the proxy finishes. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bPauseWhenFinished : 1;
 	
+	/** Whether to destroy the proxy when it finishes. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bDestroyWhenFinished : 1;
-		
+
+	/** Whether to pause when the proxy is created. If true, user should toggle the pause state manually. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bStartPaused : 1;
 };
 
 /**
- * 
+ * UVSAlphaBlendPlayProxy
+ *
+ * High-level controller that executes one or more alpha-blend cycles using a
+ * UVSAlphaBlendPlayer instance, with optional delays, loop logic, and pause
+ * control. Designed for Blueprint-friendly sequence playback.
+ *
+ * -------------------------------------------------------------------------
+ * Key Features
+ * -------------------------------------------------------------------------
+ * - Handles initial delay, per-loop delay, and optional direction reversing.
+ * - Supports pausing, resetting, and update-interval throttling.
+ * - Tracks loop index and completion state.
+ *
+ * - Events:
+ *   - OnAlphaUpdated
+ *   - OnLoopStart / OnLoopFinished
+ *   - OnProxyFinished
+ *
+ * -------------------------------------------------------------------------
+ * Usage
+ * -------------------------------------------------------------------------
+ * - Create via CreateAlphaBlendPlayProxy(WorldContext, Params).
+ * - Bind to events for per-frame and per-cycle notifications.
+ * - Use SetPaused(), Reset(), Destroy() when needed.
  */
 UCLASS(BlueprintType)
 class VSPLUGINSCORE_API UVSAlphaBlendPlayProxy : public UVSTickableObject

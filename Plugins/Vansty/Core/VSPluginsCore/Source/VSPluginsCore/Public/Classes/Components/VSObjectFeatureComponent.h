@@ -91,6 +91,7 @@ public:
 	TArray<T*> FindFeaturesByClass(TSubclassOf<T> Class = T::StaticClass()) const;
 
 public:
+	/** If true, feature registrations will be executed during BeginPlay. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Features")
 	uint8 bRegisterFeaturesDuringBeginPlay : 1;
 	

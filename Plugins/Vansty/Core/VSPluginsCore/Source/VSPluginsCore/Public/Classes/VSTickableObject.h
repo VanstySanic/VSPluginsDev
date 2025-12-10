@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Interfaces/VSTickFunctionInterface.h"
 #include "Types/VSObjectTickFunction.h"
 #include "UObject/Object.h"
 #include "VSTickableObject.generated.h"
@@ -60,7 +61,7 @@
  * - Any UObject that needs ticking behavior.
  */
 UCLASS(Abstract, Blueprintable, BlueprintType)
-class VSPLUGINSCORE_API UVSTickableObject : public UObject
+class VSPLUGINSCORE_API UVSTickableObject : public UObject, public IVSTickFunctionInterface
 {
 	GENERATED_UCLASS_BODY()
 
@@ -68,6 +69,10 @@ public:
 	//~ Begin UObject Interface.
 	virtual UWorld* GetWorld() const override;
 	//~ End UObject Interface.
+
+	//~ Begin IVSTickFunctionInterface.
+	virtual FTickFunction* GetPrimaryTickFunctionPtr() const override;
+	//~ End IVSTickFunctionInterface.
 	
 	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Tick")
 	virtual void RegisterTickFunction();
