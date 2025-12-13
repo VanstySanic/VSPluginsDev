@@ -17,11 +17,11 @@ class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_UCLASS_BODY()
 
-	UFUNCTION(BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Source"))
-	static bool IsActorNetLocal(AActor* Actor);
+	UFUNCTION(BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
+	static bool IsActorNetLocal(const AActor* Actor);
 	
-	UFUNCTION(BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Source"))
-	static bool IsActorNetLocalRoleAuthorityOrAutonomous(AActor* Actor);
+	UFUNCTION(BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
+	static bool IsActorNetLocalRoleAuthorityOrAutonomous(const AActor* Actor);
 
 	UFUNCTION(BlueprintCallable, Category = "Actor")
 	static AActor* DuplicateActor(AActor* Actor, const FTransform& SpawnTransform = FTransform());
@@ -29,13 +29,13 @@ class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
 	static UActorComponent* GetActorComponentByName(const AActor* Actor, FName ComponentName);
 	
-	UFUNCTION(BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Object"))
+	UFUNCTION(BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
 	static APawn* GetPawnFromActor(AActor* Actor);
 
-	UFUNCTION(BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Object"))
+	UFUNCTION(BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
 	static APlayerState* GetPlayerStateFromActor(AActor* Actor);
 	
-	UFUNCTION(BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Object"))
+	UFUNCTION(BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))
 	static AController* GetControllerFromActor(AActor* Actor);
 	
 	UFUNCTION(BlueprintPure, Category = "Actor", meta = (DefaultToSelf = "Actor"))

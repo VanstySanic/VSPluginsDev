@@ -2,8 +2,6 @@
 
 #include "Types/VSGameplayTypes.h"
 
-#include "Components/RichTextBlock.h"
-
 namespace EVSGameplayTagControllerTags
 {
 	UE_DEFINE_GAMEPLAY_TAG(Event_TagsUpdated, "VSPluginsCore.GameplayTagController.Event.TagsUpdated");

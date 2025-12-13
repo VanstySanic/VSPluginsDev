@@ -10,7 +10,7 @@
  * Structure for all math helper functions, inherits from platform math to pick up platform-specific implementations
  * Check GenericPlatformMath.h for additional math functions
  */
-struct FVSMath : public FMath
+struct VSPLUGINSCORE_API FVSMath : public FMath
 {
 	/**
 	 * Safely divides A by B.

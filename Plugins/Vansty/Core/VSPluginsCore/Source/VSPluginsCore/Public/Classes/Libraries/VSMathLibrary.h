@@ -21,10 +21,14 @@ class VSPLUGINSCORE_API UVSMathLibrary : public UBlueprintFunctionLibrary
 	GENERATED_UCLASS_BODY()
 
 public:
-	/** Safe int32 divide (A/B). Returns 0 if B is nearly zero. */
-	UFUNCTION(BlueprintPure, Category = "Math|Operators", meta = (DisplayName = "Safe Divide (int)", CompactNodeTitle = "Safe ÷", Keywords = "/"))
-	static int32 SafeDivideInt(int32 A, int32 B);
-
+	/** Safe int64 divide (A/B). Returns 0 if B is nearly zero. */
+	UFUNCTION(BlueprintPure, Category = "Math|Operators", meta = (DisplayName = "Safe Divide (int32)", CompactNodeTitle = "Safe ÷", Keywords = "/"))
+	static int32 SafeDivideInt32(int32 A, int32 B);
+	
+	/** Safe int64 divide (A/B). Returns 0 if B is nearly zero. */
+	UFUNCTION(BlueprintPure, Category = "Math|Operators", meta = (DisplayName = "Safe Divide (int64)", CompactNodeTitle = "Safe ÷", Keywords = "/"))
+	static int64 SafeDivideInt64(int64 A, int64 B);
+	
 	/** Safe FIntPoint divide (component-wise). Returns 0 if B is nearly zero. */
 	UFUNCTION(BlueprintPure, Category = "Math|Operators", meta = (DisplayName = "Safe Divide (Int Point)", CompactNodeTitle = "Safe ÷", Keywords = "/"))
 	static FIntPoint SafeDivideIntPoint(const FIntPoint& A, const FIntPoint& B);

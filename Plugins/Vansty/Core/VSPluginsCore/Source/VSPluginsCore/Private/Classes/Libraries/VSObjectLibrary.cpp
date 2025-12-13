@@ -1,7 +1,6 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Classes/Libraries/VSObjectLibrary.h"
-
 #include "Classes/VSObjectFeature.h"
 #include "Classes/Components/VSObjectFeatureComponent.h"
 

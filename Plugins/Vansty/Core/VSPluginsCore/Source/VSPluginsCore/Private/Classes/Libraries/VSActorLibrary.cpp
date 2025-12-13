@@ -10,7 +10,7 @@ UVSActorLibrary::UVSActorLibrary(const FObjectInitializer& ObjectInitializer)
 {
 }
 
-bool UVSActorLibrary::IsActorNetLocal(AActor* Actor)
+bool UVSActorLibrary::IsActorNetLocal(const AActor* Actor)
 {
 	if (!Actor) return false;
 
@@ -21,7 +21,7 @@ bool UVSActorLibrary::IsActorNetLocal(AActor* Actor)
 	return false;
 }
 
-bool UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(AActor* Actor)
+bool UVSActorLibrary::IsActorNetLocalRoleAuthorityOrAutonomous(const AActor* Actor)
 {
 	if (!Actor) return false;
 	return (Actor->HasAuthority() || Actor->GetLocalRole() == ROLE_AutonomousProxy);
@@ -38,7 +38,7 @@ AActor* UVSActorLibrary::DuplicateActor(AActor* Actor, const FTransform& SpawnTr
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	Params.Name = MakeUniqueObjectName(World, Actor->GetClass(), Actor->GetFName());
 
-	AActor* NewActor = World->SpawnActor<AActor>(Actor->GetClass(), Actor->GetActorTransform(), Params);
+	AActor* NewActor = World->SpawnActor<AActor>(Actor->GetClass(), SpawnTransform, Params);
     
 	return NewActor;
 }

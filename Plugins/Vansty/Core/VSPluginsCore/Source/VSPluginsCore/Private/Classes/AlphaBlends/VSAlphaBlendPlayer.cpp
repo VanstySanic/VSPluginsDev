@@ -262,17 +262,13 @@ float UVSAlphaBlendPlayProxy::GetAlpha() const
 	return AlphaBlendPlayer ? AlphaBlendPlayer->GetAlpha() : 0.f;
 }
 
-void UVSAlphaBlendPlayProxy::Reset(bool bIgnoreInitialDelay, bool bKeepUpdateTimeInterval, bool bKeepPauseState)
+void UVSAlphaBlendPlayProxy::Reset(bool bIgnoreInitialDelay, bool bKeepPauseState)
 {
 	bHasFinished = false;
 	CurrentLoopCount = 0;
 	RemainedDirectionTimeInterval = -1.f;
 	RemainedLoopTimeInterval = -1.f;
 	RemainedInitialDelay = bIgnoreInitialDelay ? -1.f : CachedProxyParams.InitialDelay;
-	if (!bKeepUpdateTimeInterval)
-	{
-		SetTickTimeInterval(CachedProxyParams.UpdateTimeInterval);
-	}
 	SetPaused(bKeepPauseState ? bIsPaused : CachedProxyParams.bStartPaused);
 	
 	if (AlphaBlendPlayer)
@@ -307,14 +303,16 @@ void UVSAlphaBlendPlayProxy::Initialize(const FVSAlphaBlendProxyParams& Params)
 	CachedProxyParams = Params;
 
 	SetTickTimeInterval(CachedProxyParams.UpdateTimeInterval);
+	SetTickableWhenPaused(Params.bUpdateWhenGamePaused);
 	RegisterTickFunction();
 	
 	if (AlphaBlendPlayer)
 	{
 		AlphaBlendPlayer->SetAlphaBlendArgs(CachedProxyParams.AlphaBlendArgs);
 		AlphaBlendPlayer->SetTickTimeInterval(CachedProxyParams.UpdateTimeInterval);
+		AlphaBlendPlayer->SetTickableWhenPaused(CachedProxyParams.bUpdateWhenGamePaused);
 		AlphaBlendPlayer->DefaultAlpha = CachedProxyParams.StartAlpha;
-		AlphaBlendPlayer->DefaultDirection = CachedProxyParams.StartDirection;
+		AlphaBlendPlayer->DefaultDirection = (Params.bLoopRequiresReversingDirection && Params.DirectionReversedAtStart) ? (CachedProxyParams.StartDirection == ETimelineDirection::Forward ? ETimelineDirection::Backward : ETimelineDirection::Forward) : CachedProxyParams.StartDirection.GetValue();
 		AlphaBlendPlayer->bDefaultAutoUpdate = false;
 
 		/** Bind delegates here. */
@@ -332,7 +330,7 @@ void UVSAlphaBlendPlayProxy::Initialize(const FVSAlphaBlendProxyParams& Params)
 		AlphaBlendPlayer->SetAutoUpdate(!CachedProxyParams.bStartPaused && CachedProxyParams.InitialDelay <= 0.f);
 	}
 
-	Reset(false, true, false);
+	Reset(false, false);
 }
 
 void UVSAlphaBlendPlayProxy::Destroy()
@@ -368,7 +366,7 @@ void UVSAlphaBlendPlayProxy::AlphaBlendPlayerFinished()
 	OnLoopFinished.Broadcast(this, GetAlpha(), CurrentLoopCount);
 	
 	bool bDesireNextLoop = true;
-	if (CachedProxyParams.bLoopCycleRequiresReversingDirection)
+	if (CachedProxyParams.bLoopRequiresReversingDirection)
 	{
 		/** Delay and reverse the direction. */
 		if ((AlphaBlendPlayer->GetAlpha() >= 1.f && CachedProxyParams.StartDirection == ETimelineDirection::Forward)
@@ -415,7 +413,7 @@ void UVSAlphaBlendPlayProxy::CheckNextLoop()
 	if (CachedProxyParams.LoopCount <= 0 || CurrentLoopCount < CachedProxyParams.LoopCount)
 	{
 		CurrentLoopCount++;
-		if (CachedProxyParams.bLoopCycleRequiresReversingDirection)
+		if (CachedProxyParams.bLoopRequiresReversingDirection)
 		{
 			AlphaBlendPlayer->ReverseDirection();
 		}

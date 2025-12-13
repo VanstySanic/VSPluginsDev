@@ -110,6 +110,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	void Update(float DeltaTime);
 
+	/** Set whether to update forward or backward. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	void SetDirection(ETimelineDirection::Type Direction);
 	
@@ -185,20 +186,9 @@ private:
  * sequence: timing, loops, reversing rules, and finish behavior.
  *
  * -------------------------------------------------------------------------
- * Core Settings
- * -------------------------------------------------------------------------
- * - AlphaBlendArgs: Blend time + curve.
- * - StartAlpha / StartDirection: First-cycle initialization.
- * - LoopCount: <=0 means infinite cycles.
- * - InitialDelay / LoopTimeInterval: Cycle timing control.
- * - UpdateTimeInterval: Optional update throttling.
- * - Direction reversing: Optional second pass per cycle.
- * - Finish rules: Pause or destroy on completion.
- *
- * -------------------------------------------------------------------------
  * Usage
  * -------------------------------------------------------------------------
- * - Populate this struct and pass to CreateAlphaBlendPlayProxy().
+ * - Populate this struct and pass to CreateAlphaBlendPlayProxy() and CreateAlphaBlendPlayCallbackProxy.
  */
 USTRUCT(BlueprintType)
 struct FVSAlphaBlendProxyParams
@@ -206,21 +196,20 @@ struct FVSAlphaBlendProxyParams
 	GENERATED_USTRUCT_BODY()
 
 	FVSAlphaBlendProxyParams()
-		: bLoopCycleRequiresReversingDirection(false)
+		: bLoopRequiresReversingDirection(false)
+		, DirectionReversedAtStart(false)
 		, bPauseWhenFinished(true)
 		, bDestroyWhenFinished(true)
 		, bStartPaused(false)
+		, bUpdateWhenGamePaused(false)
 	{
 		
 	}
-	
+
+	/** Defines the numerical alpha blending performance with time. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FAlphaBlendArgs AlphaBlendArgs;
 	
-	/** The default alpha to set. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float StartAlpha = 0.f;
-
 	/** The default direction to set. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<ETimelineDirection::Type> StartDirection = ETimelineDirection::Forward;
@@ -228,7 +217,11 @@ struct FVSAlphaBlendProxyParams
 	/** The count to perform loops. If <= 0, the loops will last forever. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 LoopCount = 0;
-
+	
+	/** The default alpha to set. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float StartAlpha = 0.f;
+	
 	/** The time to delay before the blending starts. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float InitialDelay = 0.f;
@@ -242,12 +235,16 @@ struct FVSAlphaBlendProxyParams
 	float UpdateTimeInterval = 0.f;
 
 	/** The directional time delay before the direction reverse. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bLoopCycleRequiresReversingDirection"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bLoopRequiresReversingDirection"))
 	float DirectionReverseTimeInterval = 0.0;
 	
 	/** If true, a full cycle will include an update reversed from the start direction. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	uint8 bLoopCycleRequiresReversingDirection : 1;
+	uint8 bLoopRequiresReversingDirection : 1;
+
+	/** Whether to indicate that the direction has already been reversed at start, if the loop cycle requires direction reversing. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bLoopRequiresReversingDirection"))
+	uint8 DirectionReversedAtStart : 1;
 
 	/** Whether to pause when the proxy finishes. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -260,6 +257,10 @@ struct FVSAlphaBlendProxyParams
 	/** Whether to pause when the proxy is created. If true, user should toggle the pause state manually. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bStartPaused : 1;
+
+	/** Whether to update when the game is paused. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	uint8 bUpdateWhenGamePaused : 1;
 };
 
 /**
@@ -314,18 +315,23 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	int32 GetLoopCount() const { return CurrentLoopCount; }
 
+	/** Get the params that defines the alpha blending. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	FVSAlphaBlendProxyParams GetProxyParams() const { return CachedProxyParams; }
 
+	/** Is the alpha blending totally finished. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	bool HasFinished() const { return bHasFinished; }
-	
-	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
-	void Reset(bool bIgnoreInitialDelay = false, bool bKeepUpdateTimeInterval = true, bool bKeepPauseState = true);
 
+	/** Reset the proxy to the initial states. */
+	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
+	void Reset(bool bIgnoreInitialDelay = false, bool bKeepPauseState = true);
+
+	/** Set whether to pause the update. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	void SetPaused(bool bPaused);
 
+	/** Whether the update is paused. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	bool IsPaused() const { return bIsPaused; }
 
