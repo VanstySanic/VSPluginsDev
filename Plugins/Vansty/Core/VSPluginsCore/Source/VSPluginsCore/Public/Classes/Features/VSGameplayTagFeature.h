@@ -37,55 +37,14 @@ struct FVSGameplayTagFeatureReplicatedTagCounts
 };
 
 /**
- * UVSGameplayTagFeatureBase
+ * Base feature providing gameplay tag management with count-based semantics.
  *
- * Feature-style wrapper around a gameplay tag container and its count map.
- * Provides:
- * - Centralized access to owned gameplay tags (explicit + implicit)
- * - Network-aware mutation APIs
- * - Tag-based event dispatch and high-level update notifications
- * - Initial replication of selected tag counts
+ * Acts as a feature-level abstraction over a gameplay tag container and its
+ * associated count map, supporting network-aware mutation, initial replication,
+ * and tag-based event notification.
  *
- * -------------------------------------------------------------------------
- * Key Features
- * -------------------------------------------------------------------------
- * - Tag storage abstraction:
- *   - Subclasses override GetGameplayTagContainerSourceReference() and
- *     GetGameplayTagCountMapSourceReference() to supply their own backing data.
- *   - LocalImplicitTagCounts is maintained to support non-exact parent counts.
- *
- * - Network-aware mutation:
- *   - Add/Remove/Set tag counts with FVSNetMethodExecutionPolicies.
- *   - Server/Client/Multicast RPCs drive authoritative changes.
- *   - Optional simulated-proxy local execution.
- *
- * - Initial replication:
- *   - Uses FVSGameplayTagFeatureReplicatedTagCounts + COND_InitialOnly.
- *   - Separate snapshots for autonomous and simulated proxies.
- *   - OnRep handlers reapply the replicated counts immediately.
- *
- * - Events & update notifications:
- *   - bTagsDirty tracks incremental changes.
- *   - NotifyTagsUpdated sends OnTagsUpdated and a tag-event bundle.
- *   - Instant or per-tick notification modes.
- *   - NotifyTagEvent(s) dispatch lightweight tag-based signals.
- *
- * -------------------------------------------------------------------------
- * Usage
- * -------------------------------------------------------------------------
- * - Implement backing storage in a subclass.
- * - Use AddTag / RemoveTag / SetTagCount for net-aware mutation.
- * - Use HasTag / GetTagCount / TagQuery helpers for fast checks.
- * - Bind to OnTagsUpdated / OnTagEventsNotified or implement
- *   UVSGameplayTagFeatureInterface for pull-style integration.
- *
- * -------------------------------------------------------------------------
- * Notes
- * -------------------------------------------------------------------------
- * - This base feature does NOT own gameplay tag storage.
- *   It only forwards to the subclass-defined container/count map.
- * - Initial replication is intended for persistent state that clients
- *   must know immediately when joining or spawning.
+ * This class does not own the underlying tag storage; subclasses are expected
+ * to supply the backing container and count map used for evaluation and mutation.
  */
 UCLASS(Abstract, DefaultToInstanced, EditInlineNew, DisplayName = "VS.Feature.GameplayTags.Base")
 class VSPLUGINSCORE_API UVSGameplayTagFeatureBase : public UVSObjectFeature, public IGameplayTagAssetInterface

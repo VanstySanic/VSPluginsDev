@@ -7,16 +7,7 @@
 #include "Components/TimelineComponent.h"
 #include "VSAlphaBlendPlayer.generated.h"
 
-/**
- * EVSAlphaBlendFinishAction
- *
- * High-level action set describing what UVSAlphaBlendPlayer should do when a
- * blend reaches its end. Used by FinishInternal() to drive post-blend flow.
- *
- * Notes
- * - Multiple actions may be executed in sequence.
- * - Individual entries are not explained here; see player behavior for usage.
- */
+/** Tickable wrapper around FAlphaBlend with direction control and auto-update support. */
 UENUM(BlueprintType)
 namespace EVSAlphaBlendFinishAction
 {
@@ -31,31 +22,10 @@ namespace EVSAlphaBlendFinishAction
 }
 
 /**
- * UVSAlphaBlendPlayer
+ * Parameter set describing how an alpha-blend play proxy executes.
  *
- * Tickable wrapper around FAlphaBlend providing a reusable time-based alpha
- * track with events, direction control, and auto-update support.
- *
- * -------------------------------------------------------------------------
- * Key Features
- * -------------------------------------------------------------------------
- * - Runtime blend control:
- *   - Manual or auto-updated alpha progression.
- *   - Forward / backward direction switching.
- *   - Reset, SetAlpha, SetBlendTime, SetAlphaBlendArgs.
- *
- * - Events:
- *   - OnUpdated / OnFinished (native + Blueprint).
- *
- * - Finish actions:
- *   - Executes EVSAlphaBlendFinishAction policies when blend completes.
- *
- * -------------------------------------------------------------------------
- * Usage
- * -------------------------------------------------------------------------
- * - Call Initialize() before use (applies defaults).
- * - Drive via Update(DeltaTime) or enable auto-update.
- * - Bind to OnUpdated / OnFinished for notifications.
+ * Defines timing, looping behavior, direction rules, pause semantics,
+ * and lifecycle options used to configure a proxy-driven blend sequence.
  */
 UCLASS(BlueprintType, DefaultToInstanced, EditInlineNew)
 class VSPLUGINSCORE_API UVSAlphaBlendPlayer : public UVSTickableObject
@@ -180,15 +150,11 @@ private:
 
 
 /**
- * FVSAlphaBlendProxyParams
+ * High-level controller for executing alpha-blend sequences.
  *
- * Parameter set describing how a UVSAlphaBlendPlayProxy should run its blend
- * sequence: timing, loops, reversing rules, and finish behavior.
- *
- * -------------------------------------------------------------------------
- * Usage
- * -------------------------------------------------------------------------
- * - Populate this struct and pass to CreateAlphaBlendPlayProxy() and CreateAlphaBlendPlayCallbackProxy.
+ * Manages one or more blend cycles using an internal alpha-blend player,
+ * handling delays, looping, optional direction reversal, pause control,
+ * and lifecycle completion, with Blueprint-friendly events.
  */
 USTRUCT(BlueprintType)
 struct FVSAlphaBlendProxyParams

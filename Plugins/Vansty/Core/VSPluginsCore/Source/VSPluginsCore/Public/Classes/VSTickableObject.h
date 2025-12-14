@@ -9,56 +9,16 @@
 #include "VSTickableObject.generated.h"
 
 /**
- * UVSTickableObject
+ * Base UObject that provides per-frame ticking support through a custom
+ * FVSObjectTickFunction.
  *
- * A tickable UObject that can participate in the engine's ticking system through a custom
- * FVSObjectTickFunction. Unlike Actors or Components, this class allows any UObject instance
- * to register a per-frame tick without requiring a scene component or world-placed actor.
+ * This class allows non-Actor, non-Component UObject instances to participate
+ * in the engine tick without requiring scene presence or world placement.
+ * It encapsulates tick registration, execution, and latent action processing
+ * in a lightweight, reusable form.
  *
- * The primary goal of this class is to provide lightweight, extensible ticking behavior for
- * gameplay-related objects, data objects, or runtime managers that are not derived from
- * AActor or UActorComponent.
- *
- * -------------------------------------------------------------------------
- * Key Features
- * -------------------------------------------------------------------------
- * - Provides a native tick function via FVSObjectTickFunction.
- * - Allows dynamic registration and unregistration from the world tick.
- * - Supports Blueprint extension through BlueprintNativeEvent (Tick).
- * - Supports conditional ticking via CanExecuteTick().
- * - Integrates with the latent action system (ProcessLatentActions).
- *
- * -------------------------------------------------------------------------
- * Tick Flow
- * -------------------------------------------------------------------------
- *   World Tick → FVSObjectTickFunction → TickObject() → Tick() (Blueprint/C++)
- *
- * TickObject() is responsible for:
- *   - Calling the Blueprint/C++ Tick() function.
- *   - Processing latent actions bound to this object.
- *
- * -------------------------------------------------------------------------
- * Usage
- * -------------------------------------------------------------------------
- * 1. Derive from UVSTickableObject.
- * 2. Implement Tick() in C++ or Blueprint.
- * 3. Call RegisterTickFunction(Target) to enable ticking.
- * 4. Call UnregisterTickFunction() when ticking is no longer needed.
- *
- * -------------------------------------------------------------------------
- * Blueprint Notes
- * -------------------------------------------------------------------------
- * - Tick(float DeltaTime) is a BlueprintNativeEvent.
- *   The Blueprint implementation must call "Parent: Tick" manually if the
- *   C++ native behavior should also execute.
- *
- * -------------------------------------------------------------------------
- * Suitable For
- * -------------------------------------------------------------------------
- * - Standalone gameplay logic objects.
- * - Data-driven systems needing per-frame updates.
- * - Runtime managers or subsystems not suitable as Actors.
- * - Any UObject that needs ticking behavior.
+ * Tick execution is driven by an internal FVSObjectTickFunction and ultimately
+ * forwards to the Tick() virtual function, which may be implemented in C++ or Blueprint.
  */
 UCLASS(Abstract, Blueprintable, BlueprintType)
 class VSPLUGINSCORE_API UVSTickableObject : public UObject, public IVSTickFunctionInterface

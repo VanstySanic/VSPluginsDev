@@ -24,22 +24,15 @@ void UVSSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& Proper
 {
 	if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
 	{
-		SettingSubsystem->ReregisterEditorSettingItem(this);
+		SettingSubsystem->ReregisterEditorSettingItemDifferences(TArray<UVSSettingItem*>({ this }));
 	}
 	
-	UObject::PostEditChangeProperty(PropertyChangedEvent);
+	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 #endif
 
 void UVSSettingItem::BeginDestroy()
 {
-#if WITH_EDITOR
-	if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
-	{
-		SettingSubsystem->RemoveEditorSettingItem(this);
-	}
-#endif
-
 	if (HasBeenInitialized())
 	{
 		Uninitialize();
@@ -75,7 +68,7 @@ void UVSSettingItem::Apply_Implementation()
 
 void UVSSettingItem::Confirm_Implementation()
 {
-	
+
 }
 
 void UVSSettingItem::Save_Implementation()
@@ -85,12 +78,32 @@ void UVSSettingItem::Save_Implementation()
 
 bool UVSSettingItem::IsUnconfirmed() const
 {
-	return EqualsToBySource(EVSSettingItemValueSource::Confirmed);
+	return !EqualsToBySource(EVSSettingItemValueSource::Confirmed);
+}
+
+void UVSSettingItem::SetToDefault()
+{
+	SetToBySource(EVSSettingItemValueSource::Default);
+}
+
+void UVSSettingItem::SetToGame()
+{
+	SetToBySource(EVSSettingItemValueSource::System);
+}
+
+void UVSSettingItem::SetToConfirmed()
+{
+	SetToBySource(EVSSettingItemValueSource::Confirmed);
+}
+
+bool UVSSettingItem::IsValueValid_Implementation() const
+{
+	return true;
 }
 
 bool UVSSettingItem::IsDirty() const
 {
-	return EqualsToBySource(EVSSettingItemValueSource::Game);
+	return !EqualsToBySource(EVSSettingItemValueSource::Game);
 }
 
 void UVSSettingItem::SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource)
@@ -121,15 +134,11 @@ void UVSSettingItem::ExecuteAction(EVSSettingItemAction::Type Action)
 		SetToBySource(EVSSettingItemValueSource::Game);
 		break;
 		
-	case EVSSettingItemAction::SetToLastConfirmed:
+	case EVSSettingItemAction::SetToConfirmed:
 		if (EqualsToBySource(EVSSettingItemValueSource::Confirmed)) return;
 		SetToBySource(EVSSettingItemValueSource::Confirmed);
 		break;
-
-	case EVSSettingItemAction::Validate:
-		Validate();
-		break;
-		
+	
 	case EVSSettingItemAction::Apply:
 		if (!IsDirty()) return;
 		Apply();
@@ -160,8 +169,14 @@ void UVSSettingItem::NotifyValueUpdate(bool bAllowCleanNotify)
 {
 	if (!bAllowCleanNotify && !IsDirty()) return;
 
+	OnItemUpdated();
 	OnUpdated_Native.Broadcast(this);
 	OnUpdated.Broadcast(this);
+}
+
+void UVSSettingItem::OnItemUpdated_Implementation()
+{
+	
 }
 
 #if WITH_EDITOR

@@ -7,7 +7,10 @@
 #include "VSSettingItemAgent.generated.h"
 
 /**
- * 
+ * Setting item that aggregates and drives a set of sub setting items.
+ *
+ * Acts as a composite entry that forwards lifecycle operations (load/validate/apply/confirm/save)
+ * to its owned sub items, allowing multiple settings to be managed as a single unit.
  */
 UCLASS(DisplayName = "VS.Settings.Item.Agent")
 class VSSETTINGSYSTEM_API UVSSettingItemAgent : public UVSSettingItem
@@ -36,8 +39,10 @@ public:
 	//~ End UVSSettingItemBase Interface
 	
 	TArray<UVSSettingItem*> GetDirectSubSettingItems() const { return SubSettingItems; };
+	TArray<UVSSettingItem*> GetRecursiveSubSettingItems() const;
 
 private:
+	/** Instanced child setting items driven by this agent. */
 	UPROPERTY(EditAnywhere, Category = "Settings", Instanced, meta = (ConfigRestartRequired = "true"))
 	TArray<TObjectPtr<UVSSettingItem>> SubSettingItems;
 

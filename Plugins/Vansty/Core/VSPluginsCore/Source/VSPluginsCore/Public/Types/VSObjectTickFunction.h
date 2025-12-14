@@ -8,46 +8,16 @@
 /**
  * FVSObjectTickFunction
  *
- * A custom tick function that enables regular UObjects to participate in the engine's
- * tick system. This tick function behaves similarly to the built-in Actor and Component
- * tick functions, but is designed specifically for non-Actor, non-Component objects.
+ * Custom FTickFunction implementation that enables UObjects to participate
+ * in the engine tick system.
  *
- * The function can dynamically register or unregister itself with a world, resolve
- * the correct tick target (ActorComponent, Actor, or UObject), and forward the tick
- * to user-defined delegates. This allows any UObject to implement per-frame behavior
- * without requiring scene placement or inheritance from AActor.
+ * This tick function mirrors the behavior of Actor and Component tick
+ * functions, while being applicable to non-Actor, non-Component objects.
+ * It resolves an appropriate outer context for ticking and forwards execution
+ * to user-provided delegates.
  *
- * -------------------------------------------------------------------------
- * Key Features
- * -------------------------------------------------------------------------
- * - Allows a plain UObject to register a tick into the engine tick pipeline.
- * - Automatically detects the closest outer AActor or UActorComponent for context.
- * - Supports conditional ticking through CanExecuteTick.
- * - Supports per-object time dilation when the tick target is an Actor or Component.
- * - Supports ticking across world transitions (if enabled).
- * - Provides diagnostic information for the tick dependency graph.
- * - Cleans up safely when the tick function or its target is destroyed.
- *
- * -------------------------------------------------------------------------
- * Tick Invocation Flow
- * -------------------------------------------------------------------------
- *   World Tick → FTickFunction → ExecuteTick() →
- *     → (Time dilation & validity checks)
- *     → OnExecuteTick delegate (user logic)
- *
- * The user logic is provided through delegates:
- *   - CanExecuteTick: Optional filter to determine whether ticking should occur.
- *   - OnExecuteTick: The callback invoked when the tick is executed.
- *
- * -------------------------------------------------------------------------
- * Usage
- * -------------------------------------------------------------------------
- * 1. Instantiate or embed this struct inside a UObject.
- * 2. Bind OnExecuteTick and CanExecuteTick as needed.
- * 3. Call RegisterAndSetup(this) to register with the current world.
- * 4. Call UnregisterAndCleanup() to unregister safely.
- *
- * This is typically used in conjunction with UVSTickableObject.
+ * The tick function supports conditional execution and integrates with the
+ * engine tick dependency graph and lifetime management.
  */
 USTRUCT()
 struct VSPLUGINSCORE_API FVSObjectTickFunction : public FTickFunction

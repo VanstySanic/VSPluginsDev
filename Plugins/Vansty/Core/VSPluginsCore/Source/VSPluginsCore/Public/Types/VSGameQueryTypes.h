@@ -8,9 +8,9 @@
 #include "UObject/Object.h"
 #include "VSGameQueryTypes.generated.h"
 
-class UVSSceneComponentQueryExpression;
-class UVSGameplayTagQueryExpression;
+class USceneComponent;
 
+/** Defines how multiple query results are evaluated together. */
 UENUM(BlueprintType)
 namespace EVSQueryMatchRange
 {
@@ -22,17 +22,19 @@ namespace EVSQueryMatchRange
 	};
 }
 
+/** Defines the source type used by a query expression node. */
 UENUM(BlueprintType)
 namespace EVSQueryMatchType
 {
 	enum Type
 	{
-		None				UMETA(Hidden),
+		None	UMETA(Hidden),
 		Params,
 		Expression
 	};
 }
 
+/** Leaf query parameters used to evaluate gameplay tag events and gameplay tag state. */
 USTRUCT(BlueprintType)
 struct FVSGameplayTagEventQueryParams
 {
@@ -47,78 +49,79 @@ struct FVSGameplayTagEventQueryParams
 	{
 	}
 
-	VSPLUGINSCORE_API bool Matches(const FGameplayTagContainer& InTagEvents, const FGameplayTagContainer& InGameplayTags) const;
+	VSPLUGINSCORE_API bool Matches(
+		const FGameplayTagContainer& InTagEvents,
+		const FGameplayTagContainer& InGameplayTags) const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText Description;
-	
-	/** Work as trigger. */
+
+	/** Tag events used as trigger conditions. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTagContainer TagEvents;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EGameplayContainerMatchType ContainerMatchType;
-	
-	/** If true, only exact tag event will match. */
+
+	/** If true, only exact tag matches are considered valid. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bMatchExactTagEvents : 1;
-	
-	/**
-	 * If true, empty tag will be considered as a pass to the tag events.
-	 * This may be enabled when you want any tag events to pass.
-	 */
+
+	/** Treats empty trigger tag set as a successful match. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bTriggerEventsEmptyAsPass : 1;
-	
-	/**
-	 * If true and passed-in tag events array is empty, any non-empty tag event will be considered as trigger.
-	 * This may be enabled when you just uses the query params as gameplay tag query with no events.
-	 */
+
+	/** Treats empty incoming tag events as a successful match. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bPassedInEventsEmptyAsPass : 1;
-	
-	/** Gameplay tag query to check. */
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTagQuery TagQuery;
-	
-	/** If true and TagQuery is empty, any tag states will match the query. */
+
+	/** Treats empty tag query as a successful match. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bTagQueryEmptyAsPass : 1;
 };
 
+/** Recursive expression node combining gameplay tag event query parameters or sub-expressions. */
 USTRUCT(BlueprintType)
 struct FVSGameplayTagEventQueryExpression
 {
 	GENERATED_BODY()
-	
-	bool Matches(const FGameplayTagContainer& TagEvents = FGameplayTagContainer(), const FGameplayTagContainer& GameplayTags = FGameplayTagContainer()) const;
+
+	bool Matches(
+		const FGameplayTagContainer& TagEvents = FGameplayTagContainer(),
+		const FGameplayTagContainer& GameplayTags = FGameplayTagContainer()) const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText Description;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<EVSQueryMatchRange::Type> Range = EVSQueryMatchRange::None;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<EVSQueryMatchType::Type> Type = EVSQueryMatchType::None;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSQueryMatchType::Params", EditConditionHides))
 	TArray<FVSGameplayTagEventQueryParams> Params;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSQueryMatchType::Expression", EditConditionHides))
 	TArray<TInstancedStruct<FVSGameplayTagEventQueryExpression>> Expressions;
 };
 
+/** Root gameplay tag event query evaluated against incoming tag events and gameplay tag state. */
 USTRUCT(BlueprintType)
 struct FVSGameplayTagEventQuery
 {
 	GENERATED_BODY()
-	
+
 	FVSGameplayTagEventQuery() {}
-	
+
 	VSPLUGINSCORE_API static FVSGameplayTagEventQuery GetEmptyPass();
-	VSPLUGINSCORE_API bool Matches(const FGameplayTagContainer& TagEvents = FGameplayTagContainer(), const FGameplayTagContainer& GameplayTags = FGameplayTagContainer()) const;
-	
+	VSPLUGINSCORE_API bool Matches(
+		const FGameplayTagContainer& TagEvents = FGameplayTagContainer(),
+		const FGameplayTagContainer& GameplayTags = FGameplayTagContainer()) const;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSGameplayTagEventQueryExpression RootExpression;
 
@@ -127,7 +130,7 @@ public:
 	static FVSGameplayTagEventQuery EmptyPass;
 };
 
-
+/** Leaf query parameters used to evaluate a scene component against type, class, and tag constraints. */
 USTRUCT(BlueprintType)
 struct FVSSceneComponentQueryParams
 {
@@ -137,46 +140,53 @@ struct FVSSceneComponentQueryParams
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText Description;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<TSubclassOf<USceneComponent>> ComponentClasses;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FName> ComponentTags;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FName> ActorTags;
 
-	
+	/** Inverts object type matching. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bInverseObjectTypes = false;
 
+	/** Inverts component class matching. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bInverseClassAllowance = false;
-	
+
+	/** Inverts component tag matching. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bInverseComponentTagAllowance = false;
 
+	/** Inverts actor tag matching. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bInverseActorTagAllowance = false;
 
-	
+	/** Treats empty component class list as a successful match. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bComponentClassesEmptyAsPass = true;
-	
+
+	/** Treats empty object type list as a successful match. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bObjectTypesEmptyAsPass = true;
-	
+
+	/** Treats empty component tag list as a successful match. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bComponentTagsEmptyAsPass = true;
-	
+
+	/** Treats empty actor tag list as a successful match. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bActorTagsEmptyAsPass = true;
 };
 
+/** Recursive expression node combining scene component query parameters or sub-expressions. */
 USTRUCT(BlueprintType)
 struct FVSSceneComponentQueryExpression
 {
@@ -186,29 +196,30 @@ struct FVSSceneComponentQueryExpression
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText Description;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<EVSQueryMatchRange::Type> Range = EVSQueryMatchRange::None;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<EVSQueryMatchType::Type> Type = EVSQueryMatchType::None;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSQueryMatchType::Params", EditConditionHides))
 	TArray<FVSSceneComponentQueryParams> Params;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSQueryMatchType::Expression", EditConditionHides))
 	TArray<TInstancedStruct<FVSSceneComponentQueryExpression>> Expressions;
 };
 
+/** Root scene component query evaluated against a target scene component. */
 USTRUCT(BlueprintType)
 struct FVSSceneComponentQuery
 {
 	GENERATED_BODY()
-	
+
 	FVSSceneComponentQuery() {}
 
 	VSPLUGINSCORE_API bool Matches(const USceneComponent* Component) const;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSSceneComponentQueryExpression RootExpression;
 };

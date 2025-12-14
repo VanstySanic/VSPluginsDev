@@ -1,7 +1,8 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Classes/Libraries/VSMathLibrary.h"
-#include "Types/VSMath.h"
+#include "Types/Math/VSMath.h"
+#include "Types/Math/VSMathTypes.h"
 
 UVSMathLibrary::UVSMathLibrary(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

@@ -14,39 +14,16 @@ class UVSObjectTickProxy;
 DECLARE_LOG_CATEGORY_EXTERN(LogObjectFeature, Log, All);
 
 /**
- * UVSGameplayTagFeature
+ * Feature object that provides GameplayTag ownership, replication, and
+ * notification support for an Actor.
  *
- * A flexible, replicatable, and ASC-compatible gameplay-tag management feature
- * that allows any Actor to own, modify, and react to GameplayTags with full
- * count-based semantics — whether or not the Actor uses an AbilitySystemComponent.
+ * This feature manages GameplayTags with full count-based semantics and may
+ * operate independently or integrate with an AbilitySystemComponent as a
+ * backing tag source. Tag state can be modified locally or via network-aware
+ * policies and is kept consistent across network roles.
  *
- * -------------------------------------------------------------------------
- * Core Functionality
- * -------------------------------------------------------------------------
- * - Tag ownership:
- *   Supports explicit & implicit tag tracking with count-based add/remove/set.
- *
- * - Hybrid source model:
- *   Tags may be stored locally or pulled directly from an ASC’s internal
- *   FGameplayTagCountContainer when bUseAbilitySystemComponentSource is enabled.
- *
- * - Replication model:
- *   - Supports InitialOnly replication for predefined autonomous/simulated tags.
- *   - Rich RPC policy system (Client/Server/Multicast) for tag modification.
- *   - Explicit and implicit tag counts kept consistent across network roles.
- *
- * - Event dispatching:
- *   - OnTagsUpdated (count changes)
- *   - OnTagEventsNotified (user-defined tag events)
- *   Includes native + Blueprint multicast delegates and optional auto-binding.
- *
- * -------------------------------------------------------------------------
- * Usage
- * -------------------------------------------------------------------------
- * - Add/remove/set tag counts locally or through RPC policies.
- * - Bind other objects to tag update events (auto or manual).
- * - Use MatchesTagQuery / MatchesEventQuery for hierarchical logic.
- * - Use optional automatic tick-based notifications.
+ * The feature also exposes tag change and event notifications for native
+ * and Blueprint consumers.
  */
 UCLASS(DefaultToInstanced, EditInlineNew, DisplayName = "VS.Feature.Base")
 class VSPLUGINSCORE_API UVSObjectFeature : public UVSReplicatableObject, public IVSTickFunctionInterface

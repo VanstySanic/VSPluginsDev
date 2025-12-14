@@ -1,9 +1,8 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Items/VSSettingItemAgent.h"
-#include "VSSettingSystemConfig.h"
-#include "Framework/Notifications/NotificationManager.h"
-#include "Widgets/Notifications/SNotificationList.h"
+#include "VSSettingSubsystem.h"
+#include "Types/Math/VSArray.h"
 
 UVSSettingItemAgent::UVSSettingItemAgent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -22,26 +21,34 @@ void UVSSettingItemAgent::PostInitProperties()
 #if WITH_EDITOR
 void UVSSettingItemAgent::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-
 	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemAgent, SubSettingItems))
 	{
 		if (!GetTypedOuter<UVSSettingItemAgent>() && EditorSubSettingItems != SubSettingItems)
 		{
-			if (!UVSSettingSystemConfig::Get()->bIgnoreEditorSettingItemArrayNotification)
+			if (UVSSettingSubsystem* Subsystem = UVSSettingSubsystem::Get())
 			{
-				FNotificationInfo Info(NSLOCTEXT("VSSettingSystem.SettingItemAgent", "SettingItemsChanging", "An engine restart might be executed because of the changing setting items."));
-				Info.bFireAndForget = true;
-				Info.bUseLargeFont = false;
-				Info.FadeInDuration = 0.25f;
-				Info.FadeOutDuration = 0.25f;
-				Info.ExpireDuration = 5.f;
-				FSlateNotificationManager::Get().AddNotification(Info);
-
-				EditorSubSettingItems = SubSettingItems;
+				const TArray<TObjectPtr<UVSSettingItem>> DifferentSettingItems = FVSArray::GetArrayDifference(EditorSubSettingItems, SubSettingItems);
+				for (UVSSettingItem* DifferentSettingItem : DifferentSettingItems)
+				{
+					TArray<UVSSettingItem*> ItemsToAdd;
+					TArray<UVSSettingItem*> ItemsToRemove;
+					if (SubSettingItems.Contains(DifferentSettingItem))
+					{
+						ItemsToAdd.Add(DifferentSettingItem);
+					}
+					else
+					{
+						ItemsToRemove.Add(DifferentSettingItem);
+					}
+					Subsystem->RemoveEditorSettingItemDifferences(ItemsToRemove);
+					Subsystem->AddEditorSettingItemDifferences(ItemsToAdd);
+				}
 			}
+			EditorSubSettingItems = SubSettingItems;
 		}
 	}
+	
+	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 #endif
 
@@ -135,14 +142,26 @@ void UVSSettingItemAgent::SetToBySource_Implementation(const EVSSettingItemValue
 
 bool UVSSettingItemAgent::EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
 {
-	bool bNotEqual = false;
 	for (UVSSettingItem* SettingItem : SubSettingItems)
 	{
-		if (SettingItem)
+		if (SettingItem && !SettingItem->EqualsToBySource(ValueSource))
 		{
-			bNotEqual = bNotEqual ? true : !SettingItem->EqualsToBySource(ValueSource);
+			return false;
 		}
 	}
 
-	return !bNotEqual;
+	return true;
+}
+
+TArray<UVSSettingItem*> UVSSettingItemAgent::GetRecursiveSubSettingItems() const
+{
+	TArray<UVSSettingItem*> OutSettingItems = SubSettingItems;
+	for (UVSSettingItem* SettingItem : SubSettingItems)
+	{
+		if (UVSSettingItemAgent* Agent = Cast<UVSSettingItemAgent>(SettingItem))
+		{
+			OutSettingItems.Append(Agent->GetRecursiveSubSettingItems());
+		}
+	}
+	return OutSettingItems;
 }

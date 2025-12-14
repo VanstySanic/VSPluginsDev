@@ -7,8 +7,11 @@
 #include "UObject/Object.h"
 
 /**
- * Structure for all math helper functions, inherits from platform math to pick up platform-specific implementations
- * Check GenericPlatformMath.h for additional math functions
+ * Math utility type extending FMath with additional helper functions.
+ *
+ * Provides higher-level math operations commonly used in gameplay code,
+ * including safe arithmetic, axis-aware composition, space-relative
+ * interpolation, and constrained clamping helpers.
  */
 struct VSPLUGINSCORE_API FVSMath : public FMath
 {

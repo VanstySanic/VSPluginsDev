@@ -4,6 +4,7 @@
 #include "Classes/VSPluginsCoreSettings.h"
 #include "Interfaces/VSGameplayTagFeatureInterface.h"
 #include "Net/UnrealNetwork.h"
+#include "Types/VSGameQueryTypes.h"
 
 static FGameplayTagContainer EmptyGameplayTagContainer = FGameplayTagContainer();
 static TMap<FGameplayTag, int32> EmptyGameplayTagCountMap = TMap<FGameplayTag, int32>();

@@ -14,10 +14,6 @@ void UVSSettingSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Super::Initialize(Collection);
 
 	InitSettingItems();
-
-#if WITH_EDITOR
-	bEditorHasBeenInitialized = true;
-#endif
 }
 
 void UVSSettingSubsystem::BeginDestroy()
@@ -104,117 +100,269 @@ void UVSSettingSubsystem::ExecuteSettingActions(const TArray<TEnumAsByte<EVSSett
 
 void UVSSettingSubsystem::InitSettingItems()
 {
-	for (const auto SettingItemAgentClass : UVSSettingSystemConfig::Get()->SettingItemAgentClasses)
+	AddDirectSettingItemAgentClasses(UVSSettingSystemConfig::Get()->SettingItemAgentClasses);
+}
+
+void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftClassPtr<UVSSettingItemAgent>>& SettingItemAgentClasses)
+{
+	TArray<UVSSettingItemAgent*> AgentsToAdd;
+	
+	for (const auto& SettingItemAgentClass : SettingItemAgentClasses)
 	{
 		if (UClass* AgentClass = SettingItemAgentClass.LoadSynchronous())
 		{
 			if (UVSSettingItemAgent* SettingItemAgent = AgentClass->GetDefaultObject<UVSSettingItemAgent>())
 			{
+				if (DirectSettingItemAgents.Contains(SettingItemAgent) || !SettingItemAgent->GetItemTag().IsValid()) continue;
 				DirectSettingItemAgents.Add(SettingItemAgent);
+				AgentsToAdd.Add(SettingItemAgent);
 			}
 		}
 	}
 
-	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
+	for (UVSSettingItemAgent* SettingItemAgent : AgentsToAdd)
 	{
-		for (UVSSettingItem* SettingItem : SettingItemAgent->GetDirectSubSettingItems())
-		{
-			if (SettingItem)
-			{
-				SettingItems.Add(SettingItem);
-				TaggedSettingItems.Add(SettingItem->GetItemTag(), SettingItem);
+		if (!SettingItemAgent || !SettingItemAgent->GetItemTag().IsValid()) continue;
+			
+		SettingItems.Add(SettingItemAgent);
+		TaggedSettingItems.Add(SettingItemAgent->GetItemTag(), SettingItemAgent);
 #if WITH_EDITOR
-				EditorSettingItemTags.Add(SettingItem, SettingItem->GetItemTag());
+		EditorSettingItemTags.Add(SettingItemAgent, SettingItemAgent->GetItemTag());
 #endif
-			}
+		
+		for (UVSSettingItem* SettingItem : SettingItemAgent->GetRecursiveSubSettingItems())
+		{
+			if (!SettingItem || !SettingItem->GetItemTag().IsValid()) continue;
+			SettingItems.Add(SettingItem);
+			TaggedSettingItems.Add(SettingItem->GetItemTag(), SettingItem);
+#if WITH_EDITOR
+			EditorSettingItemTags.Add(SettingItem, SettingItem->GetItemTag());
+#endif
 		}
 	}
 
-	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
+	for (UVSSettingItemAgent* SettingItemAgent : AgentsToAdd)
 	{
 		SettingItemAgent->Initialize();
 		SettingItemAgent->bHasBeenInitialized = true;
 	}
 
-	ExecuteSettingActions(TArray<TEnumAsByte<EVSSettingItemAction::Type>>
-		{
-			EVSSettingItemAction::Load,
-			EVSSettingItemAction::Validate,
-			EVSSettingItemAction::Apply,
-			EVSSettingItemAction::Confirm,
-		});
-}
-
-#if WITH_EDITOR
-void UVSSettingSubsystem::AddEditorSettingItem(UVSSettingItem* SettingItem)
-{
-	if (!bEditorHasBeenInitialized || !SettingItem || SettingItems.Contains(SettingItem)) return;
-	
-	SettingItems.Add(SettingItem);
-	TaggedSettingItems.Add(SettingItem->GetItemTag(), SettingItem);
-#if WITH_EDITOR
-	EditorSettingItemTags.Add(SettingItem, SettingItem->GetItemTag());
-#endif
-	
-	if (!SettingItem->HasBeenInitialized())
+	for (UVSSettingItemAgent* SettingItemAgent : AgentsToAdd)
 	{
-		SettingItem->Initialize();
-		SettingItem->ExecuteActions(TArray<TEnumAsByte<EVSSettingItemAction::Type>>
+		SettingItemAgent->ExecuteActions(TArray<TEnumAsByte<EVSSettingItemAction::Type>>
 		{
+			EVSSettingItemAction::SetToDefault,
 			EVSSettingItemAction::Load,
-			EVSSettingItemAction::Validate,
 			EVSSettingItemAction::Apply,
 			EVSSettingItemAction::Confirm,
+			EVSSettingItemAction::Save,
 		});
 	}
 }
 
-void UVSSettingSubsystem::RemoveEditorSettingItem(UVSSettingItem* SettingItem)
+#if WITH_EDITOR
+void UVSSettingSubsystem::RemoveEditorDirectSettingItemAgents(const TArray<TSoftClassPtr<UVSSettingItemAgent>>& SettingItemAgentClasses)
 {
-	if (!SettingItem || !SettingItems.Contains(SettingItem)) return;
+	TArray<UVSSettingItemAgent*> AgentsToRemove;
 	
-	if (SettingItem->HasBeenInitialized())
+	for (const auto& SettingItemAgentClass : SettingItemAgentClasses)
 	{
-		SettingItem->Uninitialize();
+		if (UClass* AgentClass = SettingItemAgentClass.LoadSynchronous())
+		{
+			if (UVSSettingItemAgent* SettingItemAgent = AgentClass->GetDefaultObject<UVSSettingItemAgent>())
+			{
+				if (!DirectSettingItemAgents.Contains(SettingItemAgent)) continue;
+				DirectSettingItemAgents.Remove(SettingItemAgent);
+				AgentsToRemove.Add(SettingItemAgent);
+			}
+		}
 	}
 	
-#if WITH_EDITOR
-	EditorSettingItemTags.Remove(SettingItem);
-#endif
-	TaggedSettingItems.Remove(EditorSettingItemTags.FindRef(SettingItem));
-	SettingItems.Remove(SettingItem);
-	
-	if (UVSSettingItemAgent* SettingItemAgent = Cast<UVSSettingItemAgent>(SettingItem))
+	for (UVSSettingItemAgent* SettingItemAgent : AgentsToRemove)
 	{
-		if (DirectSettingItemAgents.Contains(SettingItemAgent))
+		if (!SettingItemAgent) continue;
+
+		const FGameplayTag AgentPrevTag = EditorSettingItemTags.FindRef(SettingItemAgent);
+		TaggedSettingItems.Remove(AgentPrevTag);
+		EditorSettingItemTags.Remove(SettingItemAgent);
+		SettingItems.Remove(SettingItemAgent);
+	
+		for (UVSSettingItem* SettingItem : SettingItemAgent->GetRecursiveSubSettingItems())
 		{
-			DirectSettingItemAgents.Remove(SettingItemAgent);
+			if (SettingItem)
+			{
+				const FGameplayTag ItemPrevTag = EditorSettingItemTags.FindRef(SettingItem);
+				TaggedSettingItems.Remove(ItemPrevTag);
+				EditorSettingItemTags.Remove(SettingItem);
+				SettingItems.Remove(SettingItem);
+			}
+		}
+
+		if (SettingItemAgent->HasBeenInitialized())
+		{
+			SettingItemAgent->Uninitialize();
+			SettingItemAgent->bHasBeenInitialized = false;
 		}
 	}
 }
 
-void UVSSettingSubsystem::ReregisterEditorSettingItem(UVSSettingItem* SettingItem)
+void UVSSettingSubsystem::AddEditorSettingItemDifferences(const TArray<UVSSettingItem*>& InSettingItems)
 {
-	if (!SettingItem || !SettingItems.Contains(SettingItem)) return;
-
-	if (SettingItem->HasBeenInitialized())
+	TArray<UVSSettingItem*> TopLayerSettingItems;
+	for (UVSSettingItem* SettingItem : InSettingItems)
 	{
-		SettingItem->Uninitialize();
-		SettingItem->bHasBeenInitialized = false;
+		if (!SettingItem || SettingItems.Contains(SettingItem) || !SettingItem->GetItemTag().IsValid()) continue;
+	
+		SettingItems.Add(SettingItem);
+		TaggedSettingItems.Add(SettingItem->GetItemTag(), SettingItem);
+		EditorSettingItemTags.Add(SettingItem, SettingItem->GetItemTag());
+		TopLayerSettingItems.Add(SettingItem);
+
+		if (UVSSettingItemAgent* Agent = Cast<UVSSettingItemAgent>(SettingItem))
+		{
+			for (UVSSettingItem* RecursiveSubSettingItem : Agent->GetRecursiveSubSettingItems())
+			{
+				if (!RecursiveSubSettingItem || !RecursiveSubSettingItem->GetItemTag().IsValid()) continue;
+
+				SettingItems.Add(RecursiveSubSettingItem);
+				TaggedSettingItems.Add(RecursiveSubSettingItem->GetItemTag(), RecursiveSubSettingItem);
+				EditorSettingItemTags.Add(RecursiveSubSettingItem, RecursiveSubSettingItem->GetItemTag());
+			}
+		}
 	}
 
-	const FGameplayTag& PrevItemTag = EditorSettingItemTags.FindRef(SettingItem);
-	TaggedSettingItems.Remove(PrevItemTag);
-	TaggedSettingItems.Add(SettingItem->GetItemTag(), SettingItem);
-
-	SettingItem->Initialize();
-
-	SettingItem->ExecuteActions(TArray<TEnumAsByte<EVSSettingItemAction::Type>>
+	for (UVSSettingItem* TopLayerSettingItem : TopLayerSettingItems)
 	{
-		EVSSettingItemAction::Load,
-		EVSSettingItemAction::Validate,
-		EVSSettingItemAction::Apply,
-		EVSSettingItemAction::Confirm,
-	});
+		TopLayerSettingItem->Initialize();
+		TopLayerSettingItem->bHasBeenInitialized = true;
+	}
+
+	for (UVSSettingItem* TopLayerSettingItem : TopLayerSettingItems)
+	{
+		TopLayerSettingItem->ExecuteActions(TArray<TEnumAsByte<EVSSettingItemAction::Type>>
+		{
+			EVSSettingItemAction::SetToDefault,
+			EVSSettingItemAction::Load,
+			EVSSettingItemAction::Apply,
+			EVSSettingItemAction::Confirm,
+			EVSSettingItemAction::Save,
+		});
+	}
+}
+
+void UVSSettingSubsystem::RemoveEditorSettingItemDifferences(const TArray<UVSSettingItem*>& InSettingItems)
+{
+	for (UVSSettingItem* InSettingItem : InSettingItems)
+	{
+		if (!InSettingItem || !SettingItems.Contains(InSettingItem)) continue;
+	
+		if (InSettingItem->HasBeenInitialized())
+		{
+			InSettingItem->Uninitialize();
+			InSettingItem->bHasBeenInitialized = false;
+		}
+
+		const FGameplayTag PrevTag = EditorSettingItemTags.FindRef(InSettingItem);
+		TaggedSettingItems.Remove(PrevTag);
+		EditorSettingItemTags.Remove(InSettingItem);
+		SettingItems.Remove(InSettingItem);
+	
+		if (UVSSettingItemAgent* SettingItemAgent = Cast<UVSSettingItemAgent>(InSettingItem))
+		{
+			for (UVSSettingItem* RecursiveSubSettingItem : SettingItemAgent->GetRecursiveSubSettingItems())
+			{
+				if (!RecursiveSubSettingItem) continue;
+
+				const FGameplayTag PrevSubTag = EditorSettingItemTags.FindRef(RecursiveSubSettingItem);
+				TaggedSettingItems.Remove(PrevSubTag);
+				EditorSettingItemTags.Remove(RecursiveSubSettingItem);
+				SettingItems.Remove(RecursiveSubSettingItem);
+			}
+			
+			if (DirectSettingItemAgents.Contains(SettingItemAgent))
+			{
+				DirectSettingItemAgents.Remove(SettingItemAgent);
+			}
+		}
+	}
+}
+
+void UVSSettingSubsystem::ReregisterEditorSettingItemDifferences(const TArray<UVSSettingItem*>& InSettingItems)
+{
+	TArray<UVSSettingItem*> TopLayerItems;
+	TArray<UVSSettingItem*> TopLayerItemsToAdd;
+	TArray<UVSSettingItem*> TopLayerItemsToRemove;
+
+	for (UVSSettingItem* InSettingItem : InSettingItems)
+	{
+		if (!InSettingItem) continue;
+
+		if (!SettingItems.Contains(InSettingItem))
+		{
+			TopLayerItemsToAdd.Add(InSettingItem);
+			continue;
+		}
+
+		if (!InSettingItem->GetItemTag().IsValid())
+		{
+			TopLayerItemsToRemove.Add(InSettingItem);
+			continue;
+		}
+
+		if (InSettingItem->HasBeenInitialized())
+		{
+			InSettingItem->Uninitialize();
+			InSettingItem->bHasBeenInitialized = false;
+		}
+
+		const FGameplayTag PrevItemTag = EditorSettingItemTags.FindRef(InSettingItem);
+		TaggedSettingItems.Remove(PrevItemTag);
+		TaggedSettingItems.Add(InSettingItem->GetItemTag(), InSettingItem);
+		EditorSettingItemTags.Add(InSettingItem, InSettingItem->GetItemTag());
+		TopLayerItems.Add(InSettingItem);
+
+		if (UVSSettingItemAgent* SettingItemAgent = Cast<UVSSettingItemAgent>(InSettingItem))
+		{
+			for (UVSSettingItem* RecursiveSubSettingItem : SettingItemAgent->GetRecursiveSubSettingItems())
+			{
+				if (!RecursiveSubSettingItem) continue;
+
+				const FGameplayTag PrevSubTag = EditorSettingItemTags.FindRef(RecursiveSubSettingItem);
+				TaggedSettingItems.Remove(PrevSubTag);
+				
+				const FGameplayTag NewSubTag = RecursiveSubSettingItem->GetItemTag();
+				if (NewSubTag.IsValid())
+				{
+					TaggedSettingItems.Add(NewSubTag, RecursiveSubSettingItem);
+					EditorSettingItemTags.Add(RecursiveSubSettingItem, NewSubTag);
+				}
+				else
+				{
+					EditorSettingItemTags.Remove(RecursiveSubSettingItem);
+				}
+			}
+		}
+	}
+
+	RemoveEditorSettingItemDifferences(TopLayerItemsToRemove);
+	AddEditorSettingItemDifferences(TopLayerItemsToAdd);
+
+	for (UVSSettingItem* SettingItem : TopLayerItems)
+	{
+		SettingItem->Initialize();
+		SettingItem->bHasBeenInitialized = true;
+	}
+
+	for (UVSSettingItem* SettingItem : TopLayerItems)
+	{
+		SettingItem->ExecuteActions(TArray<TEnumAsByte<EVSSettingItemAction::Type>>
+		{
+			EVSSettingItemAction::SetToDefault,
+			EVSSettingItemAction::Load,
+			EVSSettingItemAction::Apply,
+			EVSSettingItemAction::Confirm,
+			EVSSettingItemAction::Save,
+		});
+	}
 }
 #endif

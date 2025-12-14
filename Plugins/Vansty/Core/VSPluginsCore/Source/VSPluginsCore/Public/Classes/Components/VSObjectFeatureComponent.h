@@ -9,12 +9,10 @@
 class UVSObjectFeature;
 
 /**
- * Component that owns and manages a hierarchy of UVSObjectFeature instances.
+ * Actor component responsible for owning and managing a hierarchy of object features.
  *
- * - Acts as the root "feature owner" for an Actor.
- * - Responsible for creating / attaching / detaching features.
- * - Optionally auto-registers features during BeginPlay.
- * - Supports replication of the feature list.
+ * Serves as the root feature owner for an Actor, handling feature attachment,
+ * detachment, registration, and replication of feature instances.
  */
 UCLASS(ClassGroup = (VS), meta = (BlueprintSpawnableComponent))
 class VSPLUGINSCORE_API UVSFeatureComponent : public UActorComponent

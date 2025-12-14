@@ -7,39 +7,16 @@
 #include "VSReplicatableObject.generated.h"
 
 /**
- * UVSReplicatableObject
+ * Base UObject that supports Unreal Engine network replication.
  *
- * A lightweight UObject base class that supports Unreal's network replication
- * system. Designed for creating instanced logic or data objects that replicate
- * alongside their owning Actor or Component.
+ * This class enables property replication and RPC execution for instanced
+ * UObject types that are owned by, and replicate alongside, an Actor or
+ * ActorComponent. Replication is routed through the owning object's
+ * networking context and lifecycle.
  *
- * -------------------------------------------------------------------------
- * Key Features
- * -------------------------------------------------------------------------
- * - Enables RPCs and property replication for UObjects.
- * - Uses the owning Actor's networking context for routing remote calls.
- * - Supports creation/destruction via network replication (OnCreatedFromReplication /
- *   OnDestroyedFromReplication).
- * - Provides a simple API (SetIsReplicated / GetIsReplicated) for enabling or
- *   disabling replication at runtime.
- * - Registers as a replicated subobject when replication is enabled.
- *
- * -------------------------------------------------------------------------
- * Usage
- * -------------------------------------------------------------------------
- * - Derive your UObject from UVSReplicatableObject.
- * - Place it inside a replicated Actor or Component (instanced or created at runtime).
- * - Call SetIsReplicated(true) to mark it for replication.
- * - Implement replicated properties or RPCs as with normal Actor subobjects.
- * - Optionally override OnCreatedFromReplication / OnDestroyedFromReplication
- *   to handle lifecycle events.
- *
- * -------------------------------------------------------------------------
- * Notes
- * -------------------------------------------------------------------------
- * - Requires bReplicateUsingRegisteredSubObjectList set to true inside the features' owner component / actor.
+ * Instances may be created or destroyed via network replication and can
+ * override replication lifecycle callbacks to react to those events.
  */
-
 UCLASS(Abstract, Blueprintable, BlueprintType)
 class VSPLUGINSCORE_API UVSReplicatableObject : public UObject
 {

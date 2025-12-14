@@ -21,15 +21,22 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Settings")
 	static const UVSSettingSystemConfig* GetSettingSystemConfig_VS();
 
+	//~ Begin UObject Interface
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
+	//~ End UObject Interface
+
+	//~ Begin UDeveloperSettings Interface
 	virtual FName GetCategoryName() const override;
+	//~ End UDeveloperSettings Interface
 
 public:
 	UPROPERTY(EditAnywhere, Config, Category = "Settings", meta = (ConfigRestartRequired = "true"))
 	TArray<TSoftClassPtr<UVSSettingItemAgent>> SettingItemAgentClasses;
 
-#if WITH_EDITORONLY_DATA
-	UPROPERTY(EditAnywhere, Config, Category = "Settings")
-	uint8 bIgnoreEditorSettingItemArrayNotification : 1;
+private:
+#if WITH_EDITOR
+	TArray<TSoftClassPtr<UVSSettingItemAgent>> EditorSettingItemAgentClasses;
 #endif
-	
 };

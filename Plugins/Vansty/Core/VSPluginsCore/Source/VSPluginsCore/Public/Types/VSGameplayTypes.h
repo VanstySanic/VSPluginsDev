@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "NativeGameplayTags.h"
-#include "VSGameQueryTypes.h"
 #include "UObject/Object.h"
 #include "VSGameplayTypes.generated.h"
 
@@ -17,9 +16,7 @@ namespace EVSGameplayTagControllerTags
 	VSPLUGINSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_TagsUpdated);
 }
 
-/**
- * Useful in multi-layer TMap with key type of gameplay tags.
- */
+/** Useful in multi-layer TMap with key type of ordered gameplay tags. */
 USTRUCT(BlueprintType)
 struct VSPLUGINSCORE_API FVSGameplayTagKey
 {

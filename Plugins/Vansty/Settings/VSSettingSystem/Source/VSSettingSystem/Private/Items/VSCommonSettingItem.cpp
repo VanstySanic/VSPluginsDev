@@ -13,9 +13,10 @@ void UVSCommonSettingItem::PostInitProperties()
 	Super::PostInitProperties();
 
 #if WITH_EDITOR
-	LastEditorValueType = ValueType;
 	LastEditorConfigParams = ConfigParams;
 	RefreshValueType();
+	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
+	LastEditorPreviewValue = EditorPreviewValue;
 #endif
 }
 
@@ -26,15 +27,50 @@ void UVSCommonSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& 
 	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSCommonSettingItem, ValueType))
 	{
 		RefreshValueType();
+		
+		if (ValueType == EVSCommonSettingValueType::None || ValueType == EVSCommonSettingValueType::String)
+		{
+			SetEditorPreviewValueString(FString());
+		}
+		
 		bDesireReConfig = true;
 	}
-	else if (!bDesireReConfig && PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSCommonSettingItem, ConfigParams))
+	else if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSCommonSettingItem, ConfigParams))
 	{
 		bDesireReConfig = true;
+	}
+	
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSCommonSettingItem, ValueType)
+		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSCommonSettingItem, EditorPreviewValue))
+	{
+		if (ValueType == EVSCommonSettingValueType::None || ValueType == EVSCommonSettingValueType::String)
+		{
+			SetStringValue(EditorPreviewValue);
+		}
+		else
+		{
+			float EvalValue;
+			if (FMath::Eval(EditorPreviewValue, EvalValue))
+			{
+				SetFloatValue(EvalValue);
+			}
+			else if (EditorPreviewValue == "true" || EditorPreviewValue == "false" || EditorPreviewValue.IsNumeric())
+			{
+				SetStringValue(EditorPreviewValue);
+			}
+			/** Roll back to last. */
+			else
+			{
+				SetStringValue(LastEditorPreviewValue);
+			}
+		}
+		
+		SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
 	}
 
 	if (bDesireReConfig && LastEditorConfigParams.bAutoConfig && ConfigParams.bAutoConfig)
 	{
+		/** Clear previous config and save new one. */
 		FString ConfigString;
 		if (GConfig->GetString(*LastEditorConfigParams.ConfigSection, *LastEditorConfigParams.ConfigKeyName, ConfigString, LastEditorConfigParams.ConfigFileName))
 		{
@@ -50,6 +86,15 @@ void UVSCommonSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& 
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 #endif
+
+void UVSCommonSettingItem::OnItemUpdated_Implementation()
+{
+	Super::OnItemUpdated_Implementation();
+
+#if WITH_EDITORONLY_DATA
+	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
+#endif
+}
 
 void UVSCommonSettingItem::SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource)
 {
@@ -98,10 +143,10 @@ bool UVSCommonSettingItem::EqualsToBySource_Implementation(const EVSSettingItemV
 		return GetLongIntegerValue(EVSSettingItemValueSource::System) == GetLongIntegerValue(ValueSource);
 	
 	case EVSCommonSettingValueType::Float:
-		return GetFloatValue(EVSSettingItemValueSource::System) == GetFloatValue(ValueSource);
+		return FMath::IsNearlyEqual(GetFloatValue(EVSSettingItemValueSource::System), GetFloatValue(ValueSource));
 		
 	case EVSCommonSettingValueType::Double:
-		return GetDoubleValue(EVSSettingItemValueSource::System) == GetDoubleValue(ValueSource);
+		return FMath::IsNearlyEqual(GetDoubleValue(EVSSettingItemValueSource::System), GetDoubleValue(ValueSource));
 		
 	case EVSCommonSettingValueType::None:
 	case EVSCommonSettingValueType::String:
@@ -133,7 +178,7 @@ void UVSCommonSettingItem::Save_Implementation()
 
 	if (ConfigParams.bAutoConfig)
 	{
-		const FString& ConfigString = GetStringFromValue(GetUnionValueString(CurrentValue));
+		const FString& ConfigString = GetUnionValueString(CurrentValue);
 		GConfig->SetString(*ConfigParams.ConfigSection, *ConfigParams.ConfigKeyName, *ConfigString, ConfigParams.ConfigFileName);
 	}
 }
@@ -155,11 +200,11 @@ bool UVSCommonSettingItem::GetBooleanValue_Implementation(const EVSSettingItemVa
 		/** Implement the two cases in child classes. */
 		case EVSSettingItemValueSource::Default:
 		case EVSSettingItemValueSource::Game:
-			return GetValueFromString<bool>(GetStringValue(ValueSource));
+			return false;
 			
 		case EVSSettingItemValueSource::System:
 			return CurrentValue.GetSubtype<bool>();
-
+			
 		case EVSSettingItemValueSource::Confirmed:
 			return ConfirmedValue.GetSubtype<bool>();
 			
@@ -202,11 +247,11 @@ int32 UVSCommonSettingItem::GetIntegerValue_Implementation(const EVSSettingItemV
 		/** Implement the two cases in child classes. */
 		case EVSSettingItemValueSource::Default:
 		case EVSSettingItemValueSource::Game:
-			return GetValueFromString<int32>(GetStringValue(ValueSource));
+			return 0;
 			
 		case EVSSettingItemValueSource::System:
 			return CurrentValue.GetSubtype<int32>();
-
+			
 		case EVSSettingItemValueSource::Confirmed:
 			return ConfirmedValue.GetSubtype<int32>();
 			
@@ -249,11 +294,11 @@ int64 UVSCommonSettingItem::GetLongIntegerValue_Implementation(const EVSSettingI
 		/** Implement the two cases in child classes. */
 		case EVSSettingItemValueSource::Default:
 		case EVSSettingItemValueSource::Game:
-			return GetValueFromString<int64>(GetStringValue(ValueSource));
+			return 0;
 			
 		case EVSSettingItemValueSource::System:
 			return CurrentValue.GetSubtype<int64>();
-
+			
 		case EVSSettingItemValueSource::Confirmed:
 			return ConfirmedValue.GetSubtype<int64>();
 			
@@ -296,11 +341,11 @@ float UVSCommonSettingItem::GetFloatValue_Implementation(const EVSSettingItemVal
 		/** Implement the two cases in child classes. */
 		case EVSSettingItemValueSource::Default:
 		case EVSSettingItemValueSource::Game:
-			return GetValueFromString<float>(GetStringValue(ValueSource));
+			return 0.f;
 			
 		case EVSSettingItemValueSource::System:
 			return CurrentValue.GetSubtype<float>();
-
+			
 		case EVSSettingItemValueSource::Confirmed:
 			return ConfirmedValue.GetSubtype<float>();
 			
@@ -343,11 +388,11 @@ double UVSCommonSettingItem::GetDoubleValue_Implementation(const EVSSettingItemV
 		/** Implement the two cases in child classes. */
 		case EVSSettingItemValueSource::Default:
 		case EVSSettingItemValueSource::Game:
-			return GetValueFromString<double>(GetStringValue(ValueSource));
+			return 0.0;
 	
 		case EVSSettingItemValueSource::System:
 			return CurrentValue.GetSubtype<double>();
-
+			
 		case EVSSettingItemValueSource::Confirmed:
 			return ConfirmedValue.GetSubtype<double>();
 			
@@ -374,16 +419,16 @@ FString UVSCommonSettingItem::GetStringValue_Implementation(const EVSSettingItem
 		return GetStringFromValue<bool>(GetBooleanValue(ValueSource));
 		
 	case EVSCommonSettingValueType::Integer:
-		return GetStringFromValue<int32>(GetBooleanValue(ValueSource));
+		return GetStringFromValue<int32>(GetIntegerValue(ValueSource));
 
 	case EVSCommonSettingValueType::LongInteger:
-		return GetStringFromValue<int64>(GetBooleanValue(ValueSource));
+		return GetStringFromValue<int64>(GetLongIntegerValue(ValueSource));
 		
 	case EVSCommonSettingValueType::Float:
-		return GetStringFromValue<float>(GetBooleanValue(ValueSource));
+		return GetStringFromValue<float>(GetFloatValue(ValueSource));
 		
 	case EVSCommonSettingValueType::Double:
-		return GetStringFromValue<double>(GetBooleanValue(ValueSource));
+		return GetStringFromValue<double>(GetDoubleValue(ValueSource));
 
 	case EVSCommonSettingValueType::None:
 	case EVSCommonSettingValueType::String:
@@ -399,7 +444,7 @@ FString UVSCommonSettingItem::GetStringValue_Implementation(const EVSSettingItem
 			
 		case EVSSettingItemValueSource::System:
 			return CurrentValue.GetSubtype<FString>();
-
+			
 		case EVSSettingItemValueSource::Confirmed:
 			return ConfirmedValue.GetSubtype<FString>();
 			
@@ -417,7 +462,11 @@ void UVSCommonSettingItem::SetBooleanValue(bool bNewValue)
 {
 	const TValueUnion PrevValue = CurrentValue;
 	SetUnionValue<bool>(bNewValue, CurrentValue);
-	if (CurrentValue != PrevValue)
+	if (!IsValueValid())
+	{
+		Validate();
+	}
+	else if (CurrentValue != PrevValue)
 	{
 		NotifyValueUpdate();
 	}
@@ -427,7 +476,11 @@ void UVSCommonSettingItem::SetIntegerValue(int32 NewValue)
 {
 	const TValueUnion PrevValue = CurrentValue;
 	SetUnionValue<int32>(NewValue, CurrentValue);
-	if (CurrentValue != PrevValue)
+	if (!IsValueValid())
+	{
+		Validate();
+	}
+	else if (CurrentValue != PrevValue)
 	{
 		NotifyValueUpdate();
 	}
@@ -437,7 +490,11 @@ void UVSCommonSettingItem::SetLongIntegerValue(int64 NewValue)
 {
 	const TValueUnion PrevValue = CurrentValue;
 	SetUnionValue<int64>(NewValue, CurrentValue);
-	if (CurrentValue != PrevValue)
+	if (!IsValueValid())
+	{
+		Validate();
+	}
+	else if (CurrentValue != PrevValue)
 	{
 		NotifyValueUpdate();
 	}
@@ -447,7 +504,11 @@ void UVSCommonSettingItem::SetFloatValue(float NewValue)
 {
 	const TValueUnion PrevValue = CurrentValue;
 	SetUnionValue<float>(NewValue, CurrentValue);
-	if (CurrentValue != PrevValue)
+	if (!IsValueValid())
+	{
+		Validate();
+	}
+	else if (CurrentValue != PrevValue)
 	{
 		NotifyValueUpdate();
 	}
@@ -457,7 +518,11 @@ void UVSCommonSettingItem::SetDoubleValue(double NewValue)
 {
 	const TValueUnion PrevValue = CurrentValue;
 	SetUnionValue<double>(NewValue, CurrentValue);
-	if (CurrentValue != PrevValue)
+	if (!IsValueValid())
+	{
+		Validate();
+	}
+	else if (CurrentValue != PrevValue)
 	{
 		NotifyValueUpdate();
 	}
@@ -467,11 +532,101 @@ void UVSCommonSettingItem::SetStringValue(const FString& NewValue)
 {
 	const TValueUnion PrevValue = CurrentValue;
 	SetUnionValue<FString>(NewValue, CurrentValue);
-	if (CurrentValue != PrevValue)
+	if (!IsValueValid())
+	{
+		Validate();
+	}
+	else if (CurrentValue != PrevValue)
 	{
 		NotifyValueUpdate();
 	}
 }
+
+#if WITH_EDITOR
+void UVSCommonSettingItem::SetValueType(EVSCommonSettingValueType::Type NewValueType)
+{
+	if (ValueType == NewValueType) return;
+	ValueType = NewValueType;
+	RefreshValueType();
+}
+
+void UVSCommonSettingItem::SetEditorPreviewValueString(const FString& NewValue)
+{
+	EditorPreviewValue = NewValue;
+	
+	int32 Index = INDEX_NONE;
+	if (EditorPreviewValue.Contains("."))
+	{
+		int32 DotIndex;
+		EditorPreviewValue.FindChar('.', DotIndex);
+		
+		while (EditorPreviewValue.FindLastChar('0', Index))
+		{
+			if (Index < DotIndex || Index != EditorPreviewValue.Len() - 1) break;
+			EditorPreviewValue.RemoveFromEnd("0");
+		}
+		if (DotIndex == EditorPreviewValue.Len() - 1)
+		{
+			EditorPreviewValue.RemoveFromEnd(".");
+			if (EditorPreviewValue.IsEmpty())
+			{
+				EditorPreviewValue = FString("0");
+			}
+		}
+	}
+	LastEditorPreviewValue = EditorPreviewValue;
+
+	ExecuteActions(TArray<TEnumAsByte<EVSSettingItemAction::Type>>
+	{
+		EVSSettingItemAction::Apply,
+		EVSSettingItemAction::Confirm,
+	});
+}
+
+void UVSCommonSettingItem::RefreshValueType()
+{
+	FString ValueString = GetUnionValueString(CurrentValue);
+
+	/** Set union value type. */
+	switch (ValueType)
+	{
+	case EVSCommonSettingValueType::Boolean:
+		CurrentValue.SetSubtype<bool>();
+		ConfirmedValue.SetSubtype<bool>();
+		break;
+		
+	case EVSCommonSettingValueType::Integer:
+		CurrentValue.SetSubtype<int32>();
+		ConfirmedValue.SetSubtype<int32>();
+		break;
+		
+	case EVSCommonSettingValueType::LongInteger:
+		CurrentValue.SetSubtype<int64>();
+		ConfirmedValue.SetSubtype<int64>();
+		break;
+		
+	case EVSCommonSettingValueType::Float:
+		CurrentValue.SetSubtype<float>();
+		ConfirmedValue.SetSubtype<float>();
+		break;
+		
+	case EVSCommonSettingValueType::Double:
+		CurrentValue.SetSubtype<double>();
+		ConfirmedValue.SetSubtype<double>();
+		break;
+		
+	case EVSCommonSettingValueType::None:
+	case EVSCommonSettingValueType::String:
+		CurrentValue.SetSubtype<FString>();
+		ConfirmedValue.SetSubtype<FString>();
+		break;
+		
+	default: ;
+	}
+
+	SetUnionValueFromString(ValueString, CurrentValue);
+}
+#endif
 
 #if WITH_EDITOR
 bool UVSCommonSettingItem::AllowChangingValueType_Implementation() const
@@ -482,48 +637,6 @@ bool UVSCommonSettingItem::AllowChangingValueType_Implementation() const
 bool UVSCommonSettingItem::AllowChangingConfigParams_Implementation() const
 {
 	return true;
-}
-
-void UVSCommonSettingItem::RefreshValueType()
-{
-	if (ValueType == LastEditorValueType) return;
-
-	FString ValueString = GetUnionValueString(CurrentValue);
-
-	/** Set union value type. */
-	switch (ValueType)
-	{
-	case EVSCommonSettingValueType::Boolean:
-		CurrentValue.SetSubtype<bool>();
-		break;
-		
-	case EVSCommonSettingValueType::Integer:
-		CurrentValue.SetSubtype<int32>();
-		break;
-		
-	case EVSCommonSettingValueType::LongInteger:
-		CurrentValue.SetSubtype<int64>();
-		break;
-		
-	case EVSCommonSettingValueType::Float:
-		CurrentValue.SetSubtype<float>();
-		break;
-		
-	case EVSCommonSettingValueType::Double:
-		CurrentValue.SetSubtype<double>();
-		break;
-		
-	case EVSCommonSettingValueType::None:
-	case EVSCommonSettingValueType::String:
-		CurrentValue.SetSubtype<FString>();
-		break;
-		
-	default: ;
-	}
-
-	SetUnionValueFromString(ValueString, CurrentValue);
-
-	LastEditorValueType = ValueType;
 }
 #endif
 

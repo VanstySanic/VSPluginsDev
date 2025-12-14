@@ -1,4 +1,3 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
-
-#include "Types/VSMathTypes.h"
+#include "Types/Math/VSMath.h"

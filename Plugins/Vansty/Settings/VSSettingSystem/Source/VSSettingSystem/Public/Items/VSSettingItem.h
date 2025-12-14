@@ -18,6 +18,7 @@ struct FVSSettingItemInfo
 	FText Description;
 };
 
+/** High-level actions that can be executed on a setting item. */
 UENUM(BlueprintType)
 namespace EVSSettingItemAction
 {
@@ -27,16 +28,16 @@ namespace EVSSettingItemAction
 		
 		SetToDefault,
 		SetToGame,
-		SetToLastConfirmed,
+		SetToConfirmed,
 		
 		Load,
-		Validate,
 		Apply,
 		Confirm,
 		Save
 	};
 }
 
+/** Defines which value source a setting item should compare against or apply from. */
 UENUM(BlueprintType)
 namespace EVSSettingItemValueSource
 {
@@ -52,19 +53,28 @@ namespace EVSSettingItemValueSource
 		
 		/** Value in the setting system. This could be different form the current value. */
 		System,
-
-		/** Value that are confirmed from setting system's. */
+		
+		/** Value that is confirmed from setting system's. */
 		Confirmed
 	};
 }
 
 /**
- * 
+ * Base UObject representing a single configurable setting item.
+ *
+ * Encapsulates the lifecycle, state comparison, and action execution logic
+ * for a setting entry, including loading, validation, application, and
+ * confirmation. Each setting item is identified by a gameplay tag and can
+ * dispatch update notifications to interested systems.
+ *
+ * This class is designed to be extended for concrete setting implementations,
+ * while higher-level systems coordinate persistence and synchronization.
  */
+
 UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew, DisplayName = "VS.Settings.Item.Base")
 class VSSETTINGSYSTEM_API UVSSettingItem : public UObject
 {
-	GENERATED_UCLASS_BODY()
+GENERATED_UCLASS_BODY()
 	
 	friend class UVSSettingItemAgent;
 	friend class UVSSettingSubsystem;
@@ -84,63 +94,98 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	bool HasBeenInitialized() const { return bHasBeenInitialized; }
 
+	/** Gameplay tag uniquely identifying this setting item. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	FGameplayTag GetItemTag() const { return ItemTag; }
 	
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	FVSSettingItemInfo GetItemInfo() const { return ItemInfo; }
 	
-	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
+	/** Load value from persistent storage or external source. */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
 	void Load();
-	
-	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
-	void Validate();
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
+	/** Apply the current value to the game runtime. */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
 	void Apply();
 	
-	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
+	/** Confirm the current value as accepted. */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
 	void Confirm();
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
+	/** Save the current value to persistent storage. */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
 	void Save();
 
+	/** Validate current value without applying it. Call it in proper places. */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
+	void Validate();
 
+	/** Whether the value in this item is valid. */
+	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
+	bool IsValueValid() const;
+	
+	/** Whether the system value differs from the confirmed value. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	bool IsDirty() const;
 	
+	/** Whether the current value has not yet been confirmed. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	bool IsUnconfirmed() const;
+
+	/** Set the value to the default value. */
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void SetToDefault();
+
+	/** Set the value to the current game value. */
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void SetToGame();
+
+	/** Set the value to last confirmed. */
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void SetToConfirmed();
 	
-	
+	/** Set value based on the specified source. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	void SetToBySource(const EVSSettingItemValueSource::Type ValueSource);
 	
+	/** Compare current value against the specified source. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	bool EqualsToBySource(const EVSSettingItemValueSource::Type ValueSource) const;
 
+	/** Execute a single predefined setting action. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void ExecuteAction(EVSSettingItemAction::Type Action);
 	
+	/** Execute multiple predefined setting actions in order. */
 	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "Actions"))
 	void ExecuteActions(const TArray<TEnumAsByte<EVSSettingItemAction::Type>>& Actions);
 
-	/** Notify the update of this item. Needs to call manually. */
+	/**
+	 * Notify listeners that the value has changed.
+	 * @param bAllowCleanNotify Whether to notify even if the value is considered clean.
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void NotifyValueUpdate(bool bAllowCleanNotify = false);
 
 protected:
 #if WITH_EDITOR
+	/** Whether the ItemTag can be modified in the editor. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	bool AllowChangingItemTag() const;
 #endif
 	
-	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
+	/** Initialize internal state and cache initial values. This is before */
+	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	void Initialize();
 	
-	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
+	/** Tear down internal state and release resources. */
+	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	void Uninitialize();
-	
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
+	void OnItemUpdated();
+
 public:
 	FSettingItemDelegate OnUpdated_Native;
 	
@@ -148,14 +193,14 @@ public:
 	FSettingItemEvent OnUpdated;
 	
 protected:
-	/** Unique gameplay tag that identifies a single setting item.  */
+	/** Unique gameplay tag that identifies this setting item. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	FGameplayTag ItemTag;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	FVSSettingItemInfo ItemInfo;
 
-	/** Executed when the value is updated. */
+	/** Actions automatically executed when the value is updated. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	TArray<TEnumAsByte<EVSSettingItemAction::Type>> ValueUpdatedActions;
 	

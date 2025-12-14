@@ -7,12 +7,13 @@
 #include "Containers/Union.h"
 #include "VSCommonSettingItem.generated.h"
 
+/** Supported value representation for a common setting item. */
 UENUM(BlueprintType)
 namespace EVSCommonSettingValueType
 {
 	enum Type
 	{
-		None		UMETA(Hidden),
+		None	UMETA(Hidden),
 		Boolean,
 		Integer,
 		LongInteger,
@@ -22,6 +23,10 @@ namespace EVSCommonSettingValueType
 	};
 }
 
+/**
+ * Config file binding parameters for a common setting item.
+ * Describes where the setting is loaded from / saved to when auto-config is enabled.
+ */
 USTRUCT(BlueprintType)
 struct FVSCommonSettingConfigParams
 {
@@ -32,28 +37,36 @@ struct FVSCommonSettingConfigParams
 	{
 	}
 	
+	/** Target config file (without extension), e.g. "GameUserSettings". */
 	UPROPERTY(EditAnywhere)
 	FString ConfigFileName = FString("GameUserSettings");
 
+	/** Config section name used to store the value. */
 	UPROPERTY(EditAnywhere)
 	FString ConfigSection = FString("VSSettingSystem");
 
+	/** Config key used to store the value. */
 	UPROPERTY(EditAnywhere)
 	FString ConfigKeyName;
 
-	/** If true, the config save and load will be processed, otherwise user should do config manually. */
+	/** If true, this item will load / save its value automatically via config. */
 	UPROPERTY(EditAnywhere)
 	uint8 bAutoConfig : 1;
 };
 
 /**
- * 
+ * Base setting item that stores a single value in a small set of common types.
+ *
+ * Provides typed getters/setters for Blueprint and implements the setting item lifecycle
+ * (load/save/confirm and source comparisons) using an internal union-backed storage.
+ * Optionally binds to config to persist the system/confirmed values.
  */
 UCLASS(Abstract, DisplayName = "VS.Settings.Item.Common")
 class VSSETTINGSYSTEM_API UVSCommonSettingItem : public UVSSettingItem
 {
 	GENERATED_UCLASS_BODY()
 
+	/** Internal value storage used for current/confirmed state. */
 	using TValueUnion = TUnion<bool, int32, int64, float, double, FString>;
 	
 public:
@@ -64,103 +77,131 @@ public:
 #endif
 	//~ End UObject Interface
 
-	//~ Begin UVSSettingItemBase Interface
+	//~ Begin UVSSettingItem Interface
+	virtual void OnItemUpdated_Implementation() override;
 	virtual void SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) override;
 	virtual bool EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const override;
 	virtual void Load_Implementation() override;
 	virtual void Save_Implementation() override;
 	virtual void Confirm_Implementation() override;
-	//~ End UVSSettingItemBase Interface
+	//~ End UVSSettingItem Interface
 
-	
+public:
+	/** Returns the value as bool. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
 	bool GetBooleanValue(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
+	/** Returns the value as int32. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
 	int32 GetIntegerValue(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
+	/** Returns the value as int64. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
 	int64 GetLongIntegerValue(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 	
+	/** Returns the value as float. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
 	float GetFloatValue(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
+	/** Returns the value as double. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
 	double GetDoubleValue(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
+	/** Returns the value as FString. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
 	FString GetStringValue(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
-
+	/** Sets the current value as bool and triggers update notification. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetBooleanValue(bool bNewValue);
 
+	/** Sets the current value as int32 and triggers update notification. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetIntegerValue(int32 NewValue);
 
+	/** Sets the current value as int64 and triggers update notification. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetLongIntegerValue(int64 NewValue);
 	
+	/** Sets the current value as float and triggers update notification. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetFloatValue(float NewValue);
 
+	/** Sets the current value as double and triggers update notification. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetDoubleValue(double NewValue);
 
+	/** Sets the current value as FString and triggers update notification. */
 	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "NewValue"))
 	void SetStringValue(const FString& NewValue);
 	
 protected:
 #if WITH_EDITOR
+	/** Whether ValueType can be edited in the editor for this item. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	bool AllowChangingValueType() const;
 
+	/** Whether ConfigParams can be edited in the editor for this item. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	bool AllowChangingConfigParams() const;
 #endif
 
-private:
+protected:
 #if WITH_EDITOR
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void SetValueType(EVSCommonSettingValueType::Type NewValueType);
+
+	void SetEditorPreviewValueString(const FString& NewValue);
 	void RefreshValueType();
+	
 #endif
+	
+	/** Converts a typed value to string using the item's formatting rules. */
+	template<typename T>
+	FString GetStringFromValue(const T& Value) const;
+
+	/** Converts a string to a typed value using the item's parsing rules. */
+	template<typename T>
+	T GetValueFromString(const FString& String) const;
+
+private:
 	FString GetUnionValueString(const TValueUnion& UnionValue);
 	void SetUnionValueFromString(const FString& String, TValueUnion& UnionValue);
 	
 	template<typename T>
 	void SetUnionValue(const T& NewValue, TValueUnion& UnionValue);
-	
-	template<typename T>
-	FString GetStringFromValue(const T& Value) const;
 
-	template<typename T>
-	T GetValueFromString(const FString& String) const;
-
-	
 protected:
-	/** The most preferred value type for the item. */
+	/** Preferred value type used for storage and conversion. */
 	UPROPERTY(EditAnywhere, Category = "Settings", meta = (EditCondition = "AllowChangingValueType()"))
 	TEnumAsByte<EVSCommonSettingValueType::Type> ValueType = EVSCommonSettingValueType::None;
 
+	/** Config binding parameters used when auto-config is enabled. */
 	UPROPERTY(EditAnywhere, Category = "Settings", meta = (EditCondition = "AllowChangingConfigParams()"))
 	FVSCommonSettingConfigParams ConfigParams;
 	
 private:
-	TValueUnion CurrentValue;
-	TValueUnion ConfirmedValue;
+	TValueUnion CurrentValue = TValueUnion();
+	TValueUnion ConfirmedValue = TValueUnion();
 
 #if WITH_EDITORONLY_DATA
-	TEnumAsByte<EVSCommonSettingValueType::Type> LastEditorValueType = EVSCommonSettingValueType::None;
+	/** Preview value that can be modified in editor. */
+	UPROPERTY(EditAnywhere, Category = "Settings")
+	FString EditorPreviewValue;
+
+	FString LastEditorPreviewValue;
 	FVSCommonSettingConfigParams LastEditorConfigParams = FVSCommonSettingConfigParams();
 #endif
 };
-
 
 template <typename T>
 void UVSCommonSettingItem::SetUnionValue(const T& NewValue, TValueUnion& UnionValue)
 {
 	if constexpr (std::is_same_v<T, FString>)
 	{
-		switch (static_cast<EVSCommonSettingValueType::Type>(UnionValue.GetCurrentSubtypeIndex() + 1)) {
+		/** String input is parsed into the current union subtype when possible. */
+		switch (static_cast<EVSCommonSettingValueType::Type>(UnionValue.GetCurrentSubtypeIndex() + 1))
+		{
 		case EVSCommonSettingValueType::Boolean:
 			UnionValue.SetSubtype<bool>(GetValueFromString<bool>(NewValue));
 			break;
@@ -191,7 +232,9 @@ void UVSCommonSettingItem::SetUnionValue(const T& NewValue, TValueUnion& UnionVa
 	}
 	else
 	{
-		switch (ValueType) {
+		/** Non-string input is coerced to the configured ValueType. */
+		switch (ValueType)
+		{
 		case EVSCommonSettingValueType::Boolean:
 			UnionValue.SetSubtype<bool>(static_cast<bool>(NewValue));
 			break;

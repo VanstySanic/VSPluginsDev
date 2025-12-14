@@ -3,17 +3,14 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "Types/VSMathTypes.h"
+#include "Types/Math/VSMathTypes.h"
 #include "VSMathLibrary.generated.h"
 
 #define VS_MATH_INLINE_ENABLED	(!UE_BUILD_DEBUG)
 
 /**
- * UVSMathLibrary
- *
  * Blueprint-accessible wrapper for FVSMath helper functions.
- * Provides a set of math utilities for safe division, interpolation,
- * clamping and geometric queries.
+ * Provides a set of math utilities for safe division, interpolation, clamping and geometric queries.
  */
 UCLASS()
 class VSPLUGINSCORE_API UVSMathLibrary : public UBlueprintFunctionLibrary
