@@ -30,6 +30,7 @@ public class VSSettingSystem : ModuleRules
 				"DeveloperSettings",
 				// ... add other public dependencies that you statically link with here ...
 				"VSPluginsCore",
+				"VSPluginsCoreCpp",
 			}
 			);
 			

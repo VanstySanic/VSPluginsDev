@@ -19,12 +19,11 @@ class VSSETTINGSYSTEM_API UVSSettingItemAgent : public UVSSettingItem
 	
 public:
 	//~ Begin UObject Interface
-	virtual void PostInitProperties() override;
+	virtual void PostLoad() override;
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 	//~ End UObject Interface
-
 	
 	//~ Begin UVSSettingItemBase Interface
 	virtual void Initialize_Implementation() override;

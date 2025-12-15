@@ -22,6 +22,8 @@ public:
 	static const UVSSettingSystemConfig* GetSettingSystemConfig_VS();
 
 	//~ Begin UObject Interface
+	virtual void PostLoad() override;
+	
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif

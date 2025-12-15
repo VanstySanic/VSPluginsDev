@@ -33,11 +33,11 @@ struct FVSCommonSettingConfigParams
 	GENERATED_USTRUCT_BODY()
 
 	FVSCommonSettingConfigParams()
-		: bAutoConfig(true)
+		: bAutoDefaultConfig(true)
 	{
 	}
 	
-	/** Target config file (without extension), e.g. "GameUserSettings". */
+	/** Target config file (without extension), e.g. "Editor" and "GameUserSettings". */
 	UPROPERTY(EditAnywhere)
 	FString ConfigFileName = FString("GameUserSettings");
 
@@ -49,9 +49,9 @@ struct FVSCommonSettingConfigParams
 	UPROPERTY(EditAnywhere)
 	FString ConfigKeyName;
 
-	/** If true, this item will load / save its value automatically via config. */
+	/** If true, this item will load / save its value automatically via config with the default logics. */
 	UPROPERTY(EditAnywhere)
-	uint8 bAutoConfig : 1;
+	uint8 bAutoDefaultConfig : 1;
 };
 
 /**
@@ -71,14 +71,15 @@ class VSSETTINGSYSTEM_API UVSCommonSettingItem : public UVSSettingItem
 	
 public:
 	//~ Begin UObject Interface
-	virtual void PostInitProperties() override;
+	virtual void PostLoad() override;
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 	//~ End UObject Interface
 
 	//~ Begin UVSSettingItem Interface
-	virtual void OnItemUpdated_Implementation() override;
+	virtual void Initialize_Implementation() override;
+	virtual void OnValueUpdated_Implementation() override;
 	virtual void SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) override;
 	virtual bool EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const override;
 	virtual void Load_Implementation() override;
@@ -144,16 +145,19 @@ protected:
 	/** Whether ConfigParams can be edited in the editor for this item. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	bool AllowChangingConfigParams() const;
+
+	/** Whether EditorPreviewValue can be edited in the editor for this item. */
+	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
+	bool AllowChangingEditorPreviewValue() const;
 #endif
 
 protected:
-#if WITH_EDITOR
+	/** Set the value type for this item and refresh. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetValueType(EVSCommonSettingValueType::Type NewValueType);
 
+#if WITH_EDITOR
 	void SetEditorPreviewValueString(const FString& NewValue);
-	void RefreshValueType();
-	
 #endif
 	
 	/** Converts a typed value to string using the item's formatting rules. */
@@ -165,8 +169,8 @@ protected:
 	T GetValueFromString(const FString& String) const;
 
 private:
-	FString GetUnionValueString(const TValueUnion& UnionValue);
-	void SetUnionValueFromString(const FString& String, TValueUnion& UnionValue);
+	FString GetUnionValueString(const TValueUnion& UnionValue) const;
+	void SetUnionValueFromString(const FString& String, TValueUnion& UnionValue) const;
 	
 	template<typename T>
 	void SetUnionValue(const T& NewValue, TValueUnion& UnionValue);
@@ -186,7 +190,7 @@ private:
 
 #if WITH_EDITORONLY_DATA
 	/** Preview value that can be modified in editor. */
-	UPROPERTY(EditAnywhere, Category = "Settings")
+	UPROPERTY(EditAnywhere, DisplayName = "Preview Value", Category = "Settings", meta = (EditCondition = "AllowChangingEditorPreviewValue()"), Transient, SkipSerialization)
 	FString EditorPreviewValue;
 
 	FString LastEditorPreviewValue;

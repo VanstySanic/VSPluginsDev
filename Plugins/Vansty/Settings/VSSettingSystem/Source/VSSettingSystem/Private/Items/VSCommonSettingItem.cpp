@@ -8,15 +8,12 @@ UVSCommonSettingItem::UVSCommonSettingItem(const FObjectInitializer& ObjectIniti
 	CurrentValue.SetSubtype<FString>();
 }
 
-void UVSCommonSettingItem::PostInitProperties()
+void UVSCommonSettingItem::PostLoad()
 {
-	Super::PostInitProperties();
+	Super::PostLoad();
 
-#if WITH_EDITOR
+#if WITH_EDITORONLY_DATA
 	LastEditorConfigParams = ConfigParams;
-	RefreshValueType();
-	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
-	LastEditorPreviewValue = EditorPreviewValue;
 #endif
 }
 
@@ -26,7 +23,7 @@ void UVSCommonSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& 
 	bool bDesireReConfig = false;
 	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSCommonSettingItem, ValueType))
 	{
-		RefreshValueType();
+		SetValueType(ValueType);
 		
 		if (ValueType == EVSCommonSettingValueType::None || ValueType == EVSCommonSettingValueType::String)
 		{
@@ -68,7 +65,7 @@ void UVSCommonSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& 
 		SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
 	}
 
-	if (bDesireReConfig && LastEditorConfigParams.bAutoConfig && ConfigParams.bAutoConfig)
+	if (bDesireReConfig && LastEditorConfigParams.bAutoDefaultConfig && ConfigParams.bAutoDefaultConfig)
 	{
 		/** Clear previous config and save new one. */
 		FString ConfigString;
@@ -87,11 +84,23 @@ void UVSCommonSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& 
 }
 #endif
 
-void UVSCommonSettingItem::OnItemUpdated_Implementation()
+void UVSCommonSettingItem::Initialize_Implementation()
 {
-	Super::OnItemUpdated_Implementation();
+	Super::Initialize_Implementation();
+
+	SetValueType(ValueType);
 
 #if WITH_EDITORONLY_DATA
+	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
+	LastEditorPreviewValue = EditorPreviewValue;
+#endif
+}
+
+void UVSCommonSettingItem::OnValueUpdated_Implementation()
+{
+	Super::OnValueUpdated_Implementation();
+
+#if WITH_EDITOR
 	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
 #endif
 }
@@ -162,7 +171,7 @@ void UVSCommonSettingItem::Load_Implementation()
 {
 	Super::Load_Implementation();
 
-	if (ConfigParams.bAutoConfig)
+	if (ConfigParams.bAutoDefaultConfig)
 	{
 		FString ConfigString;
 		if (GConfig->GetString(*ConfigParams.ConfigSection, *ConfigParams.ConfigKeyName, ConfigString, ConfigParams.ConfigFileName))
@@ -176,7 +185,7 @@ void UVSCommonSettingItem::Save_Implementation()
 {
 	Super::Save_Implementation();
 
-	if (ConfigParams.bAutoConfig)
+	if (ConfigParams.bAutoDefaultConfig)
 	{
 		const FString& ConfigString = GetUnionValueString(CurrentValue);
 		GConfig->SetString(*ConfigParams.ConfigSection, *ConfigParams.ConfigKeyName, *ConfigString, ConfigParams.ConfigFileName);
@@ -542,49 +551,11 @@ void UVSCommonSettingItem::SetStringValue(const FString& NewValue)
 	}
 }
 
-#if WITH_EDITOR
 void UVSCommonSettingItem::SetValueType(EVSCommonSettingValueType::Type NewValueType)
 {
-	if (ValueType == NewValueType) return;
+	if (ValueType == NewValueType && (ValueType == CurrentValue.GetCurrentSubtypeIndex() + 1)) return;
 	ValueType = NewValueType;
-	RefreshValueType();
-}
 
-void UVSCommonSettingItem::SetEditorPreviewValueString(const FString& NewValue)
-{
-	EditorPreviewValue = NewValue;
-	
-	int32 Index = INDEX_NONE;
-	if (EditorPreviewValue.Contains("."))
-	{
-		int32 DotIndex;
-		EditorPreviewValue.FindChar('.', DotIndex);
-		
-		while (EditorPreviewValue.FindLastChar('0', Index))
-		{
-			if (Index < DotIndex || Index != EditorPreviewValue.Len() - 1) break;
-			EditorPreviewValue.RemoveFromEnd("0");
-		}
-		if (DotIndex == EditorPreviewValue.Len() - 1)
-		{
-			EditorPreviewValue.RemoveFromEnd(".");
-			if (EditorPreviewValue.IsEmpty())
-			{
-				EditorPreviewValue = FString("0");
-			}
-		}
-	}
-	LastEditorPreviewValue = EditorPreviewValue;
-
-	ExecuteActions(TArray<TEnumAsByte<EVSSettingItemAction::Type>>
-	{
-		EVSSettingItemAction::Apply,
-		EVSSettingItemAction::Confirm,
-	});
-}
-
-void UVSCommonSettingItem::RefreshValueType()
-{
 	FString ValueString = GetUnionValueString(CurrentValue);
 
 	/** Set union value type. */
@@ -626,6 +597,48 @@ void UVSCommonSettingItem::RefreshValueType()
 
 	SetUnionValueFromString(ValueString, CurrentValue);
 }
+
+#if WITH_EDITOR
+bool UVSCommonSettingItem::AllowChangingEditorPreviewValue_Implementation() const
+{
+	return true;
+}
+
+void UVSCommonSettingItem::SetEditorPreviewValueString(const FString& NewValue)
+{
+	EditorPreviewValue = NewValue;
+	
+	int32 Index = INDEX_NONE;
+	if (ValueType != EVSCommonSettingValueType::None && ValueType != EVSCommonSettingValueType::String)
+	{
+		if (EditorPreviewValue.Contains("."))
+		{
+			int32 DotIndex;
+			EditorPreviewValue.FindChar('.', DotIndex);
+		
+			while (EditorPreviewValue.FindLastChar('0', Index))
+			{
+				if (Index < DotIndex || Index != EditorPreviewValue.Len() - 1) break;
+				EditorPreviewValue.RemoveFromEnd("0");
+			}
+			if (DotIndex == EditorPreviewValue.Len() - 1)
+			{
+				EditorPreviewValue.RemoveFromEnd(".");
+				if (EditorPreviewValue.IsEmpty())
+				{
+					EditorPreviewValue = FString("0");
+				}
+			}
+		}
+	}
+	LastEditorPreviewValue = EditorPreviewValue;
+
+	if (!GIsPlayInEditorWorld)
+	{
+		ExecuteAction(EVSSettingItemAction::Apply);
+		ExecuteAction(EVSSettingItemAction::Confirm);
+	}
+}
 #endif
 
 #if WITH_EDITOR
@@ -640,7 +653,7 @@ bool UVSCommonSettingItem::AllowChangingConfigParams_Implementation() const
 }
 #endif
 
-FString UVSCommonSettingItem::GetUnionValueString(const TValueUnion& UnionValue)
+FString UVSCommonSettingItem::GetUnionValueString(const TValueUnion& UnionValue) const
 {
 	static FString EmptyString = FString();
 
@@ -671,7 +684,7 @@ FString UVSCommonSettingItem::GetUnionValueString(const TValueUnion& UnionValue)
 	return EmptyString;
 }
 
-void UVSCommonSettingItem::SetUnionValueFromString(const FString& String, TValueUnion& UnionValue)
+void UVSCommonSettingItem::SetUnionValueFromString(const FString& String, TValueUnion& UnionValue) const
 {
 	switch (static_cast<EVSCommonSettingValueType::Type>(UnionValue.GetCurrentSubtypeIndex() + 1))
 	{

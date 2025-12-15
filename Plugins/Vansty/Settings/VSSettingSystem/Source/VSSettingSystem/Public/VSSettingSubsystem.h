@@ -72,16 +72,8 @@ public:
 
 #if WITH_EDITOR
 	/** Removes previously registered root agents from the editor registry. */
-	void RemoveEditorDirectSettingItemAgents(const TArray<TSoftClassPtr<UVSSettingItemAgent>>& SettingItemAgentClasses);
-
-	/** Adds transient editor-created setting items into the registry. */
-	void AddEditorSettingItemDifferences(const TArray<UVSSettingItem*>& InSettingItems);
-
-	/** Removes transient editor-created setting items from the registry. */
-	void RemoveEditorSettingItemDifferences(const TArray<UVSSettingItem*>& InSettingItems);
-
-	/** Re-registers items when tags or validity change during editor iteration. */
-	void ReregisterEditorSettingItemDifferences(const TArray<UVSSettingItem*>& InSettingItems);
+	void ClearEditorDirectSettingItemAgents();
+	void RefreshEditorDirectSettingItemAgents();
 #endif
 	
 private:
@@ -96,7 +88,7 @@ private:
 	
 	TMap<FGameplayTag, TWeakObjectPtr<UVSSettingItem>> TaggedSettingItems;
 
-#if WITH_EDITOR
+#if WITH_EDITORONLY_DATA
 	TMap<TWeakObjectPtr<UVSSettingItem>, FGameplayTag> EditorSettingItemTags;
 #endif
 };

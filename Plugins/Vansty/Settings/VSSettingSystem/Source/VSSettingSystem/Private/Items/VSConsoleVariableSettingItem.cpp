@@ -12,40 +12,7 @@ void UVSConsoleVariableSettingItem::PostEditChangeProperty(struct FPropertyChang
 {
 	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSConsoleVariableSettingItem, ConsoleVariableName))
 	{
-		if (CurrentConsoleVariable && OnVariableChangedDelegateHandle.IsValid())
-		{
-			CurrentConsoleVariable->OnChangedDelegate().Remove(OnVariableChangedDelegateHandle);
-		}
-		
-		CurrentConsoleVariable = IConsoleManager::Get().FindConsoleVariable(*ConsoleVariableName, false);
-		if (CurrentConsoleVariable)
-		{
-			if (CurrentConsoleVariable && !OnVariableChangedDelegateHandle.IsValid())
-			{
-				OnVariableChangedDelegateHandle = CurrentConsoleVariable->OnChangedDelegate().AddUObject(this, &UVSConsoleVariableSettingItem::OnConsoleVariableChanged);
-			}
-			
-			if (CurrentConsoleVariable->IsVariableBool())
-			{
-				SetValueType(EVSCommonSettingValueType::Boolean);
-			}
-			else if (CurrentConsoleVariable->IsVariableInt())
-			{
-				SetValueType(EVSCommonSettingValueType::Integer);
-			}
-			else if (CurrentConsoleVariable->GetFloat())
-			{
-				SetValueType(EVSCommonSettingValueType::Float);
-			}
-			else if (CurrentConsoleVariable->GetFloat())
-			{
-				SetValueType(EVSCommonSettingValueType::String);
-			}
-		}
-		else
-		{
-			SetValueType(EVSCommonSettingValueType::None);
-		}
+		SetConsoleVariableName(ConsoleVariableName);
 	}
 	
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -55,11 +22,8 @@ void UVSConsoleVariableSettingItem::PostEditChangeProperty(struct FPropertyChang
 void UVSConsoleVariableSettingItem::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
-
-	if (CurrentConsoleVariable && !OnVariableChangedDelegateHandle.IsValid())
-	{
-		OnVariableChangedDelegateHandle = CurrentConsoleVariable->OnChangedDelegate().AddUObject(this, &UVSConsoleVariableSettingItem::OnConsoleVariableChanged);
-	}
+	
+	SetConsoleVariableName(ConsoleVariableName);
 }
 
 void UVSConsoleVariableSettingItem::Uninitialize_Implementation()
@@ -78,6 +42,7 @@ void UVSConsoleVariableSettingItem::Apply_Implementation()
 
 	if (CurrentConsoleVariable)
 	{
+		CurrentConsoleVariable->SetWithCurrentPriority(*GetStringValue(EVSSettingItemValueSource::System));
 		CachedAppliedValueString = CurrentConsoleVariable->GetString();
 	}
 }
@@ -176,6 +141,13 @@ FString UVSConsoleVariableSettingItem::GetStringValue_Implementation(const EVSSe
 	return Super::GetStringValue_Implementation(ValueSource);
 }
 
+#if WITH_EDITOR
+bool UVSConsoleVariableSettingItem::AllowChangingConsoleVariableName_Implementation() const
+{
+	return true;
+}
+#endif
+
 void UVSConsoleVariableSettingItem::OnConsoleVariableChanged(IConsoleVariable* Variable)
 {
 	switch (ConsoleVariableChangePolicy) {
@@ -195,9 +167,7 @@ void UVSConsoleVariableSettingItem::OnConsoleVariableChanged(IConsoleVariable* V
 		ExecuteActions(TArray<TEnumAsByte<EVSSettingItemAction::Type>>
 		{
 			EVSSettingItemAction::Apply,
-#if WITH_EDITOR
 			EVSSettingItemAction::Confirm,
-#endif
 		});
 		break;
 		
@@ -211,3 +181,47 @@ bool UVSConsoleVariableSettingItem::AllowChangingValueType_Implementation() cons
 	return false;
 }
 #endif
+
+void UVSConsoleVariableSettingItem::SetConsoleVariableName(FString VariableName)
+{
+	if (ConsoleVariableName == VariableName && CurrentConsoleVariable) return;
+	ConsoleVariableName = VariableName;
+	
+	if (CurrentConsoleVariable && OnVariableChangedDelegateHandle.IsValid())
+	{
+		CurrentConsoleVariable->OnChangedDelegate().Remove(OnVariableChangedDelegateHandle);
+	}
+	
+	CurrentConsoleVariable = IConsoleManager::Get().FindConsoleVariable(*VariableName, false);
+	if (CurrentConsoleVariable)
+	{
+		if (CurrentConsoleVariable->IsVariableBool())
+		{
+			SetValueType(EVSCommonSettingValueType::Boolean);
+		}
+		else if (CurrentConsoleVariable->IsVariableInt())
+		{
+			SetValueType(EVSCommonSettingValueType::Integer);
+		}
+		else if (CurrentConsoleVariable->IsVariableFloat())
+		{
+			SetValueType(EVSCommonSettingValueType::Float);
+		}
+		else if (CurrentConsoleVariable->IsVariableString())
+		{
+			SetValueType(EVSCommonSettingValueType::String);
+		}
+			
+		if (!OnVariableChangedDelegateHandle.IsValid())
+		{
+			OnVariableChangedDelegateHandle = CurrentConsoleVariable->OnChangedDelegate().AddUObject(this, &UVSConsoleVariableSettingItem::OnConsoleVariableChanged);
+		}
+
+		SetStringValue(CurrentConsoleVariable->GetString());
+	}
+	else
+	{
+		SetValueType(EVSCommonSettingValueType::None);
+		SetStringValue(FString());
+	}
+}

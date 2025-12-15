@@ -29,7 +29,7 @@ namespace EVSSettingItemConsoleVariableChangePolicy
  * Uses the configured ValueType to interpret the CVar value, and optionally keeps the item and
  * the CVar synchronized when changes occur from either side.
  */
-UCLASS()
+UCLASS(Abstract, DisplayName = "VS.Settings.Item.ConsoleVariable")
 class VSSETTINGSYSTEM_API UVSConsoleVariableSettingItem : public UVSCommonSettingItem
 {
 	GENERATED_UCLASS_BODY()
@@ -60,17 +60,24 @@ public:
 
 protected:
 	IConsoleVariable* GetConsoleVariable() const { return CurrentConsoleVariable; }
+	void SetConsoleVariableName(FString VariableName);
+
+#if WITH_EDITOR
+	/** Whether EditorPreviewValue can be edited in the editor for this item. */
+	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
+	bool AllowChangingConsoleVariableName() const;
+#endif
 
 private:
 	void OnConsoleVariableChanged(IConsoleVariable* Variable);
 	
 protected:
 	/** Name of the console variable to bind to (e.g. "r.ShadowQuality"). */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (EditCondition = "AllowChangingConsoleVariableName()"))
 	FString ConsoleVariableName;
 
 	/** Defines what to do when the console variable changes outside the item. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", Transient)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	TEnumAsByte<EVSSettingItemConsoleVariableChangePolicy::Type> ConsoleVariableChangePolicy = EVSSettingItemConsoleVariableChangePolicy::Override;
 	
 private:

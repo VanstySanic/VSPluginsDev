@@ -2,6 +2,8 @@
 
 #include "Items/VSSettingItem.h"
 #include "VSSettingSubsystem.h"
+#include "Classes/Libraries/VSObjectLibrary.h"
+#include "Items/VSSettingItemAgent.h"
 
 UVSSettingItem::UVSSettingItem(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -22,9 +24,12 @@ void UVSSettingItem::PreEditChange(class FEditPropertyChain& PropertyAboutToChan
 
 void UVSSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
-	if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItem, ItemTag))
 	{
-		SettingSubsystem->ReregisterEditorSettingItemDifferences(TArray<UVSSettingItem*>({ this }));
+		if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
+		{
+			SettingSubsystem->RefreshEditorDirectSettingItemAgents();
+		}
 	}
 	
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -169,15 +174,26 @@ void UVSSettingItem::NotifyValueUpdate(bool bAllowCleanNotify)
 {
 	if (!bAllowCleanNotify && !IsDirty()) return;
 
-	OnItemUpdated();
+	OnValueUpdated();
 	OnUpdated_Native.Broadcast(this);
 	OnUpdated.Broadcast(this);
 }
 
-void UVSSettingItem::OnItemUpdated_Implementation()
+void UVSSettingItem::OnValueUpdated_Implementation()
 {
 	
 }
+
+UVSSettingItemAgent* UVSSettingItem::GetRootMostAgent() const
+{
+	if (UVSSettingItemAgent* Agent = GetTypedOuter<UVSSettingItemAgent>())
+	{
+		return Agent->GetRootMostAgent();
+	}
+
+	return IsA<UVSSettingItemAgent>() ? Cast<UVSSettingItemAgent>(const_cast<UVSSettingItem*>(this)) : nullptr;
+}
+
 
 #if WITH_EDITOR
 bool UVSSettingItem::AllowChangingItemTag_Implementation() const

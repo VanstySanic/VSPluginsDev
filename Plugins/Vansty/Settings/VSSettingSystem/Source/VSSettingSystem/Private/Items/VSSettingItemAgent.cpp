@@ -2,18 +2,17 @@
 
 #include "Items/VSSettingItemAgent.h"
 #include "VSSettingSubsystem.h"
-#include "Types/Math/VSArray.h"
 
 UVSSettingItemAgent::UVSSettingItemAgent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 }
 
-void UVSSettingItemAgent::PostInitProperties()
+void UVSSettingItemAgent::PostLoad()
 {
-	Super::PostInitProperties();
+	Super::PostLoad();
 
-#if WITH_EDITOR
+#if WITH_EDITORONLY_DATA
 	EditorSubSettingItems = SubSettingItems;
 #endif
 }
@@ -25,24 +24,9 @@ void UVSSettingItemAgent::PostEditChangeProperty(struct FPropertyChangedEvent& P
 	{
 		if (!GetTypedOuter<UVSSettingItemAgent>() && EditorSubSettingItems != SubSettingItems)
 		{
-			if (UVSSettingSubsystem* Subsystem = UVSSettingSubsystem::Get())
+			if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
 			{
-				const TArray<TObjectPtr<UVSSettingItem>> DifferentSettingItems = FVSArray::GetArrayDifference(EditorSubSettingItems, SubSettingItems);
-				for (UVSSettingItem* DifferentSettingItem : DifferentSettingItems)
-				{
-					TArray<UVSSettingItem*> ItemsToAdd;
-					TArray<UVSSettingItem*> ItemsToRemove;
-					if (SubSettingItems.Contains(DifferentSettingItem))
-					{
-						ItemsToAdd.Add(DifferentSettingItem);
-					}
-					else
-					{
-						ItemsToRemove.Add(DifferentSettingItem);
-					}
-					Subsystem->RemoveEditorSettingItemDifferences(ItemsToRemove);
-					Subsystem->AddEditorSettingItemDifferences(ItemsToAdd);
-				}
+				SettingSubsystem->RefreshEditorDirectSettingItemAgents();
 			}
 			EditorSubSettingItems = SubSettingItems;
 		}

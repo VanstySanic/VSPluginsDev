@@ -12,7 +12,7 @@ struct FVSSettingItemInfo
 	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText DisplayName = FText::FromString("None");
+	FText DisplayName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText Description;
@@ -175,16 +175,18 @@ protected:
 	bool AllowChangingItemTag() const;
 #endif
 	
-	/** Initialize internal state and cache initial values. This is before */
+	/** This is before any actions are executed. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	void Initialize();
 	
-	/** Tear down internal state and release resources. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	void Uninitialize();
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
-	void OnItemUpdated();
+	void OnValueUpdated();
+
+	UFUNCTION(BlueprintCallable, Category = "Feature")
+	UVSSettingItemAgent* GetRootMostAgent() const;
 
 public:
 	FSettingItemDelegate OnUpdated_Native;
@@ -194,15 +196,11 @@ public:
 	
 protected:
 	/** Unique gameplay tag that identifies this setting item. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (EditCondition = "AllowChangingItemTag()"))
 	FGameplayTag ItemTag;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	FVSSettingItemInfo ItemInfo;
-
-	/** Actions automatically executed when the value is updated. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
-	TArray<TEnumAsByte<EVSSettingItemAction::Type>> ValueUpdatedActions;
 	
 private:
 	bool bHasBeenInitialized = false;

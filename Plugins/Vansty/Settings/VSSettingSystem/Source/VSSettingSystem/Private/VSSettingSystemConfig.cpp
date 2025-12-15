@@ -1,10 +1,7 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "VSSettingSystemConfig.h"
-
 #include "VSSettingSubsystem.h"
-#include "Items/VSSettingItemAgent.h"
-#include "Types/Math/VSArray.h"
 
 UVSSettingSystemConfig::UVSSettingSystemConfig(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -21,6 +18,15 @@ const UVSSettingSystemConfig* UVSSettingSystemConfig::GetSettingSystemConfig_VS(
 	return GetDefault<UVSSettingSystemConfig>();
 }
 
+void UVSSettingSystemConfig::PostLoad()
+{
+	Super::PostLoad();
+
+#if WITH_EDITORONLY_DATA
+	EditorSettingItemAgentClasses = SettingItemAgentClasses;
+#endif
+}
+
 #if WITH_EDITOR
 void UVSSettingSystemConfig::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
@@ -30,25 +36,7 @@ void UVSSettingSystemConfig::PostEditChangeProperty(struct FPropertyChangedEvent
 		{
 			if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
 			{
-				const TArray<TSoftClassPtr<UVSSettingItemAgent>>& Differences = FVSArray::GetArrayDifference(SettingItemAgentClasses, EditorSettingItemAgentClasses);
-				TArray<TSoftClassPtr<UVSSettingItemAgent>> AgentClassesToAdd;
-				TArray<TSoftClassPtr<UVSSettingItemAgent>> AgentClassesToRemove;
-				for (const TSoftClassPtr<UVSSettingItemAgent>& Difference : Differences)
-				{
-					if (!IsValid(Difference.LoadSynchronous())) continue;
-					
-					if (SettingItemAgentClasses.Contains(Difference))
-					{
-						AgentClassesToAdd.Add(Difference);
-					}
-					else
-					{
-						AgentClassesToRemove.Add(Difference);
-					}
-				}
-
-				SettingSubsystem->RemoveEditorDirectSettingItemAgents(AgentClassesToRemove);
-				SettingSubsystem->AddDirectSettingItemAgentClasses(AgentClassesToAdd);
+				SettingSubsystem->RefreshEditorDirectSettingItemAgents();
 			}
 
 			EditorSettingItemAgentClasses = SettingItemAgentClasses;

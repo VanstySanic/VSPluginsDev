@@ -15,6 +15,18 @@
  */
 struct VSPLUGINSCORE_API FVSMath : public FMath
 {
+	template <typename T1, typename T2 = T1, typename T3 = T2>
+	// ReSharper disable once CppNotAllPathsReturnValue
+	[[nodiscard]] FORCEINLINE static bool IsInRange(const T1& V, const T2& RangeMin, const T3& RangeMax, bool bIncludeRangeMin = true, bool bIncludeRangeMax = true)
+	{
+		using NumType = decltype(T1() * T2() * T3());
+		static_assert(TIsFloatingPoint<NumType>::Value || TIsIntegral<NumType>::Value, "SafeDivide only supports arithmetic types.");
+		
+		if (V < RangeMin || (!bIncludeRangeMin && V == RangeMin)) return false;
+		if (V > RangeMax || (!bIncludeRangeMax && V == RangeMax)) return false;
+		return true;
+	}
+	
 	/**
 	 * Safely divides A by B.
 	 * - For float/double: returns 0 when B is nearly zero.
@@ -41,13 +53,13 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		{
 			return FIntPoint(SafeDivide(A.X, B.X), SafeDivide(A.Y, B.Y));
 		}
-		if constexpr (std::is_same_v<T, FVector>)
-		{
-			return FVector(SafeDivide(A.X, B.X), SafeDivide(A.Y, B.Y), SafeDivide(A.Z, B.Z));
-		}
 		else if constexpr (std::is_same_v<T, FVector2D>)
 		{
 			return FVector2D(SafeDivide(A.X, B.X), SafeDivide(A.Y, B.Y));
+		}
+		else if constexpr (std::is_same_v<T, FVector>)
+		{
+			return FVector(SafeDivide(A.X, B.X), SafeDivide(A.Y, B.Y), SafeDivide(A.Z, B.Z));
 		}
 		else if constexpr (std::is_same_v<T, FVector4>)
 		{
@@ -66,9 +78,35 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 	}
 	
 	/** Check if a vector has any axis nearly zero within tolerance. */
-	[[nodiscard]] FORCEINLINE static bool VectorHasZeroAxis(const FVector& Vector, const double Tolerance = 0.00000001)
+	template <typename T>
+	// ReSharper disable once CppNotAllPathsReturnValue
+	[[nodiscard]] FORCEINLINE static bool VectorHasZeroAxis(const T& Vector, const double Tolerance = 0.00000001)
 	{
-		return IsNearlyZero(Vector.X, Tolerance) || IsNearlyZero(Vector.Y, Tolerance) || IsNearlyZero(Vector.Z, Tolerance);
+		static_assert(
+			std::is_same_v<T, FIntPoint>
+			|| std::is_same_v<T, FVector>
+			|| std::is_same_v<T, FVector2D>
+			|| std::is_same_v<T, FVector4>,
+			"SafeDivide only supports vector types.");
+
+		/** Vector types: component-wise safe division. */
+		if constexpr (std::is_same_v<T, FIntPoint>)
+		{
+			return Vector.X == 0 || Vector.Y == 0;;
+		}
+		if constexpr (std::is_same_v<T, FVector2D>)
+		{
+			return FMath::IsNearlyZero(Vector.X, Tolerance) || FMath::IsNearlyZero(Vector.Y, Tolerance);
+		}
+		else if constexpr (std::is_same_v<T, FVector>)
+		{
+			return FMath::IsNearlyZero(Vector.X, Tolerance) || FMath::IsNearlyZero(Vector.Y, Tolerance) || FMath::IsNearlyZero(Vector.Z, Tolerance);
+		}
+		else if constexpr (std::is_same_v<T, FVector4>)
+		{
+			return FMath::IsNearlyZero(Vector.X, Tolerance) || FMath::IsNearlyZero(Vector.Y, Tolerance)
+			|| FMath::IsNearlyZero(Vector.Z, Tolerance) || FMath::IsNearlyZero(Vector.W, Tolerance);
+		}
 	}
 
 	FORCEINLINE static FRotator ComposeRotators(const FRotator& RotatorA, const FRotator& RotatorB)
