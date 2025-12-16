@@ -2,17 +2,22 @@
 
 #include "Items/VSCommonSettingItem.h"
 
+#include "VSSettingSubsystem.h"
+
 UVSCommonSettingItem::UVSCommonSettingItem(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	CurrentValue.SetSubtype<FString>();
+	SetValueType(EVSCommonSettingValueType::None);
 }
 
 void UVSCommonSettingItem::PostLoad()
 {
 	Super::PostLoad();
+	
+	SetValueType(ValueType);
 
 #if WITH_EDITORONLY_DATA
+	SetEditorPreviewValueString(GetStringValue());
 	LastEditorConfigParams = ConfigParams;
 #endif
 }
@@ -27,7 +32,7 @@ void UVSCommonSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& 
 		
 		if (ValueType == EVSCommonSettingValueType::None || ValueType == EVSCommonSettingValueType::String)
 		{
-			SetEditorPreviewValueString(FString());
+			SetStringValue(FString());
 		}
 		
 		bDesireReConfig = true;
@@ -88,20 +93,24 @@ void UVSCommonSettingItem::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
 
-	SetValueType(ValueType);
-
 #if WITH_EDITORONLY_DATA
-	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
 	LastEditorPreviewValue = EditorPreviewValue;
+	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
 #endif
 }
 
 void UVSCommonSettingItem::OnValueUpdated_Implementation()
 {
 	Super::OnValueUpdated_Implementation();
-
+	
 #if WITH_EDITOR
 	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
+
+	if (!GIsPlayInEditorWorld && HasBeenInitialized())
+	{
+		ExecuteAction(EVSSettingItemAction::Apply);
+		ExecuteAction(EVSSettingItemAction::Confirm);
+	}
 #endif
 }
 
@@ -477,7 +486,7 @@ void UVSCommonSettingItem::SetBooleanValue(bool bNewValue)
 	}
 	else if (CurrentValue != PrevValue)
 	{
-		NotifyValueUpdate();
+		NotifyValueUpdate(true);
 	}
 }
 
@@ -491,7 +500,7 @@ void UVSCommonSettingItem::SetIntegerValue(int32 NewValue)
 	}
 	else if (CurrentValue != PrevValue)
 	{
-		NotifyValueUpdate();
+		NotifyValueUpdate(true);
 	}
 }
 
@@ -505,7 +514,7 @@ void UVSCommonSettingItem::SetLongIntegerValue(int64 NewValue)
 	}
 	else if (CurrentValue != PrevValue)
 	{
-		NotifyValueUpdate();
+		NotifyValueUpdate(true);
 	}
 }
 
@@ -519,7 +528,7 @@ void UVSCommonSettingItem::SetFloatValue(float NewValue)
 	}
 	else if (CurrentValue != PrevValue)
 	{
-		NotifyValueUpdate();
+		NotifyValueUpdate(true);
 	}
 }
 
@@ -533,7 +542,7 @@ void UVSCommonSettingItem::SetDoubleValue(double NewValue)
 	}
 	else if (CurrentValue != PrevValue)
 	{
-		NotifyValueUpdate();
+		NotifyValueUpdate(true);
 	}
 }
 
@@ -547,7 +556,7 @@ void UVSCommonSettingItem::SetStringValue(const FString& NewValue)
 	}
 	else if (CurrentValue != PrevValue)
 	{
-		NotifyValueUpdate();
+		NotifyValueUpdate(true);
 	}
 }
 
@@ -596,10 +605,14 @@ void UVSCommonSettingItem::SetValueType(EVSCommonSettingValueType::Type NewValue
 	}
 
 	SetUnionValueFromString(ValueString, CurrentValue);
+
+#if WITH_EDITOR
+	SetEditorPreviewValueString(GetStringValue());
+#endif
 }
 
 #if WITH_EDITOR
-bool UVSCommonSettingItem::AllowChangingEditorPreviewValue_Implementation() const
+bool UVSCommonSettingItem::AllowEditorChangingEditorPreviewValue_Implementation() const
 {
 	return true;
 }
@@ -632,22 +645,16 @@ void UVSCommonSettingItem::SetEditorPreviewValueString(const FString& NewValue)
 		}
 	}
 	LastEditorPreviewValue = EditorPreviewValue;
-
-	if (!GIsPlayInEditorWorld)
-	{
-		ExecuteAction(EVSSettingItemAction::Apply);
-		ExecuteAction(EVSSettingItemAction::Confirm);
-	}
 }
 #endif
 
 #if WITH_EDITOR
-bool UVSCommonSettingItem::AllowChangingValueType_Implementation() const
+bool UVSCommonSettingItem::AllowEditorChangingValueType_Implementation() const
 {
 	return true;
 }
 
-bool UVSCommonSettingItem::AllowChangingConfigParams_Implementation() const
+bool UVSCommonSettingItem::AllowEditorChangingConfigParams_Implementation() const
 {
 	return true;
 }

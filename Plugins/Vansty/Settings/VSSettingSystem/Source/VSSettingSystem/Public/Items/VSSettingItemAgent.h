@@ -21,6 +21,7 @@ public:
 	//~ Begin UObject Interface
 	virtual void PostLoad() override;
 #if WITH_EDITOR
+	virtual void PostCDOCompiled(const FPostCDOCompiledContext& Context) override;
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 	//~ End UObject Interface
@@ -33,6 +34,7 @@ public:
 	virtual void Apply_Implementation() override;
 	virtual void Confirm_Implementation() override;
 	virtual void Save_Implementation() override;
+	virtual bool IsValueValid_Implementation() const override;
 	virtual void SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) override;
 	virtual bool EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const override;
 	//~ End UVSSettingItemBase Interface

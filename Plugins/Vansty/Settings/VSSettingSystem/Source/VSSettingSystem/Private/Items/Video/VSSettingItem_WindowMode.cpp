@@ -21,6 +21,15 @@ UVSSettingItem_WindowMode::UVSSettingItem_WindowMode(const FObjectInitializer& F
 	ConfigParams.ConfigKeyName = FString("FullscreenMode");
 }
 
+void UVSSettingItem_WindowMode::PostLoad()
+{
+	Super::PostLoad();
+
+#if WITH_EDITORONLY_DATA
+	EditorPreviewWindowMode = GetWindowMode(EVSSettingItemValueSource::System);
+#endif
+}
+
 #if WITH_EDITOR
 void UVSSettingItem_WindowMode::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
@@ -32,31 +41,6 @@ void UVSSettingItem_WindowMode::PostEditChangeProperty(struct FPropertyChangedEv
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 #endif
-
-void UVSSettingItem_WindowMode::Initialize_Implementation()
-{
-	Super::Initialize_Implementation();
-
-#if WITH_EDITORONLY_DATA
-	EditorPreviewWindowMode = GetWindowMode(EVSSettingItemValueSource::System);
-#endif
-}
-
-void UVSSettingItem_WindowMode::OnValueUpdated_Implementation()
-{
-	Super::OnValueUpdated_Implementation();
-
-#if WITH_EDITORONLY_DATA
-	EditorPreviewWindowMode = GetWindowMode(EVSSettingItemValueSource::System);
-	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
-#endif
-
-	/** Sync to GameUserSettings. */
-	if (GEngine && GEngine->GameUserSettings)
-	{
-		VS_PRIVABLIC_MEMBER(GEngine->GameUserSettings, UGameUserSettings, FullscreenMode) = GetIntegerValue();
-	}
-}
 
 void UVSSettingItem_WindowMode::Apply_Implementation()
 {
@@ -92,7 +76,8 @@ void UVSSettingItem_WindowMode::Save_Implementation()
 
 bool UVSSettingItem_WindowMode::IsValueValid_Implementation() const
 {
-	return FVSMath::IsInRange(GetIntegerValue(EVSSettingItemValueSource::System), 0, 2);
+	const EWindowMode::Type WindowMode = GetWindowMode(EVSSettingItemValueSource::System);
+	return FVSMath::IsInRange(WindowMode, 0, EWindowMode::NumWindowModes - 1);
 }
 
 void UVSSettingItem_WindowMode::Validate_Implementation()
@@ -100,7 +85,25 @@ void UVSSettingItem_WindowMode::Validate_Implementation()
 	Super::Validate_Implementation();
 
 	if (IsValueValid()) return;
-	SetIntegerValue(EVSSettingItemValueSource::Game);
+	const EWindowMode::Type PrevWindowMode = GetWindowMode(EVSSettingItemValueSource::Game);
+	SetIntegerValue(FMath::Clamp(PrevWindowMode, 0, EWindowMode::NumWindowModes - 1));
+}
+
+void UVSSettingItem_WindowMode::OnValueUpdated_Implementation()
+{
+	Super::OnValueUpdated_Implementation();
+
+#if WITH_EDITORONLY_DATA
+	EditorPreviewWindowMode = GetWindowMode(EVSSettingItemValueSource::System);
+	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
+#endif
+
+	/** Sync to GameUserSettings. */
+	if (GEngine && GEngine->GameUserSettings)
+	{
+		const EWindowMode::Type WindowMode = GetWindowMode(EVSSettingItemValueSource::Game);
+		VS_PRIVABLIC_MEMBER(GEngine->GameUserSettings, UGameUserSettings, FullscreenMode) = WindowMode;
+	}
 }
 
 int32 UVSSettingItem_WindowMode::GetIntegerValue_Implementation(const EVSSettingItemValueSource::Type ValueSource) const

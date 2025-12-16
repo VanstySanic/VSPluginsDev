@@ -85,20 +85,19 @@ GENERATED_UCLASS_BODY()
 public:
 	//~ Begin UObject Interface
 #if WITH_EDITOR
-	virtual void PreEditChange(class FEditPropertyChain& PropertyAboutToChange) override;
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 	virtual void BeginDestroy() override;
 	//~ End UObject Interface
 	
-	UFUNCTION(BlueprintCallable, Category = "Feature")
+	UFUNCTION(BlueprintCallable, Category = "Settings")
 	bool HasBeenInitialized() const { return bHasBeenInitialized; }
 
 	/** Gameplay tag uniquely identifying this setting item. */
-	UFUNCTION(BlueprintCallable, Category = "Feature")
+	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FGameplayTag GetItemTag() const { return ItemTag; }
 	
-	UFUNCTION(BlueprintCallable, Category = "Feature")
+	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FVSSettingItemInfo GetItemInfo() const { return ItemInfo; }
 	
 	/** Load value from persistent storage or external source. */
@@ -172,7 +171,7 @@ protected:
 #if WITH_EDITOR
 	/** Whether the ItemTag can be modified in the editor. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
-	bool AllowChangingItemTag() const;
+	bool AllowEditorChangingItemTag() const;
 #endif
 	
 	/** This is before any actions are executed. */
@@ -196,7 +195,7 @@ public:
 	
 protected:
 	/** Unique gameplay tag that identifies this setting item. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (EditCondition = "AllowChangingItemTag()"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (EditCondition = "AllowEditorChangingItemTag()"))
 	FGameplayTag ItemTag;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")

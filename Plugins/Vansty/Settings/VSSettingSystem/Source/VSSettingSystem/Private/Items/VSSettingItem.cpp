@@ -2,7 +2,6 @@
 
 #include "Items/VSSettingItem.h"
 #include "VSSettingSubsystem.h"
-#include "Classes/Libraries/VSObjectLibrary.h"
 #include "Items/VSSettingItemAgent.h"
 
 UVSSettingItem::UVSSettingItem(const FObjectInitializer& ObjectInitializer)
@@ -12,16 +11,6 @@ UVSSettingItem::UVSSettingItem(const FObjectInitializer& ObjectInitializer)
 }
 
 #if WITH_EDITOR
-void UVSSettingItem::PreEditChange(class FEditPropertyChain& PropertyAboutToChange)
-{
-	if (HasBeenInitialized())
-	{
-		Uninitialize();
-	}
-
-	Super::PreEditChange(PropertyAboutToChange);
-}
-
 void UVSSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
 	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItem, ItemTag))
@@ -41,6 +30,7 @@ void UVSSettingItem::BeginDestroy()
 	if (HasBeenInitialized())
 	{
 		Uninitialize();
+		bHasBeenInitialized = false;
 	}
 	
 	UObject::BeginDestroy();
@@ -190,13 +180,13 @@ UVSSettingItemAgent* UVSSettingItem::GetRootMostAgent() const
 	{
 		return Agent->GetRootMostAgent();
 	}
-
+	
 	return IsA<UVSSettingItemAgent>() ? Cast<UVSSettingItemAgent>(const_cast<UVSSettingItem*>(this)) : nullptr;
 }
 
 
 #if WITH_EDITOR
-bool UVSSettingItem::AllowChangingItemTag_Implementation() const
+bool UVSSettingItem::AllowEditorChangingItemTag_Implementation() const
 {
 	return true;
 }

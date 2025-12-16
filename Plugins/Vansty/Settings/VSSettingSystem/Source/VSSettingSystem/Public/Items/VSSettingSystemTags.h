@@ -35,4 +35,10 @@ namespace EVSSettingItem
 			UE_DECLARE_GAMEPLAY_TAG_EXTERN(Landscape);
 		}
 	}
+
+	namespace Graphics
+	{
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(MotionBlur);
+		UE_DECLARE_GAMEPLAY_TAG_EXTERN(AntiAliasingMethod);
+	}
 }

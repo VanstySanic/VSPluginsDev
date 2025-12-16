@@ -2,6 +2,7 @@
 
 #include "Items/VSSettingItemAgent.h"
 #include "VSSettingSubsystem.h"
+#include "Types/Math/VSArray.h"
 
 UVSSettingItemAgent::UVSSettingItemAgent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -18,16 +19,47 @@ void UVSSettingItemAgent::PostLoad()
 }
 
 #if WITH_EDITOR
+void UVSSettingItemAgent::PostCDOCompiled(const FPostCDOCompiledContext& Context)
+{
+	Super::PostCDOCompiled(Context);
+
+	if (!Context.bIsRegeneratingOnLoad)
+	{
+		for (UVSSettingItem* RecursiveSubSettingItem : GetRecursiveSubSettingItems())
+		{
+			if (RecursiveSubSettingItem)
+			{
+				RecursiveSubSettingItem->PostLoad();
+			}
+		}
+		
+		if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
+		{
+			SettingSubsystem->RefreshEditorDirectSettingItemAgents();
+		}
+	}
+}
+
 void UVSSettingItemAgent::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
 	if (PropertyChangedEvent.GetPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemAgent, SubSettingItems))
 	{
 		if (!GetTypedOuter<UVSSettingItemAgent>() && EditorSubSettingItems != SubSettingItems)
 		{
+			const TArray<UVSSettingItem*> DifferentSettingItems = FVSArray::GetArrayDifference(SubSettingItems, EditorSubSettingItems);
+			for (UVSSettingItem* DifferentSettingItem : DifferentSettingItems)
+			{
+				if (DifferentSettingItem && SubSettingItems.Contains(DifferentSettingItem))
+				{
+					DifferentSettingItem->PostLoad();
+				}
+			}
+			
 			if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
 			{
 				SettingSubsystem->RefreshEditorDirectSettingItemAgents();
 			}
+			
 			EditorSubSettingItems = SubSettingItems;
 		}
 	}
@@ -38,11 +70,14 @@ void UVSSettingItemAgent::PostEditChangeProperty(struct FPropertyChangedEvent& P
 
 void UVSSettingItemAgent::Initialize_Implementation()
 {
+	Super::Initialize_Implementation();
+	
 	for (UVSSettingItem* SettingItem : SubSettingItems)
 	{
-		if (SettingItem)
+		if (SettingItem && !SettingItem->HasBeenInitialized())
 		{
 			SettingItem->Initialize();
+			SettingItem->bHasBeenInitialized = true;
 		}
 	}
 }
@@ -51,11 +86,14 @@ void UVSSettingItemAgent::Uninitialize_Implementation()
 {
 	for (UVSSettingItem* SettingItem : SubSettingItems)
 	{
-		if (SettingItem)
+		if (SettingItem && SettingItem->HasBeenInitialized())
 		{
 			SettingItem->Uninitialize();
+			//SettingItem->bHasBeenInitialized = false;
 		}
 	}
+
+	Super::Uninitialize_Implementation();
 }
 
 void UVSSettingItemAgent::Load_Implementation()
@@ -111,6 +149,19 @@ void UVSSettingItemAgent::Save_Implementation()
 			SettingItem->Save();
 		}
 	}
+}
+
+bool UVSSettingItemAgent::IsValueValid_Implementation() const
+{
+	for (UVSSettingItem* SettingItem : SubSettingItems)
+	{
+		if (SettingItem && !SettingItem->IsValueValid())
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void UVSSettingItemAgent::SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource)

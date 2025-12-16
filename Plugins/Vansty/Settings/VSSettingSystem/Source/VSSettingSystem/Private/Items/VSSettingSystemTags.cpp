@@ -32,4 +32,10 @@ namespace EVSSettingItem
 			UE_DEFINE_GAMEPLAY_TAG(Landscape, "VS.SettingSystem.Item.Scalability.QualityLevel.Landscape");
 		}
 	}
+
+	namespace Graphics
+	{
+		UE_DEFINE_GAMEPLAY_TAG(MotionBlur, "VS.SettingSystem.Item.Graphics.MotionBlur");
+		UE_DEFINE_GAMEPLAY_TAG(AntiAliasingMethod, "VS.SettingSystem.Item.Graphics.AntiAliasingMethod");
+	}
 }

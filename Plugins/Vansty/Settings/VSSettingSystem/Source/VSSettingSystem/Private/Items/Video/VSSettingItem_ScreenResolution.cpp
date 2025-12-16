@@ -17,10 +17,19 @@ UVSSettingItem_ScreenResolution::UVSSettingItem_ScreenResolution(const FObjectIn
 	SetValueType(EVSCommonSettingValueType::String);
 	
 	ItemTag = EVSSettingItem::Video::ScreenResolution;
-	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.ScreenResolution", "ScreenResolution", "Screen Resolution");
+	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.ScreenResolution", "DisplayName", "Screen Resolution");
 	ConfigParams.ConfigSection = FString("/Script/Engine.GameUserSettings");
 	ConfigParams.ConfigKeyName = FString("ResolutionSize");
 	ConfigParams.bAutoDefaultConfig = false;
+}
+
+void UVSSettingItem_ScreenResolution::PostLoad()
+{
+	Super::PostLoad();
+
+#if WITH_EDITORONLY_DATA
+	EditorPreviewScreenResolution = GetScreenResolution(EVSSettingItemValueSource::System);
+#endif
 }
 
 #if WITH_EDITOR
@@ -34,33 +43,6 @@ void UVSSettingItem_ScreenResolution::PostEditChangeProperty(struct FPropertyCha
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 #endif
-
-void UVSSettingItem_ScreenResolution::Initialize_Implementation()
-{
-	Super::Initialize_Implementation();
-
-#if WITH_EDITORONLY_DATA
-	EditorPreviewScreenResolution = GetScreenResolution(EVSSettingItemValueSource::System);
-#endif
-}
-
-void UVSSettingItem_ScreenResolution::OnValueUpdated_Implementation()
-{
-	Super::OnValueUpdated_Implementation();
-
-#if WITH_EDITORONLY_DATA
-	EditorPreviewScreenResolution = GetScreenResolution(EVSSettingItemValueSource::System);
-	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
-#endif
-
-	/** Sync to GameUserSettings. */
-	if (GEngine && GEngine->GameUserSettings)
-	{
-		const FIntPoint& ScreenResolution = GetScreenResolution(EVSSettingItemValueSource::System);
-		VS_PRIVABLIC_MEMBER(GEngine->GameUserSettings, UGameUserSettings, ResolutionSizeX) = ScreenResolution.X;
-		VS_PRIVABLIC_MEMBER(GEngine->GameUserSettings, UGameUserSettings, ResolutionSizeY) = ScreenResolution.Y;
-	}
-}
 
 void UVSSettingItem_ScreenResolution::Load_Implementation()
 {
@@ -138,6 +120,24 @@ void UVSSettingItem_ScreenResolution::Validate_Implementation()
 	ValidatedResolution.Y = FMath::Max(ValidatedResolution.Y, 0);
 
 	SetScreenResolution(ValidatedResolution);
+}
+
+void UVSSettingItem_ScreenResolution::OnValueUpdated_Implementation()
+{
+	Super::OnValueUpdated_Implementation();
+
+#if WITH_EDITORONLY_DATA
+	EditorPreviewScreenResolution = GetScreenResolution(EVSSettingItemValueSource::System);
+	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
+#endif
+
+	/** Sync to GameUserSettings. */
+	if (GEngine && GEngine->GameUserSettings)
+	{
+		const FIntPoint& ScreenResolution = GetScreenResolution(EVSSettingItemValueSource::System);
+		VS_PRIVABLIC_MEMBER(GEngine->GameUserSettings, UGameUserSettings, ResolutionSizeX) = ScreenResolution.X;
+		VS_PRIVABLIC_MEMBER(GEngine->GameUserSettings, UGameUserSettings, ResolutionSizeY) = ScreenResolution.Y;
+	}
 }
 
 FString UVSSettingItem_ScreenResolution::GetStringValue_Implementation(const EVSSettingItemValueSource::Type ValueSource) const

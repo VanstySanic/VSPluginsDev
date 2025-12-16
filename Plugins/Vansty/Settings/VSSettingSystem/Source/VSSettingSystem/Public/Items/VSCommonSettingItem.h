@@ -37,13 +37,17 @@ struct FVSCommonSettingConfigParams
 	{
 	}
 	
-	/** Target config file (without extension), e.g. "Editor" and "GameUserSettings". */
+	/**
+	 * Target config file (without extension), e.g. "Editor" and "GameUserSettings".
+	 * @remark In some items, the file name appears as "Editor" in editor,
+	 * but this will be "GameUserSettings" in non-editor game.
+	 */
 	UPROPERTY(EditAnywhere)
 	FString ConfigFileName = FString("GameUserSettings");
 
 	/** Config section name used to store the value. */
 	UPROPERTY(EditAnywhere)
-	FString ConfigSection = FString("VSSettingSystem");
+	FString ConfigSection = FString("VS.SettingSystem.Item");
 
 	/** Config key used to store the value. */
 	UPROPERTY(EditAnywhere)
@@ -77,6 +81,7 @@ public:
 #endif
 	//~ End UObject Interface
 
+protected:
 	//~ Begin UVSSettingItem Interface
 	virtual void Initialize_Implementation() override;
 	virtual void OnValueUpdated_Implementation() override;
@@ -140,15 +145,15 @@ protected:
 #if WITH_EDITOR
 	/** Whether ValueType can be edited in the editor for this item. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
-	bool AllowChangingValueType() const;
+	bool AllowEditorChangingValueType() const;
 
 	/** Whether ConfigParams can be edited in the editor for this item. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
-	bool AllowChangingConfigParams() const;
+	bool AllowEditorChangingConfigParams() const;
 
 	/** Whether EditorPreviewValue can be edited in the editor for this item. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
-	bool AllowChangingEditorPreviewValue() const;
+	bool AllowEditorChangingEditorPreviewValue() const;
 #endif
 
 protected:
@@ -177,11 +182,11 @@ private:
 
 protected:
 	/** Preferred value type used for storage and conversion. */
-	UPROPERTY(EditAnywhere, Category = "Settings", meta = (EditCondition = "AllowChangingValueType()"))
+	UPROPERTY(EditAnywhere, Category = "Settings", meta = (EditCondition = "AllowEditorChangingValueType()"))
 	TEnumAsByte<EVSCommonSettingValueType::Type> ValueType = EVSCommonSettingValueType::None;
 
 	/** Config binding parameters used when auto-config is enabled. */
-	UPROPERTY(EditAnywhere, Category = "Settings", meta = (EditCondition = "AllowChangingConfigParams()"))
+	UPROPERTY(EditAnywhere, Category = "Settings", meta = (EditCondition = "AllowEditorChangingConfigParams()"))
 	FVSCommonSettingConfigParams ConfigParams;
 	
 private:
@@ -189,8 +194,11 @@ private:
 	TValueUnion ConfirmedValue = TValueUnion();
 
 #if WITH_EDITORONLY_DATA
-	/** Preview value that can be modified in editor. */
-	UPROPERTY(EditAnywhere, DisplayName = "Preview Value", Category = "Settings", meta = (EditCondition = "AllowChangingEditorPreviewValue()"), Transient, SkipSerialization)
+	/**
+	 * Preview value that can be modified in editor.
+	 * @remarks This is transient and will not be saved or loaded.
+	 */
+	UPROPERTY(EditAnywhere, DisplayName = "Preview Value", Category = "Settings", meta = (EditCondition = "AllowEditorChangingEditorPreviewValue()"), Transient)
 	FString EditorPreviewValue;
 
 	FString LastEditorPreviewValue;

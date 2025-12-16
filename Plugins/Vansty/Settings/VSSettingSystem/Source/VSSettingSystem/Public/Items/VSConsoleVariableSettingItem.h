@@ -29,18 +29,20 @@ namespace EVSSettingItemConsoleVariableChangePolicy
  * Uses the configured ValueType to interpret the CVar value, and optionally keeps the item and
  * the CVar synchronized when changes occur from either side.
  */
-UCLASS(Abstract, DisplayName = "VS.Settings.Item.ConsoleVariable")
+UCLASS(DisplayName = "VS.Settings.Item.ConsoleVariable")
 class VSSETTINGSYSTEM_API UVSConsoleVariableSettingItem : public UVSCommonSettingItem
 {
 	GENERATED_UCLASS_BODY()
 
 public:
 	//~ Begin UObject Interface
+	virtual void PostLoad() override;
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 	//~ End UObject Interface
 
+protected:
 	//~ Begin UVSSettingItem Interface
 	virtual void Initialize_Implementation() override;
 	virtual void Uninitialize_Implementation() override;
@@ -54,7 +56,7 @@ public:
 	virtual FString GetStringValue_Implementation(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const override;
 
 #if WITH_EDITOR
-	virtual bool AllowChangingValueType_Implementation() const override;
+	virtual bool AllowEditorChangingValueType_Implementation() const override;
 #endif
 	//~ End UVSSettingItem Interface
 
@@ -65,7 +67,7 @@ protected:
 #if WITH_EDITOR
 	/** Whether EditorPreviewValue can be edited in the editor for this item. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
-	bool AllowChangingConsoleVariableName() const;
+	bool AllowEditorChangingConsoleVariableName() const;
 #endif
 
 private:
@@ -73,7 +75,7 @@ private:
 	
 protected:
 	/** Name of the console variable to bind to (e.g. "r.ShadowQuality"). */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (EditCondition = "AllowChangingConsoleVariableName()"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (EditCondition = "AllowEditorChangingConsoleVariableName()"))
 	FString ConsoleVariableName;
 
 	/** Defines what to do when the console variable changes outside the item. */
@@ -83,5 +85,4 @@ protected:
 private:
 	IConsoleVariable* CurrentConsoleVariable = nullptr;
 	FDelegateHandle OnVariableChangedDelegateHandle;
-	FString CachedAppliedValueString;
 };

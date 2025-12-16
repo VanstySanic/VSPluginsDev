@@ -3,7 +3,6 @@
 #include "VSSettingSubsystem.h"
 #include "VSSettingSystemConfig.h"
 #include "Items/VSSettingItemAgent.h"
-#include "Types/Math/VSArray.h"
 
 UVSSettingSubsystem* UVSSettingSubsystem::Get()
 {
@@ -14,16 +13,28 @@ void UVSSettingSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
-	InitSettingItems();
+	AddDirectSettingItemAgentClasses(UVSSettingSystemConfig::Get()->SettingItemAgentClasses);
+	
+	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
+	{
+		SettingItemAgent->ExecuteActions(TArray<TEnumAsByte<EVSSettingItemAction::Type>>
+		{
+			EVSSettingItemAction::SetToDefault,
+			EVSSettingItemAction::Load,
+			EVSSettingItemAction::Apply,
+			EVSSettingItemAction::Confirm,
+		});
+	}
 }
 
 void UVSSettingSubsystem::BeginDestroy()
 {
 	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
 	{
-		if (SettingItemAgent)
+		if (SettingItemAgent && SettingItemAgent->HasBeenInitialized())
 		{
 			SettingItemAgent->Uninitialize();
+			SettingItemAgent->bHasBeenInitialized = false;
 		}
 	}
 	
@@ -99,11 +110,6 @@ void UVSSettingSubsystem::ExecuteSettingActions(const TArray<TEnumAsByte<EVSSett
 	}
 }
 
-void UVSSettingSubsystem::InitSettingItems()
-{
-	AddDirectSettingItemAgentClasses(UVSSettingSystemConfig::Get()->SettingItemAgentClasses);
-}
-
 void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftClassPtr<UVSSettingItemAgent>>& SettingItemAgentClasses)
 {
 	TArray<UVSSettingItemAgent*> AgentsToAdd;
@@ -114,7 +120,7 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 		{
 			if (UVSSettingItemAgent* SettingItemAgent = AgentClass->GetDefaultObject<UVSSettingItemAgent>())
 			{
-				if (DirectSettingItemAgents.Contains(SettingItemAgent) || !SettingItemAgent->GetItemTag().IsValid()) continue;
+				if (DirectSettingItemAgents.Contains(SettingItemAgent)) continue;
 				DirectSettingItemAgents.Add(SettingItemAgent);
 				AgentsToAdd.Add(SettingItemAgent);
 			}
@@ -123,13 +129,14 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 
 	for (UVSSettingItemAgent* SettingItemAgent : AgentsToAdd)
 	{
-		if (!SettingItemAgent || !SettingItemAgent->GetItemTag().IsValid()) continue;
-			
 		SettingItems.Add(SettingItemAgent);
-		TaggedSettingItems.Add(SettingItemAgent->GetItemTag(), SettingItemAgent);
+		if (!SettingItemAgent->GetItemTag().IsValid())
+		{
+			TaggedSettingItems.Add(SettingItemAgent->GetItemTag(), SettingItemAgent);
 #if WITH_EDITORONLY_DATA
-		EditorSettingItemTags.Add(SettingItemAgent, SettingItemAgent->GetItemTag());
+			EditorSettingItemTags.Add(SettingItemAgent, SettingItemAgent->GetItemTag());
 #endif
+		}
 		
 		for (UVSSettingItem* SettingItem : SettingItemAgent->GetRecursiveSubSettingItems())
 		{
@@ -144,20 +151,23 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 
 	for (UVSSettingItemAgent* SettingItemAgent : AgentsToAdd)
 	{
-		SettingItemAgent->Initialize();
-		SettingItemAgent->bHasBeenInitialized = true;
+		if (!SettingItemAgent->HasBeenInitialized())
+		{
+			SettingItemAgent->Initialize();
+			SettingItemAgent->bHasBeenInitialized = true;
+		}
 	}
 
-	for (UVSSettingItemAgent* SettingItemAgent : AgentsToAdd)
+#if WITH_EDITOR
+	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
 	{
 		SettingItemAgent->ExecuteActions(TArray<TEnumAsByte<EVSSettingItemAction::Type>>
 		{
-			EVSSettingItemAction::SetToDefault,
-			EVSSettingItemAction::Load,
 			EVSSettingItemAction::Apply,
 			EVSSettingItemAction::Confirm,
 		});
 	}
+#endif
 }
 
 #if WITH_EDITOR
@@ -165,30 +175,19 @@ void UVSSettingSubsystem::ClearEditorDirectSettingItemAgents()
 {
 	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
 	{
-		if (!SettingItemAgent) continue;
-
-		const FGameplayTag AgentPrevTag = EditorSettingItemTags.FindRef(SettingItemAgent);
-		TaggedSettingItems.Remove(AgentPrevTag);
-		EditorSettingItemTags.Remove(SettingItemAgent);
-		SettingItems.Remove(SettingItemAgent);
-	
-		for (UVSSettingItem* SettingItem : SettingItemAgent->GetRecursiveSubSettingItems())
-		{
-			if (SettingItem)
-			{
-				const FGameplayTag ItemPrevTag = EditorSettingItemTags.FindRef(SettingItem);
-				TaggedSettingItems.Remove(ItemPrevTag);
-				EditorSettingItemTags.Remove(SettingItem);
-				SettingItems.Remove(SettingItem);
-			}
-		}
-
-		if (SettingItemAgent->HasBeenInitialized())
+		if (SettingItemAgent && SettingItemAgent->HasBeenInitialized())
 		{
 			SettingItemAgent->Uninitialize();
 			SettingItemAgent->bHasBeenInitialized = false;
 		}
 	}
+
+	SettingItems.Empty();
+	TaggedSettingItems.Empty();
+	DirectSettingItemAgents.Empty();
+#if WITH_EDITORONLY_DATA
+	EditorSettingItemTags.Empty();
+#endif
 }
 
 void UVSSettingSubsystem::RefreshEditorDirectSettingItemAgents()

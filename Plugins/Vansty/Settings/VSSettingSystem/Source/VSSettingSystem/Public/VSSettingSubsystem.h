@@ -75,9 +75,6 @@ public:
 	void ClearEditorDirectSettingItemAgents();
 	void RefreshEditorDirectSettingItemAgents();
 #endif
-	
-private:
-	void InitSettingItems();
 
 private:
 	UPROPERTY()
