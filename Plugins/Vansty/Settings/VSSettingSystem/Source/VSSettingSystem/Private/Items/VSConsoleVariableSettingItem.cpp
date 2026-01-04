@@ -11,7 +11,9 @@ void UVSConsoleVariableSettingItem::PostLoad()
 {
 	Super::PostLoad();
 
+#if WITH_EDITOR
 	SetConsoleVariableName(ConsoleVariableName);
+#endif
 }
 
 #if WITH_EDITOR
@@ -29,11 +31,8 @@ void UVSConsoleVariableSettingItem::PostEditChangeProperty(struct FPropertyChang
 void UVSConsoleVariableSettingItem::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
-	
-	if (CurrentConsoleVariable && !OnVariableChangedDelegateHandle.IsValid())
-	{
-		OnVariableChangedDelegateHandle = CurrentConsoleVariable->OnChangedDelegate().AddUObject(this, &UVSConsoleVariableSettingItem::OnConsoleVariableChanged);
-	}
+
+	SetConsoleVariableName(ConsoleVariableName);
 }
 
 void UVSConsoleVariableSettingItem::Uninitialize_Implementation()

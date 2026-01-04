@@ -168,13 +168,6 @@ public:
 	void NotifyValueUpdate(bool bAllowCleanNotify = false);
 
 protected:
-#if WITH_EDITOR
-	/** Whether the ItemTag can be modified in the editor. */
-	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
-	bool AllowEditorChangingItemTag() const;
-#endif
-	
-	/** This is before any actions are executed. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	void Initialize();
 	
@@ -183,10 +176,13 @@ protected:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	void OnValueUpdated();
-
-	UFUNCTION(BlueprintCallable, Category = "Feature")
-	UVSSettingItemAgent* GetRootMostAgent() const;
-
+	
+#if WITH_EDITOR
+	/** Whether the ItemTag can be modified in the editor. */
+	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
+	bool AllowEditorChangingItemTag() const;
+#endif
+	
 public:
 	FSettingItemDelegate OnUpdated_Native;
 	

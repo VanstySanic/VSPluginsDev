@@ -162,7 +162,7 @@ void UVSSettingItem::ExecuteActions(const TArray<TEnumAsByte<EVSSettingItemActio
 
 void UVSSettingItem::NotifyValueUpdate(bool bAllowCleanNotify)
 {
-	if (!bAllowCleanNotify && !IsDirty()) return;
+	if (!HasBeenInitialized() || !bAllowCleanNotify && !IsDirty()) return;
 
 	OnValueUpdated();
 	OnUpdated_Native.Broadcast(this);
@@ -173,17 +173,6 @@ void UVSSettingItem::OnValueUpdated_Implementation()
 {
 	
 }
-
-UVSSettingItemAgent* UVSSettingItem::GetRootMostAgent() const
-{
-	if (UVSSettingItemAgent* Agent = GetTypedOuter<UVSSettingItemAgent>())
-	{
-		return Agent->GetRootMostAgent();
-	}
-	
-	return IsA<UVSSettingItemAgent>() ? Cast<UVSSettingItemAgent>(const_cast<UVSSettingItem*>(this)) : nullptr;
-}
-
 
 #if WITH_EDITOR
 bool UVSSettingItem::AllowEditorChangingItemTag_Implementation() const

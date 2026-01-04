@@ -25,7 +25,10 @@ UCLASS()
 class VSSETTINGSYSTEM_API UVSSettingSubsystem : public UEngineSubsystem
 {
 	GENERATED_BODY()
-
+	
+	DECLARE_MULTICAST_DELEGATE_OneParam(FSettingItemUpdateDelegate, UVSSettingItem* /** SettingItem */);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSettingItemUpdateEvent, UVSSettingItem*, SettingItem);
+	
 public:
 	static UVSSettingSubsystem* Get();
 	
@@ -76,6 +79,16 @@ public:
 	void RefreshEditorDirectSettingItemAgents();
 #endif
 
+public:
+	FSettingItemUpdateDelegate OnItemUpdated_Native;
+	
+	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
+	FSettingItemUpdateEvent OnItemUpdated;
+
+private:
+	UFUNCTION()
+	void OnSettingItemUpdated(UVSSettingItem* SettingItem);
+
 private:
 	UPROPERTY()
 	TArray<TObjectPtr<UVSSettingItemAgent>> DirectSettingItemAgents;
@@ -84,8 +97,4 @@ private:
 	TArray<TObjectPtr<UVSSettingItem>> SettingItems;
 	
 	TMap<FGameplayTag, TWeakObjectPtr<UVSSettingItem>> TaggedSettingItems;
-
-#if WITH_EDITORONLY_DATA
-	TMap<TWeakObjectPtr<UVSSettingItem>, FGameplayTag> EditorSettingItemTags;
-#endif
 };

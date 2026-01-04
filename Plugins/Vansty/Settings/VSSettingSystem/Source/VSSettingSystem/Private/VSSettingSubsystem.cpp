@@ -41,9 +41,6 @@ void UVSSettingSubsystem::BeginDestroy()
 	DirectSettingItemAgents.Empty();
 	SettingItems.Empty();
 	TaggedSettingItems.Empty();
-#if WITH_EDITORONLY_DATA
-	EditorSettingItemTags.Empty();
-#endif
 	
 	Super::BeginDestroy();
 }
@@ -104,9 +101,12 @@ void UVSSettingSubsystem::ExecuteSettingAction(EVSSettingItemAction::Type Action
 
 void UVSSettingSubsystem::ExecuteSettingActions(const TArray<TEnumAsByte<EVSSettingItemAction::Type>>& Actions)
 {
-	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
+	for (TEnumAsByte<EVSSettingItemAction::Type> Action : Actions)
 	{
-		SettingItemAgent->ExecuteActions(Actions);
+		for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
+		{
+			SettingItemAgent->ExecuteAction(Action);
+		}
 	}
 }
 
@@ -133,9 +133,6 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 		if (!SettingItemAgent->GetItemTag().IsValid())
 		{
 			TaggedSettingItems.Add(SettingItemAgent->GetItemTag(), SettingItemAgent);
-#if WITH_EDITORONLY_DATA
-			EditorSettingItemTags.Add(SettingItemAgent, SettingItemAgent->GetItemTag());
-#endif
 		}
 		
 		for (UVSSettingItem* SettingItem : SettingItemAgent->GetRecursiveSubSettingItems())
@@ -143,9 +140,6 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 			if (!SettingItem || !SettingItem->GetItemTag().IsValid()) continue;
 			SettingItems.Add(SettingItem);
 			TaggedSettingItems.Add(SettingItem->GetItemTag(), SettingItem);
-#if WITH_EDITORONLY_DATA
-			EditorSettingItemTags.Add(SettingItem, SettingItem->GetItemTag());
-#endif
 		}
 	}
 
@@ -156,6 +150,11 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 			SettingItemAgent->Initialize();
 			SettingItemAgent->bHasBeenInitialized = true;
 		}
+	}
+
+	for (UVSSettingItem* SettingItem : SettingItems)
+	{
+		SettingItem->OnUpdated.AddDynamic(this, &UVSSettingSubsystem::OnSettingItemUpdated);
 	}
 
 #if WITH_EDITOR
@@ -173,6 +172,14 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 #if WITH_EDITOR
 void UVSSettingSubsystem::ClearEditorDirectSettingItemAgents()
 {
+	for (UVSSettingItem* SettingItem : SettingItems)
+	{
+		if (SettingItem)
+		{
+			SettingItem->OnUpdated.RemoveDynamic(this, &UVSSettingSubsystem::OnSettingItemUpdated);
+		}
+	}
+	
 	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
 	{
 		if (SettingItemAgent && SettingItemAgent->HasBeenInitialized())
@@ -185,9 +192,6 @@ void UVSSettingSubsystem::ClearEditorDirectSettingItemAgents()
 	SettingItems.Empty();
 	TaggedSettingItems.Empty();
 	DirectSettingItemAgents.Empty();
-#if WITH_EDITORONLY_DATA
-	EditorSettingItemTags.Empty();
-#endif
 }
 
 void UVSSettingSubsystem::RefreshEditorDirectSettingItemAgents()
@@ -196,3 +200,9 @@ void UVSSettingSubsystem::RefreshEditorDirectSettingItemAgents()
 	AddDirectSettingItemAgentClasses(UVSSettingSystemConfig::Get()->SettingItemAgentClasses);
 }
 #endif
+
+void UVSSettingSubsystem::OnSettingItemUpdated(UVSSettingItem* SettingItem)
+{
+	OnItemUpdated_Native.Broadcast(SettingItem);
+	OnItemUpdated.Broadcast(SettingItem);
+}

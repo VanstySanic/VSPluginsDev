@@ -2,7 +2,7 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
-	"FriendlyName": "VSPluginsCorePresets",
+	"FriendlyName": "VSSettingWidgets",
 	"Description": "",
 	"Category": "Other",
 	"CreatedBy": "VanstySanic",
@@ -15,7 +15,7 @@
 	"Installed": false,
 	"Modules": [
 		{
-			"Name": "VSPluginsCorePresets",
+			"Name": "VSSettingWidgets",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}
@@ -24,6 +24,10 @@
 	"Plugins": [
 		{
 			"Name": "VSPluginsCore",
+			"Enabled": true
+		},
+		{
+			"Name": "VSWidgetCore",
 			"Enabled": true
 		}
 	]
