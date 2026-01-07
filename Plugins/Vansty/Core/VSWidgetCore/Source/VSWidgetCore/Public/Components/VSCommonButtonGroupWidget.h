@@ -23,12 +23,14 @@ class VSWIDGETCORE_API UVSCommonButtonGroupWidget : public UCommonButtonBase
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnRefreshedDelegate, UVSCommonButtonGroupWidget* /** Widget */);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRefreshedEvent, UVSCommonButtonGroupWidget*, Widget);
 
-public:
+protected:
 	//~ Begin UUserWidget Interface
 	virtual void NativePreConstruct() override;
+	virtual bool Initialize() override;
 	virtual FNavigationReply NativeOnNavigation(const FGeometry& MyGeometry, const FNavigationEvent& InNavigationEvent, const FNavigationReply& InDefaultReply) override;
 	//~ End UUserWidget Interface
 
+public:
 	/**
 	 * Regenerate all buttons in response to changes in the count or layout.
 	 * @note Don't forget to bind your delegates for buttons after the refreshment if necessary.
@@ -50,6 +52,15 @@ private:
 	UFUNCTION()
 	void OnButtonGroupButtonClicked(UCommonButtonBase* AssociatedButton, int32 ButtonIndex);
 	
+	UFUNCTION()
+	void OnButtonPrevClicked();
+
+	UFUNCTION()
+	void OnButtonNextClicked();
+	
+	/** Handle and use controller navigation to rotate text */
+	TSharedPtr<SWidget> HandleNavigation(EUINavigation UINavigation);
+	
 public:
 	FOnRefreshedDelegate OnRefreshed_Native;
 	
@@ -70,11 +81,15 @@ public:
 	uint8 bSupportButtonFocus : 1;
 
 	/** Only works when greater than zero. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group", meta = (EditCondition = "bSupportButtonFocus"))
 	int32 DesiredFocusButtonIndex = INDEX_NONE;
-	
+
+	/** If true, allow wrapping in circle when switching buttons by navigation. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")
 	uint8 bNavigationAllowWrapping : 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")
+	uint8 bVerticalFlowDirection : 1;
 	
 	/**
 	 * If false, a refreshment of buttons will be done during pre-construction.
@@ -99,12 +114,15 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category = "Button Group")
 	TObjectPtr<UPanelWidget> Panel_Buttons;
 
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional), Category = "Button Group")
-	TObjectPtr<UVSIndexImageGroupWidget> IndexImageGroup;
+	UPROPERTY(BlueprintReadOnly, Category = "Rotator", meta = (BindWidgetOptional))
+	TObjectPtr<UButton> Button_Prev;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Rotator", meta = (BindWidgetOptional))
+	TObjectPtr<UButton> Button_Next;
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = "Button Group")
-	int32 PreviewIndex = INDEX_NONE;
+	int32 EditorPreviewIndex = INDEX_NONE;
 #endif
 
 private:
@@ -113,4 +131,6 @@ private:
 
 	UPROPERTY()
 	TArray<TObjectPtr<UCommonButtonBase>> ButtonsPrivate;
+
+	FNavigationDelegate OnNavigation;
 };

@@ -79,9 +79,6 @@ struct VSWIDGETCORE_API FVSCommonButtonStyleSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideMinHeight"))
 	int32 MinHeight = 0;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideHideInputAction"))
-	uint8 bHideInputAction : 1;
-
 	
 	UPROPERTY(BlueprintReadWrite)
 	uint8 bOverrideStyle : 1;
@@ -91,9 +88,6 @@ struct VSWIDGETCORE_API FVSCommonButtonStyleSettings
 
 	UPROPERTY(BlueprintReadWrite)
 	uint8 bOverrideMinHeight : 1;
-
-	UPROPERTY(BlueprintReadWrite)
-	uint8 bOverrideHideInputAction : 1;
 };
 
 USTRUCT(BlueprintType)

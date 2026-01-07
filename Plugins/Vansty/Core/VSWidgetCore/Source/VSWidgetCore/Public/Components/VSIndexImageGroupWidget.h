@@ -8,6 +8,7 @@
 #include "VSIndexImageGroupWidget.generated.h"
 
 class UImage;
+
 /**
  * 
  */
@@ -30,9 +31,6 @@ public:
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Index Image Group")
 	int32 ImageNum = 1;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Index Image Group")
-	FVSCommonPanelSlotSettings ImageSlotSettings;
 
 	/**
 	 * If false, a refreshment of images will be done during pre-construction.
@@ -41,7 +39,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Index Image Group")
 	uint8 bDifferRefreshment : 1;
 	
-	
+		
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Index Image Group")
+	FVSCommonPanelSlotSettings ImageSlotSettings;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Index Image Group")
 	FSlateBrush SelectedBrush;
 
@@ -55,12 +56,12 @@ protected:
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere, Category = "Index Image Group")
-	int32 PreviewIndex = INDEX_NONE;
+	int32 EditorPreviewIndex = INDEX_NONE;
 #endif
 	
 private:
 	UPROPERTY()
 	TArray<TObjectPtr<UImage>> ImagesPrivate;
 
-	int32 CurrentIndex = 0;
+	int32 CurrentSelectedIndex = 0;
 };

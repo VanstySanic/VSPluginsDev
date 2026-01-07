@@ -1,7 +1,6 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Types/VSWidgetSlotTypes.h"
-
 #include "Components/BorderSlot.h"
 #include "Components/ButtonSlot.h"
 #include "Components/CanvasPanelSlot.h"
@@ -14,10 +13,10 @@
 #include "Components/Widget.h"
 
 FVSCommonPanelSlotSettings::FVSCommonPanelSlotSettings(const UWidget* Widget)
-	: bOverrideSize(true)
-	, bOverridePadding(true)
-	, bOverrideHorizontalAlignment(true)
-	, bOverrideVerticalAlignment(true)
+	: bOverrideSize(false)
+	, bOverridePadding(false)
+	, bOverrideHorizontalAlignment(false)
+	, bOverrideVerticalAlignment(false)
 {
 	if (!Widget) return;
 
@@ -134,9 +133,9 @@ void FVSCommonPanelSlotSettings::ApplyToWidget(UWidget* Widget)
 
 FVSCanvasPanelSlotSettings::FVSCanvasPanelSlotSettings(const UWidget* Widget)
 	: bAutoSize(false)
-	, bOverrideAnchors(true)
-	, bOverrideOffsets(true)
-	, bOverrideAlignment(true)
+	, bOverrideAnchors(false)
+	, bOverrideOffsets(false)
+	, bOverrideAlignment(false)
 	, bOverrideAutoSize(false)
 	, bOverrideZOrder(false)
 {

@@ -8,24 +8,22 @@
 UVSIndexImageGroupWidget::UVSIndexImageGroupWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	
+	UnselectedBrush.TintColor = FColor::White;
+	SelectedBrush.TintColor = FColor::Cyan;
 }
 
 void UVSIndexImageGroupWidget::NativePreConstruct()
 {
 	Super::NativePreConstruct();
 
+	if (!bDifferRefreshment
 #if WITH_EDITOR
-	if (IsDesignTime() || !bDifferRefreshment)
-	{
-		RefreshIndexImages();
-	}
-#elif
-	if (!bDifferRefreshment)
-	{
-		RefreshIndexImages();
-	}
+		|| IsDesignTime()
 #endif
+		)
+	{
+		RefreshIndexImages();
+	}
 }
 
 void UVSIndexImageGroupWidget::RefreshIndexImages()
@@ -48,7 +46,7 @@ void UVSIndexImageGroupWidget::RefreshIndexImages()
 #if WITH_EDITORONLY_DATA
 	if (IsDesignTime())
 	{
-		SetSelectedIndex(PreviewIndex);
+		SetSelectedIndex(EditorPreviewIndex);
 	}
 #endif
 }
@@ -58,17 +56,17 @@ void UVSIndexImageGroupWidget::SetSelectedIndex(int32 Index)
 	const int32 RealImageNum = ImagesPrivate.Num();
 
 #if WITH_EDITORONLY_DATA
-	PreviewIndex = Index;
+	EditorPreviewIndex = Index;
 #endif
 	
-	CurrentIndex = FMath::Clamp(Index, INDEX_NONE, RealImageNum);
+	CurrentSelectedIndex = FMath::Clamp(Index, INDEX_NONE, RealImageNum);
 
-	CurrentIndex = Index;
+	CurrentSelectedIndex = Index;
 	for (int i = 0; i < RealImageNum; ++i)
 	{
 		if (ImagesPrivate[i])
 		{
-			ImagesPrivate[i]->SetBrush(i == CurrentIndex ? SelectedBrush : UnselectedBrush);
+			ImagesPrivate[i]->SetBrush(i == CurrentSelectedIndex ? SelectedBrush : UnselectedBrush);
 		}	
 	}
 }

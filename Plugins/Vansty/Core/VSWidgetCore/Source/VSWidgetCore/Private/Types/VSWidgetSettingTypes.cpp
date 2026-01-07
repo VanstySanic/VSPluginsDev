@@ -20,8 +20,8 @@ VS_DECLARE_PRIVABLIC_MEMBER(UCommonBoundActionButton, Text_ActionName, TObjectPt
 VS_DECLARE_PRIVABLIC_METHOD(UUserWidget, SetInputActionPriority, void, int32);
 
 FVSCommonActionWidgetSettings::FVSCommonActionWidgetSettings(const UCommonActionWidget* ActionWidget)
-	: bOverrideInputActions(true)
-	, bOverrideEnhancedInputAction(true)
+	: bOverrideInputActions(false)
+	, bOverrideEnhancedInputAction(false)
 	, bOverrideProgressMaterialBrush(false)
 	, bOverrideProgressMaterialParam(false)
 	, bOverrideIconRimBrush(false)
@@ -51,16 +51,14 @@ void FVSCommonActionWidgetSettings::ApplyToAction(UCommonActionWidget* ActionWid
 
 FVSCommonButtonStyleSettings::FVSCommonButtonStyleSettings(const UCommonButtonBase* Button)
 	: bOverrideStyle(false)
-	, bOverrideMinWidth(true)
-	, bOverrideMinHeight(true)
-	, bOverrideHideInputAction(false)
+	, bOverrideMinWidth(false)
+	, bOverrideMinHeight(false)
 {
 	if (!Button) return;
 
 	Style = VS_PRIVABLIC_MEMBER(Button, UCommonButtonBase, Style);
 	MinWidth = VS_PRIVABLIC_MEMBER(Button, UCommonButtonBase, MinWidth);
 	MinHeight = VS_PRIVABLIC_MEMBER(Button, UCommonButtonBase, MinHeight);
-	bHideInputAction = VS_PRIVABLIC_MEMBER(Button, UCommonButtonBase, bHideInputAction);
 }
 
 void FVSCommonButtonStyleSettings::ApplyToButton(UCommonButtonBase* Button) const
@@ -70,15 +68,14 @@ void FVSCommonButtonStyleSettings::ApplyToButton(UCommonButtonBase* Button) cons
 	if (bOverrideStyle) Button->SetStyle(Style);
 
 	if (bOverrideMinWidth && bOverrideMinHeight) Button->SetMinDimensions(MinWidth, MinHeight);
-	if (bOverrideHideInputAction) Button->SetHideInputAction(bHideInputAction);
 	else if (bOverrideMinWidth) Button->SetMinDimensions(MinWidth, VS_PRIVABLIC_MEMBER(Button, UCommonButtonBase, MinHeight));
 	else if (bOverrideMinHeight) Button->SetMinDimensions(VS_PRIVABLIC_MEMBER(Button, UCommonButtonBase, MinWidth), MinHeight);
 }
 
 
 FVSCommonButtonActionSettings::FVSCommonButtonActionSettings(const UCommonButtonBase* Button)
-	: bOverrideInputAction(true)
-	, bOverrideEnhancedInputAction(true)
+	: bOverrideInputAction(false)
+	, bOverrideEnhancedInputAction(false)
 	, bOverridePriority(false)
 	, bOverrideActionName(false)
 {
