@@ -15,7 +15,6 @@ UVSIndexImageGroupWidget::UVSIndexImageGroupWidget(const FObjectInitializer& Obj
 void UVSIndexImageGroupWidget::NativePreConstruct()
 {
 	Super::NativePreConstruct();
-
 	if (!bDifferRefreshment
 #if WITH_EDITOR
 		|| IsDesignTime()
@@ -24,6 +23,13 @@ void UVSIndexImageGroupWidget::NativePreConstruct()
 	{
 		RefreshIndexImages();
 	}
+	
+#if WITH_EDITORONLY_DATA
+	if (IsDesignTime())
+	{
+		SetSelectedIndex(EditorPreviewIndex);
+	}
+#endif
 }
 
 void UVSIndexImageGroupWidget::RefreshIndexImages()
@@ -43,23 +49,24 @@ void UVSIndexImageGroupWidget::RefreshIndexImages()
 		ImageSlotSettings.ApplyToWidget(Image);
 	}
 
-#if WITH_EDITORONLY_DATA
-	if (IsDesignTime())
+	for (int i = 0; i < ImageNum; ++i)
 	{
-		SetSelectedIndex(EditorPreviewIndex);
+		if (ImagesPrivate[i])
+		{
+			ImagesPrivate[i]->SetBrush(i == CurrentSelectedIndex ? SelectedBrush : UnselectedBrush);
+		}	
 	}
-#endif
 }
 
 void UVSIndexImageGroupWidget::SetSelectedIndex(int32 Index)
 {
 	const int32 RealImageNum = ImagesPrivate.Num();
 
-#if WITH_EDITORONLY_DATA
-	EditorPreviewIndex = Index;
-#endif
-	
 	CurrentSelectedIndex = FMath::Clamp(Index, INDEX_NONE, RealImageNum);
+	
+#if WITH_EDITORONLY_DATA
+	EditorPreviewIndex = CurrentSelectedIndex;
+#endif
 
 	CurrentSelectedIndex = Index;
 	for (int i = 0; i < RealImageNum; ++i)

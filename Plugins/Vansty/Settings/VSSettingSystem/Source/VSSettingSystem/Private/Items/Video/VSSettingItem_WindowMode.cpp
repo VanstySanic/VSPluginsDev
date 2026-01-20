@@ -2,6 +2,7 @@
 
 #include "Items/Video/VSSettingItem_WindowMode.h"
 #include "VSPrivablic.h"
+#include "VSSettingSystemConfig.h"
 #include "Engine/GameEngine.h"
 #include "GameFramework/GameUserSettings.h"
 #include "Items/VSSettingSystemTags.h"
@@ -9,25 +10,24 @@
 
 VS_DECLARE_PRIVABLIC_MEMBER(UGameUserSettings, FullscreenMode, int32);
 VS_DECLARE_PRIVABLIC_MEMBER(UGameUserSettings, LastConfirmedFullscreenMode, int32);
+VS_DECLARE_PRIVABLIC_MEMBER(UGameUserSettings, PreferredFullscreenMode, int32);
 
 UVSSettingItem_WindowMode::UVSSettingItem_WindowMode(const FObjectInitializer& FObjectInitializer)
 	: Super(FObjectInitializer)
+	, bCheckForCommandLineOverrides(false)
 {
 	SetValueType(EVSCommonSettingValueType::Integer);
-	
+
 	ItemTag = EVSSettingItem::Video::WindowMode;
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.WindowMode", "DisplayName", "Window Mode");
 	ConfigParams.ConfigSection = FString("/Script/Engine.GameUserSettings");
 	ConfigParams.ConfigKeyName = FString("FullscreenMode");
-}
 
-void UVSSettingItem_WindowMode::PostLoad()
-{
-	Super::PostLoad();
-
-#if WITH_EDITORONLY_DATA
-	EditorPreviewWindowMode = GetWindowMode(EVSSettingItemValueSource::System);
-#endif
+	ValueExternChangedActions = TArray<TEnumAsByte<EVSSettingItemAction::Type>>
+	{
+		EVSSettingItemAction::SetToGame,
+		EVSSettingItemAction::Confirm,
+	};
 }
 
 #if WITH_EDITOR
@@ -35,23 +35,44 @@ void UVSSettingItem_WindowMode::PostEditChangeProperty(struct FPropertyChangedEv
 {
 	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItem_WindowMode, EditorPreviewWindowMode))
 	{
-		SetIntegerValue(EditorPreviewWindowMode);
+		SetWindowMode(EditorPreviewWindowMode);
 	}
 	
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 #endif
 
+void UVSSettingItem_WindowMode::Initialize_Implementation()
+{
+	Super::Initialize_Implementation();
+	FViewport::ViewportResizedEvent.AddUObject(this, &UVSSettingItem_WindowMode::OnViewportResized);
+}
+
+void UVSSettingItem_WindowMode::Uninitialize_Implementation()
+{
+	FViewport::ViewportResizedEvent.RemoveAll(this);
+
+	Super::Uninitialize_Implementation();
+}
+
 void UVSSettingItem_WindowMode::Apply_Implementation()
 {
 	Super::Apply_Implementation();
 
 #if !UE_SERVER
-	if (!FPlatformProperties::HasFixedResolution())
+	EWindowMode::Type WindowModeToApply = GetWindowMode(EVSSettingItemValueSource::System);
+	
+	if (bCheckForCommandLineOverrides)
 	{
-		EWindowMode::Type WindowModeToApply = GetWindowMode(EVSSettingItemValueSource::System);
-		UGameEngine::ConditionallyOverrideSettings(GSystemResolution.ResX, GSystemResolution.ResY, WindowModeToApply);
-		FSystemResolution::RequestResolutionChange(GSystemResolution.ResX, GSystemResolution.ResY, WindowModeToApply);
+		FIntPoint Resolution = FIntPoint(GSystemResolution.ResX, GSystemResolution.ResY);
+		UGameEngine::ConditionallyOverrideSettings(Resolution.X, Resolution.Y, WindowModeToApply);
+	}
+	
+	FSystemResolution::RequestResolutionChange(GSystemResolution.ResX, GSystemResolution.ResY, WindowModeToApply);
+
+	if (IConsoleVariable* CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.FullScreenMode"), false))
+	{
+		CVar->SetWithCurrentPriority(WindowModeToApply);
 	}
 #endif
 }
@@ -71,13 +92,26 @@ void UVSSettingItem_WindowMode::Save_Implementation()
 	Super::Save_Implementation();
 
 	GConfig->SetInt(*ConfigParams.ConfigSection, TEXT("LastConfirmedFullscreenMode"), GetWindowMode(EVSSettingItemValueSource::Confirmed), ConfigParams.ConfigFileName);
+	GConfig->SetInt(*ConfigParams.ConfigSection, TEXT("PreferredFullscreenMode"), GetWindowMode(EVSSettingItemValueSource::Confirmed), ConfigParams.ConfigFileName);
 	GConfig->Flush(false, ConfigParams.ConfigFileName);
 }
 
 bool UVSSettingItem_WindowMode::IsValueValid_Implementation() const
 {
 	const EWindowMode::Type WindowMode = GetWindowMode(EVSSettingItemValueSource::System);
-	return FVSMath::IsInRange(WindowMode, 0, EWindowMode::NumWindowModes - 1);
+	if (!FVSMath::IsInRange(WindowMode, 0, EWindowMode::NumWindowModes - 1)) return false;
+
+	if (bCheckForCommandLineOverrides)
+	{
+		EWindowMode::Type OverrideWindowMode = (EWindowMode::Type)FMath::Clamp(WindowMode, 0, EWindowMode::NumWindowModes - 1);
+		FIntPoint Resolution = FIntPoint(GSystemResolution.ResX, GSystemResolution.ResY);
+		UGameEngine::ConditionallyOverrideSettings(Resolution.X, Resolution.Y, OverrideWindowMode);
+		if (WindowMode != OverrideWindowMode) return false;
+	}
+
+	if (WindowMode == EWindowMode::Windowed && !FPlatformProperties::SupportsWindowedMode()) return false;
+	
+	return true;
 }
 
 void UVSSettingItem_WindowMode::Validate_Implementation()
@@ -85,24 +119,42 @@ void UVSSettingItem_WindowMode::Validate_Implementation()
 	Super::Validate_Implementation();
 
 	if (IsValueValid()) return;
-	const EWindowMode::Type PrevWindowMode = GetWindowMode(EVSSettingItemValueSource::Game);
-	SetIntegerValue(FMath::Clamp(PrevWindowMode, 0, EWindowMode::NumWindowModes - 1));
+
+	EWindowMode::Type WindowMode = GetWindowMode(EVSSettingItemValueSource::System);
+	WindowMode = (EWindowMode::Type)FMath::Clamp(WindowMode, 0, EWindowMode::NumWindowModes - 1);
+
+	if (bCheckForCommandLineOverrides)
+	{
+		FIntPoint Resolution = FIntPoint(GSystemResolution.ResX, GSystemResolution.ResY);
+		UGameEngine::ConditionallyOverrideSettings(Resolution.X, Resolution.Y, WindowMode);
+	}
+	
+	if (WindowMode == EWindowMode::Windowed && !FPlatformProperties::SupportsWindowedMode())
+	{
+		WindowMode = GetWindowMode(EVSSettingItemValueSource::Confirmed);
+		if (WindowMode == EWindowMode::Windowed)
+		{
+			WindowMode = GetWindowMode(EVSSettingItemValueSource::Game);
+		}
+	}
+	
+	SetIntegerValue(WindowMode);
 }
 
 void UVSSettingItem_WindowMode::OnValueUpdated_Implementation()
 {
 	Super::OnValueUpdated_Implementation();
-
+	
 #if WITH_EDITORONLY_DATA
 	EditorPreviewWindowMode = GetWindowMode(EVSSettingItemValueSource::System);
-	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
 #endif
-
+	
 	/** Sync to GameUserSettings. */
-	if (GEngine && GEngine->GameUserSettings)
+	if (GEngine && GEngine->GetGameUserSettings())
 	{
-		const EWindowMode::Type WindowMode = GetWindowMode(EVSSettingItemValueSource::Game);
+		const EWindowMode::Type WindowMode = GetWindowMode(EVSSettingItemValueSource::System);
 		VS_PRIVABLIC_MEMBER(GEngine->GameUserSettings, UGameUserSettings, FullscreenMode) = WindowMode;
+		VS_PRIVABLIC_MEMBER(GEngine->GameUserSettings, UGameUserSettings, PreferredFullscreenMode) = WindowMode == EWindowMode::Fullscreen ? 1 : 0;
 	}
 }
 
@@ -118,7 +170,14 @@ int32 UVSSettingItem_WindowMode::GetIntegerValue_Implementation(const EVSSetting
 			return GEngine->GetGameUserSettings()->GetDefaultWindowMode();
 			
 		case EVSSettingItemValueSource::Game:
-			return GEngine->GetGameUserSettings()->GetFullscreenMode();
+			if (GEngine && GEngine->GameViewport)
+			{
+				if (auto Window = GEngine->GameViewport->GetWindow())
+				{
+					return Window->GetWindowMode();
+				}
+			}
+			return GSystemResolution.WindowMode;
 			
 		default: ;
 		}
@@ -126,6 +185,29 @@ int32 UVSSettingItem_WindowMode::GetIntegerValue_Implementation(const EVSSetting
 		
 	return Super::GetIntegerValue_Implementation(ValueSource);
 }
+
+FText UVSSettingItem_WindowMode::ValueStringToText_Implementation(const FString& String) const
+{
+	static TMap<FString, FText> OutMap = TMap<FString, FText>
+	{
+		{ "0", UVSSettingSystemConfig::Get()->WindowModeDisplayNames.FindRef(EWindowMode::Type(0)) },
+		{ "1", UVSSettingSystemConfig::Get()->WindowModeDisplayNames.FindRef(EWindowMode::Type(1)) },
+		{ "2", UVSSettingSystemConfig::Get()->WindowModeDisplayNames.FindRef(EWindowMode::Type(2)) },
+	};
+	
+	return OutMap.FindRef(String);
+}
+
+#if WITH_EDITOR
+void UVSSettingItem_WindowMode::EditorPostInitialized_Implementation()
+{
+	Super::EditorPostInitialized_Implementation();
+
+#if WITH_EDITORONLY_DATA
+	EditorPreviewWindowMode = GetWindowMode(EVSSettingItemValueSource::System);
+#endif
+}
+#endif
 
 void UVSSettingItem_WindowMode::SetWindowMode(EWindowMode::Type InWindowMode)
 {
@@ -135,4 +217,11 @@ void UVSSettingItem_WindowMode::SetWindowMode(EWindowMode::Type InWindowMode)
 EWindowMode::Type UVSSettingItem_WindowMode::GetWindowMode(EVSSettingItemValueSource::Type ValueSource) const
 {
 	return static_cast<EWindowMode::Type>(GetIntegerValue(ValueSource));
+}
+
+void UVSSettingItem_WindowMode::OnViewportResized(FViewport* Viewport, uint32 Value)
+{
+	FViewport::ViewportResizedEvent.RemoveAll(this);
+	NotifyValueExternChanged(false);
+	FViewport::ViewportResizedEvent.AddUObject(this, &UVSSettingItem_WindowMode::OnViewportResized);
 }

@@ -55,15 +55,21 @@ void UVSSettingItemWidgetController::BindTypedWidget_Implementation(const FName 
 {
 	Super::BindTypedWidget_Implementation(TypeName, Widget);
 
+	if (!SettingItemPrivate.Get()) return;
+
 	if (TypeName == FName("Name"))
 	{
+		const FText& TextToSet = SettingItemPrivate->GetItemInfo().DisplayName.IsEmpty()
+			? FText::FromString("Item Name")
+			: SettingItemPrivate->GetItemInfo().DisplayName;
+		
 		if (UTextBlock* TextBlock = Cast<UTextBlock>(Widget))
 		{
-			TextBlock->SetText(SettingItemPrivate->GetItemInfo().DisplayName);
+			TextBlock->SetText(TextToSet);
 		}
 		else if (URichTextBlock* RichTextBlock = Cast<URichTextBlock>(Widget))
 		{
-			RichTextBlock->SetText(SettingItemPrivate->GetItemInfo().DisplayName);
+			RichTextBlock->SetText(TextToSet);
 		}
 	}
 }

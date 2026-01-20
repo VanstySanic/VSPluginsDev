@@ -18,14 +18,19 @@ class VSSETTINGWIDGETS_API UVSCommonSettingItemRangeBasedWidgetBinder : public U
 	GENERATED_UCLASS_BODY()
 
 protected:
-	//~ Begin UVSWidgetBinder Interface
+	//~ Begin UVSRangeBasedWidgetBinder Interface
 	virtual void Initialize_Implementation() override;
 	virtual void Uninitialize_Implementation() override;
-	//~ End UVSWidgetBinder Interface
+	virtual void BindTypedWidget_Implementation(const FName TypeName, UWidget* Widget) override;
+	virtual void UnbindTypedWidget_Implementation(const FName TypeName, UWidget* Widget) override;
 	
+	virtual void OnWidgetValueChanged_Implementation(float NewValue) override;
+	
+	//~ End UVSRangeBasedWidgetBinder Interface
+
 public:
 	UFUNCTION(BlueprintCallable, Category = "Settings")
-	UVSCommonSettingItem* GetCommonSettingItem() const { return CommonSettingItemPrivate.Get(); }
+	UVSCommonSettingItem* GetCommonSettingItem() const;
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")

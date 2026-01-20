@@ -14,17 +14,20 @@ class VSSETTINGSYSTEM_API UVSSettingItem_VSync : public UVSConsoleVariableSettin
 {
 	GENERATED_UCLASS_BODY()
 
+public:
+	//~ Begin UVSConsoleVariableSettingItem Interface
+	virtual FText ValueStringToText_Implementation(const FString& String) const override;
+
 protected:
-	//~ Begin UVSSettingItem Interface
 	virtual void OnValueUpdated_Implementation() override;
-	//~ End UVSSettingItem Interface
+	//~ End UVSConsoleVariableSettingItem Interface
 
 #if WITH_EDITOR
 	//~ Begin UVSSettingItem Interface
-	virtual bool AllowEditorChangingItemTag_Implementation() const override { return false; }
-	virtual bool AllowEditorChangingValueType_Implementation() const override { return false; }
-	virtual bool AllowEditorChangingConfigParams_Implementation() const override { return false; }
-	virtual bool AllowEditorChangingConsoleVariableName_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingItemTag_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingValueType_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingConfigParams_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingConsoleVariableName_Implementation() const override { return false; }
 #endif
 	//~ End UVSSettingItem Interface
 

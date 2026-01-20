@@ -1,11 +1,9 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Classes/Features/VSAbilitySystemGameplayTagFeature.h"
-
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
-#include "Classes/VSPluginsCoreSettings.h"
-#include "Classes/Libraries/VSActorLibrary.h"
+#include "Classes/Settings/VSPluginsCoreGameSettings.h"
 #include "VSPluginsCoreCpp/Public/VSPrivablic.h"
 
 using GameplayTagTagCountMap = TMap<FGameplayTag, int32>;
@@ -28,7 +26,7 @@ void UVSAbilitySystemGameplayTagFeature::Initialize_Implementation()
 	AbilitySystemGameplayTagCountContainerPtr = &VS_PRIVABLIC_MEMBER(AbilitySystemComponentPrivate.Get(), UAbilitySystemComponent, GameplayTagCountContainer);
 	check(AbilitySystemGameplayTagCountContainerPtr);
 
-	for (const FGameplayTag& GameplayTag : UVSPluginsCoreSettings::Get()->AbilitySystemListeningTags.GetGameplayTagArray())
+	for (const FGameplayTag& GameplayTag : UVSPluginsCoreGameSettings::Get()->AbilitySystemListeningTags.GetGameplayTagArray())
 	{
 		FDelegateHandle DelegateHandle = AbilitySystemComponentPrivate->RegisterGameplayTagEvent(GameplayTag, EGameplayTagEventType::AnyCountChange)
 			.AddUObject(this, &UVSAbilitySystemGameplayTagFeature::OnAbilitySystemListeningTagsUpdated);

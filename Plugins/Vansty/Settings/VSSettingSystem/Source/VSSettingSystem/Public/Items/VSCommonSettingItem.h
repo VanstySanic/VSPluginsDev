@@ -75,7 +75,6 @@ class VSSETTINGSYSTEM_API UVSCommonSettingItem : public UVSSettingItem
 	
 public:
 	//~ Begin UObject Interface
-	virtual void PostLoad() override;
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
@@ -85,11 +84,18 @@ protected:
 	//~ Begin UVSSettingItem Interface
 	virtual void Initialize_Implementation() override;
 	virtual void OnValueUpdated_Implementation() override;
+
+public:
 	virtual void SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) override;
 	virtual bool EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const override;
 	virtual void Load_Implementation() override;
 	virtual void Save_Implementation() override;
 	virtual void Confirm_Implementation() override;
+
+protected:
+#if WITH_EDITOR
+	virtual void EditorPostInitialized_Implementation() override;
+#endif
 	//~ End UVSSettingItem Interface
 
 public:
@@ -140,20 +146,23 @@ public:
 	/** Sets the current value as FString and triggers update notification. */
 	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "NewValue"))
 	void SetStringValue(const FString& NewValue);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "String"))
+	FText ValueStringToText(const FString& String) const;
 	
 protected:
 #if WITH_EDITOR
 	/** Whether ValueType can be edited in the editor for this item. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
-	bool AllowEditorChangingValueType() const;
+	bool EditorAllowChangingValueType() const;
 
 	/** Whether ConfigParams can be edited in the editor for this item. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
-	bool AllowEditorChangingConfigParams() const;
+	bool EditorAllowChangingConfigParams() const;
 
 	/** Whether EditorPreviewValue can be edited in the editor for this item. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
-	bool AllowEditorChangingEditorPreviewValue() const;
+	bool EditorAllowChangingEditorPreviewValue() const;
 #endif
 
 protected:
@@ -182,11 +191,11 @@ private:
 
 protected:
 	/** Preferred value type used for storage and conversion. */
-	UPROPERTY(EditAnywhere, Category = "Settings", meta = (EditCondition = "AllowEditorChangingValueType()"))
+	UPROPERTY(EditAnywhere, Category = "Settings", meta = (EditCondition = "EditorAllowChangingValueType()"))
 	TEnumAsByte<EVSCommonSettingValueType::Type> ValueType = EVSCommonSettingValueType::None;
 
 	/** Config binding parameters used when auto-config is enabled. */
-	UPROPERTY(EditAnywhere, Category = "Settings", meta = (EditCondition = "AllowEditorChangingConfigParams()"))
+	UPROPERTY(EditAnywhere, Category = "Settings", meta = (EditCondition = "EditorAllowChangingConfigParams()"))
 	FVSCommonSettingConfigParams ConfigParams;
 	
 private:
@@ -198,8 +207,11 @@ private:
 	 * Preview value that can be modified in editor.
 	 * @remarks This is transient and will not be saved or loaded.
 	 */
-	UPROPERTY(EditAnywhere, DisplayName = "Preview Value", Category = "Settings", meta = (EditCondition = "AllowEditorChangingEditorPreviewValue()"), Transient)
+	UPROPERTY(EditAnywhere, DisplayName = "Preview Value", Category = "Settings", meta = (EditCondition = "EditorAllowChangingEditorPreviewValue()"))
 	FString EditorPreviewValue;
+
+	UPROPERTY(VisibleAnywhere, DisplayName = "Preview Text", Category = "Settings", Transient)
+	FText EditorPreviewText;
 
 	FString LastEditorPreviewValue;
 	FVSCommonSettingConfigParams LastEditorConfigParams = FVSCommonSettingConfigParams();

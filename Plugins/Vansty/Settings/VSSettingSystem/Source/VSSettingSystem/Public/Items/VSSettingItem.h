@@ -70,7 +70,6 @@ namespace EVSSettingItemValueSource
  * This class is designed to be extended for concrete setting implementations,
  * while higher-level systems coordinate persistence and synchronization.
  */
-
 UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew, DisplayName = "VS.Settings.Item.Base")
 class VSSETTINGSYSTEM_API UVSSettingItem : public UObject
 {
@@ -165,7 +164,10 @@ public:
 	 * @param bAllowCleanNotify Whether to notify even if the value is considered clean.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
-	void NotifyValueUpdate(bool bAllowCleanNotify = false);
+	void NotifyValueUpdated(bool bAllowCleanNotify = false);
+
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void NotifyValueExternChanged(bool bAllowSameNotify = false);
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
@@ -176,11 +178,14 @@ protected:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	void OnValueUpdated();
-	
+
 #if WITH_EDITOR
+	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
+	void EditorPostInitialized();
+	
 	/** Whether the ItemTag can be modified in the editor. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
-	bool AllowEditorChangingItemTag() const;
+	bool EditorAllowChangingItemTag() const;
 #endif
 	
 public:
@@ -191,11 +196,15 @@ public:
 	
 protected:
 	/** Unique gameplay tag that identifies this setting item. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (EditCondition = "AllowEditorChangingItemTag()"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (EditCondition = "EditorAllowChangingItemTag()"))
 	FGameplayTag ItemTag;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	FVSSettingItemInfo ItemInfo;
+
+	/** Execute when the game value changes outside the item. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+	TArray<TEnumAsByte<EVSSettingItemAction::Type>> ValueExternChangedActions;
 	
 private:
 	bool bHasBeenInitialized = false;

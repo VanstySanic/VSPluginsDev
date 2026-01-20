@@ -9,19 +9,23 @@
 class UWidget;
 
 /**
- * 
+ * Base binder object responsible for reacting to widget bindings managed
+ * by a widget controller.
+ *
+ * A widget binder encapsulates a specific piece of binding logic, receiving
+ * notifications when widgets of certain logical types are bound or unbound,
+ * and optionally updating its state every tick via the owning controller.
+ *
+ * This class is intended to be subclassed for concrete binding behavior,
+ * while lifecycle and widget ownership are coordinated externally.
  */
-UCLASS(Blueprintable, EditInlineNew, DefaultToInstanced)
+UCLASS(Abstract, Blueprintable, EditInlineNew, DefaultToInstanced)
 class VSWIDGETCORE_API UVSWidgetBinder : public UObject
 {
 	GENERATED_UCLASS_BODY()
 	
 	friend class UVSWidgetController;
 
-public:
-	UFUNCTION(BlueprintCallable, Category = "Widget Binder")
-	UVSWidgetController* GetWidgetController() const { return WidgetControllerPrivate.Get(); }
-	
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "Widget Binder")
 	void Initialize();
@@ -34,7 +38,8 @@ protected:
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "Widget Binder")
 	void UnbindTypedWidget(const FName TypeName, UWidget* Widget);
-	
+
+	/** Works as tick. Called in parent widget controller. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Widget Binder")
 	void UpdateBinder(float DeltaTime);
 
@@ -44,6 +49,12 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Widget Binder")
 	void RebindAllWidgets();
 
+	UFUNCTION(BlueprintCallable, Category = "Widget Binder")
+	UWidget* GetBoundTypedWidget(const FName TypeName) const;
+		
+	UFUNCTION(BlueprintCallable, Category = "Widget Binder")
+	UVSWidgetController* GetWidgetController() const { return WidgetControllerPrivate.Get(); }
+	
 private:
 	TWeakObjectPtr<UVSWidgetController> WidgetControllerPrivate;
 };

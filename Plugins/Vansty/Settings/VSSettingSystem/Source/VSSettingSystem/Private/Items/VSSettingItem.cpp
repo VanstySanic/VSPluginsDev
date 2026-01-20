@@ -2,7 +2,6 @@
 
 #include "Items/VSSettingItem.h"
 #include "VSSettingSubsystem.h"
-#include "Items/VSSettingItemAgent.h"
 
 UVSSettingItem::UVSSettingItem(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -98,7 +97,7 @@ bool UVSSettingItem::IsValueValid_Implementation() const
 
 bool UVSSettingItem::IsDirty() const
 {
-	return !EqualsToBySource(EVSSettingItemValueSource::Game);
+	return !EqualsToBySource(EVSSettingItemValueSource::Confirmed);
 }
 
 void UVSSettingItem::SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource)
@@ -160,14 +159,45 @@ void UVSSettingItem::ExecuteActions(const TArray<TEnumAsByte<EVSSettingItemActio
 	}
 }
 
-void UVSSettingItem::NotifyValueUpdate(bool bAllowCleanNotify)
+void UVSSettingItem::NotifyValueUpdated(bool bAllowCleanNotify)
 {
 	if (!HasBeenInitialized() || !bAllowCleanNotify && !IsDirty()) return;
-
+	
 	OnValueUpdated();
 	OnUpdated_Native.Broadcast(this);
 	OnUpdated.Broadcast(this);
+	
+#if WITH_EDITOR
+	if (!GIsPlayInEditorWorld && HasBeenInitialized())
+	{
+		ExecuteAction(EVSSettingItemAction::Apply);
+		ExecuteAction(EVSSettingItemAction::Confirm);
+	}
+#endif
 }
+
+void UVSSettingItem::NotifyValueExternChanged(bool bAllowSameNotify)
+{
+	if (!bAllowSameNotify && EqualsToBySource(EVSSettingItemValueSource::Game)) return;
+	ExecuteActions(ValueExternChangedActions);
+}
+
+#if WITH_EDITOR
+void UVSSettingItem::EditorPostInitialized_Implementation()
+{
+	if (!GIsPlayInEditorWorld)
+	{
+		if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
+		{
+			if (SettingSubsystem->GetSettingItemByTag(ItemTag))
+			{
+				SetToBySource(EVSSettingItemValueSource::Game);
+				Confirm();
+			}
+		}
+	}
+}
+#endif
 
 void UVSSettingItem::OnValueUpdated_Implementation()
 {
@@ -175,7 +205,7 @@ void UVSSettingItem::OnValueUpdated_Implementation()
 }
 
 #if WITH_EDITOR
-bool UVSSettingItem::AllowEditorChangingItemTag_Implementation() const
+bool UVSSettingItem::EditorAllowChangingItemTag_Implementation() const
 {
 	return true;
 }

@@ -35,15 +35,25 @@ void UVSWidgetBinder::UpdateBinder_Implementation(float DeltaTime)
 	
 }
 
-void UVSWidgetBinder::RebindWidgetByType(FName TypeName)
+UWidget* UVSWidgetBinder::GetBoundTypedWidget(const FName TypeName) const
 {
 	if (UVSWidgetController* WidgetController = Cast<UVSWidgetController>(WidgetControllerPrivate.Get()))
 	{
 		if (UWidget* Widget = WidgetController->GetBoundTypedWidget(TypeName))
 		{
-			UnbindTypedWidget(TypeName, Widget);
-			BindTypedWidget(TypeName, Widget);
+			return Widget;
 		}
+	}
+
+	return nullptr;
+}
+
+void UVSWidgetBinder::RebindWidgetByType(FName TypeName)
+{
+	if (UWidget* Widget = GetBoundTypedWidget(TypeName))
+	{
+		UnbindTypedWidget(TypeName, Widget);
+		BindTypedWidget(TypeName, Widget);
 	}
 }
 

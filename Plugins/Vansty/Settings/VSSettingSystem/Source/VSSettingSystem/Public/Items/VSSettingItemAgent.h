@@ -16,19 +16,23 @@ UCLASS(DisplayName = "VS.Settings.Item.Agent")
 class VSSETTINGSYSTEM_API UVSSettingItemAgent : public UVSSettingItem
 {
 	GENERATED_UCLASS_BODY()
-	
+
+	friend class UVSSettingSubsystem;
+
 public:
 	//~ Begin UObject Interface
-	virtual void PostLoad() override;
 #if WITH_EDITOR
 	virtual void PostCDOCompiled(const FPostCDOCompiledContext& Context) override;
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 	//~ End UObject Interface
-	
+
+protected:
 	//~ Begin UVSSettingItemBase Interface
 	virtual void Initialize_Implementation() override;
 	virtual void Uninitialize_Implementation() override;
+
+public:
 	virtual void Load_Implementation() override;
 	virtual void Validate_Implementation() override;
 	virtual void Apply_Implementation() override;
@@ -37,8 +41,13 @@ public:
 	virtual bool IsValueValid_Implementation() const override;
 	virtual void SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) override;
 	virtual bool EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const override;
+
+protected:
+#if WITH_EDITOR
+	virtual void EditorPostInitialized_Implementation() override;
+#endif
 	//~ End UVSSettingItemBase Interface
-	
+
 	TArray<UVSSettingItem*> GetDirectSubSettingItems() const { return SubSettingItems; };
 	TArray<UVSSettingItem*> GetRecursiveSubSettingItems() const;
 

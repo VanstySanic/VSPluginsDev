@@ -37,6 +37,21 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Settings", meta = (ConfigRestartRequired = "true"))
 	TArray<TSoftClassPtr<UVSSettingItemAgent>> SettingItemAgentClasses;
 
+	UPROPERTY(EditAnywhere, Config, Category = "Settings|Display Names", meta = (ConfigRestartRequired = "true"))
+	FText NoLimitsDisplayName;
+	
+	UPROPERTY(EditAnywhere, Config, Category = "Settings|Display Names", meta = (ConfigRestartRequired = "true"))
+	TMap<bool, FText> OnOffDisplayNames;
+
+	UPROPERTY(EditAnywhere, Config, Category = "Settings|Display Names", meta = (ConfigRestartRequired = "true"))
+	TMap<bool, FText> EnabledStateDisplayNames;
+	
+	UPROPERTY(EditAnywhere, Config, Category = "Settings|Display Names", meta = (ConfigRestartRequired = "true"))
+	TMap<TEnumAsByte<EWindowMode::Type>, FText> WindowModeDisplayNames;
+
+	UPROPERTY(EditAnywhere, Config, Category = "Settings|Display Names", meta = (ConfigRestartRequired = "true"))
+	TMap<TEnumAsByte<EAntiAliasingMethod>, FText> AntiAliasingMethodDisplayNames;
+	
 private:
 #if WITH_EDITOR
 	TArray<TSoftClassPtr<UVSSettingItemAgent>> EditorSettingItemAgentClasses;

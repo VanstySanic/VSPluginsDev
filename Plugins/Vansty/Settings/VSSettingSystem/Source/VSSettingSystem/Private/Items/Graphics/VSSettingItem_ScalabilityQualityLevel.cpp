@@ -14,15 +14,6 @@ UVSSettingItem_ScalabilityQualityLevel::UVSSettingItem_ScalabilityQualityLevel(c
 	ItemTag = UGameplayTagsManager::Get().RequestGameplayTag("VS.SettingSystem.Item.Scalability.QualityLevel");
 }
 
-void UVSSettingItem_ScalabilityQualityLevel::PostLoad()
-{
-	Super::PostLoad();
-
-#if WITH_EDITORONLY_DATA
-	EditorPreviewQualityLevel = GetQualityLevel(EVSSettingItemValueSource::System);
-#endif
-}
-
 #if WITH_EDITOR
 void UVSSettingItem_ScalabilityQualityLevel::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
@@ -64,9 +55,8 @@ void UVSSettingItem_ScalabilityQualityLevel::OnValueUpdated_Implementation()
 
 #if WITH_EDITORONLY_DATA
 	EditorPreviewQualityLevel = GetQualityLevel(EVSSettingItemValueSource::System);
-	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
 #endif
-
+	
 	if (!GEngine || !GEngine->GameUserSettings) return;
 
 	/** Sync to GameUserSettings. */
@@ -113,7 +103,7 @@ void UVSSettingItem_ScalabilityQualityLevel::OnValueUpdated_Implementation()
 	}
 	else if (ItemTag == EVSSettingItem::Scalability::QualityLevel::Landscape)
 	{
-		
+		/** Do nothing. */
 	}
 }
 
@@ -151,6 +141,29 @@ int32 UVSSettingItem_ScalabilityQualityLevel::GetIntegerValue_Implementation(con
 	return Super::GetIntegerValue_Implementation(ValueSource);
 }
 
+FText UVSSettingItem_ScalabilityQualityLevel::ValueStringToText_Implementation(const FString& String) const
+{
+	static TMap<FString, FText> OutMap = TMap<FString, FText>
+	{
+		{ "0", Scalability::GetQualityLevelText(0, 5) },
+		{ "1", Scalability::GetQualityLevelText(1, 5) },
+		{ "2", Scalability::GetQualityLevelText(2, 5) },
+		{ "3", Scalability::GetQualityLevelText(3, 5) },
+		{ "4", Scalability::GetQualityLevelText(4, 5) },
+	};
+	
+	return OutMap.FindRef(String);
+}
+
+#if WITH_EDITOR
+void UVSSettingItem_ScalabilityQualityLevel::EditorPostInitialized_Implementation()
+{
+	Super::EditorPostInitialized_Implementation();
+
+	EditorPreviewQualityLevel = GetQualityLevel(EVSSettingItemValueSource::System);
+}
+#endif
+
 void UVSSettingItem_ScalabilityQualityLevel::SetQualityLevel(EPerQualityLevels InQualityLevel)
 {
 	SetIntegerValue(static_cast<int32>(InQualityLevel));
@@ -162,7 +175,7 @@ EPerQualityLevels UVSSettingItem_ScalabilityQualityLevel::GetQualityLevel(const 
 }
 
 #if WITH_EDITOR
-TMap<FGameplayTag, FText> UVSSettingItem_ScalabilityQualityLevel::GetScalabilityQualityLevelDefaultDisplayNames() const
+TMap<FGameplayTag, FText> UVSSettingItem_ScalabilityQualityLevel::GetScalabilityQualityLevelDefaultDisplayNames()
 {
 	static TMap<FGameplayTag, FText> ScalabilityQualityLevels = TMap<FGameplayTag, FText>
 	{
@@ -182,7 +195,7 @@ TMap<FGameplayTag, FText> UVSSettingItem_ScalabilityQualityLevel::GetScalability
 	return ScalabilityQualityLevels;
 }
 
-TMap<FGameplayTag, FString> UVSSettingItem_ScalabilityQualityLevel::GetScalabilityQualityLevelConsoleVariableNames() const
+TMap<FGameplayTag, FString> UVSSettingItem_ScalabilityQualityLevel::GetScalabilityQualityLevelConsoleVariableNames()
 {
 	static TMap<FGameplayTag, FString> ScalabilityQualityLevels = TMap<FGameplayTag, FString>
 	{

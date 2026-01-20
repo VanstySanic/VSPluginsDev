@@ -54,11 +54,6 @@ int32 UVSSettingItem_MotionBlur::GetIntegerValue_Implementation(const EVSSetting
 	return SuperValue;
 }
 
-float UVSSettingItem_MotionBlur::GetFloatValue_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
-{
-	return static_cast<float>(GetIntegerValue(ValueSource));
-}
-
 void UVSSettingItem_MotionBlur::SetMotionBlurQualityLevel(int32 QualityLevel)
 {
 	SetIntegerValue(QualityLevel);

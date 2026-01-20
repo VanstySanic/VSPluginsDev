@@ -13,7 +13,21 @@ class UCommonButtonGroupBase;
 class UCommonButtonBase;
 
 /**
- * 
+ * A CommonUI-based widget that manages a group of buttons as a single
+ * selectable option set.
+ *
+ * This widget dynamically generates and owns a collection of CommonButton
+ * instances, routes selection and navigation through an internal
+ * UCommonButtonGroupBase, and exposes unified focus, navigation, and
+ * refresh behavior to both C++ and Blueprint.
+ *
+ * It supports controller/keyboard navigation (horizontal or vertical),
+ * optional wrapping, external Prev/Next controls, and per-index button
+ * configuration through style and action settings.
+ *
+ * The button group can be refreshed at runtime to reflect changes in
+ * option count, layout, or binding state, and notifies listeners when
+ * regeneration is complete.
  */
 UCLASS()
 class VSWIDGETCORE_API UVSCommonButtonGroupWidget : public UCommonButtonBase
@@ -88,6 +102,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")
 	uint8 bNavigationAllowWrapping : 1;
 
+	/** If true, the navigation flow direction will be vertical instead of the default horizontal. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")
 	uint8 bVerticalFlowDirection : 1;
 	
@@ -114,18 +129,18 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category = "Button Group")
 	TObjectPtr<UPanelWidget> Panel_Buttons;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Rotator", meta = (BindWidgetOptional))
+	UPROPERTY(BlueprintReadOnly, Category = "Button Group", meta = (BindWidgetOptional))
 	TObjectPtr<UButton> Button_Prev;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Rotator", meta = (BindWidgetOptional))
+	UPROPERTY(BlueprintReadOnly, Category = "Button Group", meta = (BindWidgetOptional))
 	TObjectPtr<UButton> Button_Next;
 
+private:
 #if WITH_EDITORONLY_DATA
-	UPROPERTY(EditAnywhere, Category = "Button Group")
+	UPROPERTY(EditAnywhere, DisplayName = "Preview Index", Category = "Button Group")
 	int32 EditorPreviewIndex = INDEX_NONE;
 #endif
-
-private:
+	
 	UPROPERTY()
 	TObjectPtr<UCommonButtonGroupBase> ButtonGroupPrivate;
 

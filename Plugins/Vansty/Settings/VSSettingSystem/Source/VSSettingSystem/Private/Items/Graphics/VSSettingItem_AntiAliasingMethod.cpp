@@ -1,6 +1,8 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Items/Graphics/VSSettingItem_AntiAliasingMethod.h"
+
+#include "VSSettingSystemConfig.h"
 #include "Engine/RendererSettings.h"
 #include "Items/VSSettingSystemTags.h"
 #include "Types/Math/VSMath.h"
@@ -14,15 +16,6 @@ UVSSettingItem_AntiAliasingMethod::UVSSettingItem_AntiAliasingMethod(const FObje
 	ConfigParams.ConfigKeyName = FString("r.AntiAliasingMethod");
 
 	SetConsoleVariableName("r.AntiAliasingMethod");
-}
-
-void UVSSettingItem_AntiAliasingMethod::PostLoad()
-{
-	Super::PostLoad();
-
-#if WITH_EDITORONLY_DATA
-	EditorPreviewAntiAliasingMethod = GetAntiAliasingMethod(EVSSettingItemValueSource::System);
-#endif
 }
 
 #if WITH_EDITOR
@@ -71,6 +64,29 @@ int32 UVSSettingItem_AntiAliasingMethod::GetIntegerValue_Implementation(const EV
 		
 	return Super::GetIntegerValue_Implementation(ValueSource);
 }
+
+FText UVSSettingItem_AntiAliasingMethod::ValueStringToText_Implementation(const FString& String) const
+{
+	static TMap<FString, FText> OutMap = TMap<FString, FText>
+	{
+		{ "0", UVSSettingSystemConfig::Get()->AntiAliasingMethodDisplayNames.FindRef(AAM_None) },
+		{ "1", UVSSettingSystemConfig::Get()->AntiAliasingMethodDisplayNames.FindRef(AAM_FXAA) },
+		{ "2", UVSSettingSystemConfig::Get()->AntiAliasingMethodDisplayNames.FindRef(AAM_TemporalAA) },
+		{ "3", UVSSettingSystemConfig::Get()->AntiAliasingMethodDisplayNames.FindRef(AAM_MSAA) },
+		{ "4", UVSSettingSystemConfig::Get()->AntiAliasingMethodDisplayNames.FindRef(AAM_TSR) },
+	};
+	
+	return OutMap.FindRef(String);
+}
+
+#if WITH_EDITOR
+void UVSSettingItem_AntiAliasingMethod::EditorPostInitialized_Implementation()
+{
+	Super::EditorPostInitialized_Implementation();
+
+	EditorPreviewAntiAliasingMethod = GetAntiAliasingMethod(EVSSettingItemValueSource::System);
+}
+#endif
 
 void UVSSettingItem_AntiAliasingMethod::SetAntiAliasingMethod(EAntiAliasingMethod InMethod)
 {

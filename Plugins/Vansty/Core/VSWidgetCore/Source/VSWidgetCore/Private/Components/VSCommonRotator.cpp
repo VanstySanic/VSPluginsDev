@@ -7,20 +7,23 @@ UVSCommonRotator::UVSCommonRotator(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bNavigationAllowWrapping(true)
 {
-	
+	bLocked = true;
 }
 
 void UVSCommonRotator::NativePreConstruct()
 {
 	Super::NativePreConstruct();
 
-	if (DefaultOptions.Num())
+	if (DefaultOptionTexts.Num())
 	{
-		PopulateTextLabels(DefaultOptions);
+		PopulateTextLabels(DefaultOptionTexts);
 	}
 
 #if WITH_EDITORONLY_DATA
-	SetSelectedItem(EditorPreviewIndex);
+	if (IsDesignTime())
+	{
+		SetSelectedItem(EditorPreviewIndex);
+	}
 #endif
 
 	if (IndexImageGroup)
@@ -89,6 +92,13 @@ void UVSCommonRotator::SetSelectedItem(int32 InValue)
 	{
 		IndexImageGroup->SetSelectedIndex(InValue);
 	}
+}
+
+TMap<UWidget*, FName> UVSCommonRotator::GetDesiredBoundTypedWidgets_Implementation() const
+{
+	TMap<UWidget*, FName> OutMap;
+	OutMap.Add(const_cast<UVSCommonRotator*>(this), FName("Options"));
+	return OutMap;
 }
 
 void UVSCommonRotator::OnButtonPrevClicked()

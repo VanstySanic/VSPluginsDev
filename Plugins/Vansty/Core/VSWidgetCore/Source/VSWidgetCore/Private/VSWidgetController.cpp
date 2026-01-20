@@ -3,6 +3,7 @@
 #include "VSWidgetController.h"
 #include "Components/Widget.h"
 #include "WidgetBinders/VSWidgetBinder.h"
+#include "WidgetBinders/VSDesiredBoundWidgetInterface.h"
 
 UVSWidgetController::UVSWidgetController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -19,7 +20,7 @@ void UVSWidgetController::BeginDestroy()
 	Super::BeginDestroy();
 }
 
-void UVSWidgetController::Register(const TMap<FName, UWidget*>& TypedWidgetsToBind)
+void UVSWidgetController::Register()
 {
 	if (bIsRegistered) return;
 	bIsRegistered = true;
@@ -50,11 +51,6 @@ void UVSWidgetController::Register(const TMap<FName, UWidget*>& TypedWidgetsToBi
 	{
 		UnbindWidget(TypedWidget.Value.Get(), TypedWidget.Key);
 		BindWidget(TypedWidget.Value.Get(), TypedWidget.Key);
-	}
-	
-	for (const TPair<FName, UWidget*>& TypedWidget : TypedWidgetsToBind)
-	{
-		BindWidget(TypedWidget.Value, TypedWidget.Key);
 	}
 }
 
@@ -94,13 +90,8 @@ void UVSWidgetController::Unregister()
 void UVSWidgetController::Reregister()
 {
 	if (!IsRegistered()) return;
-	TMap<FName, UWidget*> CopiedTypedBoundWidgets;;
-	for (const TPair<FName, TWeakObjectPtr<UWidget>>& TypedBoundWidget : BoundTypedWidgets)
-	{
-		CopiedTypedBoundWidgets.Emplace(TypedBoundWidget.Key, TypedBoundWidget.Value.Get());
-	}
 	Unregister();
-	Register(CopiedTypedBoundWidgets);
+	Register();
 }
 
 void UVSWidgetController::Initialize_Implementation()
@@ -128,6 +119,14 @@ void UVSWidgetController::BindWidget(UWidget* Widget, const FName TypeName)
 		if (WidgetBinder)
 		{
 			WidgetBinder->BindTypedWidget(TypeName, Widget);
+		}
+	}
+
+	if (Widget->GetClass()->ImplementsInterface(UVSDesiredBoundWidgetInterface::StaticClass()))
+	{
+		for (const TPair<UWidget*, FName>& DesiredBoundTypedWidget : IVSDesiredBoundWidgetInterface::Execute_GetDesiredBoundTypedWidgets(Widget))
+		{
+			BindWidget(DesiredBoundTypedWidget.Key, DesiredBoundTypedWidget.Value);
 		}
 	}
 }

@@ -1,7 +1,7 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Classes/Features/VSGameplayTagFeature.h"
-#include "Classes/VSPluginsCoreSettings.h"
+#include "Classes/Settings/VSPluginsCoreGameSettings.h"
 #include "Interfaces/VSGameplayTagFeatureInterface.h"
 #include "Net/UnrealNetwork.h"
 #include "Types/VSGameQueryTypes.h"
@@ -120,14 +120,14 @@ void UVSGameplayTagFeatureBase::InitDefaultGameplayTags()
 		}
 		else if (GetOwnerActor()->GetLocalRole() == ROLE_AutonomousProxy)
 		{
-			if (UVSPluginsCoreSettings::Get()->InitialAutonomousReplicatedGameplayTags.HasTagExact(GameplayTagCountMap.Key))
+			if (UVSPluginsCoreGameSettings::Get()->InitialAutonomousReplicatedGameplayTags.HasTagExact(GameplayTagCountMap.Key))
 			{
 				bShouldRemove = true;
 			}
 		}
 		else if (GetOwnerActor()->GetLocalRole() == ROLE_SimulatedProxy)
 		{
-			if (UVSPluginsCoreSettings::Get()->InitialSimulationReplicatedGameplayTags.HasTagExact(GameplayTagCountMap.Key))
+			if (UVSPluginsCoreGameSettings::Get()->InitialSimulationReplicatedGameplayTags.HasTagExact(GameplayTagCountMap.Key))
 			{
 				bShouldRemove = true;
 			}
@@ -620,7 +620,7 @@ void UVSGameplayTagFeatureBase::UpdateInitialReplicatedTag(const FGameplayTag& G
 {
 	if (!GetOwnerActor()->HasAuthority()) return;
 	const int32 CurrentCount = GetTagCount(GameplayTag);
-	if (UVSPluginsCoreSettings::Get()->InitialAutonomousReplicatedGameplayTags.HasTagExact(GameplayTag))
+	if (UVSPluginsCoreGameSettings::Get()->InitialAutonomousReplicatedGameplayTags.HasTagExact(GameplayTag))
 	{
 		const int32 CurrentIndex = InitialAutonomousReplicatedTagCounts.Tags.Find(GameplayTag);
 		if (CurrentIndex == INDEX_NONE && CurrentCount > 0)
@@ -639,7 +639,7 @@ void UVSGameplayTagFeatureBase::UpdateInitialReplicatedTag(const FGameplayTag& G
 		}
 	}
 
-	if (UVSPluginsCoreSettings::Get()->InitialSimulationReplicatedGameplayTags.HasTagExact(GameplayTag))
+	if (UVSPluginsCoreGameSettings::Get()->InitialSimulationReplicatedGameplayTags.HasTagExact(GameplayTag))
 	{
 		const int32 CurrentIndex = InitialSimulationReplicatedTagCounts.Tags.Find(GameplayTag);
 		if (CurrentIndex == INDEX_NONE && CurrentCount > 0)

@@ -2,6 +2,7 @@
 
 #include "VSSettingSubsystem.h"
 #include "VSSettingSystemConfig.h"
+#include "GameFramework/GameUserSettings.h"
 #include "Items/VSSettingItemAgent.h"
 
 UVSSettingSubsystem* UVSSettingSubsystem::Get()
@@ -12,6 +13,11 @@ UVSSettingSubsystem* UVSSettingSubsystem::Get()
 void UVSSettingSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+
+	if (GEngine && !GEngine->GameUserSettingsClass)
+	{
+		GEngine->GameUserSettingsClass = GEngine->GameUserSettingsClassName.TryLoadClass<UGameUserSettings>();
+	}
 
 	AddDirectSettingItemAgentClasses(UVSSettingSystemConfig::Get()->SettingItemAgentClasses);
 	
@@ -149,6 +155,10 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 		{
 			SettingItemAgent->Initialize();
 			SettingItemAgent->bHasBeenInitialized = true;
+			
+#if WITH_EDITOR
+			SettingItemAgent->EditorPostInitialized();
+#endif
 		}
 	}
 

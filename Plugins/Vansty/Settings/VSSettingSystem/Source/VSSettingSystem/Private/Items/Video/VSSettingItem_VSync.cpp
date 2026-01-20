@@ -1,6 +1,8 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Items/Video/VSSettingItem_VSync.h"
+
+#include "VSSettingSystemConfig.h"
 #include "GameFramework/GameUserSettings.h"
 #include "Items/VSSettingSystemTags.h"
 
@@ -25,6 +27,12 @@ void UVSSettingItem_VSync::OnValueUpdated_Implementation()
 		const bool bVSyncEnabled = GetVSyncEnabled(EVSSettingItemValueSource::System);
 		GEngine->GameUserSettings->SetVSyncEnabled(bVSyncEnabled);
 	}
+}
+
+FText UVSSettingItem_VSync::ValueStringToText_Implementation(const FString& String) const
+{
+	const bool bValue = GetValueFromString<bool>(String);
+	return UVSSettingSystemConfig::Get()->EnabledStateDisplayNames.FindRef(bValue);
 }
 
 void UVSSettingItem_VSync::SetVSyncEnabled(bool bEnabled)

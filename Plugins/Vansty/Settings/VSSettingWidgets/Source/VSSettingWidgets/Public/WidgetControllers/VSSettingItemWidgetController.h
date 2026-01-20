@@ -24,7 +24,8 @@ public:
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 	//~ End UObject Interface
-	
+
+protected:
 	//~ Begin UVSWidgetController Interface
 	virtual void Initialize_Implementation() override;
 	virtual void Uninitialize_Implementation() override;
@@ -32,6 +33,7 @@ public:
 	virtual void UnbindTypedWidget_Implementation(const FName TypeName, UWidget* Widget) override;
 	//~ End UVSWidgetController Interface
 
+public:
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	UVSSettingItem* GetSettingItem() const;
 

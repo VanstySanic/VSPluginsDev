@@ -16,24 +16,25 @@ class VSSETTINGSYSTEM_API UVSSettingItem_ScalabilityQualityLevel : public UVSCon
 
 public:
 	//~ Begin UObject Interface
-	virtual void PostLoad() override;
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 	//~ End UObject Interface
 
-protected:
 	//~ Begin UVSSettingItem Interface
 	virtual bool IsValueValid_Implementation() const override;
 	virtual void Validate_Implementation() override;
-	virtual void OnValueUpdated_Implementation() override;
 	virtual int32 GetIntegerValue_Implementation(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const override;
+	virtual FText ValueStringToText_Implementation(const FString& String) const override;
 
-	#if WITH_EDITOR
-	virtual bool AllowEditorChangingValueType_Implementation() const override { return false; }
-	virtual bool AllowEditorChangingConfigParams_Implementation() const override { return false; }
-	virtual bool AllowEditorChangingEditorPreviewValue_Implementation() const override { return false; }
-	virtual bool AllowEditorChangingConsoleVariableName_Implementation() const override { return false; }
+protected:
+	virtual void OnValueUpdated_Implementation() override;
+#if WITH_EDITOR
+	virtual void EditorPostInitialized_Implementation() override;
+	virtual bool EditorAllowChangingValueType_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingConfigParams_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingEditorPreviewValue_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingConsoleVariableName_Implementation() const override { return false; }
 #endif
 	//~ End UVSSettingItem Interface
 
@@ -46,8 +47,8 @@ public:
 
 private:
 #if WITH_EDITOR
-	TMap<FGameplayTag, FText> GetScalabilityQualityLevelDefaultDisplayNames() const;
-	TMap<FGameplayTag, FString> GetScalabilityQualityLevelConsoleVariableNames() const;
+	static TMap<FGameplayTag, FText> GetScalabilityQualityLevelDefaultDisplayNames();
+	static TMap<FGameplayTag, FString> GetScalabilityQualityLevelConsoleVariableNames();
 #endif
 	
 protected:

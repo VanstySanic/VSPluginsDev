@@ -9,18 +9,6 @@ UVSCommonSettingItem::UVSCommonSettingItem(const FObjectInitializer& ObjectIniti
 	SetValueType(EVSCommonSettingValueType::None);
 }
 
-void UVSCommonSettingItem::PostLoad()
-{
-	Super::PostLoad();
-
-#if WITH_EDITORONLY_DATA
-	SetValueType(ValueType);
-	LastEditorPreviewValue = EditorPreviewValue;
-	SetEditorPreviewValueString(GetStringValue());
-	LastEditorConfigParams = ConfigParams;
-#endif
-}
-
 #if WITH_EDITOR
 void UVSCommonSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
@@ -101,12 +89,6 @@ void UVSCommonSettingItem::OnValueUpdated_Implementation()
 	
 #if WITH_EDITOR
 	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
-
-	if (!GIsPlayInEditorWorld && HasBeenInitialized())
-	{
-		ExecuteAction(EVSSettingItemAction::Apply);
-		ExecuteAction(EVSSettingItemAction::Confirm);
-	}
 #endif
 }
 
@@ -203,6 +185,22 @@ void UVSCommonSettingItem::Confirm_Implementation()
 
 	ConfirmedValue = CurrentValue;
 }
+
+#if WITH_EDITOR
+void UVSCommonSettingItem::EditorPostInitialized_Implementation()
+{
+	if (!GIsPlayInEditorWorld)
+	{
+		SetValueType(ValueType);
+	}
+	
+	Super::EditorPostInitialized_Implementation();
+
+	LastEditorPreviewValue = EditorPreviewValue;
+	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
+	LastEditorConfigParams = ConfigParams;
+}
+#endif
 
 bool UVSCommonSettingItem::GetBooleanValue_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
 {
@@ -487,7 +485,7 @@ void UVSCommonSettingItem::SetBooleanValue(bool bNewValue)
 	}
 	else if (CurrentValue != PrevValue)
 	{
-		NotifyValueUpdate(true);
+		NotifyValueUpdated(true);
 	}
 }
 
@@ -501,7 +499,7 @@ void UVSCommonSettingItem::SetIntegerValue(int32 NewValue)
 	}
 	else if (CurrentValue != PrevValue)
 	{
-		NotifyValueUpdate(true);
+		NotifyValueUpdated(true);
 	}
 }
 
@@ -515,7 +513,7 @@ void UVSCommonSettingItem::SetLongIntegerValue(int64 NewValue)
 	}
 	else if (CurrentValue != PrevValue)
 	{
-		NotifyValueUpdate(true);
+		NotifyValueUpdated(true);
 	}
 }
 
@@ -529,7 +527,7 @@ void UVSCommonSettingItem::SetFloatValue(float NewValue)
 	}
 	else if (CurrentValue != PrevValue)
 	{
-		NotifyValueUpdate(true);
+		NotifyValueUpdated(true);
 	}
 }
 
@@ -543,7 +541,7 @@ void UVSCommonSettingItem::SetDoubleValue(double NewValue)
 	}
 	else if (CurrentValue != PrevValue)
 	{
-		NotifyValueUpdate(true);
+		NotifyValueUpdated(true);
 	}
 }
 
@@ -557,8 +555,13 @@ void UVSCommonSettingItem::SetStringValue(const FString& NewValue)
 	}
 	else if (CurrentValue != PrevValue)
 	{
-		NotifyValueUpdate(true);
+		NotifyValueUpdated(true);
 	}
+}
+
+FText UVSCommonSettingItem::ValueStringToText_Implementation(const FString& String) const
+{
+	return FText::FromString(String);
 }
 
 void UVSCommonSettingItem::SetValueType(EVSCommonSettingValueType::Type NewValueType)
@@ -608,12 +611,12 @@ void UVSCommonSettingItem::SetValueType(EVSCommonSettingValueType::Type NewValue
 	SetUnionValueFromString(ValueString, CurrentValue);
 
 #if WITH_EDITOR
-	SetEditorPreviewValueString(GetStringValue());
+	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
 #endif
 }
 
 #if WITH_EDITOR
-bool UVSCommonSettingItem::AllowEditorChangingEditorPreviewValue_Implementation() const
+bool UVSCommonSettingItem::EditorAllowChangingEditorPreviewValue_Implementation() const
 {
 	return true;
 }
@@ -621,6 +624,7 @@ bool UVSCommonSettingItem::AllowEditorChangingEditorPreviewValue_Implementation(
 void UVSCommonSettingItem::SetEditorPreviewValueString(const FString& NewValue)
 {
 	EditorPreviewValue = NewValue;
+	EditorPreviewText = ValueStringToText(EditorPreviewValue);
 	
 	int32 Index = INDEX_NONE;
 	if (ValueType != EVSCommonSettingValueType::None && ValueType != EVSCommonSettingValueType::String)
@@ -650,12 +654,12 @@ void UVSCommonSettingItem::SetEditorPreviewValueString(const FString& NewValue)
 #endif
 
 #if WITH_EDITOR
-bool UVSCommonSettingItem::AllowEditorChangingValueType_Implementation() const
+bool UVSCommonSettingItem::EditorAllowChangingValueType_Implementation() const
 {
 	return true;
 }
 
-bool UVSCommonSettingItem::AllowEditorChangingConfigParams_Implementation() const
+bool UVSCommonSettingItem::EditorAllowChangingConfigParams_Implementation() const
 {
 	return true;
 }

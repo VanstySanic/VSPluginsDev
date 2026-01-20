@@ -1,6 +1,8 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Items/Video/VSSettingItem_FrameRateLimit.h"
+
+#include "VSSettingSystemConfig.h"
 #include "GameFramework/GameUserSettings.h"
 #include "Items/VSSettingSystemTags.h"
 
@@ -28,6 +30,16 @@ void UVSSettingItem_FrameRateLimit::Validate_Implementation()
 	if (IsValueValid()) return;
 	const float PrevFrameRateLimit = GetFrameRateLimit(EVSSettingItemValueSource::System);
 	SetFloatValue(FMath::Max(PrevFrameRateLimit, 0.f));
+}
+
+FText UVSSettingItem_FrameRateLimit::ValueStringToText_Implementation(const FString& String) const
+{
+	if (String == "0")
+	{
+		return UVSSettingSystemConfig::Get()->NoLimitsDisplayName;
+	}
+	
+	return FText::FromString(String + "FPS");
 }
 
 void UVSSettingItem_FrameRateLimit::OnValueUpdated_Implementation()

@@ -18,7 +18,7 @@ UVSCommonButtonGroupWidget::UVSCommonButtonGroupWidget(const FObjectInitializer&
 	, bDifferRefreshment(false)
 {
 	SetIsFocusable(true);
-	
+	bLocked = true;
 	ButtonGroupPrivate = CreateDefaultSubobject<UCommonButtonGroupBase>(TEXT("ButtonGroup"));
 }
 
@@ -34,6 +34,13 @@ void UVSCommonButtonGroupWidget::NativePreConstruct()
 	{
 		RefreshButtons();
 	}
+	
+#if WITH_EDITOR
+	if (IsDesignTime() && ButtonGroupPrivate)
+	{
+		ButtonGroupPrivate->SelectButtonAtIndex(EditorPreviewIndex);	
+	}
+#endif
 }
 
 bool UVSCommonButtonGroupWidget::Initialize()
@@ -52,7 +59,7 @@ bool UVSCommonButtonGroupWidget::Initialize()
 	
 	OnNavigation.BindUObject(this, &UVSCommonButtonGroupWidget::HandleNavigation);
 	ButtonGroupPrivate->OnSelectedButtonBaseChanged.AddUniqueDynamic(this, &UVSCommonButtonGroupWidget::OnButtonGroupSelectionChanged);
-	ButtonGroupPrivate->OnButtonBaseClicked.AddUniqueDynamic(this, &UVSCommonButtonGroupWidget::UVSCommonButtonGroupWidget::OnButtonGroupButtonClicked);
+	ButtonGroupPrivate->OnButtonBaseClicked.AddUniqueDynamic(this, &UVSCommonButtonGroupWidget::OnButtonGroupButtonClicked);
 	
 	return true;
 }
@@ -88,11 +95,11 @@ FNavigationReply UVSCommonButtonGroupWidget::NativeOnNavigation(const FGeometry&
 
 void UVSCommonButtonGroupWidget::RefreshButtons()
 {
-	if (!Panel_Buttons) return;
+	if (!Panel_Buttons || !WidgetTree || !ButtonClass) return;
 
 	Panel_Buttons->ClearChildren();
 	ButtonGroupPrivate->RemoveAll();
-
+	ButtonsPrivate.Empty();
 	for (int i = 0; i < ButtonNum; ++i)
 	{
 		UCommonButtonBase* Button = WidgetTree->ConstructWidget<UCommonButtonBase>(ButtonClass);
@@ -123,13 +130,6 @@ void UVSCommonButtonGroupWidget::RefreshButtons()
 	}
 	
 	ButtonGroupPrivate->AddWidgets(ButtonsPrivate);
-
-#if WITH_EDITORONLY_DATA
-	if (IsDesignTime())
-	{
-		ButtonGroupPrivate->SelectButtonAtIndex(EditorPreviewIndex);
-	}
-#endif
 
 	if (bSupportButtonFocus && DesiredFocusButtonIndex >= 0 && ButtonsPrivate.IsValidIndex(DesiredFocusButtonIndex))
 	{
@@ -216,9 +216,9 @@ TSharedPtr<SWidget> UVSCommonButtonGroupWidget::HandleNavigation(EUINavigation U
 			/** Don't know why the internal button is always not focusable even if set. Need to hack in that way. */
 			if (UCommonButtonInternalBase* InternalButton = VS_PRIVABLIC_MEMBER(ButtonGroupPrivate->GetSelectedButtonBase(), UCommonButtonBase, RootButton).Get())
 			{
-				if (TSharedPtr<class SCommonButton> SlateButton = VS_PRIVABLIC_MEMBER(InternalButton, UCommonButtonInternalBase, MyCommonButton))
+				if (TSharedPtr<SCommonButton> SlateButton = VS_PRIVABLIC_MEMBER(InternalButton, UCommonButtonInternalBase, MyCommonButton))
 				{
-					if (SlateButton.IsValid())
+					if (SlateButton.IsValid() && GetOwningLocalPlayer())
 					{
 						FSlateApplication::Get().SetUserFocus(GetOwningLocalPlayer()->GetPlatformUserId(), SlateButton);
 					}

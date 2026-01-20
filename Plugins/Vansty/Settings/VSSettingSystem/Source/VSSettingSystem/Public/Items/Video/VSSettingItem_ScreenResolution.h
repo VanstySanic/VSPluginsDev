@@ -17,14 +17,17 @@ class VSSETTINGSYSTEM_API UVSSettingItem_ScreenResolution : public UVSCommonSett
 
 public:
 	//~ Begin UObject Interface
-	virtual void PostLoad() override;
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 	//~ End UObject Interface
-
-protected:
+	
 	//~ Begin UVSSettingItem Interface
+protected:
+	virtual void Initialize_Implementation() override;
+	virtual void Uninitialize_Implementation() override;
+	
+public:
 	virtual void Load_Implementation() override;
 	virtual void Apply_Implementation() override;
 	virtual void Confirm_Implementation() override;
@@ -33,12 +36,15 @@ protected:
 	virtual void Validate_Implementation() override;
 	virtual void OnValueUpdated_Implementation() override;
 	virtual FString GetStringValue_Implementation(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const override;
-
+	virtual FText ValueStringToText_Implementation(const FString& String) const override;
+	
+protected:
 #if WITH_EDITOR
-	virtual bool AllowEditorChangingItemTag_Implementation() const override { return false; }
-	virtual bool AllowEditorChangingValueType_Implementation() const override { return false; }
-	virtual bool AllowEditorChangingConfigParams_Implementation() const override { return false; }
-	virtual bool AllowEditorChangingEditorPreviewValue_Implementation() const override { return false; }
+	virtual void EditorPostInitialized_Implementation() override;
+	virtual bool EditorAllowChangingItemTag_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingValueType_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingConfigParams_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingEditorPreviewValue_Implementation() const override { return false; }
 #endif
 	//~ End UVSSettingItem Interface
 
@@ -48,6 +54,16 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FIntPoint GetScreenResolution(EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "String"))
+	FIntPoint StringToScreenResolution(const FString& String) const;
+
+private:
+	void OnSystemResolutionChanged(uint32 ResX, uint32  ResY);
+	
+protected:
+	UPROPERTY(EditAnywhere, Category = "Settings")
+	uint8 bCheckForCommandLineOverrides : 1;
 
 protected:
 #if WITH_EDITORONLY_DATA

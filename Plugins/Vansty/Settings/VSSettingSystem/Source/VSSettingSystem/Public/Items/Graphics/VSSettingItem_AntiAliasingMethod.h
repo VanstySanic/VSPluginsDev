@@ -16,24 +16,25 @@ class VSSETTINGSYSTEM_API UVSSettingItem_AntiAliasingMethod : public UVSConsoleV
 
 public:
 	//~ Begin UObject Interface
-	virtual void PostLoad() override;
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 	//~ End UObject Interface
 
-protected:
 	//~ Begin UVSSettingItem Interface
 	virtual bool IsValueValid_Implementation() const override;
 	virtual void Validate_Implementation() override;
 	virtual int32 GetIntegerValue_Implementation(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const override;
-
+	virtual FText ValueStringToText_Implementation(const FString& String) const override;
+	
+protected:
 #if WITH_EDITOR
-	virtual bool AllowEditorChangingItemTag_Implementation() const override { return false; }
-	virtual bool AllowEditorChangingValueType_Implementation() const override { return false; }
-	virtual bool AllowEditorChangingConfigParams_Implementation() const override { return false; }
-	virtual bool AllowEditorChangingEditorPreviewValue_Implementation() const override { return false; }
-	virtual bool AllowEditorChangingConsoleVariableName_Implementation() const override { return false; }
+	virtual void EditorPostInitialized_Implementation() override;
+	virtual bool EditorAllowChangingItemTag_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingValueType_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingConfigParams_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingEditorPreviewValue_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingConsoleVariableName_Implementation() const override { return false; }
 #endif
 	//~ End UVSSettingItem Interface
 

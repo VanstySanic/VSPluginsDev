@@ -15,19 +15,21 @@ class VSSETTINGSYSTEM_API UVSSettingItem_FrameRateLimit : public UVSConsoleVaria
 	GENERATED_UCLASS_BODY()
 
 public:
-
-protected:
 	//~ Begin UVSSettingItem Interface
 	virtual bool IsValueValid_Implementation() const override;
 	virtual void Validate_Implementation() override;
-	virtual void OnValueUpdated_Implementation() override;
+	virtual FText ValueStringToText_Implementation(const FString& String) const override;
 
+protected:
 #if WITH_EDITOR
-	virtual bool AllowEditorChangingItemTag_Implementation() const override { return false; }
-	virtual bool AllowEditorChangingValueType_Implementation() const override { return false; }
-	virtual bool AllowEditorChangingConfigParams_Implementation() const override { return false; }
-	virtual bool AllowEditorChangingConsoleVariableName_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingItemTag_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingValueType_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingConfigParams_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingConsoleVariableName_Implementation() const override { return false; }
 #endif
+
+protected:
+	virtual void OnValueUpdated_Implementation() override;
 	//~ End UVSSettingItem Interface
 
 public:

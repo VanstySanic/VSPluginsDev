@@ -31,12 +31,11 @@ class VSSETTINGSYSTEM_API UVSSettingSubsystem : public UEngineSubsystem
 	
 public:
 	static UVSSettingSubsystem* Get();
-	
-	/** Initializes and registers setting items from configured agent classes. */
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
-	/** Uninitializes and clears the registry. */
+	//~ Begin UEngineSubsystem Interface
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void BeginDestroy() override;
+	//~ End UEngineSubsystem Interface
 
 	/** Returns a registered setting item by tag, or nullptr if not found. */
 	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "ItemTag"))

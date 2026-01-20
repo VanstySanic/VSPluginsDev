@@ -10,7 +10,12 @@
 class UImage;
 
 /**
- * 
+ * Auxiliary widget used to visualize the current index of an external
+ * selector, such as a rotator or button group.
+ *
+ * The widget generates a sequence of images and highlights the currently
+ * selected index using configurable brushes, allowing higher-level widgets
+ * to drive its state without managing individual image elements.
  */
 UCLASS()
 class VSWIDGETCORE_API UVSIndexImageGroupWidget : public UUserWidget
@@ -22,27 +27,29 @@ public:
 	virtual void NativePreConstruct() override;
 	//~ End UUserWidget Interface
 	
+	/** Rebuilds all index images based on the current ImageNum and layout settings. */
 	UFUNCTION(BlueprintCallable, Category = "Index Image Group")
 	void RefreshIndexImages();
-
+	
+	/** Updates the currently selected index and refreshes image highlight states. */
 	UFUNCTION(BlueprintCallable, Category = "Index Image Group")
 	void SetSelectedIndex(int32 Index);
 
 public:
+	/** Number of images to display. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Index Image Group")
 	int32 ImageNum = 1;
-
+		
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Index Image Group")
+	FVSCommonPanelSlotSettings ImageSlotSettings;
+	
 	/**
 	 * If false, a refreshment of images will be done during pre-construction.
-	 * If true, button refreshment should be executed manually.
+	 * If true, image refreshment should be executed manually.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Index Image Group")
 	uint8 bDifferRefreshment : 1;
 	
-		
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Index Image Group")
-	FVSCommonPanelSlotSettings ImageSlotSettings;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Index Image Group")
 	FSlateBrush SelectedBrush;
 
@@ -53,13 +60,13 @@ protected:
 	/** The panel widget that contains the buttons. */
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UPanelWidget> Panel_Images;
-
+	
+private:
 #if WITH_EDITORONLY_DATA
-	UPROPERTY(EditAnywhere, Category = "Index Image Group")
+	UPROPERTY(EditAnywhere, DisplayName = "Preview Index", Category = "Index Image Group")
 	int32 EditorPreviewIndex = INDEX_NONE;
 #endif
 	
-private:
 	UPROPERTY()
 	TArray<TObjectPtr<UImage>> ImagesPrivate;
 

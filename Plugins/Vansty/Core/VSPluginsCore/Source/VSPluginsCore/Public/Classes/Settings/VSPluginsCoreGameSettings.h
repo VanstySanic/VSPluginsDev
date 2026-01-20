@@ -5,35 +5,36 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Engine/DeveloperSettings.h"
-#include "VSPluginsCoreSettings.generated.h"
+#include "VSPluginsCoreGameSettings.generated.h"
 
 /**
  * 
  */
 UCLASS(Config = Game, DefaultConfig)
-class VSPLUGINSCORE_API UVSPluginsCoreSettings : public UDeveloperSettings
+class VSPLUGINSCORE_API UVSPluginsCoreGameSettings : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
 
 public:
-	static const UVSPluginsCoreSettings* Get();
+	//~ Begin UDeveloperSettings Interface
+	virtual FName GetCategoryName() const override;
+	//~ End UDeveloperSettings Interface
+	
+	static const UVSPluginsCoreGameSettings* Get();
 	
 	UFUNCTION(BlueprintPure, Category = "Settings")
-	static const UVSPluginsCoreSettings* GetPluginsCoreSettings_VS();
-
-	virtual FName GetCategoryName() const override;
-	
+	static const UVSPluginsCoreGameSettings* GetVSPluginsCoreGameSettings();
 
 public:
 	/** Gameplay tags whose initial explicit counts should be captured on the server and replicated once to autonomous proxies. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags|Feature")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags")
 	FGameplayTagContainer InitialAutonomousReplicatedGameplayTags;
 
 	/** Gameplay tags whose initial explicit counts should be captured on the server and replicated once to simulated proxies. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags|Feature")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags")
 	FGameplayTagContainer InitialSimulationReplicatedGameplayTags;
 
 	/** Gameplay tags on the AbilitySystemComponent to listen to for AnyCountChange events when using the ASC as the tag source. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags|Feature")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags")
 	FGameplayTagContainer AbilitySystemListeningTags;
 };

@@ -2,37 +2,19 @@
 
 #include "Items/VSSettingItemAgent.h"
 #include "VSSettingSubsystem.h"
-#include "Types/Math/VSArray.h"
 
 UVSSettingItemAgent::UVSSettingItemAgent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 }
 
-void UVSSettingItemAgent::PostLoad()
-{
-	Super::PostLoad();
-
-#if WITH_EDITORONLY_DATA
-	EditorSubSettingItems = SubSettingItems;
-#endif
-}
-
 #if WITH_EDITOR
 void UVSSettingItemAgent::PostCDOCompiled(const FPostCDOCompiledContext& Context)
 {
 	Super::PostCDOCompiled(Context);
-
+	
 	if (!Context.bIsRegeneratingOnLoad)
 	{
-		for (UVSSettingItem* RecursiveSubSettingItem : GetRecursiveSubSettingItems())
-		{
-			if (RecursiveSubSettingItem)
-			{
-				RecursiveSubSettingItem->PostLoad();
-			}
-		}
-		
 		if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
 		{
 			SettingSubsystem->RefreshEditorDirectSettingItemAgents();
@@ -46,15 +28,6 @@ void UVSSettingItemAgent::PostEditChangeProperty(struct FPropertyChangedEvent& P
 	{
 		if (!GetTypedOuter<UVSSettingItemAgent>() && EditorSubSettingItems != SubSettingItems)
 		{
-			const TArray<UVSSettingItem*> DifferentSettingItems = FVSArray::GetArrayDifference(SubSettingItems, EditorSubSettingItems);
-			for (UVSSettingItem* DifferentSettingItem : DifferentSettingItems)
-			{
-				if (DifferentSettingItem && SubSettingItems.Contains(DifferentSettingItem))
-				{
-					DifferentSettingItem->PostLoad();
-				}
-			}
-			
 			if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
 			{
 				SettingSubsystem->RefreshEditorDirectSettingItemAgents();
@@ -89,7 +62,7 @@ void UVSSettingItemAgent::Uninitialize_Implementation()
 		if (SettingItem && SettingItem->HasBeenInitialized())
 		{
 			SettingItem->Uninitialize();
-			//SettingItem->bHasBeenInitialized = false;
+			SettingItem->bHasBeenInitialized = false;
 		}
 	}
 
@@ -187,6 +160,23 @@ bool UVSSettingItemAgent::EqualsToBySource_Implementation(const EVSSettingItemVa
 
 	return true;
 }
+
+#if WITH_EDITOR
+void UVSSettingItemAgent::EditorPostInitialized_Implementation()
+{
+	Super::EditorPostInitialized_Implementation();
+
+	EditorSubSettingItems = SubSettingItems;
+
+	for (UVSSettingItem* SettingItem : SubSettingItems)
+	{
+		if (SettingItem)
+		{
+			SettingItem->EditorPostInitialized();
+		}
+	}
+}
+#endif
 
 TArray<UVSSettingItem*> UVSSettingItemAgent::GetRecursiveSubSettingItems() const
 {
