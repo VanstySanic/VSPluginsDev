@@ -8,7 +8,9 @@
 UVSSettingSystemConfig::UVSSettingSystemConfig(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	SystemDefaultText = LOCTEXT("DisplayName.State.SystemDefault", "System Default");
 	NoLimitsDisplayName = LOCTEXT("DisplayName.State.NoLimits", "No Limits");
+	VolumeMutedText = LOCTEXT("DisplayName.State.VolumeMuted", "Muted");
 	
 	OnOffDisplayNames = TMap<bool, FText>
 	{
@@ -36,6 +38,15 @@ UVSSettingSystemConfig::UVSSettingSystemConfig(const FObjectInitializer& ObjectI
 		{ AAM_TemporalAA, LOCTEXT("DisplayName.State.AntiAliasingMethod.TemporalAA", "TAA") },
 		{ AAM_MSAA, LOCTEXT("DisplayName.State.AntiAliasingMethod.Fullscreen", "MSAA") },
 		{ AAM_TSR, LOCTEXT("DisplayName.State.AntiAliasingMethod.Fullscreen", "TSR") },
+	};
+
+	MotionBlueQualityLevelNames = TMap<int32, FText>
+	{
+	{ 0, LOCTEXT("DisplayName.State.MotionBlueQuality.Off", "Off") },
+		{ 1, LOCTEXT("DisplayName.State.AntiAliasingMethod.Low", "Low") },
+		{ 2, LOCTEXT("DisplayName.State.AntiAliasingMethod.Medium", "Medium") },
+		{ 3, LOCTEXT("DisplayName.State.AntiAliasingMethod.High", "High") },
+		{ 4, LOCTEXT("DisplayName.State.AntiAliasingMethod.VeryHigh", "Very High") },
 	};
 }
 
@@ -82,3 +93,5 @@ FName UVSSettingSystemConfig::GetCategoryName() const
 {
 	return FName("Engine");
 }
+
+#undef LOCTEXT_NAMESPACE

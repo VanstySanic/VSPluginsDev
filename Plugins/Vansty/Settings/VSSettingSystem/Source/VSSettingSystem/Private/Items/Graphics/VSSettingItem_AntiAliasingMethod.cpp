@@ -1,7 +1,6 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Items/Graphics/VSSettingItem_AntiAliasingMethod.h"
-
 #include "VSSettingSystemConfig.h"
 #include "Engine/RendererSettings.h"
 #include "Items/VSSettingSystemTags.h"
@@ -12,7 +11,7 @@ UVSSettingItem_AntiAliasingMethod::UVSSettingItem_AntiAliasingMethod(const FObje
 {
 	ItemTag = EVSSettingItem::Graphics::AntiAliasingMethod;
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Graphics.AntiAliasingMethod", "DisplayName", "Anti-Aliasing Method");
-	ConfigParams.ConfigSection = FString("VS.SettingSystem.Item.Graphics.AntiAliasingMethod");
+	ConfigParams.ConfigSection = FString("VS.SettingSystem.Item.Graphics");
 	ConfigParams.ConfigKeyName = FString("r.AntiAliasingMethod");
 
 	SetConsoleVariableName("r.AntiAliasingMethod");
@@ -41,7 +40,11 @@ void UVSSettingItem_AntiAliasingMethod::Validate_Implementation()
 	Super::Validate_Implementation();
 
 	const EAntiAliasingMethod PrevAntiAliasingMethod = GetAntiAliasingMethod(EVSSettingItemValueSource::System);
-	SetIntegerValue(FMath::Clamp(PrevAntiAliasingMethod, 0, AAM_MAX - 1));
+	const EAntiAliasingMethod NewAntiAliasingMethod = (EAntiAliasingMethod)FMath::Clamp(PrevAntiAliasingMethod, 0, AAM_MAX - 1);
+	if (PrevAntiAliasingMethod != NewAntiAliasingMethod)
+	{
+		SetIntegerValue(NewAntiAliasingMethod);
+	}
 }
 
 int32 UVSSettingItem_AntiAliasingMethod::GetIntegerValue_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
@@ -79,14 +82,14 @@ FText UVSSettingItem_AntiAliasingMethod::ValueStringToText_Implementation(const 
 	return OutMap.FindRef(String);
 }
 
-#if WITH_EDITOR
-void UVSSettingItem_AntiAliasingMethod::EditorPostInitialized_Implementation()
+void UVSSettingItem_AntiAliasingMethod::OnValueUpdated_Implementation()
 {
-	Super::EditorPostInitialized_Implementation();
-
+	Super::OnValueUpdated_Implementation();
+	
+#if WITH_EDITOR
 	EditorPreviewAntiAliasingMethod = GetAntiAliasingMethod(EVSSettingItemValueSource::System);
-}
 #endif
+}
 
 void UVSSettingItem_AntiAliasingMethod::SetAntiAliasingMethod(EAntiAliasingMethod InMethod)
 {

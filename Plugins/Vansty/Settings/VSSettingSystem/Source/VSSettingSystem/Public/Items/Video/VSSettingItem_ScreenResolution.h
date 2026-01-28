@@ -27,7 +27,6 @@ protected:
 	virtual void Initialize_Implementation() override;
 	virtual void Uninitialize_Implementation() override;
 	
-public:
 	virtual void Load_Implementation() override;
 	virtual void Apply_Implementation() override;
 	virtual void Confirm_Implementation() override;
@@ -38,9 +37,7 @@ public:
 	virtual FString GetStringValue_Implementation(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const override;
 	virtual FText ValueStringToText_Implementation(const FString& String) const override;
 	
-protected:
 #if WITH_EDITOR
-	virtual void EditorPostInitialized_Implementation() override;
 	virtual bool EditorAllowChangingItemTag_Implementation() const override { return false; }
 	virtual bool EditorAllowChangingValueType_Implementation() const override { return false; }
 	virtual bool EditorAllowChangingConfigParams_Implementation() const override { return false; }
@@ -61,7 +58,11 @@ public:
 private:
 	void OnSystemResolutionChanged(uint32 ResX, uint32  ResY);
 	
-protected:
+public:
+	UPROPERTY(EditAnywhere, Category = "Settings")
+	uint8 DisableInWindowedFullscreenMode : 1;
+	
+	/** Used when applying. */
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	uint8 bCheckForCommandLineOverrides : 1;
 

@@ -26,7 +26,6 @@ protected:
 	virtual void Initialize_Implementation() override;
 	virtual void Uninitialize_Implementation() override;
 
-public:
 	virtual void Apply_Implementation() override;
 	virtual void Confirm_Implementation() override;
 	virtual void Save_Implementation() override;
@@ -35,10 +34,9 @@ public:
 	virtual int32 GetIntegerValue_Implementation(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const override;
 	virtual FText ValueStringToText_Implementation(const FString& String) const override;
 	
-protected:
 	virtual void OnValueUpdated_Implementation() override;
+	
 #if WITH_EDITOR
-	virtual void EditorPostInitialized_Implementation() override;
 	virtual bool EditorAllowChangingItemTag_Implementation() const override { return false; }
 	virtual bool EditorAllowChangingValueType_Implementation() const override { return false; }
 	virtual bool EditorAllowChangingConfigParams_Implementation() const override { return false; }

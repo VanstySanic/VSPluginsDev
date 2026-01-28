@@ -60,6 +60,9 @@ public:
 	UCommonButtonGroupBase* GetButtonGroup() const { return ButtonGroupPrivate; }
 
 private:
+	/** Handle and use controller navigation to rotate text */
+	TSharedPtr<SWidget> HandleNavigation(EUINavigation UINavigation);
+	
 	UFUNCTION()
 	void OnButtonGroupSelectionChanged(UCommonButtonBase* AssociatedButton, int32 ButtonIndex);
 	
@@ -71,9 +74,6 @@ private:
 
 	UFUNCTION()
 	void OnButtonNextClicked();
-	
-	/** Handle and use controller navigation to rotate text */
-	TSharedPtr<SWidget> HandleNavigation(EUINavigation UINavigation);
 	
 public:
 	FOnRefreshedDelegate OnRefreshed_Native;
@@ -89,14 +89,22 @@ public:
 	/** Button count in the group. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")
 	int32 ButtonNum = 1;
-	
-	/** Whether the buttons are focusable in the group (reactable by keyboard or gamepad). */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")
-	uint8 bSupportButtonFocus : 1;
 
+	/** Override the button action names if not empty, and the name in array is not empty. */
+	UPROPERTY(EditAnywhere, Category = "Rotator")
+	TArray<FText> OverridenButtonNames;
+
+	/** Disable buttons of these indexes when refreshed. */
+	UPROPERTY(EditAnywhere, Category = "Rotator")
+	TArray<int32> DefaultDisabledIndexes;
+	
 	/** Only works when greater than zero. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group", meta = (EditCondition = "bSupportButtonFocus"))
 	int32 DesiredFocusButtonIndex = INDEX_NONE;
+
+	/** Whether the buttons are focusable in the group (reactable by keyboard or gamepad). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")
+	uint8 bSupportButtonFocus : 1;
 
 	/** If true, allow wrapping in circle when switching buttons by navigation. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")

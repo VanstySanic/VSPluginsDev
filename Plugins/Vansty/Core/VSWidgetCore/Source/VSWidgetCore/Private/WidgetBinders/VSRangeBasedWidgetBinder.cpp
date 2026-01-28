@@ -1,11 +1,13 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "WidgetBinders/VSRangeBasedWidgetBinder.h"
-#include "Components/CheckBox.h"
+
+#include "Components/RichTextBlock.h"
 #include "Components/Slider.h"
 #include "Components/SpinBox.h"
 #include "Components/TextBlock.h"
 #include "Components/VSCommonRanger.h"
+#include "Kismet/KismetTextLibrary.h"
 
 UVSRangeBasedWidgetBinder::UVSRangeBasedWidgetBinder(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -32,6 +34,9 @@ void UVSRangeBasedWidgetBinder::BindTypedWidget_Implementation(const FName TypeN
 {
 	Super::BindTypedWidget_Implementation(TypeName, Widget);
 
+	const float ExternalValue = GetExternalValue();
+	const float CurrentValue = GetCurrentValue();
+
 	if (TypeName == FName("Range"))
 	{
 		if (USlider* Slider = Cast<USlider>(Widget))
@@ -40,7 +45,7 @@ void UVSRangeBasedWidgetBinder::BindTypedWidget_Implementation(const FName TypeN
 			Slider->SetMaxValue(ValueRange.Y);
 			Slider->SetStepSize(StepSize);
 			Slider->MouseUsesStep = bSnapByStep;
-			Slider->SetValue(GetExternalValue(true));
+			Slider->SetValue(ExternalValue);
 			
 			Slider->OnValueChanged.AddDynamic(this, &UVSRangeBasedWidgetBinder::OnWidgetValueChanged);
 		}
@@ -49,10 +54,13 @@ void UVSRangeBasedWidgetBinder::BindTypedWidget_Implementation(const FName TypeN
 			SpinBox->SetMinValue(ValueRange.X);
 			SpinBox->SetMaxValue(ValueRange.Y);
 			SpinBox->SetDelta(StepSize);
+			SpinBox->SetMinFractionalDigits(DisplayFractionDigitRange.X);
+			SpinBox->SetMaxFractionalDigits(DisplayFractionDigitRange.Y);
 			SpinBox->SetAlwaysUsesDeltaSnap(bSnapByStep);
 			
-			SpinBox->SetValue(GetExternalValue(true));
-
+			SpinBox->SetValue((float)INT32_MAX);
+			SpinBox->SetValue(ExternalValue);
+			
 			SpinBox->OnValueChanged.AddDynamic(this, &UVSRangeBasedWidgetBinder::OnWidgetValueChanged);
 		}
 		else if (UVSCommonRanger* CommonRanger = Cast<UVSCommonRanger>(Widget))
@@ -60,29 +68,27 @@ void UVSRangeBasedWidgetBinder::BindTypedWidget_Implementation(const FName TypeN
 			CommonRanger->ValueRange = ValueRange;
 			CommonRanger->StepSize = StepSize;
 			CommonRanger->bSnapByStep = bSnapByStep;
-			CommonRanger->bSupportMutation = bSupportMutation;
-			CommonRanger->MutedStateValue = MutedStateValue;
-			CommonRanger->RefreshRanger();
 			
-			CommonRanger->SetValue(GetExternalValue(true), false);
+			CommonRanger->DisplayFractionDigitRange = DisplayFractionDigitRange;
+			CommonRanger->DisplayTextFormat = DisplayTextFormat;
+			
+			CommonRanger->RefreshRanger();
+			CommonRanger->SetValue(ExternalValue);
 			
 			CommonRanger->OnValueChanged_Native.AddUObject(this, &UVSRangeBasedWidgetBinder::OnCommonRangerValueChanged);
 		}
 	}
-	else if (TypeName == FName("Mute"))
-	{
-		if (UCheckBox* CheckBox = Cast<UCheckBox>(Widget))
-		{
-			CheckBox->SetIsChecked(GetExternalIsMuted());
-			CheckBox->OnCheckStateChanged.AddDynamic(this, &UVSRangeBasedWidgetBinder::OnWidgetMutedStateChanged);
-		}
-	}
 	else if (TypeName == FName("Content"))
 	{
+		const FText& ContentText = GetContentText();
+
 		if (UTextBlock* TextBlock = Cast<UTextBlock>(Widget))
 		{
-			const FText& ContentText = GetContentText(GetCurrentValue());
 			TextBlock->SetText(ContentText);
+		}
+		else if (URichTextBlock* RichTextBlock = Cast<URichTextBlock>(Widget))
+		{
+			RichTextBlock->SetText(ContentText);
 		}
 	}
 }
@@ -108,25 +114,15 @@ void UVSRangeBasedWidgetBinder::UnbindTypedWidget_Implementation(const FName Typ
 	Super::UnbindTypedWidget_Implementation(TypeName, Widget);
 }
 
-bool UVSRangeBasedWidgetBinder::GetExternalIsMuted_Implementation() const
+float UVSRangeBasedWidgetBinder::GetExternalValue_Implementation() const
 {
-	return false;
+	return 0.f;
 }
 
-float UVSRangeBasedWidgetBinder::GetCurrentValue(bool bIgnoreMutedState) const
-{
-	if (GetCurrentIsMuted() && !bIgnoreMutedState)
-	{
-		return MutedStateValue;
-	}
-
-	return GetCurrentNonMutedValue();
-}
-
-float UVSRangeBasedWidgetBinder::GetCurrentNonMutedValue_Implementation() const
+float UVSRangeBasedWidgetBinder::GetCurrentValue() const
 {
 	UWidget* RangeWidget = GetBoundTypedWidget(FName("Range"));
-	if (!RangeWidget) return GetExternalValue(true);
+	if (!RangeWidget) return GetExternalValue();
 	
 	if (USlider* Slider = Cast<USlider>(RangeWidget))
 	{
@@ -138,37 +134,21 @@ float UVSRangeBasedWidgetBinder::GetCurrentNonMutedValue_Implementation() const
 	}
 	if (UVSCommonRanger* CommonRanger = Cast<UVSCommonRanger>(RangeWidget))
 	{
-		return CommonRanger->GetValue(true);
+		return CommonRanger->GetValue();
 	}
 
-	return GetExternalValue(true);
+	return GetExternalValue();
 }
 
-float UVSRangeBasedWidgetBinder::GetExternalValue_Implementation(bool bIgnoreMutedState) const
+FText UVSRangeBasedWidgetBinder::GetContentText() const
 {
-	return !bIgnoreMutedState && GetExternalIsMuted() ? 0.f : 0.f;
-}
+	const FText& ValueText = UKismetTextLibrary::Conv_DoubleToText(
+		GetCurrentValue() * DisplayValueMultiplier, HalfToZero,
+		false, true,
+		1, 324,
+		DisplayFractionDigitRange.X, DisplayFractionDigitRange.Y);
 
-bool UVSRangeBasedWidgetBinder::GetCurrentIsMuted_Implementation() const
-{
-	return false;
-}
-
-FText UVSRangeBasedWidgetBinder::GetContentText(float Value, bool bMuted, bool bSameValueMutedText) const
-{
-	if (!DisplayMutedText.IsEmpty())
-	{
-		if (bMuted)
-		{
-			return DisplayMutedText;
-		}
-		if (bSameValueMutedText && FMath::IsNearlyEqual(Value, MutedStateValue))
-		{
-			return DisplayMutedText;
-		}
-	}
-	
-	return FText::Format(DisplayFormatText, Value);
+	return FText::Format(DisplayTextFormat, ValueText);
 }
 
 void UVSRangeBasedWidgetBinder::RefreshRange()
@@ -199,44 +179,16 @@ bool UVSRangeBasedWidgetBinder::EditorAllowChangingSnapByStep_Implementation() c
 {
 	return true;
 }
-
-bool UVSRangeBasedWidgetBinder::EditorAllowChangingMutedStateValue_Implementation() const
-{
-	return true;
-}
-
-bool UVSRangeBasedWidgetBinder::EditorAllowChangingSupportMutation_Implementation() const
-{
-	return true;
-}
 #endif
 
 void UVSRangeBasedWidgetBinder::OnCultureChanged()
 {
-	RefreshRange();
+	RebindWidgetByType(FName("Content"));
 }
 
-void UVSRangeBasedWidgetBinder::OnCommonRangerValueChanged(UVSCommonRanger* Ranger, float Value, bool bIsMuteRedirect)
+void UVSRangeBasedWidgetBinder::OnCommonRangerValueChanged(UVSCommonRanger* Ranger, float Value)
 {
-	if (!Ranger->IsMuted() || !bIsMuteRedirect
-		|| !Ranger->IsMuted() && !bIsMuteRedirect)
-	{
-		OnBoundWidgetValueChanged(Value);
-	}
-}
-
-void UVSRangeBasedWidgetBinder::OnWidgetMutedStateChanged(bool bIsMuted)
-{
-	const bool bPrevIsMuted = bIsMuted;
-	bIsMuted = bIsMuted && bSupportMutation;
-	if (bPrevIsMuted != bIsMuted)
-	{
-		OnBoundWidgetValueChanged(bIsMuted);
-	}
-	else
-	{
-		RebindWidgetByType(FName("Mute"));
-	}
+	OnBoundWidgetValueChanged(Value);
 }
 
 void UVSRangeBasedWidgetBinder::OnBoundWidgetValueChanged(float Value)
@@ -244,5 +196,4 @@ void UVSRangeBasedWidgetBinder::OnBoundWidgetValueChanged(float Value)
 	RebindWidgetByType(FName("Content"));
 	OnWidgetValueChanged(Value);
 }
-
 

@@ -169,7 +169,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void NotifyValueExternChanged(bool bAllowSameNotify = false);
 
+	/** Defines whether the setting item will be loaded and handled in the subsystem. */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
+	bool ShouldCreateSettingItem() const;
+
 protected:
+	/** Initialization should be executed before any other actions. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	void Initialize();
 	
@@ -180,9 +185,6 @@ protected:
 	void OnValueUpdated();
 
 #if WITH_EDITOR
-	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
-	void EditorPostInitialized();
-	
 	/** Whether the ItemTag can be modified in the editor. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	bool EditorAllowChangingItemTag() const;
@@ -202,9 +204,19 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	FVSSettingItemInfo ItemInfo;
 
+	/** Execute when the game value changes inside the item. Runtime only. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Action")
+	TArray<TEnumAsByte<EVSSettingItemAction::Type>> InternalChangeActions;
+	
 	/** Execute when the game value changes outside the item. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
-	TArray<TEnumAsByte<EVSSettingItemAction::Type>> ValueExternChangedActions;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Action")
+	TArray<TEnumAsByte<EVSSettingItemAction::Type>> ExternalChangeActions;
+
+#if WITH_EDITORONLY_DATA
+	/** Execute when the game value changes inside the item when in editor details. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Action")
+	TArray<TEnumAsByte<EVSSettingItemAction::Type>> EditorChangeActions;
+#endif
 	
 private:
 	bool bHasBeenInitialized = false;

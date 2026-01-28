@@ -6,7 +6,10 @@
 UVSSettingItem::UVSSettingItem(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	
+#if WITH_EDITORONLY_DATA
+	EditorChangeActions.Add(EVSSettingItemAction::Apply);
+	EditorChangeActions.Add(EVSSettingItemAction::Confirm);
+#endif
 }
 
 #if WITH_EDITOR
@@ -161,43 +164,34 @@ void UVSSettingItem::ExecuteActions(const TArray<TEnumAsByte<EVSSettingItemActio
 
 void UVSSettingItem::NotifyValueUpdated(bool bAllowCleanNotify)
 {
-	if (!HasBeenInitialized() || !bAllowCleanNotify && !IsDirty()) return;
+	if (!HasBeenInitialized() || (!bAllowCleanNotify && !IsDirty()) || !ItemTag.IsValid()) return;
 	
 	OnValueUpdated();
 	OnUpdated_Native.Broadcast(this);
 	OnUpdated.Broadcast(this);
-	
+
 #if WITH_EDITOR
-	if (!GIsPlayInEditorWorld && HasBeenInitialized())
+	if (!GIsPlayInEditorWorld)
 	{
-		ExecuteAction(EVSSettingItemAction::Apply);
-		ExecuteAction(EVSSettingItemAction::Confirm);
+		ExecuteActions(EditorChangeActions);
 	}
+	else
 #endif
+	{
+		ExecuteActions(InternalChangeActions);
+	}
 }
 
 void UVSSettingItem::NotifyValueExternChanged(bool bAllowSameNotify)
 {
-	if (!bAllowSameNotify && EqualsToBySource(EVSSettingItemValueSource::Game)) return;
-	ExecuteActions(ValueExternChangedActions);
+	if (!HasBeenInitialized() || (!bAllowSameNotify && EqualsToBySource(EVSSettingItemValueSource::Game))) return;
+	ExecuteActions(ExternalChangeActions);
 }
 
-#if WITH_EDITOR
-void UVSSettingItem::EditorPostInitialized_Implementation()
+bool UVSSettingItem::ShouldCreateSettingItem_Implementation() const
 {
-	if (!GIsPlayInEditorWorld)
-	{
-		if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
-		{
-			if (SettingSubsystem->GetSettingItemByTag(ItemTag))
-			{
-				SetToBySource(EVSSettingItemValueSource::Game);
-				Confirm();
-			}
-		}
-	}
+	return true;
 }
-#endif
 
 void UVSSettingItem::OnValueUpdated_Implementation()
 {

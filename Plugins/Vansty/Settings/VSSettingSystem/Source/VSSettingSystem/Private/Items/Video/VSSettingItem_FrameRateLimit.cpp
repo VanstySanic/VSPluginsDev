@@ -10,9 +10,14 @@ UVSSettingItem_FrameRateLimit::UVSSettingItem_FrameRateLimit(const FObjectInitia
 	: Super(FObjectInitializer)
 {
 	ItemTag = EVSSettingItem::Video::FrameRateLimit;
-	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.FrameRateLimit", "DisplayName", "Frame Rate Limit");
+	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.FrameRateLimit", "DisplayName", "Frame-Rate Limit");
 	ConfigParams.ConfigSection = FString("/Script/Engine.GameUserSettings");
 	ConfigParams.ConfigKeyName = FString("t.MaxFPS");
+
+	DisplayNumericTextFormat = FText::FromString(TEXT("{0} FPS"));
+	DisplayNumericFractionDigitRange = FIntPoint(0, 0);
+	
+	ExternalChangeActions.Empty();
 
 	SetConsoleVariableName("t.MaxFPS");
 }
@@ -34,12 +39,13 @@ void UVSSettingItem_FrameRateLimit::Validate_Implementation()
 
 FText UVSSettingItem_FrameRateLimit::ValueStringToText_Implementation(const FString& String) const
 {
-	if (String == "0")
+	const float Value = FCString::Atof(*String);
+	if (FMath::IsNearlyZero(Value))
 	{
 		return UVSSettingSystemConfig::Get()->NoLimitsDisplayName;
 	}
 	
-	return FText::FromString(String + "FPS");
+	return Super::ValueStringToText_Implementation(String);
 }
 
 void UVSSettingItem_FrameRateLimit::OnValueUpdated_Implementation()

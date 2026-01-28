@@ -10,6 +10,7 @@ class UCheckBox;
 class UTextBlock;
 class USpinBox;
 class USlider;
+
 /**
  * 
  */
@@ -18,49 +19,38 @@ class VSWIDGETCORE_API UVSCommonRanger : public UCommonButtonBase
 {
 	GENERATED_UCLASS_BODY()
 
-	DECLARE_MULTICAST_DELEGATE_ThreeParams(FValueChangedSignature, UVSCommonRanger* /** Ranger */, float /** Value */, bool /** bIsMutedValue */);
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FMuteStateChangedSignature, UVSCommonRanger* /** Ranger */, bool /** bMuted */);
-	
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FValueChangedEvent, UVSCommonRanger*, Ranger, float, Value, bool, bIsMutedValue);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FMuteStateChangedEvent, UVSCommonRanger*, Ranger, bool, bMuted);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FValueChangedSignature, UVSCommonRanger* /** Ranger */, float /** Value */);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FValueChangedEvent, UVSCommonRanger*, Ranger, float, Value);
 
 public:
 	//~ Begin UCommonButtonBase Interface
 	virtual void NativePreConstruct() override;
+	virtual void NativeDestruct() override;
 	virtual bool Initialize() override;
 	virtual FNavigationReply NativeOnNavigation(const FGeometry& MyGeometry, const FNavigationEvent& InNavigationEvent, const FNavigationReply& InDefaultReply) override;
-
-	virtual void NativeOnClicked() override;
 	//~ End UCommonButtonBase Interface
-
-
-	UFUNCTION(BlueprintCallable, Category = "Ranger")
-	void SetValue(float NewValue, bool bIsMutedValue = false);
-
-	UFUNCTION(BlueprintCallable, Category = "Ranger")
-	float GetValue(bool bIgnoreMuteState = false) const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Ranger")
-	bool IsMuted() const { return bIsMuted; }
+	virtual void SetValue(float NewValue);
 
 	UFUNCTION(BlueprintCallable, Category = "Ranger")
-	void SetIsMuted(bool bMuted);
+	virtual float GetValue() const { return CurrentValue; }
 	
 	UFUNCTION(BlueprintCallable, Category = "Ranger")
-	FText GetContentText(float Value, bool bMuted = false, bool bSameValueMutedText = true) const;
+	virtual FText GetContentText() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Ranger")
-	void RefreshRanger();
-	
-private:
-	void OnValueChangedInternal(float Value, bool bIsMutedValue);
+	virtual void RefreshRanger();
+
+protected:
+	virtual void OnValueChangedInternal();
 	void RefreshContentText();
-	
-	UFUNCTION()
-	void OnWidgetValueChanged(float Value);
 
 	UFUNCTION()
-	void OnWidgetMuteStateChanged(bool bMuted);
+	virtual void OnWidgetValueChanged(float Value);
+
+private:
+	void OnCultureChanged();
 	
 protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
@@ -70,20 +60,13 @@ protected:
 	TObjectPtr<USpinBox> SpinBox;
 	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
-	TObjectPtr<UCheckBox> CheckBox_Mute;
-	
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> TextBlock_Content;
 
 public:
 	FValueChangedSignature OnValueChanged_Native;
-	FMuteStateChangedSignature OnMuteStateChanged_Native;
 
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FValueChangedEvent OnValueChanged;
-
-	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
-	FMuteStateChangedEvent OnMuteStateChanged;
 	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
@@ -95,12 +78,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
 	uint8 bSnapByStep : 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
-	uint8 bSupportMutation : 1;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
-	float MutedStateValue = 0.f;
-
 	/**
 	 * If false, a refreshment of widgets will be done during pre-construction.
 	 * If true, widgets refreshment should be executed manually.
@@ -110,32 +87,22 @@ public:
 	
 	/** The content text format to display. If you want to show the digits, please put ‘{0}’ in it. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
-	FText DisplayFormatText = FText::FromString("{0}");
+	FText DisplayTextFormat = FText::FromString("{0}");
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
-	FIntPoint DisplayFractionDigitRange = FIntPoint(1, 324);
+	FIntPoint DisplayFractionDigitRange = FIntPoint(0, 324);
 
-	/** The text to display when muted. Not work if left empty. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
-	FText DisplayMutedText = FText::FromString("");
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
-	uint8 bDisplaySameValueMutedText : 1;
+	float DisplayValueMultiplier = 1.f;
 
 private:
 #if WITH_EDITORONLY_DATA
 	/** Non muted. */
 	UPROPERTY(EditAnywhere, DisplayName = "Preview Value", Category = "Ranger")
 	float EditorPreviewValue = 0.f;
-
-	UPROPERTY(EditAnywhere, DisplayName = "Preview Mute State", Category = "Ranger")
-	uint8 EditorPreviewMuteState : 1;
 #endif
 
 	/** The value that is set and is not concerned with mutation. Sync with slider and spinbox. */
-	float CurrentNonMuteValue = 0.f;
-	float LastRefreshedMutedValue = 0.f;
-	uint8 bIsMuted : 1;
+	float CurrentValue = 0.f;
 	uint8 bValueDelegatesBound : 1;
-	uint8 bMuteDelegateBound : 1;
 };

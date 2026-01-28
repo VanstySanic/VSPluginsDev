@@ -14,23 +14,15 @@ void UVSSettingSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
-	if (GEngine && !GEngine->GameUserSettingsClass)
+	FCoreDelegates::OnFEngineLoopInitComplete.AddLambda([this] ()
 	{
-		GEngine->GameUserSettingsClass = GEngine->GameUserSettingsClassName.TryLoadClass<UGameUserSettings>();
-	}
-
-	AddDirectSettingItemAgentClasses(UVSSettingSystemConfig::Get()->SettingItemAgentClasses);
-	
-	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
-	{
-		SettingItemAgent->ExecuteActions(TArray<TEnumAsByte<EVSSettingItemAction::Type>>
+		if (GEngine && !GEngine->GameUserSettingsClass)
 		{
-			EVSSettingItemAction::SetToDefault,
-			EVSSettingItemAction::Load,
-			EVSSettingItemAction::Apply,
-			EVSSettingItemAction::Confirm,
-		});
-	}
+			GEngine->GameUserSettingsClass = GEngine->GameUserSettingsClassName.TryLoadClass<UGameUserSettings>();
+		}
+		
+		AddDirectSettingItemAgentClasses(UVSSettingSystemConfig::Get()->SettingItemAgentClasses);
+	});
 }
 
 void UVSSettingSubsystem::BeginDestroy()
@@ -126,6 +118,7 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 		{
 			if (UVSSettingItemAgent* SettingItemAgent = AgentClass->GetDefaultObject<UVSSettingItemAgent>())
 			{
+				if (!SettingItemAgent || !SettingItemAgent->ShouldCreateSettingItem()) continue;
 				if (DirectSettingItemAgents.Contains(SettingItemAgent)) continue;
 				DirectSettingItemAgents.Add(SettingItemAgent);
 				AgentsToAdd.Add(SettingItemAgent);
@@ -143,40 +136,51 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 		
 		for (UVSSettingItem* SettingItem : SettingItemAgent->GetRecursiveSubSettingItems())
 		{
-			if (!SettingItem || !SettingItem->GetItemTag().IsValid()) continue;
+			if (!SettingItem || !SettingItem->GetItemTag().IsValid() || !SettingItem->ShouldCreateSettingItem()) continue;
+
 			SettingItems.Add(SettingItem);
 			TaggedSettingItems.Add(SettingItem->GetItemTag(), SettingItem);
 		}
 	}
 
+	/** Cache actions. */
+	TMap<UVSSettingItem*, TArray<TEnumAsByte<EVSSettingItemAction::Type>>> InternalChangeActions;
+	for (UVSSettingItem* SettingItem : SettingItems)
+	{
+		InternalChangeActions.Add(SettingItem, SettingItem->InternalChangeActions);
+		SettingItem->InternalChangeActions = TArray<TEnumAsByte<EVSSettingItemAction::Type>>();
+	}
+	
 	for (UVSSettingItemAgent* SettingItemAgent : AgentsToAdd)
 	{
-		if (!SettingItemAgent->HasBeenInitialized())
+		SettingItemAgent->Initialize();
+		SettingItemAgent->bHasBeenInitialized = true;
+	}
+
+	/** Execute actions after initialization and restore prev actions. */
+	TArray<TEnumAsByte<EVSSettingItemAction::Type>> InitActions = TArray<TEnumAsByte<EVSSettingItemAction::Type>>
+	{
+		EVSSettingItemAction::SetToDefault,
+		EVSSettingItemAction::SetToGame,
+		EVSSettingItemAction::Apply,
+		EVSSettingItemAction::Confirm,
+	};
+	for (EVSSettingItemAction::Type InitAction : InitActions)
+	{
+		for (UVSSettingItemAgent* SettingItemAgent : AgentsToAdd)
 		{
-			SettingItemAgent->Initialize();
-			SettingItemAgent->bHasBeenInitialized = true;
-			
-#if WITH_EDITOR
-			SettingItemAgent->EditorPostInitialized();
-#endif
+			SettingItemAgent->ExecuteAction(InitAction);
 		}
+	}
+	for (UVSSettingItem* SettingItem : SettingItems)
+	{
+		SettingItem->InternalChangeActions = InternalChangeActions.FindRef(SettingItem);
 	}
 
 	for (UVSSettingItem* SettingItem : SettingItems)
 	{
-		SettingItem->OnUpdated.AddDynamic(this, &UVSSettingSubsystem::OnSettingItemUpdated);
+		SettingItem->OnUpdated_Native.AddUObject(this, &UVSSettingSubsystem::OnSettingItemUpdated);
 	}
-
-#if WITH_EDITOR
-	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
-	{
-		SettingItemAgent->ExecuteActions(TArray<TEnumAsByte<EVSSettingItemAction::Type>>
-		{
-			EVSSettingItemAction::Apply,
-			EVSSettingItemAction::Confirm,
-		});
-	}
-#endif
 }
 
 #if WITH_EDITOR
@@ -186,7 +190,7 @@ void UVSSettingSubsystem::ClearEditorDirectSettingItemAgents()
 	{
 		if (SettingItem)
 		{
-			SettingItem->OnUpdated.RemoveDynamic(this, &UVSSettingSubsystem::OnSettingItemUpdated);
+			SettingItem->OnUpdated_Native.RemoveAll(this);
 		}
 	}
 	

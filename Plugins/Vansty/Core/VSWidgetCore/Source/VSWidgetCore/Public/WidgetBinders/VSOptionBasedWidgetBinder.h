@@ -6,6 +6,7 @@
 #include "VSWidgetBinder.h"
 #include "VSOptionBasedWidgetBinder.generated.h"
 
+class UVSCommonRanger;
 class UCommonButtonBase;
 
 /**
@@ -84,6 +85,7 @@ protected:
 
 private:
 	void OnCultureChanged();
+	void OnBoundWidgetValueChanged(int32 Index);
 
 	UFUNCTION()
 	void OnComboBoxStringOpening();
@@ -96,6 +98,12 @@ private:
 
 	UFUNCTION()
 	void OnButtonGroupValueChanged(UCommonButtonBase* AssociatedButton, int32 ButtonIndex);
+
+	UFUNCTION()
+	void OnSliderValueChanged(float Value);
+
+	UFUNCTION()
+	void OnCommonRangerValueChanged(UVSCommonRanger* Ranger, float Value);
 	
 protected:
 	/** If true, reverse the generated options after generation. */

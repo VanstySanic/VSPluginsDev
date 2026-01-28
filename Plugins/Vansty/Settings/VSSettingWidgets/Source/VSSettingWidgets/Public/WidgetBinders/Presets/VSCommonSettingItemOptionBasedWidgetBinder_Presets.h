@@ -19,8 +19,7 @@ protected:
 	virtual TArray<FString> GenerateOptions_Implementation() const override;
 	virtual TArray<FString> GenerateDisabledOptions_Implementation() const override;
 	//~ End UVSOptionBasedWidgetBinder Interface
-
-public:
 	
+public:
 
 };

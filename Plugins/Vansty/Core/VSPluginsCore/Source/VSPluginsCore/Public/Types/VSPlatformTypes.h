@@ -7,7 +7,7 @@
 #include "VSPlatformTypes.generated.h"
 
 USTRUCT(BlueprintType)
-struct FVSMonitorInfo
+struct VSPLUGINSCORE_API FVSMonitorInfo
 {
 	GENERATED_BODY()
 
@@ -26,7 +26,7 @@ struct FVSMonitorInfo
 
 	FVector2D GetRootPosition() const;
 	FVector2D GetCenterPosition(bool bWorkAreaOnly = false) const;
-	FVector2D GetCurrentResolution(bool bWorkAreaOnly = false) const;
+	FVector2D GetCurrentSize(bool bWorkAreaOnly = false) const;
 
 	UPROPERTY(BlueprintReadOnly)
 	FString Name;

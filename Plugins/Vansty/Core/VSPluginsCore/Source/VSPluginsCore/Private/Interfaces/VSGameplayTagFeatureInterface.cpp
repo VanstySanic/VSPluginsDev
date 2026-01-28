@@ -4,7 +4,9 @@
 
 UVSGameplayTagFeatureBase* IVSGameplayTagFeatureInterface::GetPrimaryGameplayTagFeature_Native() const
 {
-	UObject* Object = _getUObject();
-	if (!Object) return nullptr;
-	return Execute_GetPrimaryGameplayTagFeature(_getUObject());
+	if (UObject* Object = _getUObject())
+	{
+		return Execute_GetPrimaryGameplayTagFeature(Object);
+	}
+	return nullptr;
 }

@@ -14,11 +14,9 @@ class VSSETTINGSYSTEM_API UVSSettingItem_VSync : public UVSConsoleVariableSettin
 {
 	GENERATED_UCLASS_BODY()
 
-public:
+protected:
 	//~ Begin UVSConsoleVariableSettingItem Interface
 	virtual FText ValueStringToText_Implementation(const FString& String) const override;
-
-protected:
 	virtual void OnValueUpdated_Implementation() override;
 	//~ End UVSConsoleVariableSettingItem Interface
 

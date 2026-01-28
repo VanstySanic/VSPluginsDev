@@ -5,11 +5,7 @@
 UVSConsoleVariableSettingItem::UVSConsoleVariableSettingItem(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	ValueExternChangedActions = TArray<TEnumAsByte<EVSSettingItemAction::Type>>
-	{
-		EVSSettingItemAction::SetToGame,
-		EVSSettingItemAction::Confirm,
-	};
+
 }
 
 #if WITH_EDITOR
@@ -23,6 +19,13 @@ void UVSConsoleVariableSettingItem::PostEditChangeProperty(struct FPropertyChang
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 #endif
+
+void UVSConsoleVariableSettingItem::PostLoad()
+{
+	Super::PostLoad();
+
+	SetConsoleVariableName(ConsoleVariableName);
+}
 
 void UVSConsoleVariableSettingItem::Initialize_Implementation()
 {
@@ -152,14 +155,6 @@ FString UVSConsoleVariableSettingItem::GetStringValue_Implementation(const EVSSe
 }
 
 #if WITH_EDITOR
-
-void UVSConsoleVariableSettingItem::EditorPostInitialized_Implementation()
-{
-	Super::EditorPostInitialized_Implementation();
-
-	SetConsoleVariableName(ConsoleVariableName);
-}
-
 bool UVSConsoleVariableSettingItem::EditorAllowChangingConsoleVariableName_Implementation() const
 {
 	return true;
@@ -213,13 +208,16 @@ void UVSConsoleVariableSettingItem::SetConsoleVariableName(FString VariableName)
 		if (HasBeenInitialized())
 		{
 			CurrentConsoleVariable->OnChangedDelegate().AddUObject(this, &UVSConsoleVariableSettingItem::OnConsoleVariableChanged);
+			SetStringValue(CurrentConsoleVariable->GetString());
 		}
-
-		SetStringValue(CurrentConsoleVariable->GetString());
 	}
 	else
 	{
 		SetValueType(EVSCommonSettingValueType::None);
-		SetStringValue(FString());
+
+		if (HasBeenInitialized())
+		{
+			SetStringValue(FString());
+		}
 	}
 }

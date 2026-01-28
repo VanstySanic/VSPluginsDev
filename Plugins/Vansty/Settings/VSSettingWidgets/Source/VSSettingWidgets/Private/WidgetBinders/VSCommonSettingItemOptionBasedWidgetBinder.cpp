@@ -13,34 +13,11 @@ UVSCommonSettingItemOptionBasedWidgetBinder::UVSCommonSettingItemOptionBasedWidg
 	
 }
 
-void UVSCommonSettingItemOptionBasedWidgetBinder::Initialize_Implementation()
-{
-	CommonSettingItemPrivate = GetCommonSettingItem();
-
-	Super::Initialize_Implementation();
-	
-	if (CommonSettingItemPrivate.IsValid())
-	{
-		CommonSettingItemPrivate->OnUpdated.AddDynamic(this, &UVSCommonSettingItemOptionBasedWidgetBinder::OnSettingItemUpdated);
-	}
-}
-
-void UVSCommonSettingItemOptionBasedWidgetBinder::Uninitialize_Implementation()
-{
-	if (CommonSettingItemPrivate.IsValid())
-	{
-		CommonSettingItemPrivate->OnUpdated.RemoveDynamic(this, &UVSCommonSettingItemOptionBasedWidgetBinder::OnSettingItemUpdated);
-	}
-	CommonSettingItemPrivate.Reset();
-	
-	Super::Uninitialize_Implementation();
-}
-
 void UVSCommonSettingItemOptionBasedWidgetBinder::BindTypedWidget_Implementation(const FName TypeName, UWidget* Widget)
 {
 	Super::BindTypedWidget_Implementation(TypeName, Widget);
 
-	if (TypeName == FName("Core"))
+	if (TypeName == FName("Core") && GetWidgetController())
 	{
 		if (UComboBoxString* ComboBoxString = Cast<UComboBoxString>(Widget))
 		{
@@ -55,7 +32,7 @@ void UVSCommonSettingItemOptionBasedWidgetBinder::BindTypedWidget_Implementation
 
 void UVSCommonSettingItemOptionBasedWidgetBinder::UnbindTypedWidget_Implementation(const FName TypeName, UWidget* Widget)
 {
-	if (TypeName == FName("Core"))
+	if (TypeName == FName("Core") && GetWidgetController())
 	{
 		if (UComboBoxString* ComboBoxString = Cast<UComboBoxString>(Widget))
 		{
@@ -72,11 +49,10 @@ void UVSCommonSettingItemOptionBasedWidgetBinder::UnbindTypedWidget_Implementati
 
 FString UVSCommonSettingItemOptionBasedWidgetBinder::GetExternalOption_Implementation() const
 {
-	if (CommonSettingItemPrivate.IsValid())
+	if (UVSCommonSettingItem* CommonSettingItem = Cast<UVSCommonSettingItem>(GetSettingItem_Native()))
 	{
-		FString Str = CommonSettingItemPrivate->GetStringValue();
-		UE_LOG(LogTemp,Log,TEXT("Setting item: %s"), *CommonSettingItemPrivate->GetStringValue())
-		return CommonSettingItemPrivate->GetStringValue();
+		FString Str = CommonSettingItem->GetStringValue();
+		return CommonSettingItem->GetStringValue();
 	}
 	
 	return Super::GetExternalOption_Implementation();
@@ -86,46 +62,24 @@ void UVSCommonSettingItemOptionBasedWidgetBinder::OnWidgetOptionChanged_Implemen
 {
 	Super::OnWidgetOptionChanged_Implementation(NewIndex);
 	
-	if (CommonSettingItemPrivate.IsValid())
+	if (UVSCommonSettingItem* CommonSettingItem = Cast<UVSCommonSettingItem>(GetSettingItem_Native()))
 	{
-		CommonSettingItemPrivate->SetStringValue(GetOptionAtIndex(NewIndex));
+		CommonSettingItem->SetStringValue(GetOptionAtIndex(NewIndex));
 	}
 }
 
 FText UVSCommonSettingItemOptionBasedWidgetBinder::OptionStringToText_Implementation(const FString& String) const
 {
-	if (UVSCommonSettingItem* SettingItem = GetCommonSettingItem())
+	if (UVSCommonSettingItem* CommonSettingItem = Cast<UVSCommonSettingItem>(GetSettingItem_Native()))
 	{
-		return SettingItem->ValueStringToText(String);
+		return CommonSettingItem->ValueStringToText(String);
 	}
 	
 	return Super::OptionStringToText_Implementation(String);
 }
 
-UVSCommonSettingItem* UVSCommonSettingItemOptionBasedWidgetBinder::GetCommonSettingItem() const
-{
-	if (CommonSettingItemPrivate.IsValid()) return CommonSettingItemPrivate.Get();
-
-	if (UVSSettingItemWidgetController* WidgetController = Cast<UVSSettingItemWidgetController>(GetWidgetController()))
-	{
-		if (UVSCommonSettingItem* SettingItem = Cast<UVSCommonSettingItem>(WidgetController->GetSettingItem()))
-		{
-			return SettingItem;
-		}
-	}
-
-	return nullptr;
-}
-
-void UVSCommonSettingItemOptionBasedWidgetBinder::OnSettingItemUpdated(UVSSettingItem* SettingItem)
+void UVSCommonSettingItemOptionBasedWidgetBinder::OnCurrentSettingItemUpdated_Implementation()
 {
 	RebindWidgetByType(FName("Options"));
-	OnCommonSettingItemUpdated(CommonSettingItemPrivate.Get());
 }
-
-void UVSCommonSettingItemOptionBasedWidgetBinder::OnCommonSettingItemUpdated_Implementation(UVSCommonSettingItem* SettingItem)
-{
-	
-}
-
 

@@ -9,9 +9,10 @@ UVSSettingItem_ScalabilityQualityLevel::UVSSettingItem_ScalabilityQualityLevel(c
 	: Super(ObjectInitializer)
 {
 	SetValueType(EVSCommonSettingValueType::Integer);
+	
 	ConfigParams.ConfigFileName = GIsEditor ? "Editor" : "GameUserSettings";
 	ConfigParams.ConfigSection = FString("ScalabilityGroups");
-	ItemTag = UGameplayTagsManager::Get().RequestGameplayTag("VS.SettingSystem.Item.Scalability.QualityLevel");
+	ItemTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Scalability::QualityLevel::AntiAliasing);
 }
 
 #if WITH_EDITOR
@@ -154,15 +155,6 @@ FText UVSSettingItem_ScalabilityQualityLevel::ValueStringToText_Implementation(c
 	
 	return OutMap.FindRef(String);
 }
-
-#if WITH_EDITOR
-void UVSSettingItem_ScalabilityQualityLevel::EditorPostInitialized_Implementation()
-{
-	Super::EditorPostInitialized_Implementation();
-
-	EditorPreviewQualityLevel = GetQualityLevel(EVSSettingItemValueSource::System);
-}
-#endif
 
 void UVSSettingItem_ScalabilityQualityLevel::SetQualityLevel(EPerQualityLevels InQualityLevel)
 {

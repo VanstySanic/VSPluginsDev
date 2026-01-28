@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "VSSettingItemWidgetMediatorInterface.h"
 #include "VSWidgetController.h"
 #include "UObject/Object.h"
 #include "VSSettingItemWidgetController.generated.h"
@@ -14,7 +15,7 @@ class UVSSettingItem;
  * 
  */
 UCLASS()
-class VSSETTINGWIDGETS_API UVSSettingItemWidgetController : public UVSWidgetController
+class VSSETTINGWIDGETS_API UVSSettingItemWidgetController : public UVSWidgetController, public IVSSettingItemWidgetMediatorInterface
 {
 	GENERATED_UCLASS_BODY()
 
@@ -33,13 +34,16 @@ protected:
 	virtual void UnbindTypedWidget_Implementation(const FName TypeName, UWidget* Widget) override;
 	//~ End UVSWidgetController Interface
 
-public:
-	UFUNCTION(BlueprintCallable, Category = "Settings")
-	UVSSettingItem* GetSettingItem() const;
+	//~ Begin IVSSettingItemWidgetMediatorInterface Interface
+	virtual UVSSettingItem* GetSettingItem_Implementation() const override;
+	
+	virtual void OnCurrentSettingItemUpdated_Implementation() override;
+	virtual void OnAnySettingItemUpdated_Implementation(UVSSettingItem* SettingItem) override;
+	virtual void EditorRefreshMediator_Implementation() override;
+	//~ End IVSSettingItemWidgetMediatorInterface Interface
 
-protected:
-	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
-	void OnSettingItemUpdated(UVSSettingItem* SettingItem);
+private:
+	void OnCurrentSettingItemUpdatedNative(UVSSettingItem* SettingItem);
 	
 protected:
 	UPROPERTY(EditAnywhere, Category = "Settings")

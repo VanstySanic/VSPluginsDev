@@ -1,13 +1,66 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Classes/Libraries/VSPlatformLibrary.h"
+#include "AudioDevice.h"
+#include "AudioMixerBlueprintLibrary.h"
+#include "AudioMixerDevice.h"
 #include "Classes/Settings/VSPluginsCoreEngineSettings.h"
 #include "Types/Math/VSMath.h"
+#include "VSPluginsCoreCpp/Public/VSPrivablic.h"
+
+typedef TMap<USoundMix*, TMap<USoundClass*, FSoundMixClassOverride>> FVSSoundMixClassOverrideMap;
+VS_DECLARE_PRIVABLIC_MEMBER(FAudioDevice, SoundMixClassEffectOverrides, FVSSoundMixClassOverrideMap);
 
 UVSPlatformLibrary::UVSPlatformLibrary(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	
+}
+
+bool UVSPlatformLibrary::ParseSetRes(const FString& InSetRes, FIntPoint& OutResolution, TEnumAsByte<EWindowMode::Type>& OutWindowMode)
+{
+	FString Cmd = InSetRes;
+	Cmd.TrimStartAndEndInline();
+
+	Cmd.RemoveFromStart(TEXT("r.SetRes"));
+	Cmd.TrimStartAndEndInline();
+
+	OutWindowMode = EWindowMode::Windowed;
+	if (Cmd.EndsWith(TEXT("wf")) || Cmd.EndsWith(TEXT("fw")))
+	{
+		OutWindowMode = EWindowMode::WindowedFullscreen;
+		Cmd.LeftChopInline(2);
+	}
+	else if (Cmd.EndsWith(TEXT("f")))
+	{
+		OutWindowMode = EWindowMode::Fullscreen;
+		Cmd.LeftChopInline(1);
+	}
+	else if (Cmd.EndsWith(TEXT("w")))
+	{
+		OutWindowMode = EWindowMode::Windowed;
+		Cmd.LeftChopInline(1);
+	}
+
+	int32 X = 0, Y = 0;
+	if (FParse::Value(*Cmd, TEXT("x"), X))
+	{
+		const int32 XIndex = Cmd.Find(TEXT("x"));
+		const FString YStr = Cmd.Mid(XIndex + 1);
+		Y = FCString::Atoi(*YStr);
+	}
+	else
+	{
+		return false;
+	}
+
+	if (X <= 0 || Y <= 0)
+	{
+		return false;
+	}
+
+	OutResolution = FIntPoint(X, Y);
+	return true;
 }
 
 FVector2D UVSPlatformLibrary::GetWindowSize(bool bClientOnly)
@@ -42,7 +95,7 @@ FVector2D UVSPlatformLibrary::GetWindowCenterPosition(bool bClientOnly)
 	const FVector2D& RootPosition = GetWindowRootPosition(bClientOnly);
 	const FVector2D& WindowSize = GetWindowSize(bClientOnly);
 
-	return 0.5f * (RootPosition + WindowSize);
+	return RootPosition + 0.5f * WindowSize;
 }
 
 void UVSPlatformLibrary::SetWindowPosition(const FVector2D& Position)
@@ -56,12 +109,36 @@ void UVSPlatformLibrary::SetWindowPosition(const FVector2D& Position)
 	}
 }
 
+void UVSPlatformLibrary::SetWindowCentered(bool bWorkAreaOnly)
+{
+	if (TSharedPtr<SWindow> Window = GetActiveWindow())
+	{
+		const FVector2D& CenterPos = GetWindowCenterPosition(false);
+		const FString& MonitorID = GetMonitorIDByPosition(CenterPos);
+		SetWindowCenteredAtMonitor(MonitorID, bWorkAreaOnly);
+	}
+}
 
-TArray<FVSMonitorInfo> UVSPlatformLibrary::GetAllMonitorInfos()
+void UVSPlatformLibrary::SetWindowCenteredAtMonitor(const FString& MonitorID, bool bWorkAreaOnly)
+{
+	if (TSharedPtr<SWindow> Window = GetActiveWindow())
+	{
+		const FVSMonitorInfo& MonitorInfo = GetMonitorInfoByID(MonitorID);
+		if (!MonitorInfo.ID.IsEmpty())
+		{
+			const FVector2D& MonitorCenter = MonitorInfo.GetCenterPosition(bWorkAreaOnly);
+			const FVector2D& TargetPos = MonitorCenter - Window->GetSizeInScreen() / 2.f;
+			SetWindowPosition(TargetPos);
+		}
+	}
+}
+
+
+TArray<FVSMonitorInfo> UVSPlatformLibrary::GetAvailableMonitorInfos()
 {
 	TArray<FString> OutNames;
 	TArray<FVSMonitorInfo> MonitorInfos;
-	TArray<FMonitorInfo> NativeMonitorInfos = GetAllNativeMonitorInfos();
+	TArray<FMonitorInfo> NativeMonitorInfos = GetAvailableNativeMonitorInfos();
 
 	for (const FMonitorInfo& NativeMonitorInfo : NativeMonitorInfos)
 	{
@@ -76,6 +153,19 @@ FVSMonitorInfo UVSPlatformLibrary::GetPrimaryMonitorInfo()
 	return FVSMonitorInfo(GetPrimaryNativeMonitorInfo());
 }
 
+bool UVSPlatformLibrary::IsValidMonitorID(const FString& MonitorID)
+{
+	for (const FMonitorInfo& MonitorInfo : GetAvailableNativeMonitorInfos())
+	{
+		if (MonitorInfo.ID == MonitorID)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 FVSMonitorInfo UVSPlatformLibrary::GetMonitorInfoByID(const FString& MonitorID)
 {
 	return FVSMonitorInfo(GetNativeMonitorInfoByID(MonitorID));
@@ -83,7 +173,7 @@ FVSMonitorInfo UVSPlatformLibrary::GetMonitorInfoByID(const FString& MonitorID)
 
 FString UVSPlatformLibrary::GetMonitorIDByPosition(const FVector2D& Position)
 {
-	for (const FMonitorInfo& NativeMonitorInfo : GetAllNativeMonitorInfos())
+	for (const FMonitorInfo& NativeMonitorInfo : GetAvailableNativeMonitorInfos())
 	{
 		if (FVSMath::IsInRange(Position.X, NativeMonitorInfo.DisplayRect.Left, NativeMonitorInfo.DisplayRect.Right, true, false)
 			&& FVSMath::IsInRange(Position.Y, NativeMonitorInfo.DisplayRect.Top, NativeMonitorInfo.DisplayRect.Bottom, true, false))
@@ -134,7 +224,7 @@ FVector2D UVSPlatformLibrary::GetMonitorMaxWindowedClientSize(const FString& Mon
 	const FString& MonitorIDToUse = MonitorID.IsEmpty() ? MonitorID : GetMonitorIDByPosition(WindowCenterPos);
 	const FVSMonitorInfo& MonitorInfo = GetMonitorInfoByID(MonitorIDToUse);
 
-	const FVector2D& MonitorSize = MonitorInfo.GetCurrentResolution(true);
+	const FVector2D& MonitorSize = MonitorInfo.GetCurrentSize(true);
 	const FMargin& ClientPaddings = Window->GetWindowBorderSize(false);
 	const FVector2D& ClientSize = MonitorSize - FVector2D
 	(
@@ -163,7 +253,7 @@ bool UVSPlatformLibrary::SwitchMonitorByID(const FString& MonitorID)
 	{
 		FVector2D NewWindowPos = MonitorInfo.GetCenterPosition(true) - Window->GetSizeInScreen() / 2.f;
 		const FVector2D& WindowSize = Window->GetSizeInScreen();
-		if (WindowSize.Y > MonitorInfo.GetCurrentResolution(true).Y)
+		if (WindowSize.Y > MonitorInfo.GetCurrentSize(true).Y)
 		{
 			NewWindowPos.Y = 0.f;
 		}
@@ -177,6 +267,144 @@ void UVSPlatformLibrary::SetDesiredFullscreenMonitorID(const FString& MonitorID)
 {
 	CVarDesiredFullscreenMonitorID->SetWithCurrentPriority(*MonitorID);
 }
+
+FString UVSPlatformLibrary::GetSystemDefaultAudioOutputDeviceID()
+{
+	for (const FAudioOutputDeviceInfo& AudioOutputDeviceInfo : GetAvailableAudioOutputDeviceInfos())
+	{
+		if (AudioOutputDeviceInfo.bIsSystemDefault) return AudioOutputDeviceInfo.DeviceId;
+	}
+
+	return FString();
+}
+
+
+FString UVSPlatformLibrary::GetMainAudioOutputDeviceID()
+{
+	if (!FAudioDeviceManager::Get() || !FAudioDeviceManager::Get()->GetMainAudioDeviceHandle()) return FString();
+
+	FAudioDevice* MainAudioDevice = FAudioDeviceManager::Get()->GetMainAudioDeviceHandle().GetAudioDevice();
+	if (Audio::FMixerDevice* AudioMixerDevice = static_cast<Audio::FMixerDevice*>(MainAudioDevice))
+	{
+		if (Audio::IAudioMixerPlatformInterface* MixerPlatform = AudioMixerDevice->GetAudioMixerPlatform())
+		{
+			return MixerPlatform->GetPlatformDeviceInfo().DeviceId;
+		}
+	}
+
+	return FString();
+}
+
+FAudioOutputDeviceInfo UVSPlatformLibrary::GetAudioOutputDeviceInfoByID(const FString& DeviceID)
+{
+	for (const FAudioOutputDeviceInfo& AudioOutputDeviceInfo : GetAvailableAudioOutputDeviceInfos())
+	{
+		if (AudioOutputDeviceInfo.DeviceId  == DeviceID) return AudioOutputDeviceInfo;
+	}
+
+	return FAudioOutputDeviceInfo();
+}
+
+TArray<FAudioOutputDeviceInfo> UVSPlatformLibrary::GetAvailableAudioOutputDeviceInfos()
+{
+	if (!FAudioDeviceManager::Get() || !FAudioDeviceManager::Get()->GetMainAudioDeviceHandle()) return TArray<FAudioOutputDeviceInfo>();
+	
+	TArray<FAudioOutputDeviceInfo> OutputDeviceInfos;
+
+	FAudioDevice* MainAudioDevice = FAudioDeviceManager::Get()->GetMainAudioDeviceHandle().GetAudioDevice();
+	if (Audio::FMixerDevice* AudioMixerDevice = static_cast<Audio::FMixerDevice*>(MainAudioDevice))
+	{
+		if (Audio::IAudioMixerPlatformInterface* MixerPlatform = AudioMixerDevice->GetAudioMixerPlatform())
+		{
+			if (Audio::IAudioPlatformDeviceInfoCache* DeviceInfoCache = MixerPlatform->GetDeviceInfoCache())
+			{
+				TArray<Audio::FAudioPlatformDeviceInfo> AllDevices = DeviceInfoCache->GetAllActiveOutputDevices();
+				Algo::Transform(AllDevices, OutputDeviceInfos, [] (auto& i) -> FAudioOutputDeviceInfo { return { i }; });
+			}
+			else 
+			{
+				uint32 NumOutputDevices = 0;
+				MixerPlatform->GetNumOutputDevices(NumOutputDevices);
+				OutputDeviceInfos.Reserve(NumOutputDevices);
+				FAudioOutputDeviceInfo CurrentOutputDevice = MixerPlatform->GetPlatformDeviceInfo();
+
+				for (uint32 i = 0; i < NumOutputDevices; ++i)
+				{
+					Audio::FAudioPlatformDeviceInfo DeviceInfo;
+					MixerPlatform->GetOutputDeviceInfo(i, DeviceInfo);
+
+					FAudioOutputDeviceInfo NewInfo(DeviceInfo);
+					NewInfo.bIsCurrentDevice = (NewInfo.DeviceId == CurrentOutputDevice.DeviceId);
+
+					OutputDeviceInfos.Emplace(MoveTemp(NewInfo));
+				}
+			}
+		}
+	}
+
+	return OutputDeviceInfos;
+}
+
+bool UVSPlatformLibrary::IsValidAudioOutputDeviceID(const FString& DeviceID)
+{
+	for (const FAudioOutputDeviceInfo& AudioOutputDeviceInfo : GetAvailableAudioOutputDeviceInfos())
+	{
+		if (AudioOutputDeviceInfo.DeviceId == DeviceID)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool UVSPlatformLibrary::SetMainAudioOutputDeviceByID(const FString& DeviceID)
+{
+	if (!FAudioDeviceManager::Get()) return false;
+	
+	FAudioDeviceHandle MainAudioDeviceHandle = FAudioDeviceManager::Get()->GetMainAudioDeviceHandle();
+	FAudioDevice* MainAudioDevice = MainAudioDeviceHandle.GetAudioDevice();
+	if (!MainAudioDevice) return false;
+	
+	Audio::FMixerDevice* MixerDevice = static_cast<Audio::FMixerDevice*>(MainAudioDevice);
+	if (!MixerDevice) return false;
+	
+	auto* Platform = MixerDevice->GetAudioMixerPlatform();
+	if (!Platform) return false;
+	
+	return Platform->MoveAudioStreamToNewAudioDevice(DeviceID);
+}
+
+FSoundClassAdjuster UVSPlatformLibrary::GetMainSoundClassAdjuster(USoundMix* SoundMix, USoundClass* SoundClass)
+{
+	if (!SoundMix || !SoundClass || !FAudioDeviceManager::Get()) return FSoundClassAdjuster();
+
+	if (FAudioDeviceHandle AudioDevice = FAudioDeviceManager::Get()->GetMainAudioDeviceHandle())
+	{
+		auto& SoundMixClassOverrideMap = VS_PRIVABLIC_MEMBER(AudioDevice.GetAudioDevice(), FAudioDevice, SoundMixClassEffectOverrides);
+
+		if (SoundMixClassOverrideMap.Contains(SoundMix) && !SoundMixClassOverrideMap[SoundMix].Contains(SoundClass))
+		{
+			const FSoundMixClassOverride& SoundMixClassOverride = SoundMixClassOverrideMap[SoundMix][SoundClass];
+			return SoundMixClassOverride.SoundClassAdjustor;
+		}
+
+		if (AudioDevice->GetSoundMixModifiers().Contains(SoundMix))
+		{
+			for (const FSoundClassAdjuster& SoundClassEffect : SoundMix->SoundClassEffects)
+			{
+				if (SoundClassEffect.SoundClassObject == SoundClass)
+				{
+					return SoundClassEffect;
+				}
+			}
+		}
+	}
+
+	return FSoundClassAdjuster();
+}
+
+
 
 TSharedPtr<SWindow> UVSPlatformLibrary::GetActiveWindow()
 {
@@ -197,7 +425,7 @@ TSharedPtr<SWindow> UVSPlatformLibrary::GetActiveWindow()
 	return Window;
 }
 
-TArray<FMonitorInfo> UVSPlatformLibrary::GetAllNativeMonitorInfos()
+TArray<FMonitorInfo> UVSPlatformLibrary::GetAvailableNativeMonitorInfos()
 {
 	if (!FSlateApplication::IsInitialized()) return TArray<FMonitorInfo>();
 
@@ -209,7 +437,7 @@ TArray<FMonitorInfo> UVSPlatformLibrary::GetAllNativeMonitorInfos()
 
 FMonitorInfo UVSPlatformLibrary::GetPrimaryNativeMonitorInfo()
 {
-	for (const FMonitorInfo& NativeMonitorInfo : GetAllNativeMonitorInfos())
+	for (const FMonitorInfo& NativeMonitorInfo : GetAvailableNativeMonitorInfos())
 	{
 		if (NativeMonitorInfo.bIsPrimary)
 		{
@@ -222,7 +450,7 @@ FMonitorInfo UVSPlatformLibrary::GetPrimaryNativeMonitorInfo()
 
 FMonitorInfo UVSPlatformLibrary::GetNativeMonitorInfoByID(const FString& MonitorID)
 {
-	for (const FMonitorInfo& NativeMonitorInfo : GetAllNativeMonitorInfos())
+	for (const FMonitorInfo& NativeMonitorInfo : GetAvailableNativeMonitorInfos())
 	{
 		if (MonitorID == NativeMonitorInfo.ID)
 		{

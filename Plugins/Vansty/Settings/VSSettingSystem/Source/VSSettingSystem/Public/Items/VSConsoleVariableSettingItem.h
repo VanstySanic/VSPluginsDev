@@ -22,14 +22,13 @@ public:
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
+	virtual void PostLoad() override;
 	//~ End UObject Interface
 
 protected:
 	//~ Begin UVSSettingItem Interface
 	virtual void Initialize_Implementation() override;
 	virtual void Uninitialize_Implementation() override;
-
-public:
 	virtual void Apply_Implementation() override;
 	virtual bool GetBooleanValue_Implementation(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const override;
 	virtual int32 GetIntegerValue_Implementation(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const override;
@@ -38,9 +37,7 @@ public:
 	virtual double GetDoubleValue_Implementation(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const override;
 	virtual FString GetStringValue_Implementation(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const override;
 
-protected:
 #if WITH_EDITOR
-	virtual void EditorPostInitialized_Implementation() override;
 	virtual bool EditorAllowChangingValueType_Implementation() const override;
 	//~ End UVSSettingItem Interface
 	
@@ -49,7 +46,6 @@ protected:
 	bool EditorAllowChangingConsoleVariableName() const;
 #endif
 
-protected:
 	IConsoleVariable* GetConsoleVariable() const { return CurrentConsoleVariable; }
 	void SetConsoleVariableName(FString VariableName);
 	void OnConsoleVariableChanged(IConsoleVariable* Variable);

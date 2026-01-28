@@ -78,24 +78,17 @@ public:
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
+	virtual void PostLoad() override;
 	//~ End UObject Interface
 
 protected:
 	//~ Begin UVSSettingItem Interface
-	virtual void Initialize_Implementation() override;
 	virtual void OnValueUpdated_Implementation() override;
-
-public:
 	virtual void SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) override;
 	virtual bool EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const override;
 	virtual void Load_Implementation() override;
 	virtual void Save_Implementation() override;
 	virtual void Confirm_Implementation() override;
-
-protected:
-#if WITH_EDITOR
-	virtual void EditorPostInitialized_Implementation() override;
-#endif
 	//~ End UVSSettingItem Interface
 
 public:
@@ -146,7 +139,7 @@ public:
 	/** Sets the current value as FString and triggers update notification. */
 	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "NewValue"))
 	void SetStringValue(const FString& NewValue);
-
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "String"))
 	FText ValueStringToText(const FString& String) const;
 	
@@ -197,7 +190,22 @@ protected:
 	/** Config binding parameters used when auto-config is enabled. */
 	UPROPERTY(EditAnywhere, Category = "Settings", meta = (EditCondition = "EditorAllowChangingConfigParams()"))
 	FVSCommonSettingConfigParams ConfigParams;
+
+public:
+	/**
+	 * The content text format to display. If you want to show the digits, please put ‘{0}’ in it.
+	 * Only work with numeric types, and this may not work if you override the function.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Display")
+	FText DisplayNumericTextFormat = FText::FromString("{0}");
 	
+	/** Only work with float and numeric types. */
+	UPROPERTY(EditAnywhere, Category = "Display")
+	FIntPoint DisplayNumericFractionDigitRange = FIntPoint(0, 324);
+	
+	UPROPERTY(EditAnywhere, Category = "Display")
+	double DisplayNumericValueMultiplier = 1.f;
+
 private:
 	TValueUnion CurrentValue = TValueUnion();
 	TValueUnion ConfirmedValue = TValueUnion();

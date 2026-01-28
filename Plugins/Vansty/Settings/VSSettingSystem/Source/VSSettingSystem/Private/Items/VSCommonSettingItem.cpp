@@ -2,6 +2,7 @@
 
 #include "Items/VSCommonSettingItem.h"
 #include "VSSettingSubsystem.h"
+#include "Kismet/KismetTextLibrary.h"
 
 UVSCommonSettingItem::UVSCommonSettingItem(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -53,8 +54,6 @@ void UVSCommonSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& 
 				SetStringValue(LastEditorPreviewValue);
 			}
 		}
-		
-		SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
 	}
 
 	if (bDesireReConfig && LastEditorConfigParams.bAutoDefaultConfig && ConfigParams.bAutoDefaultConfig)
@@ -76,17 +75,22 @@ void UVSCommonSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& 
 }
 #endif
 
-void UVSCommonSettingItem::Initialize_Implementation()
+void UVSCommonSettingItem::PostLoad()
 {
-	Super::Initialize_Implementation();
-	
+	Super::PostLoad();
+
 	SetValueType(ValueType);
+
+#if WITH_EDITOR
+	LastEditorPreviewValue = EditorPreviewValue;
+	LastEditorConfigParams = ConfigParams;
+#endif
 }
 
 void UVSCommonSettingItem::OnValueUpdated_Implementation()
 {
 	Super::OnValueUpdated_Implementation();
-	
+
 #if WITH_EDITOR
 	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
 #endif
@@ -119,8 +123,8 @@ void UVSCommonSettingItem::SetToBySource_Implementation(const EVSSettingItemValu
 	case EVSCommonSettingValueType::None:
 	case EVSCommonSettingValueType::String:
 		SetStringValue(GetStringValue(ValueSource));
-		
 		break;
+		
 	default: ;
 	}
 }
@@ -186,22 +190,6 @@ void UVSCommonSettingItem::Confirm_Implementation()
 	ConfirmedValue = CurrentValue;
 }
 
-#if WITH_EDITOR
-void UVSCommonSettingItem::EditorPostInitialized_Implementation()
-{
-	if (!GIsPlayInEditorWorld)
-	{
-		SetValueType(ValueType);
-	}
-	
-	Super::EditorPostInitialized_Implementation();
-
-	LastEditorPreviewValue = EditorPreviewValue;
-	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
-	LastEditorConfigParams = ConfigParams;
-}
-#endif
-
 bool UVSCommonSettingItem::GetBooleanValue_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
 {
 	if (ValueType == CurrentValue.GetCurrentSubtypeIndex() - 1)
@@ -216,9 +204,9 @@ bool UVSCommonSettingItem::GetBooleanValue_Implementation(const EVSSettingItemVa
 		{
 		/** Implement the two cases in child classes. */
 		case EVSSettingItemValueSource::Default:
-		case EVSSettingItemValueSource::Game:
 			return false;
-			
+
+		case EVSSettingItemValueSource::Game:
 		case EVSSettingItemValueSource::System:
 			return CurrentValue.GetSubtype<bool>();
 			
@@ -264,9 +252,9 @@ int32 UVSCommonSettingItem::GetIntegerValue_Implementation(const EVSSettingItemV
 		{
 		/** Implement the two cases in child classes. */
 		case EVSSettingItemValueSource::Default:
-		case EVSSettingItemValueSource::Game:
 			return 0;
 			
+		case EVSSettingItemValueSource::Game:
 		case EVSSettingItemValueSource::System:
 			return CurrentValue.GetSubtype<int32>();
 			
@@ -312,9 +300,9 @@ int64 UVSCommonSettingItem::GetLongIntegerValue_Implementation(const EVSSettingI
 		{
 		/** Implement the two cases in child classes. */
 		case EVSSettingItemValueSource::Default:
-		case EVSSettingItemValueSource::Game:
 			return 0;
 			
+		case EVSSettingItemValueSource::Game:
 		case EVSSettingItemValueSource::System:
 			return CurrentValue.GetSubtype<int64>();
 			
@@ -360,9 +348,9 @@ float UVSCommonSettingItem::GetFloatValue_Implementation(const EVSSettingItemVal
 		{
 		/** Implement the two cases in child classes. */
 		case EVSSettingItemValueSource::Default:
-		case EVSSettingItemValueSource::Game:
 			return 0.f;
-			
+
+		case EVSSettingItemValueSource::Game:
 		case EVSSettingItemValueSource::System:
 			return CurrentValue.GetSubtype<float>();
 			
@@ -408,9 +396,9 @@ double UVSCommonSettingItem::GetDoubleValue_Implementation(const EVSSettingItemV
 		{
 		/** Implement the two cases in child classes. */
 		case EVSSettingItemValueSource::Default:
-		case EVSSettingItemValueSource::Game:
 			return 0.0;
-	
+
+		case EVSSettingItemValueSource::Game:
 		case EVSSettingItemValueSource::System:
 			return CurrentValue.GetSubtype<double>();
 			
@@ -456,9 +444,6 @@ FString UVSCommonSettingItem::GetStringValue_Implementation(const EVSSettingItem
 			return EmptyString;
 			
 		case EVSSettingItemValueSource::Game:
-			/** Implement the case in child classes. */
-			return EmptyString;
-			
 		case EVSSettingItemValueSource::System:
 			return CurrentValue.GetSubtype<FString>();
 			
@@ -493,6 +478,9 @@ void UVSCommonSettingItem::SetIntegerValue(int32 NewValue)
 {
 	const TValueUnion PrevValue = CurrentValue;
 	SetUnionValue<int32>(NewValue, CurrentValue);
+
+	UE_LOG(LogTemp, Log, TEXT("Set + %s"), *GetName());
+	
 	if (!IsValueValid())
 	{
 		Validate();
@@ -561,6 +549,16 @@ void UVSCommonSettingItem::SetStringValue(const FString& NewValue)
 
 FText UVSCommonSettingItem::ValueStringToText_Implementation(const FString& String) const
 {
+	if (String.IsNumeric())
+	{
+		double Value = FCString::Atod(*String) * DisplayNumericValueMultiplier;
+		FText ValueText = UKismetTextLibrary::Conv_DoubleToText(Value, HalfFromZero, false, true,
+			1,324, DisplayNumericFractionDigitRange.X, DisplayNumericFractionDigitRange.Y);
+
+		ValueText = FText::Format(DisplayNumericTextFormat, ValueText);
+		return ValueText;
+	}
+	
 	return FText::FromString(String);
 }
 

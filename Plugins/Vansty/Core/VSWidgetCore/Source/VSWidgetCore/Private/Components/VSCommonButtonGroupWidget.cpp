@@ -103,7 +103,7 @@ void UVSCommonButtonGroupWidget::RefreshButtons()
 	for (int i = 0; i < ButtonNum; ++i)
 	{
 		UCommonButtonBase* Button = WidgetTree->ConstructWidget<UCommonButtonBase>(ButtonClass);
-		if (!Button) continue;
+		check(Button);
 		
 		Panel_Buttons->AddChild(Button);
 		ButtonsPrivate.Add(Button);
@@ -119,13 +119,17 @@ void UVSCommonButtonGroupWidget::RefreshButtons()
 
 	for (int i = 0; i < ButtonsPrivate.Num(); ++i)
 	{
-		if (ButtonActionSettings.IsValidIndex(i))
+		FVSCommonButtonActionSettings ActionSettings = ButtonActionSettings.IsValidIndex(i) ? ButtonActionSettings[i] : FVSCommonButtonActionSettings();
+		if (OverridenButtonNames.IsValidIndex(i) && OverridenButtonNames[i].IsEmpty())
 		{
-			ButtonActionSettings[i].ApplyToButton(ButtonsPrivate[i]);
+			ActionSettings.bOverrideActionName = true;
+			ActionSettings.ActionName = OverridenButtonNames[i];
 		}
-		else
+		ActionSettings.ApplyToButton(ButtonsPrivate[i]);
+
+		if (DefaultDisabledIndexes.Contains(i))
 		{
-			break;
+			ButtonsPrivate[i]->SetIsEnabled(false);
 		}
 	}
 	

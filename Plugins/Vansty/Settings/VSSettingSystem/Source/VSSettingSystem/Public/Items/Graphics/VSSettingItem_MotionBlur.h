@@ -14,13 +14,13 @@ class VSSETTINGSYSTEM_API UVSSettingItem_MotionBlur : public UVSConsoleVariableS
 {
 	GENERATED_UCLASS_BODY()
 
-public:
+protected:
 	//~ Begin UVSSettingItem Interface
 	virtual bool IsValueValid_Implementation() const override;
 	virtual void Validate_Implementation() override;
 	virtual int32 GetIntegerValue_Implementation(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const override;
+	virtual FText ValueStringToText_Implementation(const FString& String) const override;
 	
-protected:
 #if WITH_EDITOR
 	virtual bool EditorAllowChangingItemTag_Implementation() const override { return false; }
 	virtual bool EditorAllowChangingValueType_Implementation() const override { return false; }

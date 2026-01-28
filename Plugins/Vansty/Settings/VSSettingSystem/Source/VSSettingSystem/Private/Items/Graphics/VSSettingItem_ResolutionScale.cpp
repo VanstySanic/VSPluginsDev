@@ -14,6 +14,10 @@ UVSSettingItem_ResolutionScale::UVSSettingItem_ResolutionScale(const FObjectInit
 	ConfigParams.ConfigSection = FString("ScalabilityGroups");
 	ConfigParams.ConfigKeyName = FString("sg.ResolutionQuality");
 
+	DisplayNumericTextFormat = FText::FromString(TEXT("{0}%"));
+	DisplayNumericFractionDigitRange = FIntPoint(0, 0);
+	DisplayNumericValueMultiplier = 100.f;
+
 	SetConsoleVariableName(TEXT("sg.ResolutionQuality"));
 }
 

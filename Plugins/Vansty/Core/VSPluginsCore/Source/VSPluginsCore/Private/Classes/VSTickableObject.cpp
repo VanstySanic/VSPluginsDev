@@ -32,7 +32,16 @@ void UVSTickableObject::RegisterTickFunction()
 {
 	if (!GetWorld()) return;
 	if (IsTickFunctionRegistered()) return;
-	PrimaryObjectTick.RegisterAndSetup(GetTypedOuter<AActor>());
+
+	if (AActor* OuterActor = GetTypedOuter<AActor>())
+	{
+		PrimaryObjectTick.RegisterAndSetup(OuterActor);
+	}
+	else
+	{
+		PrimaryObjectTick.RegisterAndSetup(GetOuter());
+	}
+	
 	if (!IsTickFunctionRegistered()) return;
 	PrimaryObjectTick.CanExecuteTick.BindUObject(this, &UVSTickableObject::CanExecuteTick);
 	PrimaryObjectTick.OnExecuteTick.BindUObject(this, &UVSTickableObject::TickObject);

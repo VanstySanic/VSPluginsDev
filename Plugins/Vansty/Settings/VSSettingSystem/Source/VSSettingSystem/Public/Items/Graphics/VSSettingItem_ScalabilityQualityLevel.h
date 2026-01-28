@@ -14,7 +14,7 @@ class VSSETTINGSYSTEM_API UVSSettingItem_ScalabilityQualityLevel : public UVSCon
 {
 	GENERATED_UCLASS_BODY()
 
-public:
+protected:
 	//~ Begin UObject Interface
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -27,10 +27,9 @@ public:
 	virtual int32 GetIntegerValue_Implementation(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const override;
 	virtual FText ValueStringToText_Implementation(const FString& String) const override;
 
-protected:
 	virtual void OnValueUpdated_Implementation() override;
+	
 #if WITH_EDITOR
-	virtual void EditorPostInitialized_Implementation() override;
 	virtual bool EditorAllowChangingValueType_Implementation() const override { return false; }
 	virtual bool EditorAllowChangingConfigParams_Implementation() const override { return false; }
 	virtual bool EditorAllowChangingEditorPreviewValue_Implementation() const override { return false; }

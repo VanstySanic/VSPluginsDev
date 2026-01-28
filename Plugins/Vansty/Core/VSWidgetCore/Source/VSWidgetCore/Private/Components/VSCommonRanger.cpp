@@ -5,12 +5,11 @@
 #include "Components/Slider.h"
 #include "Components/SpinBox.h"
 #include "Components/TextBlock.h"
+#include "Kismet/KismetTextLibrary.h"
 
 UVSCommonRanger::UVSCommonRanger(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bSnapByStep(false)
-	, bSupportMutation(false)
-	, bDisplaySameValueMutedText(true)
 {
 	bLocked = true;
 }
@@ -18,8 +17,6 @@ UVSCommonRanger::UVSCommonRanger(const FObjectInitializer& ObjectInitializer)
 void UVSCommonRanger::NativePreConstruct()
 {
 	Super::NativePreConstruct();
-	
-	LastRefreshedMutedValue = MutedStateValue;
 	
 	if (!bDifferRefreshment
 #if WITH_EDITOR
@@ -34,9 +31,17 @@ void UVSCommonRanger::NativePreConstruct()
 	if (IsDesignTime())
 	{
 		SetValue(EditorPreviewValue);
-		SetIsMuted(EditorPreviewMuteState);
 	}
 #endif
+
+	FInternationalization::Get().OnCultureChanged().AddUObject(this, &UVSCommonRanger::OnCultureChanged);;
+}
+
+void UVSCommonRanger::NativeDestruct()
+{
+	FInternationalization::Get().OnCultureChanged().RemoveAll(this);
+
+	Super::NativeDestruct();
 }
 
 bool UVSCommonRanger::Initialize()
@@ -55,11 +60,6 @@ bool UVSCommonRanger::Initialize()
 			SpinBox->OnValueChanged.AddUniqueDynamic(this, &UVSCommonRanger::OnWidgetValueChanged);
 		}
 	}
-	if (!bMuteDelegateBound && CheckBox_Mute)
-	{
-		bMuteDelegateBound = true;
-		CheckBox_Mute->OnCheckStateChanged.AddDynamic(this, &UVSCommonRanger::OnWidgetMuteStateChanged);
-	}
 	
 	return true;
 }
@@ -67,10 +67,10 @@ bool UVSCommonRanger::Initialize()
 FNavigationReply UVSCommonRanger::NativeOnNavigation(const FGeometry& MyGeometry, const FNavigationEvent& InNavigationEvent, const FNavigationReply& InDefaultReply)
 {
 	FNavigationReply Reply = Super::NativeOnNavigation(MyGeometry, InNavigationEvent, InDefaultReply);
-	float PrevValue = GetValue(true);
+	float PrevValue = CurrentValue;
 	float NewValue = PrevValue;
 
-	const float StepSizeToUse = FMath::Max(StepSize, FMath::Max(ValueRange.Y, ValueRange.X) - FMath::Min(ValueRange.Y, ValueRange.X));
+	const float StepSizeToUse = StepSize > 0.f ? StepSize : FMath::Max(ValueRange.Y, ValueRange.X) - FMath::Min(ValueRange.Y, ValueRange.X);
 	
 	if (Slider)
 	{
@@ -115,7 +115,7 @@ FNavigationReply UVSCommonRanger::NativeOnNavigation(const FGeometry& MyGeometry
 		}
 	}
 
-	if (PrevValue != NewValue)
+	if (!FMath::IsNearlyEqual(PrevValue, NewValue))
 	{
 		SetValue(NewValue);
 	}
@@ -123,158 +123,118 @@ FNavigationReply UVSCommonRanger::NativeOnNavigation(const FGeometry& MyGeometry
 	return Reply;
 }
 
-void UVSCommonRanger::NativeOnClicked()
+void UVSCommonRanger::SetValue(float NewValue)
 {
-	Super::NativeOnClicked();
+	const float PrevValue = CurrentValue;
+	CurrentValue = FMath::Clamp(NewValue, ValueRange.X, ValueRange.Y);
 
-	SetIsMuted(!IsMuted());
-}
-
-void UVSCommonRanger::SetValue(float NewValue, bool bIsMutedValue)
-{
-	if (!bIsMutedValue)
-	{
-		const float PrevNonMuteValue = GetValue(true);
-        CurrentNonMuteValue = NewValue;
-		
 #if WITH_EDITORONLY_DATA
-		EditorPreviewValue = CurrentNonMuteValue;
+	EditorPreviewValue = CurrentValue;
 #endif
-		
-        if (!FMath::IsNearlyEqual(CurrentNonMuteValue, PrevNonMuteValue))
-        {
-        	OnValueChangedInternal(NewValue, false);
-        }
-	}
-	else
+
+	if (!FMath::IsNearlyEqual(PrevValue, CurrentValue))
 	{
-		NewValue = FMath::Clamp(NewValue, ValueRange.X, ValueRange.Y);
-		const float PrevNonMuteValue = MutedStateValue;
-		MutedStateValue = NewValue;
-		if (!FMath::IsNearlyEqual(MutedStateValue, PrevNonMuteValue))
-		{
-			LastRefreshedMutedValue = MutedStateValue;
-			OnValueChangedInternal(NewValue, true);
-		}
+		OnValueChangedInternal();
 	}
 }
 
-float UVSCommonRanger::GetValue(bool bIgnoreMuteState) const
+FText UVSCommonRanger::GetContentText() const
 {
-	return !bIgnoreMuteState && bIsMuted ? MutedStateValue : CurrentNonMuteValue;
-}
-
-FText UVSCommonRanger::GetContentText(float Value, bool bMuted, bool bSameValueMutedText) const
-{
-	if (!DisplayMutedText.IsEmpty())
-	{
-		if (bMuted)
-		{
-			return DisplayMutedText;
-		}
-		if (bSameValueMutedText && FMath::IsNearlyEqual(Value, MutedStateValue))
-		{
-			return DisplayMutedText;
-		}
-	}
+	const FText& ValueText = UKismetTextLibrary::Conv_DoubleToText(
+		CurrentValue * DisplayValueMultiplier, HalfToZero,
+		false, true,
+		1, 324,
+		DisplayFractionDigitRange.X, DisplayFractionDigitRange.Y);
 	
-	return FText::Format(DisplayFormatText, Value);
+	return FText::Format(DisplayTextFormat, ValueText);
 }
 
 void UVSCommonRanger::RefreshRanger()
 {
+	const float StepSizeToUse = StepSize > 0.f ? StepSize : FMath::Max(ValueRange.Y, ValueRange.X) - FMath::Min(ValueRange.Y, ValueRange.X);
+
+	const bool bPrevValueDelegatesBound = bValueDelegatesBound;
+	bValueDelegatesBound = false;
 	if (Slider)
 	{
+		if (bPrevValueDelegatesBound)
+		{
+			Slider->OnValueChanged.RemoveDynamic(this, &UVSCommonRanger::OnWidgetValueChanged);
+		}
+		
 		Slider->SetMinValue(ValueRange.X);
 		Slider->SetMaxValue(ValueRange.Y);
-		Slider->SetStepSize(StepSize);
+		Slider->SetStepSize(StepSizeToUse);
 		Slider->MouseUsesStep = bSnapByStep;
 		
-		Slider->SetValue(CurrentNonMuteValue);
-	}
+		Slider->SetValue(CurrentValue);
 
+		if (bPrevValueDelegatesBound)
+		{
+			Slider->OnValueChanged.AddDynamic(this, &UVSCommonRanger::OnWidgetValueChanged);
+		}
+	}
 	if (SpinBox)
 	{
+		if (bPrevValueDelegatesBound)
+		{
+			SpinBox->OnValueChanged.RemoveDynamic(this, &UVSCommonRanger::OnWidgetValueChanged);
+		}
+		
 		SpinBox->SetMinValue(ValueRange.X);
+		SpinBox->SetMinSliderValue(ValueRange.X);
 		SpinBox->SetMaxValue(ValueRange.Y);
-		SpinBox->SetDelta(StepSize);
+		SpinBox->SetMaxSliderValue(ValueRange.Y);
+		SpinBox->SetDelta(StepSizeToUse);
+		SpinBox->SetMinFractionalDigits(DisplayFractionDigitRange.X);
+		SpinBox->SetMaxFractionalDigits(DisplayFractionDigitRange.Y);
 		SpinBox->SetAlwaysUsesDeltaSnap(bSnapByStep);
 		
-		SpinBox->SetValue(CurrentNonMuteValue);
-	}
+		SpinBox->SetValue((float)INT32_MAX);
+		SpinBox->SetValue(CurrentValue);
 
-	if (CheckBox_Mute)
-	{
-		CheckBox_Mute->SetIsChecked(bIsMuted && bSupportMutation);
+		if (bPrevValueDelegatesBound)
+		{
+			SpinBox->OnValueChanged.AddDynamic(this, &UVSCommonRanger::OnWidgetValueChanged);
+		}
 	}
-
-	SetValue(CurrentNonMuteValue, false);
-	if (!FMath::IsNearlyEqual(LastRefreshedMutedValue, MutedStateValue))
-	{
-		OnValueChangedInternal(MutedStateValue, true);
-	}
+	bValueDelegatesBound = bPrevValueDelegatesBound;
+	
+	SetValue(CurrentValue);
 	RefreshContentText();
 }
 
-void UVSCommonRanger::SetIsMuted(bool bMuted)
+void UVSCommonRanger::OnValueChangedInternal()
 {
-	bMuted = bSupportMutation && bMuted;
+	const float Value = CurrentValue;
 	
-	const bool bPrevMuted = bIsMuted;
-	bIsMuted = bMuted;
-
-#if WITH_EDITORONLY_DATA
-	EditorPreviewMuteState = bIsMuted;
-#endif
-
-	if (CheckBox_Mute)
+	if (Slider)
 	{
-		CheckBox_Mute->SetIsChecked(bMuted);
+		Slider->SetValue(Value);
 	}
-
-	if (bPrevMuted != bIsMuted)
+	if (SpinBox)
 	{
-		RefreshContentText();
-	}
-}
-
-void UVSCommonRanger::OnValueChangedInternal(float Value, bool bIsMutedValue)
-{
-	if (!bIsMutedValue)
-	{
-		if (Slider)
-		{
-			Slider->SetValue(Value);
-		}
-		if (SpinBox)
-		{
-			SpinBox->SetValue(Value);
-		}
-	}
-	else
-	{
-		LastRefreshedMutedValue = MutedStateValue;
+		SpinBox->SetValue(Value);
 	}
 	
 	RefreshContentText();
 	
-	OnValueChanged_Native.Broadcast(this, Value, bIsMutedValue);
-	OnValueChanged.Broadcast(this, Value, bIsMutedValue);
+	OnValueChanged_Native.Broadcast(this, Value);
+	OnValueChanged.Broadcast(this, Value);
 }
 
 void UVSCommonRanger::RefreshContentText()
 {
 	if (TextBlock_Content)
 	{
-		const float CurrentValue = GetValue(false);
-		const FText& ValueText = GetContentText(CurrentValue, bIsMuted, bDisplaySameValueMutedText);
+		const FText& ValueText = GetContentText();
 		TextBlock_Content->SetText(ValueText);
 	}
 }
 
 void UVSCommonRanger::OnWidgetValueChanged(float Value)
 {
-	if (!FMath::IsNearlyEqual(Value, GetValue(true)))
+	if (!FMath::IsNearlyEqual(Value, CurrentValue))
 	{
 		const bool bPrevDelegatesBound = bValueDelegatesBound;
 		if (bPrevDelegatesBound)
@@ -290,7 +250,7 @@ void UVSCommonRanger::OnWidgetValueChanged(float Value)
 			}
 		}
 		
-		SetValue(Value, false);
+		SetValue(Value);
 
 		if (bPrevDelegatesBound)
 		{
@@ -307,27 +267,10 @@ void UVSCommonRanger::OnWidgetValueChanged(float Value)
 	}
 }
 
-void UVSCommonRanger::OnWidgetMuteStateChanged(bool bMuted)
+void UVSCommonRanger::OnCultureChanged()
 {
-	bMuted = bMuted && bSupportMutation;
-	if (bMuted != bIsMuted)
+	if (TextBlock_Content)
 	{
-		if (CheckBox_Mute)
-		{
-			const bool bPrevDelegateBound = bMuteDelegateBound;
-			if (bPrevDelegateBound)
-			{
-				bMuteDelegateBound = false;
-				CheckBox_Mute->OnCheckStateChanged.RemoveDynamic(this, &UVSCommonRanger::OnWidgetMuteStateChanged);
-			}
-
-			SetIsMuted(bMuted);
-
-			if (bPrevDelegateBound)
-			{
-				bMuteDelegateBound = true;
-				CheckBox_Mute->OnCheckStateChanged.AddDynamic(this, &UVSCommonRanger::OnWidgetMuteStateChanged);
-			}
-		}
+		TextBlock_Content->SetText(GetContentText());
 	}
 }

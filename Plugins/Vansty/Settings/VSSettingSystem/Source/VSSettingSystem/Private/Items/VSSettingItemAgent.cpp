@@ -28,12 +28,11 @@ void UVSSettingItemAgent::PostEditChangeProperty(struct FPropertyChangedEvent& P
 	{
 		if (!GetTypedOuter<UVSSettingItemAgent>() && EditorSubSettingItems != SubSettingItems)
 		{
+			EditorSubSettingItems = SubSettingItems;
 			if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
 			{
 				SettingSubsystem->RefreshEditorDirectSettingItemAgents();
 			}
-			
-			EditorSubSettingItems = SubSettingItems;
 		}
 	}
 	
@@ -41,11 +40,20 @@ void UVSSettingItemAgent::PostEditChangeProperty(struct FPropertyChangedEvent& P
 }
 #endif
 
+void UVSSettingItemAgent::PostLoad()
+{
+	Super::PostLoad();
+
+#if WITH_EDITOR
+	EditorSubSettingItems = SubSettingItems;
+#endif
+}
+
 void UVSSettingItemAgent::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
 	
-	for (UVSSettingItem* SettingItem : SubSettingItems)
+	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem && !SettingItem->HasBeenInitialized())
 		{
@@ -57,7 +65,7 @@ void UVSSettingItemAgent::Initialize_Implementation()
 
 void UVSSettingItemAgent::Uninitialize_Implementation()
 {
-	for (UVSSettingItem* SettingItem : SubSettingItems)
+	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem && SettingItem->HasBeenInitialized())
 		{
@@ -71,7 +79,7 @@ void UVSSettingItemAgent::Uninitialize_Implementation()
 
 void UVSSettingItemAgent::Load_Implementation()
 {
-	for (UVSSettingItem* SettingItem : SubSettingItems)
+	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem)
 		{
@@ -82,7 +90,7 @@ void UVSSettingItemAgent::Load_Implementation()
 
 void UVSSettingItemAgent::Validate_Implementation()
 {
-	for (UVSSettingItem* SettingItem : SubSettingItems)
+	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem)
 		{
@@ -93,7 +101,7 @@ void UVSSettingItemAgent::Validate_Implementation()
 
 void UVSSettingItemAgent::Apply_Implementation()
 {
-	for (UVSSettingItem* SettingItem : SubSettingItems)
+	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem)
 		{
@@ -104,7 +112,7 @@ void UVSSettingItemAgent::Apply_Implementation()
 
 void UVSSettingItemAgent::Confirm_Implementation()
 {
-	for (UVSSettingItem* SettingItem : SubSettingItems)
+	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem)
 		{
@@ -115,7 +123,7 @@ void UVSSettingItemAgent::Confirm_Implementation()
 
 void UVSSettingItemAgent::Save_Implementation()
 {
-	for (UVSSettingItem* SettingItem : SubSettingItems)
+	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem)
 		{
@@ -126,7 +134,7 @@ void UVSSettingItemAgent::Save_Implementation()
 
 bool UVSSettingItemAgent::IsValueValid_Implementation() const
 {
-	for (UVSSettingItem* SettingItem : SubSettingItems)
+	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem && !SettingItem->IsValueValid())
 		{
@@ -139,7 +147,7 @@ bool UVSSettingItemAgent::IsValueValid_Implementation() const
 
 void UVSSettingItemAgent::SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource)
 {
-	for (UVSSettingItem* SettingItem : SubSettingItems)
+	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem)
 		{
@@ -150,7 +158,7 @@ void UVSSettingItemAgent::SetToBySource_Implementation(const EVSSettingItemValue
 
 bool UVSSettingItemAgent::EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
 {
-	for (UVSSettingItem* SettingItem : SubSettingItems)
+	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem && !SettingItem->EqualsToBySource(ValueSource))
 		{
@@ -161,28 +169,26 @@ bool UVSSettingItemAgent::EqualsToBySource_Implementation(const EVSSettingItemVa
 	return true;
 }
 
-#if WITH_EDITOR
-void UVSSettingItemAgent::EditorPostInitialized_Implementation()
+TArray<UVSSettingItem*> UVSSettingItemAgent::GetDirectSubSettingItems() const
 {
-	Super::EditorPostInitialized_Implementation();
-
-	EditorSubSettingItems = SubSettingItems;
-
+	TArray<UVSSettingItem*> OutItems;
 	for (UVSSettingItem* SettingItem : SubSettingItems)
 	{
-		if (SettingItem)
+		if (SettingItem && SettingItem->GetItemTag().IsValid() && SettingItem->ShouldCreateSettingItem())
 		{
-			SettingItem->EditorPostInitialized();
+			OutItems.Add(SettingItem);
 		}
 	}
+
+	return OutItems;
 }
-#endif
 
 TArray<UVSSettingItem*> UVSSettingItemAgent::GetRecursiveSubSettingItems() const
 {
 	TArray<UVSSettingItem*> OutSettingItems = SubSettingItems;
-	for (UVSSettingItem* SettingItem : SubSettingItems)
+	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
 	{
+		if (!SettingItem || !SettingItem->GetItemTag().IsValid() || !SettingItem->ShouldCreateSettingItem()) continue;
 		if (UVSSettingItemAgent* Agent = Cast<UVSSettingItemAgent>(SettingItem))
 		{
 			OutSettingItems.Append(Agent->GetRecursiveSubSettingItems());

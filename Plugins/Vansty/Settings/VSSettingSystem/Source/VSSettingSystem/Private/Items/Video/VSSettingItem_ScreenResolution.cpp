@@ -3,9 +3,12 @@
 #include "Items/Video/VSSettingItem_ScreenResolution.h"
 #include "VSPrivablic.h"
 #include "VSSettingSubsystem.h"
+#include "VSSettingSystemConfig.h"
+#include "Classes/Libraries/VSPlatformLibrary.h"
 #include "Engine/GameEngine.h"
 #include "GameFramework/GameUserSettings.h"
 #include "Items/VSSettingSystemTags.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "Types/Math/VSMath.h"
 
 VS_DECLARE_PRIVABLIC_MEMBER(UGameUserSettings, ResolutionSizeX, uint32);
@@ -15,6 +18,7 @@ VS_DECLARE_PRIVABLIC_MEMBER(UGameUserSettings, LastUserConfirmedDesiredScreenHei
 
 UVSSettingItem_ScreenResolution::UVSSettingItem_ScreenResolution(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, DisableInWindowedFullscreenMode(true)
 	, bCheckForCommandLineOverrides(false)
 {
 	SetValueType(EVSCommonSettingValueType::String);
@@ -22,7 +26,7 @@ UVSSettingItem_ScreenResolution::UVSSettingItem_ScreenResolution(const FObjectIn
 	ItemTag = EVSSettingItem::Video::ScreenResolution;
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.ScreenResolution", "DisplayName", "Screen Resolution");
 	ConfigParams.ConfigSection = FString("/Script/Engine.GameUserSettings");
-	ConfigParams.ConfigKeyName = FString("ResolutionSize");
+	ConfigParams.ConfigKeyName = FString("ResolutionSize(X/Y)");
 	ConfigParams.bAutoDefaultConfig = false;
 }
 
@@ -83,14 +87,34 @@ void UVSSettingItem_ScreenResolution::Apply_Implementation()
 	{
 		FCoreDelegates::OnSystemResolutionChanged.RemoveAll(this);
 
-		FIntPoint ScreenResolution = GetScreenResolution(EVSSettingItemValueSource::System);
-		if (bCheckForCommandLineOverrides)
+		TEnumAsByte<EWindowMode::Type> WindowMode = GSystemResolution.WindowMode;
+		if (IConsoleVariable* CVarSetRes = IConsoleManager::Get().FindConsoleVariable(TEXT("r.SetRes"), false))
 		{
-			EWindowMode::Type WindowMode = GSystemResolution.WindowMode;
-			UGameEngine::ConditionallyOverrideSettings(ScreenResolution.X, ScreenResolution.Y, WindowMode);
+			FIntPoint OriginalResolution;
+			UVSPlatformLibrary::ParseSetRes(CVarSetRes->GetString(), OriginalResolution, WindowMode);
+		}
+
+		if (WindowMode == EWindowMode::WindowedFullscreen && DisableInWindowedFullscreenMode)
+		{
+			return;
 		}
 		
-		FSystemResolution::RequestResolutionChange(ScreenResolution.X, ScreenResolution.Y, GSystemResolution.WindowMode);
+		FIntPoint ScreenResolutionToApply = GetScreenResolution(EVSSettingItemValueSource::System);
+		if (WindowMode == EWindowMode::WindowedFullscreen)
+		{
+			TArray<FIntPoint> ScreenResolutions;
+			UKismetSystemLibrary::GetSupportedFullscreenResolutions(ScreenResolutions);
+			if (ScreenResolutions.Num())
+			{
+				ScreenResolutionToApply = ScreenResolutions.Last();
+			}
+		}
+		if (bCheckForCommandLineOverrides)
+		{
+			EWindowMode::Type TempWindowMode = WindowMode;
+			UGameEngine::ConditionallyOverrideSettings(ScreenResolutionToApply.X, ScreenResolutionToApply.Y, TempWindowMode);
+		}
+		FSystemResolution::RequestResolutionChange(ScreenResolutionToApply.X, ScreenResolutionToApply.Y, WindowMode);
 		
 		FCoreDelegates::OnSystemResolutionChanged.AddUObject(this, &UVSSettingItem_ScreenResolution::OnSystemResolutionChanged);
 	}
@@ -130,15 +154,7 @@ void UVSSettingItem_ScreenResolution::Save_Implementation()
 bool UVSSettingItem_ScreenResolution::IsValueValid_Implementation() const
 {
 	const FIntPoint& ScreenResolution = GetScreenResolution(EVSSettingItemValueSource::System);
-	if (ScreenResolution.X < 0 || ScreenResolution.Y < 0) return false;
-
-	if (bCheckForCommandLineOverrides)
-	{
-		EWindowMode::Type WindowMode = GSystemResolution.WindowMode;
-		FIntPoint OverrideScreenResolution = ScreenResolution;
-		UGameEngine::ConditionallyOverrideSettings(OverrideScreenResolution.X, OverrideScreenResolution.Y, WindowMode);
-		if (ScreenResolution != OverrideScreenResolution) return false;
-	}
+	if (ScreenResolution.X <= 0 || ScreenResolution.Y <= 0) return false;
 	
 	return true;
 }
@@ -153,13 +169,19 @@ void UVSSettingItem_ScreenResolution::Validate_Implementation()
 	ScreenResolution.X = FMath::Max(ScreenResolution.X, 0);
 	ScreenResolution.Y = FMath::Max(ScreenResolution.Y, 0);
 
-	if (bCheckForCommandLineOverrides)
+	if (ScreenResolution == FIntPoint::ZeroValue)
 	{
-		EWindowMode::Type WindowMode = GSystemResolution.WindowMode;
-		UGameEngine::ConditionallyOverrideSettings(ScreenResolution.X, ScreenResolution.Y, WindowMode);
+		TArray<FIntPoint> ScreenResolutions;
+		UKismetSystemLibrary::GetSupportedFullscreenResolutions(ScreenResolutions);
+		if (ScreenResolutions.Num())
+		{
+			ScreenResolution = ScreenResolutions.Last();
+		}
+		if (ScreenResolution != FIntPoint::ZeroValue)
+		{
+			SetScreenResolution(ScreenResolution);
+		}
 	}
-
-	SetScreenResolution(ScreenResolution);
 }
 
 void UVSSettingItem_ScreenResolution::OnValueUpdated_Implementation()
@@ -191,6 +213,13 @@ FString UVSSettingItem_ScreenResolution::GetStringValue_Implementation(const EVS
 			return GEngine->GetGameUserSettings()->GetDefaultResolution().ToString();
 			
 		case EVSSettingItemValueSource::Game:
+			if (IConsoleVariable* CVarSetRes = IConsoleManager::Get().FindConsoleVariable(TEXT("r.SetRes"), false))
+			{
+				TEnumAsByte<EWindowMode::Type> WindowMode;
+				FIntPoint Resolution;
+				UVSPlatformLibrary::ParseSetRes(CVarSetRes->GetString(), Resolution, WindowMode);
+				return Resolution.ToString();
+			}
 			return FIntPoint(GSystemResolution.ResX, GSystemResolution.ResY).ToString();
 
 		default: ;
@@ -204,63 +233,49 @@ FString UVSSettingItem_ScreenResolution::GetStringValue_Implementation(const EVS
 FText UVSSettingItem_ScreenResolution::ValueStringToText_Implementation(const FString& String) const
 {
 	/** [Generated by ChatGPT] */
-	FIntPoint ScreenResolution = StringToScreenResolution(String);
-
-	if (FVSMath::VectorHasZeroAxis(ScreenResolution) && GEngine)
+	const FIntPoint& ScreenResolution = StringToScreenResolution(String);
+	if (ScreenResolution == FIntPoint::ZeroValue)
 	{
-		if (GEngine->GameViewport && GEngine->GameViewport->Viewport)
-		{
-			ScreenResolution = GEngine->GameViewport->Viewport->GetSizeXY();
-		}
-		else if (UGameUserSettings* GameUserSettings = GEngine->GameUserSettings)
-		{
-			ScreenResolution = GameUserSettings->GetScreenResolution();
-		}
+		return UVSSettingSystemConfig::Get()->SystemDefaultText;
 	}
 
 	FString Left  = FString::FromInt(ScreenResolution.X);
 	FString Right = FString::FromInt(ScreenResolution.Y);
-
+	
 	/** Figure space. */
-	static int32 FieldWidth = 6;
-
+	// static int32 FieldWidth = 6;
+	//
+	// auto PadLeftTo = [&] (FString& InOut, int32 Width)
+	// {
+	// 	const int32 PadCount = Width - InOut.Len();
+	// 	if (PadCount > 0)
+	// 	{
+	// 		InOut = FString::ChrN(PadCount, PadChar) + InOut;
+	// 	}
+	// };
+	//
+	// auto PadRightTo = [&] (FString& InOut, int32 Width)
+	// {
+	// 	const int32 PadCount = Width - InOut.Len();
+	// 	if (PadCount > 0)
+	// 	{
+	// 		InOut = InOut + FString::ChrN(PadCount, PadChar);
+	// 	}
+	// };
+	//
+	// PadLeftTo(Left, FieldWidth);
+	// PadRightTo(Right, FieldWidth);
+	
 	/** Figure Space (U+2007): typically same width as digits. */
 	static TCHAR PadChar = 0x2007;
-
-	auto PadLeftTo = [&](FString& InOut, int32 Width)
+	FString Result = Left + FString::Chr(PadChar) + TEXT("x") + FString::Chr(PadChar) + Right;
+	if (Right.Len() > Left.Len())
 	{
-		const int32 PadCount = Width - InOut.Len();
-		if (PadCount > 0)
-		{
-			InOut = FString::ChrN(PadCount, PadChar) + InOut;
-		}
-	};
-
-	auto PadRightTo = [&](FString& InOut, int32 Width)
-	{
-		const int32 PadCount = Width - InOut.Len();
-		if (PadCount > 0)
-		{
-			InOut = InOut + FString::ChrN(PadCount, PadChar);
-		}
-	};
-
-	PadLeftTo(Left, FieldWidth);
-	PadRightTo(Right, FieldWidth);
-
-	const FString Result = Left + TEXT(" x ") + Right;
+		Result += FString::ChrN(Right.Len() - Left.Len(), PadChar);
+	}
+	
 	return FText::FromString(Result);
 }
-
-
-#if WITH_EDITOR
-void UVSSettingItem_ScreenResolution::EditorPostInitialized_Implementation()
-{
-	Super::EditorPostInitialized_Implementation();
-	
-	EditorPreviewScreenResolution = GetScreenResolution(EVSSettingItemValueSource::System);
-}
-#endif
 
 void UVSSettingItem_ScreenResolution::SetScreenResolution(const FIntPoint& InResolution)
 {

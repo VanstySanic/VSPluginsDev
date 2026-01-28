@@ -2,8 +2,10 @@
 
 #include "WidgetControllers/VSSettingItemWidgetController.h"  
 #include "VSSettingSubsystem.h"
+#include "Classes/Libraries/VSPlatformLibrary.h"
 #include "Components/RichTextBlock.h"
 #include "Components/TextBlock.h"
+#include "WidgetBinders/VSWidgetBinder.h"
 
 UVSSettingItemWidgetController::UVSSettingItemWidgetController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -16,9 +18,22 @@ void UVSSettingItemWidgetController::PostEditChangeProperty(struct FPropertyChan
 {
 	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemWidgetController, ItemTag))
 	{
-		if (IsRegistered())
+		const bool PrevRegistered = IsRegistered();
+		if (PrevRegistered)
 		{
-			Reregister();
+			Unregister();
+		}
+
+		if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
+		{
+			SettingItemPrivate = SettingSubsystem->GetSettingItemByTag(ItemTag);
+		}
+		
+		Execute_EditorRefreshMediator(this);
+		
+		if (PrevRegistered)
+		{
+			Register();
 		}
 	}
 	
@@ -35,16 +50,21 @@ void UVSSettingItemWidgetController::Initialize_Implementation()
 		if (UVSSettingItem* SettingItem = SettingSubsystem->GetSettingItemByTag(ItemTag))
 		{
 			SettingItemPrivate = SettingItem;
-			SettingItem->OnUpdated.AddDynamic(this, &UVSSettingItemWidgetController::OnSettingItemUpdated);
+			SettingItemPrivate->OnUpdated_Native.AddUObject(this, &UVSSettingItemWidgetController::OnCurrentSettingItemUpdatedNative);
 		}
+		SettingSubsystem->OnItemUpdated.AddDynamic(this, &UVSSettingItemWidgetController::OnAnySettingItemUpdated);
 	}
 }
 
 void UVSSettingItemWidgetController::Uninitialize_Implementation()
 {
-	if (SettingItemPrivate.IsValid())
+	if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
 	{
-		SettingItemPrivate->OnUpdated.RemoveDynamic(this, &UVSSettingItemWidgetController::OnSettingItemUpdated);
+		SettingSubsystem->OnItemUpdated.RemoveDynamic(this, &UVSSettingItemWidgetController::OnAnySettingItemUpdated);
+		if (UVSSettingItem* SettingItem = SettingSubsystem->GetSettingItemByTag(ItemTag))
+		{
+			SettingItem->OnUpdated_Native.RemoveAll(this);
+		}
 	}
 	SettingItemPrivate.Reset();
 
@@ -54,11 +74,22 @@ void UVSSettingItemWidgetController::Uninitialize_Implementation()
 void UVSSettingItemWidgetController::BindTypedWidget_Implementation(const FName TypeName, UWidget* Widget)
 {
 	Super::BindTypedWidget_Implementation(TypeName, Widget);
-
-	if (!SettingItemPrivate.Get()) return;
-
+	
+	if (TypeName == FName("Item"))
+	{
+		if (!SettingItemPrivate.IsValid())
+		{
+#if WITH_EDITOR
+			if (!Widget->IsDesignTime())
+#endif
+			{
+				Widget->SetVisibility(ESlateVisibility::Collapsed);
+			}
+		}
+	}
 	if (TypeName == FName("Name"))
 	{
+		if (!SettingItemPrivate.IsValid()) return; 
 		const FText& TextToSet = SettingItemPrivate->GetItemInfo().DisplayName.IsEmpty()
 			? FText::FromString("Item Name")
 			: SettingItemPrivate->GetItemInfo().DisplayName;
@@ -91,12 +122,45 @@ void UVSSettingItemWidgetController::UnbindTypedWidget_Implementation(const FNam
 	Super::UnbindTypedWidget_Implementation(TypeName, Widget);
 }
 
-UVSSettingItem* UVSSettingItemWidgetController::GetSettingItem() const
+void UVSSettingItemWidgetController::OnCurrentSettingItemUpdated_Implementation()
+{
+	for (UVSWidgetBinder* WidgetBinder : WidgetBinders)
+	{
+		if (WidgetBinder && WidgetBinder->GetClass()->ImplementsInterface(UVSSettingItemWidgetMediatorInterface::StaticClass()))
+		{
+			Execute_OnCurrentSettingItemUpdated(WidgetBinder);
+		}
+	}
+}
+
+void UVSSettingItemWidgetController::OnAnySettingItemUpdated_Implementation(UVSSettingItem* SettingItem)
+{
+	for (UVSWidgetBinder* WidgetBinder : WidgetBinders)
+	{
+		if (WidgetBinder && WidgetBinder->GetClass()->ImplementsInterface(UVSSettingItemWidgetMediatorInterface::StaticClass()))
+		{
+			Execute_OnAnySettingItemUpdated(WidgetBinder, SettingItem);
+		}
+	}
+}
+
+void UVSSettingItemWidgetController::EditorRefreshMediator_Implementation()
+{
+	for (UVSWidgetBinder* WidgetBinder : WidgetBinders)
+	{
+		if (WidgetBinder && WidgetBinder->GetClass()->ImplementsInterface(UVSSettingItemWidgetMediatorInterface::StaticClass()))
+		{
+			Execute_EditorRefreshMediator(WidgetBinder);
+		}
+	}
+}
+
+UVSSettingItem* UVSSettingItemWidgetController::GetSettingItem_Implementation() const
 {
 	return SettingItemPrivate.Get();
 }
 
-void UVSSettingItemWidgetController::OnSettingItemUpdated_Implementation(UVSSettingItem* SettingItem)
+void UVSSettingItemWidgetController::OnCurrentSettingItemUpdatedNative(UVSSettingItem* SettingItem)
 {
-	
+	Execute_OnCurrentSettingItemUpdated(this);
 }

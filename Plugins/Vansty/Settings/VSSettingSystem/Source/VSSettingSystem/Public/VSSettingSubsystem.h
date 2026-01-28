@@ -39,7 +39,7 @@ public:
 
 	/** Returns a registered setting item by tag, or nullptr if not found. */
 	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "ItemTag"))
-	UVSSettingItem* GetSettingItemByTag(const FGameplayTag& ItemTag = FGameplayTag());
+	UVSSettingItem* GetSettingItemByTag(const FGameplayTag& ItemTag);
 
 	/** Loads settings for all root agents. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
@@ -85,7 +85,6 @@ public:
 	FSettingItemUpdateEvent OnItemUpdated;
 
 private:
-	UFUNCTION()
 	void OnSettingItemUpdated(UVSSettingItem* SettingItem);
 
 private:

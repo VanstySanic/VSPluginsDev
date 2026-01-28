@@ -1,6 +1,8 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Items/Graphics/VSSettingItem_MotionBlur.h"
+
+#include "VSSettingSystemConfig.h"
 #include "Engine/RendererSettings.h"
 #include "Items/VSSettingSystemTags.h"
 #include "Types/Math/VSMath.h"
@@ -11,7 +13,7 @@ UVSSettingItem_MotionBlur::UVSSettingItem_MotionBlur(const FObjectInitializer& O
 	ItemTag = EVSSettingItem::Graphics::MotionBlur;
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Graphics.MotionBlur", "DisplayName", "Motion Blur");
 	ConfigParams.ConfigFileName = GIsEditor ? "Editor" : "GameUserSettings";
-	ConfigParams.ConfigSection = FString("VS.Settings.Item.Graphic");
+	ConfigParams.ConfigSection = FString("VS.Settings.Item.Graphics");
 	ConfigParams.ConfigKeyName = FString("r.MotionBlurQuality");
 
 	SetConsoleVariableName(TEXT("r.MotionBlurQuality"));
@@ -52,6 +54,17 @@ int32 UVSSettingItem_MotionBlur::GetIntegerValue_Implementation(const EVSSetting
 	}
 
 	return SuperValue;
+}
+
+FText UVSSettingItem_MotionBlur::ValueStringToText_Implementation(const FString& String) const
+{
+	const int32 Level = FCString::Atoi(*String);
+	if (UVSSettingSystemConfig::Get()->MotionBlueQualityLevelNames.Contains(Level))
+	{
+		return UVSSettingSystemConfig::Get()->MotionBlueQualityLevelNames.FindRef(Level);
+	}
+	
+	return Super::ValueStringToText_Implementation(String);
 }
 
 void UVSSettingItem_MotionBlur::SetMotionBlurQualityLevel(int32 QualityLevel)

@@ -38,16 +38,26 @@ const UVSPluginsCoreEngineSettings* UVSPluginsCoreEngineSettings::GetVSPluginsCo
 
 void UVSPluginsCoreEngineSettings::CheckFullscreenDesiredMonitor()
 {
-	if (GSystemResolution.WindowMode == EWindowMode::Fullscreen)
+	FIntPoint ScreenResolution = FIntPoint(GSystemResolution.ResX, GSystemResolution.ResY);
+	TEnumAsByte<EWindowMode::Type> WindowMode = GSystemResolution.WindowMode;
+	if (IConsoleVariable* CVarSetRes = IConsoleManager::Get().FindConsoleVariable(TEXT("r.SetRes"), false))
+	{
+		UVSPlatformLibrary::ParseSetRes(CVarSetRes->GetString(), ScreenResolution, WindowMode);
+	}
+	if (WindowMode == EWindowMode::Fullscreen)
 	{
 		FVSMonitorInfo MonitorInfo = UVSPlatformLibrary::GetMonitorInfoByID(CVarDesiredFullscreenMonitorID->GetString());
 		if (MonitorInfo.ID.IsEmpty())
 		{
 			MonitorInfo = UVSPlatformLibrary::GetPrimaryMonitorInfo();
 		}
-		if (!MonitorInfo.ID.IsEmpty())
+
+		const FVector2D& WindowRootPos = UVSPlatformLibrary::GetWindowRootPosition(false);
+		const FString& WindowMonitorID = UVSPlatformLibrary::GetMonitorIDByPosition(WindowRootPos);
+		const FMonitorInfo& WindowMonitorInfo = UVSPlatformLibrary::GetNativeMonitorInfoByID(WindowMonitorID);
+		if (!MonitorInfo.ID.IsEmpty() && WindowMonitorInfo.ID != MonitorInfo.ID)
 		{
-			UVSPlatformLibrary::SwitchMonitorByID(CVarDesiredFullscreenMonitorID->GetString());
+			UVSPlatformLibrary::SwitchMonitorByID(MonitorInfo.ID);
 		}
 	}
 }

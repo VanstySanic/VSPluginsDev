@@ -7,6 +7,7 @@
 #include "VSSettingSystemConfig.generated.h"
 
 class UVSSettingItemAgent;
+
 /**
  * 
  */
@@ -38,6 +39,9 @@ public:
 	TArray<TSoftClassPtr<UVSSettingItemAgent>> SettingItemAgentClasses;
 
 	UPROPERTY(EditAnywhere, Config, Category = "Settings|Display Names", meta = (ConfigRestartRequired = "true"))
+	FText SystemDefaultText;
+	
+	UPROPERTY(EditAnywhere, Config, Category = "Settings|Display Names", meta = (ConfigRestartRequired = "true"))
 	FText NoLimitsDisplayName;
 	
 	UPROPERTY(EditAnywhere, Config, Category = "Settings|Display Names", meta = (ConfigRestartRequired = "true"))
@@ -45,12 +49,18 @@ public:
 
 	UPROPERTY(EditAnywhere, Config, Category = "Settings|Display Names", meta = (ConfigRestartRequired = "true"))
 	TMap<bool, FText> EnabledStateDisplayNames;
+
+	UPROPERTY(EditAnywhere, Config, Category = "Settings|Display Names", meta = (ConfigRestartRequired = "true"))
+	FText VolumeMutedText;
 	
 	UPROPERTY(EditAnywhere, Config, Category = "Settings|Display Names", meta = (ConfigRestartRequired = "true"))
 	TMap<TEnumAsByte<EWindowMode::Type>, FText> WindowModeDisplayNames;
 
 	UPROPERTY(EditAnywhere, Config, Category = "Settings|Display Names", meta = (ConfigRestartRequired = "true"))
 	TMap<TEnumAsByte<EAntiAliasingMethod>, FText> AntiAliasingMethodDisplayNames;
+
+	UPROPERTY(EditAnywhere, Config, Category = "Settings|Display Names", meta = (ConfigRestartRequired = "true"))
+	TMap<int32, FText> MotionBlueQualityLevelNames;
 	
 private:
 #if WITH_EDITOR

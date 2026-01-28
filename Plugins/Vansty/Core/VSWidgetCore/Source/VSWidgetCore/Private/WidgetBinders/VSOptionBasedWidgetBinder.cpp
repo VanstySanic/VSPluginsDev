@@ -4,7 +4,11 @@
 #include "CommonRotator.h"
 #include "VSPrivablic.h"
 #include "Components/ComboBoxString.h"
+#include "Components/RichTextBlock.h"
+#include "Components/Slider.h"
+#include "Components/TextBlock.h"
 #include "Components/VSCommonButtonGroupWidget.h"
+#include "Components/VSCommonRanger.h"
 #include "Groups/CommonButtonGroupBase.h"
 #include "Runtime/Slate/Private/Widgets/Views/SListPanel.h"
 
@@ -41,10 +45,11 @@ void UVSOptionBasedWidgetBinder::BindTypedWidget_Implementation(const FName Type
 {
 	Super::BindTypedWidget_Implementation(TypeName, Widget);
 
-	FString CurrentOption = GetExternalOption();
+	const FString& CurrentOption = GetCurrentOption();
+	const int32 CurrentIndex = GetCurrentIndex();
+	const FString& ExternalOption = GetExternalOption();;
+	const int32 ExternalIndex = GetOptionIndex(ExternalOption);
 
-	int32 SelectedIndex = GetCurrentIndex();
-	
 	if (TypeName == FName("Options"))
 	{
 		if (UComboBoxString* ComboBoxString = Cast<UComboBoxString>(Widget))
@@ -57,7 +62,7 @@ void UVSOptionBasedWidgetBinder::BindTypedWidget_Implementation(const FName Type
 			}
 			
 			ComboBoxString->RefreshOptions();
-			ComboBoxString->SetSelectedIndex(SelectedIndex);
+			ComboBoxString->SetSelectedIndex(ExternalIndex);
 
 			ComboBoxString->OnSelectionChanged.AddDynamic(this, &UVSOptionBasedWidgetBinder::OnComboBoxStringValueChanged);
 			ComboBoxString->OnOpening.AddDynamic(this, &UVSOptionBasedWidgetBinder::OnComboBoxStringOpening);
@@ -66,7 +71,7 @@ void UVSOptionBasedWidgetBinder::BindTypedWidget_Implementation(const FName Type
 		{
 			CommonRotator->ClearSelection();
 			CommonRotator->PopulateTextLabels(OptionTexts);
-			CommonRotator->SetSelectedItem(SelectedIndex);
+			CommonRotator->SetSelectedItem(ExternalIndex);
 
 			CommonRotator->OnRotatedWithDirection.AddDynamic(this, &UVSOptionBasedWidgetBinder::OnCommonRotatorValueChanged);
 
@@ -74,32 +79,58 @@ void UVSOptionBasedWidgetBinder::BindTypedWidget_Implementation(const FName Type
 		}
 		else if (UVSCommonButtonGroupWidget* ButtonGroupWidget = Cast<UVSCommonButtonGroupWidget>(Widget))
 		{
+			ButtonGroupWidget->ButtonActionSettings.Empty();
 			ButtonGroupWidget->ButtonActionSettings.Reserve(OptionTexts.Num());
-			
+			ButtonGroupWidget->OverridenButtonNames.Empty();
+			ButtonGroupWidget->DefaultDisabledIndexes.Empty();
+
 			for (int i = 0; i < OptionTexts.Num(); ++i)
 			{
-				if (i < ButtonGroupWidget->ButtonActionSettings.Num())
-				{
-					ButtonGroupWidget->ButtonActionSettings[i].ActionName = OptionTexts[i];
-				}
-				else
-				{
-					FVSCommonButtonActionSettings CommonButtonActionSettings;
-					CommonButtonActionSettings.bOverrideActionName = true;
-					CommonButtonActionSettings.ActionName = OptionTexts[i];
-					ButtonGroupWidget->ButtonActionSettings.Add(CommonButtonActionSettings);
-				}
-
+				ButtonGroupWidget->OverridenButtonNames.Add(OptionTexts[i]);
 				if (IsOptionDisabled(GetOptionAtIndex(i)))
 				{
-					ButtonGroupWidget->GetButtonGroup()->GetButtonBaseAtIndex(i)->SetIsEnabled(false);
+					ButtonGroupWidget->DefaultDisabledIndexes.Add(i);
 				}
 			}
 
 			ButtonGroupWidget->RefreshButtons();
-			ButtonGroupWidget->GetButtonGroup()->SelectButtonAtIndex(SelectedIndex);
+			ButtonGroupWidget->GetButtonGroup()->SelectButtonAtIndex(ExternalIndex);
 
 			ButtonGroupWidget->GetButtonGroup()->OnSelectedButtonBaseChanged.AddDynamic(this, &UVSOptionBasedWidgetBinder::OnButtonGroupValueChanged);
+		}
+		else if (USlider* Slider = Cast<USlider>(Widget))
+		{
+			Slider->SetMinValue(0.f);
+			Slider->SetMaxValue(Options.Num() - 1.f);
+			Slider->SetStepSize(1.f);
+			Slider->MouseUsesStep = true;
+
+			Slider->SetValue((float)CurrentIndex);
+
+			Slider->OnValueChanged.AddDynamic(this, &UVSOptionBasedWidgetBinder::OnSliderValueChanged);
+		}
+		else if (UVSCommonRanger* CommonRanger = Cast<UVSCommonRanger>(Widget))
+		{
+			CommonRanger->ValueRange.X = 0.f;
+			CommonRanger->ValueRange.Y = Options.Num() - 1.f;
+			CommonRanger->StepSize = 1.f;
+			CommonRanger->bSnapByStep = true;
+
+			CommonRanger->RefreshRanger();
+			CommonRanger->SetValue((float)CurrentIndex);
+
+			CommonRanger->OnValueChanged.AddDynamic(this, &UVSOptionBasedWidgetBinder::OnCommonRangerValueChanged);
+		}
+	}
+	else if (TypeName == FName("Content"))
+	{
+		if (UTextBlock* TextBlock = Cast<UTextBlock>(Widget))
+		{
+			TextBlock->SetText(GetCurrentOptionText());
+		}
+		else if (URichTextBlock* RichTextBlock = Cast<URichTextBlock>(Widget))
+		{
+			RichTextBlock->SetText(GetCurrentOptionText());
 		}
 	}
 }
@@ -124,6 +155,14 @@ void UVSOptionBasedWidgetBinder::UnbindTypedWidget_Implementation(const FName Ty
 		{
 			ButtonGroupWidget->GetButtonGroup()->OnSelectedButtonBaseChanged.RemoveDynamic(this, &UVSOptionBasedWidgetBinder::OnButtonGroupValueChanged);
 			ButtonGroupWidget->GetButtonGroup()->SelectButtonAtIndex(INDEX_NONE);
+		}
+		else if (USlider* Slider = Cast<USlider>(Widget))
+		{
+			Slider->OnValueChanged.RemoveDynamic(this, &UVSOptionBasedWidgetBinder::OnSliderValueChanged);
+		}
+		else if (UVSCommonRanger* CommonRanger = Cast<UVSCommonRanger>(Widget))
+		{
+			CommonRanger->OnValueChanged.RemoveDynamic(this, &UVSOptionBasedWidgetBinder::OnCommonRangerValueChanged);
 		}
 	}
 	
@@ -155,6 +194,7 @@ void UVSOptionBasedWidgetBinder::RefreshOptions()
 	}
 	
 	RebindWidgetByType(FName("Options"));
+	RebindWidgetByType(FName("Content"));
 }
 
 FString UVSOptionBasedWidgetBinder::GetExternalOption_Implementation() const
@@ -260,6 +300,12 @@ void UVSOptionBasedWidgetBinder::OnCultureChanged()
 	RefreshOptions();
 }
 
+void UVSOptionBasedWidgetBinder::OnBoundWidgetValueChanged(int32 Index)
+{
+	RebindWidgetByType(FName("Content"));
+	OnWidgetOptionChanged(Index);
+}
+
 void UVSOptionBasedWidgetBinder::OnComboBoxStringOpening()
 {
 	/** Disable item widgets in combobox whose option is disabled. */
@@ -299,18 +345,25 @@ void UVSOptionBasedWidgetBinder::OnComboBoxStringOpening()
 
 void UVSOptionBasedWidgetBinder::OnComboBoxStringValueChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
-	if (UComboBoxString* ComboBoxString = Cast<UComboBoxString>(GetBoundTypedWidget(FName("Options"))))
-	{
-		OnWidgetOptionChanged(ComboBoxString->GetSelectedIndex());
-	}
+	OnBoundWidgetValueChanged(GetOptionIndex(SelectedItem));
 }
 
 void UVSOptionBasedWidgetBinder::OnCommonRotatorValueChanged(int32 Value, ERotatorDirection RotatorDir)
 {
-	OnWidgetOptionChanged(Value);
+	OnBoundWidgetValueChanged(Value);
 }
 
 void UVSOptionBasedWidgetBinder::OnButtonGroupValueChanged(UCommonButtonBase* AssociatedButton, int32 ButtonIndex)
 {
-	OnWidgetOptionChanged(ButtonIndex);
+	OnBoundWidgetValueChanged(ButtonIndex);
+}
+
+void UVSOptionBasedWidgetBinder::OnSliderValueChanged(float Value)
+{
+	OnBoundWidgetValueChanged(int32(Value));
+}
+
+void UVSOptionBasedWidgetBinder::OnCommonRangerValueChanged(UVSCommonRanger* Ranger, float Value)
+{
+	OnBoundWidgetValueChanged(int32(Value));
 }

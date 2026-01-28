@@ -22,6 +22,9 @@ class VSWIDGETCORE_API IVSDesiredBoundWidgetInterface
 	GENERATED_BODY()
 
 public:
+	TMap<UWidget*, FName> GetDesiredBoundTypedWidgets_Native() const;
+	
+protected:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Widget Binder")
 	TMap<UWidget*, FName> GetDesiredBoundTypedWidgets() const;
 };

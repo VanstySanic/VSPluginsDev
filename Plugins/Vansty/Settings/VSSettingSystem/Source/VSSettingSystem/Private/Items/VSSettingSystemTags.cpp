@@ -11,6 +11,7 @@ namespace EVSSettingItem
 		UE_DEFINE_GAMEPLAY_TAG(ScreenResolution, "VS.SettingSystem.Item.Video.ScreenResolution");
 		UE_DEFINE_GAMEPLAY_TAG(VSync, "VS.SettingSystem.Item.Video.VSync");
 		UE_DEFINE_GAMEPLAY_TAG(FrameRateLimit, "VS.SettingSystem.Item.Video.FrameRateLimit");
+		UE_DEFINE_GAMEPLAY_TAG(Monitor, "VS.SettingSystem.Item.Video.Monitor");
 	}
 
 	namespace Scalability
@@ -37,5 +38,20 @@ namespace EVSSettingItem
 	{
 		UE_DEFINE_GAMEPLAY_TAG(MotionBlur, "VS.SettingSystem.Item.Graphics.MotionBlur");
 		UE_DEFINE_GAMEPLAY_TAG(AntiAliasingMethod, "VS.SettingSystem.Item.Graphics.AntiAliasingMethod");
+	}
+
+	namespace Audio
+	{
+		namespace Volume
+		{
+			UE_DEFINE_GAMEPLAY_TAG(Master, "VS.SettingSystem.Item.Audio.Volume.Master");
+			UE_DEFINE_GAMEPLAY_TAG(Music, "VS.SettingSystem.Item.Audio.Volume.Music");
+		}
+
+		namespace Device
+		{
+			UE_DEFINE_GAMEPLAY_TAG(Output, "VS.SettingSystem.Item.Audio.Device.Output");
+			UE_DEFINE_GAMEPLAY_TAG(Input, "VS.SettingSystem.Item.Audio.Device.Input");
+		}
 	}
 }

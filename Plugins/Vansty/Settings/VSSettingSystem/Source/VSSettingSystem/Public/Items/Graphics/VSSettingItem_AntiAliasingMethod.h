@@ -14,7 +14,7 @@ class VSSETTINGSYSTEM_API UVSSettingItem_AntiAliasingMethod : public UVSConsoleV
 {
 	GENERATED_UCLASS_BODY()
 
-public:
+protected:
 	//~ Begin UObject Interface
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -26,10 +26,9 @@ public:
 	virtual void Validate_Implementation() override;
 	virtual int32 GetIntegerValue_Implementation(const EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const override;
 	virtual FText ValueStringToText_Implementation(const FString& String) const override;
+	virtual void OnValueUpdated_Implementation() override;
 	
-protected:
 #if WITH_EDITOR
-	virtual void EditorPostInitialized_Implementation() override;
 	virtual bool EditorAllowChangingItemTag_Implementation() const override { return false; }
 	virtual bool EditorAllowChangingValueType_Implementation() const override { return false; }
 	virtual bool EditorAllowChangingConfigParams_Implementation() const override { return false; }
