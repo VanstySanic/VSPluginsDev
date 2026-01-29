@@ -31,7 +31,7 @@ public:
 	//~ End UCommonButtonBase Interface
 	
 	UFUNCTION(BlueprintCallable, Category = "Ranger")
-	virtual void SetValue(float NewValue);
+	void SetValue(float NewValue);
 
 	UFUNCTION(BlueprintCallable, Category = "Ranger")
 	virtual float GetValue() const { return CurrentValue; }
@@ -56,6 +56,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<USlider> Slider;
 
+	/** Auxiliary value and display. */
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<USpinBox> SpinBox;
 	

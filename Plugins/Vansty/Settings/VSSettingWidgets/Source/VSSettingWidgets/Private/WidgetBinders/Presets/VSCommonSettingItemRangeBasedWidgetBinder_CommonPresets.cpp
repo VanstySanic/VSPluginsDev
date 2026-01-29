@@ -1,17 +1,17 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
-#include "WidgetBinders/Presets/VSCommonSettingItemRangeBasedWidgetBinder_Presets.h"
+#include "WidgetBinders/Presets/VSCommonSettingItemRangeBasedWidgetBinder_CommonPresets.h"
 #include "GameplayTagContainer.h"
 #include "Items/VSCommonSettingItem.h"
 #include "Items/VSSettingSystemTags.h"
 
-UVSCommonSettingItemRangeBasedWidgetBinder_Presets::UVSCommonSettingItemRangeBasedWidgetBinder_Presets(const FObjectInitializer& ObjectInitializer)
+UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	
 }
 
-FVector2D UVSCommonSettingItemRangeBasedWidgetBinder_Presets::GenerateValueRange_Implementation() const
+FVector2D UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::GenerateValueRange_Implementation() const
 {
 	if (!GetSettingItem_Native()) return Super::GenerateValueRange_Implementation();
 	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();
@@ -24,7 +24,7 @@ FVector2D UVSCommonSettingItemRangeBasedWidgetBinder_Presets::GenerateValueRange
 	}
 	if (ItemTag == EVSSettingItem::Scalability::ResolutionScale)
 	{
-		return FVector2D(Scalability::MinResolutionScale, Scalability::MaxResolutionScale);
+		return FVector2D(FMath::Max(Scalability::MinResolutionScale, 10.0), Scalability::MaxResolutionScale);
 	}
 	if (ItemTag.MatchesTag(AudioVolumeParentTag))
 	{
@@ -35,7 +35,7 @@ FVector2D UVSCommonSettingItemRangeBasedWidgetBinder_Presets::GenerateValueRange
 }
 
 #if WITH_EDITOR
-bool UVSCommonSettingItemRangeBasedWidgetBinder_Presets::EditorAllowChangingStepSize_Implementation() const
+bool UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::EditorAllowChangingStepSize_Implementation() const
 {
 	if (!GetSettingItem_Native()) return Super::EditorAllowChangingStepSize_Implementation();
 	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();
@@ -52,7 +52,7 @@ bool UVSCommonSettingItemRangeBasedWidgetBinder_Presets::EditorAllowChangingStep
 	return Super::EditorAllowChangingStepSize_Implementation();
 }
 
-bool UVSCommonSettingItemRangeBasedWidgetBinder_Presets::EditorAllowChangingSnapByStep_Implementation() const
+bool UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::EditorAllowChangingSnapByStep_Implementation() const
 {
 	if (!GetSettingItem_Native()) return Super::EditorAllowChangingSnapByStep_Implementation();
 	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();
@@ -69,7 +69,7 @@ bool UVSCommonSettingItemRangeBasedWidgetBinder_Presets::EditorAllowChangingSnap
 	return Super::EditorAllowChangingSnapByStep_Implementation();
 }
 
-void UVSCommonSettingItemRangeBasedWidgetBinder_Presets::EditorRefreshMediator_Implementation()
+void UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::EditorRefreshMediator_Implementation()
 {
 	Super::EditorRefreshMediator_Implementation();
 

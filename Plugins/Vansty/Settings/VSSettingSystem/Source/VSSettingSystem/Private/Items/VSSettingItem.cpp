@@ -137,7 +137,7 @@ void UVSSettingItem::ExecuteAction(EVSSettingItemAction::Type Action)
 		break;
 	
 	case EVSSettingItemAction::Apply:
-		if (!IsDirty()) return;
+		if (EqualsToBySource(EVSSettingItemValueSource::Game)) return;
 		Apply();
 		break;
 		

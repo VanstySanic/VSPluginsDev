@@ -29,7 +29,7 @@ struct VSWIDGETCORE_API FVSCommonPanelSlotSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideVerticalAlignment"))
 	TEnumAsByte<EVerticalAlignment> VerticalAlignment = VAlign_Fill;
-
+	
 	
 	UPROPERTY(BlueprintReadWrite)
 	uint8 bOverrideSize : 1;

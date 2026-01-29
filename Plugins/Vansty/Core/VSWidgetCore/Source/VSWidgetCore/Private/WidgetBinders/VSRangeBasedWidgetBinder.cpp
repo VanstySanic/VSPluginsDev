@@ -41,27 +41,27 @@ void UVSRangeBasedWidgetBinder::BindTypedWidget_Implementation(const FName TypeN
 	{
 		if (USlider* Slider = Cast<USlider>(Widget))
 		{
-			Slider->SetMinValue(ValueRange.X);
-			Slider->SetMaxValue(ValueRange.Y);
-			Slider->SetStepSize(StepSize);
+			Slider->SetMinValue(ValueRange.X * DisplayValueMultiplier);
+			Slider->SetMaxValue(ValueRange.Y * DisplayValueMultiplier);
+			Slider->SetStepSize(StepSize * DisplayValueMultiplier);
 			Slider->MouseUsesStep = bSnapByStep;
 			Slider->SetValue(ExternalValue);
 			
-			Slider->OnValueChanged.AddDynamic(this, &UVSRangeBasedWidgetBinder::OnWidgetValueChanged);
+			Slider->OnValueChanged.AddDynamic(this, &UVSRangeBasedWidgetBinder::OnDisplayWidgetValueChanged);
 		}
 		else if (USpinBox* SpinBox = Cast<USpinBox>(Widget))
 		{
-			SpinBox->SetMinValue(ValueRange.X);
-			SpinBox->SetMaxValue(ValueRange.Y);
-			SpinBox->SetDelta(StepSize);
+			SpinBox->SetMinValue(ValueRange.X * DisplayValueMultiplier);
+			SpinBox->SetMaxValue(ValueRange.Y * DisplayValueMultiplier);
+			SpinBox->SetDelta(StepSize * DisplayValueMultiplier);
 			SpinBox->SetMinFractionalDigits(DisplayFractionDigitRange.X);
 			SpinBox->SetMaxFractionalDigits(DisplayFractionDigitRange.Y);
 			SpinBox->SetAlwaysUsesDeltaSnap(bSnapByStep);
 			
 			SpinBox->SetValue((float)INT32_MAX);
-			SpinBox->SetValue(ExternalValue);
+			SpinBox->SetValue(ExternalValue * DisplayValueMultiplier);
 			
-			SpinBox->OnValueChanged.AddDynamic(this, &UVSRangeBasedWidgetBinder::OnWidgetValueChanged);
+			SpinBox->OnValueChanged.AddDynamic(this, &UVSRangeBasedWidgetBinder::OnDisplayWidgetValueChanged);
 		}
 		else if (UVSCommonRanger* CommonRanger = Cast<UVSCommonRanger>(Widget))
 		{
@@ -71,7 +71,8 @@ void UVSRangeBasedWidgetBinder::BindTypedWidget_Implementation(const FName TypeN
 			
 			CommonRanger->DisplayFractionDigitRange = DisplayFractionDigitRange;
 			CommonRanger->DisplayTextFormat = DisplayTextFormat;
-			
+			CommonRanger->DisplayValueMultiplier = DisplayValueMultiplier;
+
 			CommonRanger->RefreshRanger();
 			CommonRanger->SetValue(ExternalValue);
 			
@@ -99,11 +100,11 @@ void UVSRangeBasedWidgetBinder::UnbindTypedWidget_Implementation(const FName Typ
 	{
 		if (USlider* Slider = Cast<USlider>(Widget))
 		{
-			Slider->OnValueChanged.RemoveDynamic(this, &UVSRangeBasedWidgetBinder::OnWidgetValueChanged);
+			Slider->OnValueChanged.RemoveDynamic(this, &UVSRangeBasedWidgetBinder::OnDisplayWidgetValueChanged);
 		}
 		else if (USpinBox* SpinBox = Cast<USpinBox>(Widget))
 		{
-			SpinBox->OnValueChanged.RemoveDynamic(this, &UVSRangeBasedWidgetBinder::OnWidgetValueChanged);
+			SpinBox->OnValueChanged.RemoveDynamic(this, &UVSRangeBasedWidgetBinder::OnDisplayWidgetValueChanged);
 		}
 		else if (UVSCommonRanger* CommonRanger = Cast<UVSCommonRanger>(Widget))
 		{
@@ -126,11 +127,11 @@ float UVSRangeBasedWidgetBinder::GetCurrentValue() const
 	
 	if (USlider* Slider = Cast<USlider>(RangeWidget))
 	{
-		return Slider->GetValue();
+		return Slider->GetValue() / DisplayValueMultiplier;
 	}
 	if (USpinBox* SpinBox = Cast<USpinBox>(RangeWidget))
 	{
-		return SpinBox->GetValue();
+		return SpinBox->GetValue() / DisplayValueMultiplier;
 	}
 	if (UVSCommonRanger* CommonRanger = Cast<UVSCommonRanger>(RangeWidget))
 	{
@@ -189,6 +190,11 @@ void UVSRangeBasedWidgetBinder::OnCultureChanged()
 void UVSRangeBasedWidgetBinder::OnCommonRangerValueChanged(UVSCommonRanger* Ranger, float Value)
 {
 	OnBoundWidgetValueChanged(Value);
+}
+
+void UVSRangeBasedWidgetBinder::OnDisplayWidgetValueChanged(float Value)
+{
+	OnBoundWidgetValueChanged(Value / DisplayValueMultiplier);
 }
 
 void UVSRangeBasedWidgetBinder::OnBoundWidgetValueChanged(float Value)

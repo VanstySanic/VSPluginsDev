@@ -53,17 +53,17 @@ void UVSMutableRangedWidgetBinder::BindTypedWidget_Implementation(const FName Ty
 		}
 		else if (USpinBox* SpinBox = Cast<USpinBox>(Widget))
 		{
-			SpinBox->SetMinValue(ValueRange.X);
-			SpinBox->SetMaxValue(ValueRange.Y);
-			SpinBox->SetDelta(StepSize);
+			SpinBox->SetMinValue(ValueRange.X * DisplayValueMultiplier);
+			SpinBox->SetMaxValue(ValueRange.Y * DisplayValueMultiplier);
+			SpinBox->SetDelta(StepSize * DisplayValueMultiplier);
 			SpinBox->SetMinFractionalDigits(DisplayFractionDigitRange.X);
 			SpinBox->SetMaxFractionalDigits(DisplayFractionDigitRange.Y);
 			SpinBox->SetAlwaysUsesDeltaSnap(bSnapByStep);
 			
 			SpinBox->SetValue((float)INT32_MAX);
-			SpinBox->SetValue(ExternalNonMutedValue);
+			SpinBox->SetValue(ExternalNonMutedValue * DisplayValueMultiplier);
 			
-			SpinBox->OnValueChanged.AddDynamic(this, &UVSMutableRangedWidgetBinder::OnWidgetValueChanged);
+			SpinBox->OnValueChanged.AddDynamic(this, &UVSMutableRangedWidgetBinder::OnDisplayWidgetValueChanged);
 		}
 		else if (UVSCommonRanger* CommonRanger = Cast<UVSCommonRanger>(Widget))
 		{
@@ -73,17 +73,24 @@ void UVSMutableRangedWidgetBinder::BindTypedWidget_Implementation(const FName Ty
 			
 			CommonRanger->DisplayFractionDigitRange = DisplayFractionDigitRange;
 			CommonRanger->DisplayTextFormat = DisplayTextFormat;
+			CommonRanger->DisplayValueMultiplier = DisplayValueMultiplier;
 			
-			CommonRanger->RefreshRanger();
-			CommonRanger->SetValue(ExternalNonMutedValue);
-			
-			CommonRanger->OnValueChanged_Native.AddUObject(this, &UVSMutableRangedWidgetBinder::OnCommonRangerValueChanged);
-
 			if (UVSCommonMutableRanger* MutableRanger = Cast<UVSCommonMutableRanger>(Widget))
 			{
 				MutableRanger->MuteStateValue = MuteStateValue;
 				MutableRanger->DisplayMutedText = DisplayMutedText;
+			}
+
+			CommonRanger->RefreshRanger();
+			CommonRanger->SetValue(ExternalNonMutedValue);
+			if (UVSCommonMutableRanger* MutableRanger = Cast<UVSCommonMutableRanger>(Widget))
+			{
 				MutableRanger->SetIsMuted(bCurrentIsMuted);
+			}
+			
+			CommonRanger->OnValueChanged_Native.AddUObject(this, &UVSMutableRangedWidgetBinder::OnCommonRangerValueChanged);
+			if (UVSCommonMutableRanger* MutableRanger = Cast<UVSCommonMutableRanger>(Widget))
+			{
 				MutableRanger->OnMuteStateChanged_Native.AddUObject(this, &UVSMutableRangedWidgetBinder::OnCommonRangerMuteStateChanged);
 			}
 		}
@@ -112,11 +119,11 @@ void UVSMutableRangedWidgetBinder::UnbindTypedWidget_Implementation(const FName 
 	{
 		if (USlider* Slider = Cast<USlider>(Widget))
 		{
-			Slider->OnValueChanged.RemoveDynamic(this, &UVSMutableRangedWidgetBinder::OnWidgetValueChanged);
+			Slider->OnValueChanged.RemoveDynamic(this, &UVSMutableRangedWidgetBinder::OnDisplayWidgetValueChanged);
 		}
 		else if (USpinBox* SpinBox = Cast<USpinBox>(Widget))
 		{
-			SpinBox->OnValueChanged.RemoveDynamic(this, &UVSMutableRangedWidgetBinder::OnWidgetValueChanged);
+			SpinBox->OnValueChanged.RemoveDynamic(this, &UVSMutableRangedWidgetBinder::OnDisplayWidgetValueChanged);
 		}
 		else if (UVSCommonRanger* CommonRanger = Cast<UVSCommonRanger>(Widget))
 		{
@@ -161,11 +168,11 @@ float UVSMutableRangedWidgetBinder::GetCurrentNonMutedValue_Implementation() con
 	
 	if (USlider* Slider = Cast<USlider>(RangeWidget))
 	{
-		return Slider->GetValue();
+		return Slider->GetValue() / DisplayValueMultiplier;
 	}
 	if (USpinBox* SpinBox = Cast<USpinBox>(RangeWidget))
 	{
-		return SpinBox->GetValue();
+		return SpinBox->GetValue() / DisplayValueMultiplier;
 	}
 	if (UVSCommonMutableRanger* CommonRanger = Cast<UVSCommonMutableRanger>(RangeWidget))
 	{
@@ -275,6 +282,11 @@ void UVSMutableRangedWidgetBinder::OnCommonRangerValueChanged(UVSCommonRanger* R
 void UVSMutableRangedWidgetBinder::OnCommonRangerMuteStateChanged(UVSCommonMutableRanger* Ranger, bool bMuted)
 {
 	OnBoundWidgetMuteStateChanged(bMuted);
+}
+
+void UVSMutableRangedWidgetBinder::OnDisplayWidgetValueChanged(float Value)
+{
+	OnBoundWidgetValueChanged(Value / DisplayValueMultiplier);
 }
 
 void UVSMutableRangedWidgetBinder::OnBoundWidgetValueChanged(float Value)

@@ -3,19 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "WidgetBinders/VSCommonSettingItemRangeBasedWidgetBinder.h"
-#include "VSCommonSettingItemRangeBasedWidgetBinder_Presets.generated.h"
+#include "WidgetBinders/VSSettingItemMutableRangedWidgetBinder.h"
+#include "VSSettingItemMutableRangedWidgetBinder_CommonPresets.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class VSSETTINGWIDGETS_API UVSCommonSettingItemRangeBasedWidgetBinder_Presets : public UVSCommonSettingItemRangeBasedWidgetBinder
+class VSSETTINGWIDGETS_API UVSSettingItemMutableRangedWidgetBinder_CommonPresets : public UVSSettingItemMutableRangedWidgetBinder
 {
 	GENERATED_UCLASS_BODY()
 
-protected:
-	//~ Begin UVSRangeBasedWidgetBinder Interface
+	//~ Begin UVSSettingItemMutableRangedWidgetBinder Interface
 	virtual FVector2D GenerateValueRange_Implementation() const override;
 
 #if WITH_EDITOR
@@ -24,6 +23,5 @@ protected:
 	
 	virtual void EditorRefreshMediator_Implementation() override;
 #endif
-	//~ End UVSRangeBasedWidgetBinder Interface
-	
+	//~ End UVSSettingItemMutableRangedWidgetBinder Interface
 };

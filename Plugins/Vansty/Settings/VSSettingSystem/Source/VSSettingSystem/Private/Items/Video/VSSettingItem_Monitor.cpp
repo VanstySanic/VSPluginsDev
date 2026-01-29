@@ -75,9 +75,9 @@ void UVSSettingItem_Monitor::Validate_Implementation()
 	if (IsValueValid()) return;
 
 	const FString& MonitorID = GetMonitorID(EVSSettingItemValueSource::System);
-	if (!UVSPlatformLibrary::IsValidMonitorID(MonitorID) && !UVSPlatformLibrary::GetPrimaryMonitorInfo().ID.IsEmpty())
+	if (!UVSPlatformLibrary::IsValidMonitorID(MonitorID) && !UVSPlatformLibrary::GetPrimaryMonitorID().IsEmpty())
 	{
-		SetStringValue(UVSPlatformLibrary::GetPrimaryMonitorInfo().ID);
+		SetStringValue(UVSPlatformLibrary::GetPrimaryMonitorID());
 	}
 }
 
@@ -88,14 +88,14 @@ FString UVSSettingItem_Monitor::GetStringValue_Implementation(const EVSSettingIt
 		switch (ValueSource)
 		{
 		case EVSSettingItemValueSource::Default:
-			return UVSPlatformLibrary::GetPrimaryMonitorInfo().ID;
+			return UVSPlatformLibrary::GetPrimaryMonitorID();
 			
 		case EVSSettingItemValueSource::Game:
 			if (auto Window = UVSPlatformLibrary::GetActiveWindow())
 			{
 				UVSPlatformLibrary::GetMonitorIDByPosition(Window->GetPositionInScreen());
 			}
-			return UVSPlatformLibrary::GetPrimaryMonitorInfo().ID;
+			return UVSPlatformLibrary::GetPrimaryMonitorID();
 			
 		default: ;
 		}

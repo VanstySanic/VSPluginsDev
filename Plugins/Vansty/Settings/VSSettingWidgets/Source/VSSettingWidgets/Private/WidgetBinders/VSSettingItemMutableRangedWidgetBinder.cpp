@@ -1,7 +1,6 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "WidgetBinders/VSSettingItemMutableRangedWidgetBinder.h"
-
 #include "VSSettingSubsystem.h"
 #include "VSWidgetController.h"
 #include "Components/VSCommonRanger.h"
@@ -12,11 +11,6 @@ UVSSettingItemMutableRangedWidgetBinder::UVSSettingItemMutableRangedWidgetBinder
 	: Super(ObjectInitializer)
 {
 	
-}
-
-void UVSSettingItemMutableRangedWidgetBinder::Initialize_Implementation()
-{
-	Super::Initialize_Implementation();
 }
 
 void UVSSettingItemMutableRangedWidgetBinder::BindTypedWidget_Implementation(const FName TypeName, UWidget* Widget)
@@ -69,6 +63,32 @@ void UVSSettingItemMutableRangedWidgetBinder::OnCurrentSettingItemUpdated_Implem
 	RebindWidgetByType(FName("Content"));
 }
 
+float UVSSettingItemMutableRangedWidgetBinder::GetExternalNonMutedValue_Implementation() const
+{
+	if (UVSCommonSettingItem* CommonSettingItem = Cast<UVSCommonSettingItem>(GetSettingItem_Native()))
+	{
+		return CommonSettingItem->GetFloatValue(EVSSettingItemValueSource::System);
+	}
+	if (UVSMutableFloatSettingItem* MutableRanger = Cast<UVSMutableFloatSettingItem>(GetSettingItem_Native()))
+	{
+		return MutableRanger->GetNonMutedValue(EVSSettingItemValueSource::System);
+	}
+	
+	return Super::GetExternalNonMutedValue_Implementation();
+}
+
+bool UVSSettingItemMutableRangedWidgetBinder::GetExternalIsMuted_Implementation() const
+{
+	if (!GetSettingItem_Native()) return false;
+	
+	if (UVSMutableFloatSettingItem* MutableRanger = Cast<UVSMutableFloatSettingItem>(GetSettingItem_Native()))
+	{
+		return MutableRanger->GetIsMuted(EVSSettingItemValueSource::System);
+	}
+	
+	return Super::GetExternalIsMuted_Implementation();
+}
+
 #if WITH_EDITOR
 void UVSSettingItemMutableRangedWidgetBinder::EditorRefreshMediator_Implementation()
 {
@@ -88,6 +108,7 @@ void UVSSettingItemMutableRangedWidgetBinder::EditorRefreshMediator_Implementati
 			DisplayTextFormat = MutableRanger->DisplayTextFormat;
 			DisplayFractionDigitRange = MutableRanger->DisplayFractionDigitRange;
 			DisplayValueMultiplier = MutableRanger->DisplayValueMultiplier;
+			DisplayMutedText = MutableRanger->DisplayMutedText;
 		}
 	}
 }

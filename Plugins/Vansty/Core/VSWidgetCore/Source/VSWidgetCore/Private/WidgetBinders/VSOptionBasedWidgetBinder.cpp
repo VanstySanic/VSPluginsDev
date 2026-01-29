@@ -74,8 +74,9 @@ void UVSOptionBasedWidgetBinder::BindTypedWidget_Implementation(const FName Type
 			CommonRotator->SetSelectedItem(ExternalIndex);
 
 			CommonRotator->OnRotatedWithDirection.AddDynamic(this, &UVSOptionBasedWidgetBinder::OnCommonRotatorValueChanged);
-
+			
 			/** Common rotator does not support disabled options. Please turn the bInternalHideDisabledOptions on. */
+			bInternalHideDisabledOptions = true;
 		}
 		else if (UVSCommonButtonGroupWidget* ButtonGroupWidget = Cast<UVSCommonButtonGroupWidget>(Widget))
 		{
@@ -314,12 +315,12 @@ void UVSOptionBasedWidgetBinder::OnComboBoxStringOpening()
 		auto ComboBox = VS_PRIVABLIC_MEMBER(ComboBoxString, UComboBoxString, MyComboBox);
 		auto ListView = VS_PRIVABLIC_MEMBER(ComboBox.Get(), SComboBoxString, ComboListView);
 		auto TableView = VS_PRIVABLIC_MEMBER(ListView.Get(), STableViewBase, ItemsPanel);
-
-		if (TableView.IsValid())
+		
+		if (TableView.IsValid() && ListView.IsValid())
 		{
 			GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([this, TableView, ListView]()
 			{
-				if (!GetWorld()) return;
+				if (!GetWorld() || !TableView.IsValid() || !ListView.IsValid()) return;
 				GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([this, TableView, ListView]()
 				{
 					if (!TableView.IsValid() || !ListView.IsValid()) return;
@@ -345,7 +346,13 @@ void UVSOptionBasedWidgetBinder::OnComboBoxStringOpening()
 
 void UVSOptionBasedWidgetBinder::OnComboBoxStringValueChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
-	OnBoundWidgetValueChanged(GetOptionIndex(SelectedItem));
+	for (int32 i = 0; i < OptionTexts.Num(); i++)
+	{
+		if (OptionTexts[i].EqualTo(FText::FromString(SelectedItem)))
+		{
+			OnBoundWidgetValueChanged(i);
+		}
+	}
 }
 
 void UVSOptionBasedWidgetBinder::OnCommonRotatorValueChanged(int32 Value, ERotatorDirection RotatorDir)

@@ -9,7 +9,8 @@ UVSSettingItem_AudioOutputDevice::UVSSettingItem_AudioOutputDevice(const FObject
 {
 	SetValueType(EVSCommonSettingValueType::String);
 
-	ItemTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Audio::Device::Output);
+	ItemTag = EVSSettingItem::Audio::Device::Output;
+	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Audio.Device.Output", "DisplayName", "Audio Output Device");
 	ConfigParams.ConfigFileName = "GameUserSettings";
 	ConfigParams.ConfigSection = "VS.Settings.Item.Audio.Device";
 	ConfigParams.ConfigKeyName = "AudioOutputDeviceID";
@@ -49,7 +50,7 @@ void UVSSettingItem_AudioOutputDevice::Validate_Implementation()
 	FString DeviceID = GetStringValue(EVSSettingItemValueSource::System);
 	if (!UVSPlatformLibrary::IsValidAudioOutputDeviceID(DeviceID))
 	{
-		DeviceID = UVSPlatformLibrary::GetMainAudioOutputDeviceID();
+		DeviceID = UVSPlatformLibrary::GetActiveAudioOutputDeviceID();
 		if (!DeviceID.IsEmpty())
 		{
 			SetAudioOutputDeviceID(DeviceID);
@@ -62,7 +63,10 @@ void UVSSettingItem_AudioOutputDevice::Apply_Implementation()
 	Super::Apply_Implementation();
 	
 	const FString& DeviceID = GetStringValue(EVSSettingItemValueSource::System);
-	UVSPlatformLibrary::SetMainAudioOutputDeviceByID(DeviceID);
+	if (UVSPlatformLibrary::IsValidAudioOutputDeviceID(DeviceID))
+	{
+		UVSPlatformLibrary::SetActiveAudioOutputDeviceByID(DeviceID);
+	}
 }
 
 FString UVSSettingItem_AudioOutputDevice::GetStringValue_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
@@ -73,7 +77,7 @@ FString UVSSettingItem_AudioOutputDevice::GetStringValue_Implementation(const EV
 		return UVSPlatformLibrary::GetSystemDefaultAudioOutputDeviceID();
 	
 	case EVSSettingItemValueSource::Game:
-		return UVSPlatformLibrary::GetMainAudioOutputDeviceID();
+		return UVSPlatformLibrary::GetActiveAudioOutputDeviceID();
 		
 	default: ;
 	}

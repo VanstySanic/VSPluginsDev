@@ -20,7 +20,7 @@ class UCommonButtonBase;
  * It also supports optional option reversal, disabled-option filtering, and
  * culture-change refresh for localized option text.
  */
-UCLASS()
+UCLASS(DisplayName = "VS.Widget.Controller.OptionBased")
 class VSWIDGETCORE_API UVSOptionBasedWidgetBinder : public UVSWidgetBinder
 {
 	GENERATED_UCLASS_BODY()

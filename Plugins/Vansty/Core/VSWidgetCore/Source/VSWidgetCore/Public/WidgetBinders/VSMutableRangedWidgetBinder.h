@@ -12,7 +12,7 @@ class UVSCommonMutableRanger;
 /**
  * 
  */
-UCLASS()
+UCLASS(DisplayName = "VS.Widget.Controller.MutableRanged")
 class VSWIDGETCORE_API UVSMutableRangedWidgetBinder : public UVSWidgetBinder
 {
 	GENERATED_UCLASS_BODY()
@@ -84,6 +84,9 @@ private:
 	void OnCultureChanged();
 	void OnCommonRangerValueChanged(UVSCommonRanger* Ranger, float Value);
 	void OnCommonRangerMuteStateChanged(UVSCommonMutableRanger* Ranger, bool bMuted);
+
+	UFUNCTION()
+	void OnDisplayWidgetValueChanged(float Value);
 	
 	UFUNCTION()
 	void OnBoundWidgetValueChanged(float Value);

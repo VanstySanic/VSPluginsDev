@@ -1,17 +1,17 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
-#include "WidgetBinders/Presets/VSSettingItemMutableRangedWidgetBinder_Presets.h"
+#include "WidgetBinders/Presets/VSSettingItemMutableRangedWidgetBinder_CommonPresets.h"
 #include "GameplayTagContainer.h"
 #include "Items/VSSettingItem.h"
 #include "Items/VSSettingSystemTags.h"
 
-UVSSettingItemMutableRangedWidgetBinder_Presets::UVSSettingItemMutableRangedWidgetBinder_Presets(const FObjectInitializer& ObjectInitializer)
+UVSSettingItemMutableRangedWidgetBinder_CommonPresets::UVSSettingItemMutableRangedWidgetBinder_CommonPresets(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	
 }
 
-FVector2D UVSSettingItemMutableRangedWidgetBinder_Presets::GenerateValueRange_Implementation() const
+FVector2D UVSSettingItemMutableRangedWidgetBinder_CommonPresets::GenerateValueRange_Implementation() const
 {
 	if (!GetSettingItem_Native()) return Super::GenerateValueRange_Implementation();
 	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();
@@ -31,7 +31,7 @@ FVector2D UVSSettingItemMutableRangedWidgetBinder_Presets::GenerateValueRange_Im
 }
 
 #if WITH_EDITOR
-bool UVSSettingItemMutableRangedWidgetBinder_Presets::EditorAllowChangingStepSize_Implementation() const
+bool UVSSettingItemMutableRangedWidgetBinder_CommonPresets::EditorAllowChangingStepSize_Implementation() const
 {
 	if (!GetSettingItem_Native()) return Super::EditorAllowChangingStepSize_Implementation();
 	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();
@@ -47,7 +47,7 @@ bool UVSSettingItemMutableRangedWidgetBinder_Presets::EditorAllowChangingStepSiz
 	return Super::EditorAllowChangingStepSize_Implementation();
 }
 
-bool UVSSettingItemMutableRangedWidgetBinder_Presets::EditorAllowChangingSnapByStep_Implementation() const
+bool UVSSettingItemMutableRangedWidgetBinder_CommonPresets::EditorAllowChangingSnapByStep_Implementation() const
 {
 	if (!GetSettingItem_Native()) return Super::EditorAllowChangingStepSize_Implementation();
 	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();
@@ -63,7 +63,7 @@ bool UVSSettingItemMutableRangedWidgetBinder_Presets::EditorAllowChangingSnapByS
 	return Super::EditorAllowChangingSnapByStep_Implementation();
 }
 
-void UVSSettingItemMutableRangedWidgetBinder_Presets::EditorRefreshMediator_Implementation()
+void UVSSettingItemMutableRangedWidgetBinder_CommonPresets::EditorRefreshMediator_Implementation()
 {
 	Super::EditorRefreshMediator_Implementation();
 

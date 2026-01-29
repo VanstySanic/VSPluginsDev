@@ -35,8 +35,9 @@ public:
 	//~ Begin UEngineSubsystem Interface
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void BeginDestroy() override;
+	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 	//~ End UEngineSubsystem Interface
-
+	
 	/** Returns a registered setting item by tag, or nullptr if not found. */
 	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "ItemTag"))
 	UVSSettingItem* GetSettingItemByTag(const FGameplayTag& ItemTag);

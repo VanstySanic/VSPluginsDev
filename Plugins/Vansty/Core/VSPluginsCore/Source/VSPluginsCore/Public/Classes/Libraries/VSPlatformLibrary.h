@@ -45,7 +45,7 @@ UVSPlatformLibrary : public UBlueprintFunctionLibrary
 	static TArray<FVSMonitorInfo> GetAvailableMonitorInfos();
 
 	UFUNCTION(BlueprintPure, Category = "Platform|Monitor")
-	static FVSMonitorInfo GetPrimaryMonitorInfo();
+	static FString GetPrimaryMonitorID();
 
 	UFUNCTION(BlueprintPure, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "MonitorID"))
 	static bool IsValidMonitorID(const FString& MonitorID);
@@ -70,7 +70,10 @@ UVSPlatformLibrary : public UBlueprintFunctionLibrary
 
 	UFUNCTION(BlueprintPure, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "MonitorID"))
 	static FVector2D GetMonitorMaxWindowedClientSize(const FString& MonitorID);
-		
+
+	/**
+	 * @params MonitorID The monitor id to set. If left empty, use the default one.
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "MonitorID"))
 	static bool SwitchMonitorByID(const FString& MonitorID);
 
@@ -82,7 +85,7 @@ UVSPlatformLibrary : public UBlueprintFunctionLibrary
 	static FString GetSystemDefaultAudioOutputDeviceID();
 	
 	UFUNCTION(BlueprintPure, Category = "Platform|Audio")
-	static FString GetMainAudioOutputDeviceID();
+	static FString GetActiveAudioOutputDeviceID();
 	
 	UFUNCTION(BlueprintCallable, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "DeviceID"))
 	static FAudioOutputDeviceInfo GetAudioOutputDeviceInfoByID(const FString& DeviceID);
@@ -93,11 +96,14 @@ UVSPlatformLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "DeviceID"))
 	static bool IsValidAudioOutputDeviceID(const FString& DeviceID);
 
+	/**
+	 * @params DeviceID The device id to set. If left empty, use the primary one.
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "DeviceID"))
-	static bool SetMainAudioOutputDeviceByID(const FString& DeviceID);
+	static bool SetActiveAudioOutputDeviceByID(const FString& DeviceID);
 	
 	UFUNCTION(BlueprintPure, Category = "Platform|Audio")
-	static FSoundClassAdjuster GetMainSoundClassAdjuster(USoundMix* SoundMix, USoundClass* SoundClass);
+	static FSoundClassAdjuster GetActiveSoundClassAdjuster(USoundMix* SoundMix, USoundClass* SoundClass);
 
 	
 public:

@@ -9,7 +9,7 @@
 UVSSettingItemWidget::UVSSettingItemWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	
+	SettingWidgetController = CreateDefaultSubobject<UVSSettingItemWidgetController>(TEXT("SettingsWidgetController"));
 }
 
 void UVSSettingItemWidget::NativePreConstruct()

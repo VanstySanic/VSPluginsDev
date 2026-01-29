@@ -98,7 +98,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FVSSettingItemInfo GetItemInfo() const { return ItemInfo; }
-	
+
 	/** Load value from persistent storage or external source. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings")
 	void Load();
@@ -122,14 +122,6 @@ public:
 	/** Whether the value in this item is valid. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	bool IsValueValid() const;
-	
-	/** Whether the system value differs from the confirmed value. */
-	UFUNCTION(BlueprintCallable, Category = "Settings")
-	bool IsDirty() const;
-	
-	/** Whether the current value has not yet been confirmed. */
-	UFUNCTION(BlueprintCallable, Category = "Settings")
-	bool IsUnconfirmed() const;
 
 	/** Set the value to the default value. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
@@ -150,7 +142,16 @@ public:
 	/** Compare current value against the specified source. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	bool EqualsToBySource(const EVSSettingItemValueSource::Type ValueSource) const;
+	
+	/** Whether the system value differs from the confirmed value. */
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	bool IsDirty() const;
+	
+	/** Whether the current value has not yet been confirmed. */
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	bool IsUnconfirmed() const;
 
+	
 	/** Execute a single predefined setting action. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void ExecuteAction(EVSSettingItemAction::Type Action);

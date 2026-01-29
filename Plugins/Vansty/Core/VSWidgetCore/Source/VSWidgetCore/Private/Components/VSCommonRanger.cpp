@@ -131,7 +131,7 @@ void UVSCommonRanger::SetValue(float NewValue)
 #if WITH_EDITORONLY_DATA
 	EditorPreviewValue = CurrentValue;
 #endif
-
+	
 	if (!FMath::IsNearlyEqual(PrevValue, CurrentValue))
 	{
 		OnValueChangedInternal();
@@ -162,12 +162,12 @@ void UVSCommonRanger::RefreshRanger()
 			Slider->OnValueChanged.RemoveDynamic(this, &UVSCommonRanger::OnWidgetValueChanged);
 		}
 		
-		Slider->SetMinValue(ValueRange.X);
-		Slider->SetMaxValue(ValueRange.Y);
-		Slider->SetStepSize(StepSizeToUse);
+		Slider->SetMinValue(ValueRange.X * DisplayValueMultiplier);
+		Slider->SetMaxValue(ValueRange.Y * DisplayValueMultiplier);
+		Slider->SetStepSize(StepSizeToUse * DisplayValueMultiplier);
 		Slider->MouseUsesStep = bSnapByStep;
 		
-		Slider->SetValue(CurrentValue);
+		Slider->SetValue(CurrentValue * DisplayValueMultiplier);
 
 		if (bPrevValueDelegatesBound)
 		{
@@ -181,17 +181,17 @@ void UVSCommonRanger::RefreshRanger()
 			SpinBox->OnValueChanged.RemoveDynamic(this, &UVSCommonRanger::OnWidgetValueChanged);
 		}
 		
-		SpinBox->SetMinValue(ValueRange.X);
-		SpinBox->SetMinSliderValue(ValueRange.X);
-		SpinBox->SetMaxValue(ValueRange.Y);
-		SpinBox->SetMaxSliderValue(ValueRange.Y);
-		SpinBox->SetDelta(StepSizeToUse);
+		SpinBox->SetMinValue(ValueRange.X * DisplayValueMultiplier);
+		SpinBox->SetMinSliderValue(ValueRange.X * DisplayValueMultiplier);
+		SpinBox->SetMaxValue(ValueRange.Y * DisplayValueMultiplier);
+		SpinBox->SetMaxSliderValue(ValueRange.Y * DisplayValueMultiplier);
+		SpinBox->SetDelta(StepSizeToUse * DisplayValueMultiplier);
 		SpinBox->SetMinFractionalDigits(DisplayFractionDigitRange.X);
 		SpinBox->SetMaxFractionalDigits(DisplayFractionDigitRange.Y);
 		SpinBox->SetAlwaysUsesDeltaSnap(bSnapByStep);
 		
 		SpinBox->SetValue((float)INT32_MAX);
-		SpinBox->SetValue(CurrentValue);
+		SpinBox->SetValue(CurrentValue * DisplayValueMultiplier);
 
 		if (bPrevValueDelegatesBound)
 		{
@@ -210,11 +210,11 @@ void UVSCommonRanger::OnValueChangedInternal()
 	
 	if (Slider)
 	{
-		Slider->SetValue(Value);
+		Slider->SetValue(Value * DisplayValueMultiplier);
 	}
 	if (SpinBox)
 	{
-		SpinBox->SetValue(Value);
+		SpinBox->SetValue(Value * DisplayValueMultiplier);
 	}
 	
 	RefreshContentText();
@@ -234,6 +234,7 @@ void UVSCommonRanger::RefreshContentText()
 
 void UVSCommonRanger::OnWidgetValueChanged(float Value)
 {
+	Value /= DisplayValueMultiplier;
 	if (!FMath::IsNearlyEqual(Value, CurrentValue))
 	{
 		const bool bPrevDelegatesBound = bValueDelegatesBound;

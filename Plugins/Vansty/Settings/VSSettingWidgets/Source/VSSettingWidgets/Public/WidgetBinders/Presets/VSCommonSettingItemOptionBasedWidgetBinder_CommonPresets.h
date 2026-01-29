@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "WidgetBinders/VSCommonSettingItemOptionBasedWidgetBinder.h"
-#include "VSCommonSettingItemOptionBasedWidgetBinder_Presets.generated.h"
+#include "VSCommonSettingItemOptionBasedWidgetBinder_CommonPresets.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class VSSETTINGWIDGETS_API UVSCommonSettingItemOptionBasedWidgetBinder_Presets : public UVSCommonSettingItemOptionBasedWidgetBinder
+class VSSETTINGWIDGETS_API UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets : public UVSCommonSettingItemOptionBasedWidgetBinder
 {
 	GENERATED_UCLASS_BODY()
 

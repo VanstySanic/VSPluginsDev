@@ -102,11 +102,11 @@ void UVSSettingItem_Volume::Apply_Implementation()
 {
 	Super::Apply_Implementation();
 
-	if (!SoundMix || !SoundClass || !FAudioDeviceManager::Get() || !FAudioDeviceManager::Get()->GetMainAudioDeviceHandle()) return;
-	
-	const FSoundClassAdjuster& SoundClassAdjuster = UVSPlatformLibrary::GetMainSoundClassAdjuster(SoundMix, SoundClass);
-	FAudioDeviceManager::Get()->GetMainAudioDeviceRaw()->PushSoundMixModifier(SoundMix);
-	FAudioDeviceManager::Get()->GetMainAudioDeviceRaw()->SetSoundMixClassOverride(SoundMix, SoundClass, GetVolume(EVSSettingItemValueSource::System),
+	if (!SoundMix || !SoundClass || !FAudioDeviceManager::Get() || !FAudioDeviceManager::Get()->GetActiveAudioDevice()) return;
+
+	FAudioDeviceManager::Get()->GetActiveAudioDevice()->PushSoundMixModifier(SoundMix);
+	const FSoundClassAdjuster& SoundClassAdjuster = UVSPlatformLibrary::GetActiveSoundClassAdjuster(SoundMix, SoundClass);
+	FAudioDeviceManager::Get()->GetActiveAudioDevice()->SetSoundMixClassOverride(SoundMix, SoundClass, GetVolume(EVSSettingItemValueSource::System),
 		SoundClassAdjuster.PitchAdjuster, SoundMix->FadeInTime, SoundClassAdjuster.bApplyToChildren);
 }
 
@@ -125,12 +125,35 @@ float UVSSettingItem_Volume::GetNonMutedValue_Implementation(EVSSettingItemValue
 		return 1.f;
 		
 	case EVSSettingItemValueSource::Game:
-		return UVSPlatformLibrary::GetMainSoundClassAdjuster(SoundMix, SoundClass).VolumeAdjuster;
+		return UVSPlatformLibrary::GetActiveSoundClassAdjuster(SoundMix, SoundClass).VolumeAdjuster;
 		
 	default: ;
 	}
 	
 	return Super::GetNonMutedValue_Implementation(Source);
+}
+
+bool UVSSettingItem_Volume::GetIsMuted_Implementation(EVSSettingItemValueSource::Type Source) const
+{
+	switch (Source)
+	{
+	case EVSSettingItemValueSource::Default:
+		for (const FSoundClassAdjuster& SoundClassEffect : SoundMix->SoundClassEffects)
+		{
+			if (SoundClassEffect.SoundClassObject == SoundClass)
+			{
+				return FMath::IsNearlyZero(SoundClassEffect.VolumeAdjuster);
+			}
+		}
+		return false;
+		
+	case EVSSettingItemValueSource::Game:
+		return FMath::IsNearlyZero(UVSPlatformLibrary::GetActiveSoundClassAdjuster(SoundMix, SoundClass).VolumeAdjuster);
+		
+	default: ;
+	}
+	
+	return Super::GetIsMuted_Implementation(Source);
 }
 
 float UVSSettingItem_Volume::GetVolume(EVSSettingItemValueSource::Type Source) const
@@ -165,6 +188,5 @@ TMap<FGameplayTag, FString> UVSSettingItem_Volume::GetVolumeTypeConfigKeyNames()
 
 	return StaticNames;
 }
-
 #endif
 

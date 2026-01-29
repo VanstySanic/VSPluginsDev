@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "WidgetBinders/VSSettingItemEnabledStateControlWidgetBinder.h"
-#include "VSSettingItemEnabledStateWidgetBinder_Presets.generated.h"
+#include "VSSettingItemEnabledStateWidgetBinder_CommonPresets.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class VSSETTINGWIDGETS_API UVSSettingItemEnabledStateWidgetBinder_Presets : public UVSSettingItemEnabledStateControlWidgetBinder
+class VSSETTINGWIDGETS_API UVSSettingItemEnabledStateWidgetBinder_CommonPresets : public UVSSettingItemEnabledStateControlWidgetBinder
 {
 	GENERATED_UCLASS_BODY()
 

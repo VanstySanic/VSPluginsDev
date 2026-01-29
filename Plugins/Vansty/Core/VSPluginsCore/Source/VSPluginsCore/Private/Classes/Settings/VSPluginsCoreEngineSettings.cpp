@@ -46,16 +46,18 @@ void UVSPluginsCoreEngineSettings::CheckFullscreenDesiredMonitor()
 	}
 	if (WindowMode == EWindowMode::Fullscreen)
 	{
-		FVSMonitorInfo MonitorInfo = UVSPlatformLibrary::GetMonitorInfoByID(CVarDesiredFullscreenMonitorID->GetString());
-		if (MonitorInfo.ID.IsEmpty())
+		FString MonitorID = CVarDesiredFullscreenMonitorID->GetString();
+		if (MonitorID.IsEmpty() || !UVSPlatformLibrary::IsValidMonitorID(MonitorID))
 		{
-			MonitorInfo = UVSPlatformLibrary::GetPrimaryMonitorInfo();
+			MonitorID = UVSPlatformLibrary::GetPrimaryMonitorID();
 		}
-
+		
+		FVSMonitorInfo MonitorInfo = UVSPlatformLibrary::GetMonitorInfoByID(MonitorID);
+		
 		const FVector2D& WindowRootPos = UVSPlatformLibrary::GetWindowRootPosition(false);
 		const FString& WindowMonitorID = UVSPlatformLibrary::GetMonitorIDByPosition(WindowRootPos);
 		const FMonitorInfo& WindowMonitorInfo = UVSPlatformLibrary::GetNativeMonitorInfoByID(WindowMonitorID);
-		if (!MonitorInfo.ID.IsEmpty() && WindowMonitorInfo.ID != MonitorInfo.ID)
+		if (!MonitorID.IsEmpty() && WindowMonitorInfo.ID != MonitorInfo.ID)
 		{
 			UVSPlatformLibrary::SwitchMonitorByID(MonitorInfo.ID);
 		}

@@ -24,6 +24,7 @@ public:
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
+	virtual void PostLoad() override;
 	//~ End UObject Interface
 
 protected:
@@ -51,4 +52,9 @@ protected:
 
 private:
 	TWeakObjectPtr<UVSSettingItem> SettingItemPrivate;
+
+#if WITH_EDITORONLY_DATA
+	UPROPERTY()
+	TArray<TObjectPtr<UVSWidgetBinder>> LastEditorWidgetBinders;
+#endif
 };

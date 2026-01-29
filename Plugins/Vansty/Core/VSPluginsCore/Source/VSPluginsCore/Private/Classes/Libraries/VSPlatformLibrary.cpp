@@ -148,9 +148,9 @@ TArray<FVSMonitorInfo> UVSPlatformLibrary::GetAvailableMonitorInfos()
 	return MonitorInfos;
 }
 
-FVSMonitorInfo UVSPlatformLibrary::GetPrimaryMonitorInfo()
+FString UVSPlatformLibrary::GetPrimaryMonitorID()
 {
-	return FVSMonitorInfo(GetPrimaryNativeMonitorInfo());
+	return GetPrimaryNativeMonitorInfo().ID;
 }
 
 bool UVSPlatformLibrary::IsValidMonitorID(const FString& MonitorID)
@@ -239,9 +239,20 @@ bool UVSPlatformLibrary::SwitchMonitorByID(const FString& MonitorID)
 {
 	TSharedPtr<SWindow> Window = GetActiveWindow();
 	if (!Window.IsValid()) return false;
-	
-	const FVSMonitorInfo MonitorInfo = GetMonitorInfoByID(MonitorID);
-	if (MonitorInfo.ID.IsEmpty()) return false;
+
+	FVSMonitorInfo MonitorInfo;
+	if (MonitorID.IsEmpty())
+	{
+		MonitorInfo = GetMonitorInfoByID(GetPrimaryMonitorID());
+	}
+	else if (IsValidMonitorID(MonitorID))
+	{
+		MonitorInfo = GetMonitorInfoByID(MonitorID);
+	}
+	else
+	{
+		return false;
+	}
 
 	const EWindowMode::Type WindowMode = Window->GetWindowMode();
 	
@@ -279,12 +290,12 @@ FString UVSPlatformLibrary::GetSystemDefaultAudioOutputDeviceID()
 }
 
 
-FString UVSPlatformLibrary::GetMainAudioOutputDeviceID()
+FString UVSPlatformLibrary::GetActiveAudioOutputDeviceID()
 {
-	if (!FAudioDeviceManager::Get() || !FAudioDeviceManager::Get()->GetMainAudioDeviceHandle()) return FString();
+	if (!FAudioDeviceManager::Get() || !FAudioDeviceManager::Get()->GetActiveAudioDevice()) return FString();
 
-	FAudioDevice* MainAudioDevice = FAudioDeviceManager::Get()->GetMainAudioDeviceHandle().GetAudioDevice();
-	if (Audio::FMixerDevice* AudioMixerDevice = static_cast<Audio::FMixerDevice*>(MainAudioDevice))
+	FAudioDevice* ActiveAudioDevice = FAudioDeviceManager::Get()->GetActiveAudioDevice().GetAudioDevice();
+	if (Audio::FMixerDevice* AudioMixerDevice = static_cast<Audio::FMixerDevice*>(ActiveAudioDevice))
 	{
 		if (Audio::IAudioMixerPlatformInterface* MixerPlatform = AudioMixerDevice->GetAudioMixerPlatform())
 		{
@@ -307,12 +318,12 @@ FAudioOutputDeviceInfo UVSPlatformLibrary::GetAudioOutputDeviceInfoByID(const FS
 
 TArray<FAudioOutputDeviceInfo> UVSPlatformLibrary::GetAvailableAudioOutputDeviceInfos()
 {
-	if (!FAudioDeviceManager::Get() || !FAudioDeviceManager::Get()->GetMainAudioDeviceHandle()) return TArray<FAudioOutputDeviceInfo>();
+	if (!FAudioDeviceManager::Get() || !FAudioDeviceManager::Get()->GetActiveAudioDevice()) return TArray<FAudioOutputDeviceInfo>();
 	
 	TArray<FAudioOutputDeviceInfo> OutputDeviceInfos;
 
-	FAudioDevice* MainAudioDevice = FAudioDeviceManager::Get()->GetMainAudioDeviceHandle().GetAudioDevice();
-	if (Audio::FMixerDevice* AudioMixerDevice = static_cast<Audio::FMixerDevice*>(MainAudioDevice))
+	FAudioDevice* ActiveAudioDevice = FAudioDeviceManager::Get()->GetActiveAudioDevice().GetAudioDevice();
+	if (Audio::FMixerDevice* AudioMixerDevice = static_cast<Audio::FMixerDevice*>(ActiveAudioDevice))
 	{
 		if (Audio::IAudioMixerPlatformInterface* MixerPlatform = AudioMixerDevice->GetAudioMixerPlatform())
 		{
@@ -358,28 +369,36 @@ bool UVSPlatformLibrary::IsValidAudioOutputDeviceID(const FString& DeviceID)
 	return false;
 }
 
-bool UVSPlatformLibrary::SetMainAudioOutputDeviceByID(const FString& DeviceID)
+bool UVSPlatformLibrary::SetActiveAudioOutputDeviceByID(const FString& DeviceID)
 {
-	if (!FAudioDeviceManager::Get()) return false;
+	if (!FAudioDeviceManager::Get() || !FAudioDeviceManager::Get()->GetActiveAudioDevice()) return false;
+
+	FAudioDeviceHandle ActiveDeviceHandle = FAudioDeviceManager::Get()->GetActiveAudioDevice();
+	if (!ActiveDeviceHandle.IsValid()) return false;
 	
-	FAudioDeviceHandle MainAudioDeviceHandle = FAudioDeviceManager::Get()->GetMainAudioDeviceHandle();
-	FAudioDevice* MainAudioDevice = MainAudioDeviceHandle.GetAudioDevice();
-	if (!MainAudioDevice) return false;
-	
-	Audio::FMixerDevice* MixerDevice = static_cast<Audio::FMixerDevice*>(MainAudioDevice);
+	FAudioDevice* ActiveAudioDevice = ActiveDeviceHandle.GetAudioDevice();
+	if (!ActiveAudioDevice) return false;
+
+	Audio::FMixerDevice* MixerDevice = static_cast<Audio::FMixerDevice*>(ActiveAudioDevice);
 	if (!MixerDevice) return false;
+
+	Audio::IAudioMixerPlatformInterface* MixerPlatform = MixerDevice->GetAudioMixerPlatform();
+	if (!MixerPlatform) return false;
 	
-	auto* Platform = MixerDevice->GetAudioMixerPlatform();
-	if (!Platform) return false;
-	
-	return Platform->MoveAudioStreamToNewAudioDevice(DeviceID);
+	const bool bSwapQueued = MixerPlatform->RequestDeviceSwap(
+		DeviceID,
+		false,
+		TEXT("UVSPlatformLibrary::SetActiveAudioOutputDeviceByID")
+	);
+
+	return bSwapQueued;
 }
 
-FSoundClassAdjuster UVSPlatformLibrary::GetMainSoundClassAdjuster(USoundMix* SoundMix, USoundClass* SoundClass)
+FSoundClassAdjuster UVSPlatformLibrary::GetActiveSoundClassAdjuster(USoundMix* SoundMix, USoundClass* SoundClass)
 {
 	if (!SoundMix || !SoundClass || !FAudioDeviceManager::Get()) return FSoundClassAdjuster();
 
-	if (FAudioDeviceHandle AudioDevice = FAudioDeviceManager::Get()->GetMainAudioDeviceHandle())
+	if (FAudioDeviceHandle AudioDevice = FAudioDeviceManager::Get()->GetActiveAudioDevice())
 	{
 		auto& SoundMixClassOverrideMap = VS_PRIVABLIC_MEMBER(AudioDevice.GetAudioDevice(), FAudioDevice, SoundMixClassEffectOverrides);
 

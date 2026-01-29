@@ -1,6 +1,6 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
-#include "WidgetBinders/Presets/VSSettingItemEnabledStateWidgetBinder_Presets.h"
+#include "WidgetBinders/Presets/VSSettingItemEnabledStateWidgetBinder_CommonPresets.h"
 #include "VSSettingSubsystem.h"
 #include "Items/VSCommonSettingItem.h"
 #include "Items/VSSettingItem.h"
@@ -9,13 +9,13 @@
 #include "Items/Video/VSSettingItem_ScreenResolution.h"
 #include "Items/Video/VSSettingItem_WindowMode.h"
 
-UVSSettingItemEnabledStateWidgetBinder_Presets::UVSSettingItemEnabledStateWidgetBinder_Presets(const FObjectInitializer& ObjectInitializer)
+UVSSettingItemEnabledStateWidgetBinder_CommonPresets::UVSSettingItemEnabledStateWidgetBinder_CommonPresets(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	
 }
 
-void UVSSettingItemEnabledStateWidgetBinder_Presets::OnAnySettingItemUpdated_Implementation(UVSSettingItem* SettingItem)
+void UVSSettingItemEnabledStateWidgetBinder_CommonPresets::OnAnySettingItemUpdated_Implementation(UVSSettingItem* SettingItem)
 {
 	Super::OnAnySettingItemUpdated_Implementation(SettingItem);
 
@@ -25,7 +25,7 @@ void UVSSettingItemEnabledStateWidgetBinder_Presets::OnAnySettingItemUpdated_Imp
 	}
 }
 
-bool UVSSettingItemEnabledStateWidgetBinder_Presets::GetDesiredEnabledState_Implementation()
+bool UVSSettingItemEnabledStateWidgetBinder_CommonPresets::GetDesiredEnabledState_Implementation()
 {
 	UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get();
 	if (!GetSettingItem_Native() || !SettingSubsystem) return Super::GetDesiredEnabledState_Implementation();
@@ -62,7 +62,7 @@ bool UVSSettingItemEnabledStateWidgetBinder_Presets::GetDesiredEnabledState_Impl
 }
 
 #if WITH_EDITOR
-void UVSSettingItemEnabledStateWidgetBinder_Presets::EditorRefreshMediator_Implementation()
+void UVSSettingItemEnabledStateWidgetBinder_CommonPresets::EditorRefreshMediator_Implementation()
 {
 	Super::EditorRefreshMediator_Implementation();
 	

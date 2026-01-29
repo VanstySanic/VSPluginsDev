@@ -26,6 +26,8 @@ protected:
 	virtual void OnWidgetValueChanged_Implementation(float NewValue) override;
 	virtual void OnCurrentSettingItemUpdated_Implementation() override;
 
+	virtual float GetExternalValue_Implementation() const override;
+
 #if WITH_EDITOR
 	virtual void EditorRefreshMediator_Implementation() override;
 #endif

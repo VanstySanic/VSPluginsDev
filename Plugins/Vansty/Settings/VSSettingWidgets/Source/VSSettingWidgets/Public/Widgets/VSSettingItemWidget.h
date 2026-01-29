@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "CommonButtonBase.h"
-#include "Common/VSHighlightableWidget.h"
 #include "Components/TextBlock.h"
 #include "Types/VSWidgetSlotTypes.h"
 #include "WidgetBinders/VSDesiredBoundWidgetInterface.h"
@@ -39,6 +38,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Settings")
 	TObjectPtr<UPanelWidget> Panel_CoreWidget;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Settings")
+	TObjectPtr<UWidget> CoreWidget;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	TSubclassOf<UWidget> CoreWidgetClass;
@@ -49,6 +51,4 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	FVSCommonPanelSlotSettings CoreWidgetPanelSlotSettings;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Settings")
-	TObjectPtr<UWidget> CoreWidget;
 };

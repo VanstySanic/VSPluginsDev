@@ -5,6 +5,7 @@
 #include "Classes/Libraries/VSPlatformLibrary.h"
 #include "Components/RichTextBlock.h"
 #include "Components/TextBlock.h"
+#include "Types/Math/VSArray.h"
 #include "WidgetBinders/VSWidgetBinder.h"
 
 UVSSettingItemWidgetController::UVSSettingItemWidgetController(const FObjectInitializer& ObjectInitializer)
@@ -24,22 +25,44 @@ void UVSSettingItemWidgetController::PostEditChangeProperty(struct FPropertyChan
 			Unregister();
 		}
 
-		if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
-		{
-			SettingItemPrivate = SettingSubsystem->GetSettingItemByTag(ItemTag);
-		}
-		
+		SettingItemPrivate = GetSettingItem_Native();
 		Execute_EditorRefreshMediator(this);
-		
+		SettingItemPrivate = nullptr;
+
 		if (PrevRegistered)
 		{
 			Register();
 		}
 	}
+	else if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemWidgetController, WidgetBinders))
+	{
+		if (LastEditorWidgetBinders != WidgetBinders)
+		{
+			const auto& Diff = FVSArray::GetArrayDifference(WidgetBinders, LastEditorWidgetBinders);
+			for (UVSWidgetBinder* WidgetBinder : Diff)
+			{
+				if (WidgetBinder)
+				{
+					Execute_EditorRefreshMediator(WidgetBinder);
+				}
+			}
+		}
+		
+		LastEditorWidgetBinders = WidgetBinders;
+	}
 	
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 #endif
+
+void UVSSettingItemWidgetController::PostLoad()
+{
+	Super::PostLoad();
+
+#if WITH_EDITOR
+	LastEditorWidgetBinders = WidgetBinders;
+#endif
+}
 
 void UVSSettingItemWidgetController::Initialize_Implementation()
 {
@@ -77,7 +100,7 @@ void UVSSettingItemWidgetController::BindTypedWidget_Implementation(const FName 
 	
 	if (TypeName == FName("Item"))
 	{
-		if (!SettingItemPrivate.IsValid())
+		if (!SettingItemPrivate.IsValid() && HasBeenInitialized())
 		{
 #if WITH_EDITOR
 			if (!Widget->IsDesignTime())

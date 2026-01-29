@@ -26,6 +26,7 @@ protected:
 	virtual void Validate_Implementation() override;
 	virtual void Apply_Implementation() override;
 	virtual float GetNonMutedValue_Implementation(EVSSettingItemValueSource::Type Source = EVSSettingItemValueSource::System) const override;
+	virtual bool GetIsMuted_Implementation(EVSSettingItemValueSource::Type Source = EVSSettingItemValueSource::System) const override;
 	//~ End UVSSettingItem Interface
 
 public:

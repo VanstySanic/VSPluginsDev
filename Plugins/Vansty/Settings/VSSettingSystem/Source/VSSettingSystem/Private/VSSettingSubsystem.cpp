@@ -13,8 +13,8 @@ UVSSettingSubsystem* UVSSettingSubsystem::Get()
 void UVSSettingSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-
-	FCoreDelegates::OnFEngineLoopInitComplete.AddLambda([this] ()
+	
+	FCoreDelegates::OnAllModuleLoadingPhasesComplete.AddLambda([this] ()
 	{
 		if (GEngine && !GEngine->GameUserSettingsClass)
 		{
@@ -41,6 +41,11 @@ void UVSSettingSubsystem::BeginDestroy()
 	TaggedSettingItems.Empty();
 	
 	Super::BeginDestroy();
+}
+
+bool UVSSettingSubsystem::ShouldCreateSubsystem(UObject* Outer) const
+{
+	return Super::ShouldCreateSubsystem(Outer);
 }
 
 UVSSettingItem* UVSSettingSubsystem::GetSettingItemByTag(const FGameplayTag& ItemTag)
@@ -148,7 +153,7 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 	for (UVSSettingItem* SettingItem : SettingItems)
 	{
 		InternalChangeActions.Add(SettingItem, SettingItem->InternalChangeActions);
-		SettingItem->InternalChangeActions = TArray<TEnumAsByte<EVSSettingItemAction::Type>>();
+		SettingItem->InternalChangeActions.Empty();
 	}
 	
 	for (UVSSettingItemAgent* SettingItemAgent : AgentsToAdd)
@@ -162,6 +167,7 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 	{
 		EVSSettingItemAction::SetToDefault,
 		EVSSettingItemAction::SetToGame,
+		EVSSettingItemAction::Load,
 		EVSSettingItemAction::Apply,
 		EVSSettingItemAction::Confirm,
 	};
@@ -172,6 +178,7 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 			SettingItemAgent->ExecuteAction(InitAction);
 		}
 	}
+	
 	for (UVSSettingItem* SettingItem : SettingItems)
 	{
 		SettingItem->InternalChangeActions = InternalChangeActions.FindRef(SettingItem);

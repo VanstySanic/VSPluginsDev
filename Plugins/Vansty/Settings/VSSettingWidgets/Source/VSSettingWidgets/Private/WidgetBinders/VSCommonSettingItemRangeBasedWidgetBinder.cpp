@@ -68,12 +68,30 @@ void UVSCommonSettingItemRangeBasedWidgetBinder::OnWidgetValueChanged_Implementa
 	{
 		CommonSettingItem->SetFloatValue(GetCurrentValue());
 	}
+	if (UVSMutableFloatSettingItem* MutableFloatSettingItem = Cast<UVSMutableFloatSettingItem>(GetSettingItem_Native()))
+	{
+		MutableFloatSettingItem->SetValue(GetCurrentValue());
+	}
 }
 
 void UVSCommonSettingItemRangeBasedWidgetBinder::OnCurrentSettingItemUpdated_Implementation()
 {
 	RebindWidgetByType(FName("Range"));
 	RebindWidgetByType(FName("Content"));
+}
+
+float UVSCommonSettingItemRangeBasedWidgetBinder::GetExternalValue_Implementation() const
+{
+	if (UVSCommonSettingItem* CommonSettingItem = Cast<UVSCommonSettingItem>(GetSettingItem_Native()))
+	{
+		return CommonSettingItem->GetFloatValue(EVSSettingItemValueSource::System);
+	}
+	if (UVSMutableFloatSettingItem* MutableFloatSettingItem = Cast<UVSMutableFloatSettingItem>(GetSettingItem_Native()))
+	{
+		return MutableFloatSettingItem->GetValue(EVSSettingItemValueSource::System);
+	}
+	
+	return Super::GetExternalValue_Implementation();
 }
 
 #if WITH_EDITOR

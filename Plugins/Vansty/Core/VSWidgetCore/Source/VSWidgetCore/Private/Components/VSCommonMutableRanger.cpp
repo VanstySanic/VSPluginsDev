@@ -92,20 +92,30 @@ void UVSCommonMutableRanger::OnWidgetValueChanged(float Value)
 
 void UVSCommonMutableRanger::OnValueChangedInternal()
 {
-	const float PrevValue = GetValue();
-	
-	const float WidgetValue = Super::GetValue();
+	const float NonMutedValue = Super::GetValue();
 	if (Slider)
 	{
-		Slider->SetValue(WidgetValue);
+		Slider->SetValue(NonMutedValue * DisplayValueMultiplier);
 	}
 	if (SpinBox)
 	{
-		SpinBox->SetValue(WidgetValue);
+		SpinBox->SetValue(NonMutedValue * DisplayValueMultiplier);
 	}
 
+	const float Value = GetValue();
+
+#if WITH_EDITORONLY_DATA
+	EditorPreviewValueWithMuteState = GetValue();
+#endif
+	
+	RefreshContentText();
+
+	OnNonMutedValueChanged_Native.Broadcast(this, NonMutedValue);
+	OnNonMutedValueChanged.Broadcast(this, NonMutedValue);
+
 	/** Ensure same value mute. */
-	if (FMath::IsNearlyEqual(WidgetValue, MuteStateValue))
+	bool bMuteStateChanged = false;
+	if (FMath::IsNearlyEqual(NonMutedValue, MuteStateValue))
 	{
 		if (!GetIsMuted())
 		{
@@ -114,22 +124,14 @@ void UVSCommonMutableRanger::OnValueChangedInternal()
 #if WITH_EDITORONLY_DATA
 			EditorPreviewMuteState = bIsMuted;
 #endif
-	
+			
+			bMuteStateChanged = true;
+			
 			OnMuteStateChangedInternal();
 		}
 	}
-
-	const float Value = GetValue();
-
-#if WITH_EDITORONLY_DATA
-	EditorPreviewValueWithMuteState = Value;
-#endif
 	
-	RefreshContentText();
-
-	OnNonMutedValueChanged_Native.Broadcast(this, WidgetValue);
-	OnNonMutedValueChanged.Broadcast(this, WidgetValue);
-	if (!FMath::IsNearlyEqual(PrevValue, Value))
+	if (!bMuteStateChanged)
 	{
 		OnValueChanged_Native.Broadcast(this, Value);
 		OnValueChanged.Broadcast(this, Value);

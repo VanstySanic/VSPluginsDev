@@ -1,6 +1,6 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
-#include "WidgetBinders/Presets/VSCommonSettingItemOptionBasedWidgetBinder_Presets.h"
+#include "WidgetBinders/Presets/VSCommonSettingItemOptionBasedWidgetBinder_CommonPresets.h"
 
 #include "AudioMixerBlueprintLibrary.h"
 #include "GameplayTagContainer.h"
@@ -9,13 +9,13 @@
 #include "Items/VSSettingSystemTags.h"
 #include "Kismet/KismetSystemLibrary.h"
 
-UVSCommonSettingItemOptionBasedWidgetBinder_Presets::UVSCommonSettingItemOptionBasedWidgetBinder_Presets(const FObjectInitializer& ObjectInitializer)
+UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	
 }
 
-TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_Presets::GenerateOptions_Implementation() const
+TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::GenerateOptions_Implementation() const
 {
 	if (!GetSettingItem_Native()) return {};
 	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();
@@ -92,7 +92,7 @@ TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_Presets::GenerateOpt
 	return Super::GenerateOptions_Implementation();
 }
 
-TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_Presets::GenerateDisabledOptions_Implementation() const
+TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::GenerateDisabledOptions_Implementation() const
 {
 	if (!GetSettingItem_Native()) return {};
 	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();

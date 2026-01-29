@@ -12,7 +12,7 @@ class UVSCommonMutableRanger;
 /**
  * 
  */
-UCLASS()
+UCLASS(DisplayName = "VS.Widget.Controller.RangeBased")
 class VSWIDGETCORE_API UVSRangeBasedWidgetBinder : public UVSWidgetBinder
 {
 	GENERATED_UCLASS_BODY()
@@ -30,7 +30,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Range")
 	float GetExternalValue() const;
 	
-	/** Get the widget value. */
+	/** Get the value from widget. */
 	UFUNCTION(BlueprintCallable, Category = "Range")
 	float GetCurrentValue() const;
 
@@ -61,6 +61,9 @@ protected:
 private:
 	void OnCultureChanged();
 	void OnCommonRangerValueChanged(UVSCommonRanger* Ranger, float Value);
+
+	UFUNCTION()
+	void OnDisplayWidgetValueChanged(float Value);
 	
 	UFUNCTION()
 	void OnBoundWidgetValueChanged(float Value);

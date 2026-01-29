@@ -19,7 +19,7 @@ class UWidget;
  * and orderly teardown. It supports instanced binder composition and optional
  * tick-driven updates without requiring a direct widget hierarchy.
  */
-UCLASS(Blueprintable, BlueprintType, EditInlineNew, DefaultToInstanced)
+UCLASS(Blueprintable, BlueprintType, EditInlineNew, DefaultToInstanced, DisplayName = "VS.Widget.Controller.Base")
 class VSWIDGETCORE_API UVSWidgetController : public UVSTickableObject
 {
 	GENERATED_UCLASS_BODY()
