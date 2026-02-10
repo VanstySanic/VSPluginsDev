@@ -33,9 +33,12 @@ UCLASS()
 class VSWIDGETCORE_API UVSCommonButtonGroupWidget : public UCommonButtonBase
 {
 	GENERATED_UCLASS_BODY()
-
+	
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnRefreshedDelegate, UVSCommonButtonGroupWidget* /** Widget */);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnSelectionChangedDelegate, UVSCommonButtonGroupWidget* /** Widget */, int32 /** Index */);
+	
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRefreshedEvent, UVSCommonButtonGroupWidget*, Widget);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSelectionChangedEvent, UVSCommonButtonGroupWidget*, Widget, int32, Index);
 
 protected:
 	//~ Begin UUserWidget Interface
@@ -77,9 +80,13 @@ private:
 	
 public:
 	FOnRefreshedDelegate OnRefreshed_Native;
+	FOnSelectionChangedDelegate OnSelectionChanged_Native;
 	
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FOnRefreshedEvent OnRefreshed;
+	
+	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
+	FOnSelectionChangedEvent OnSelectionChanged;
 	
 public:
 	/** Button class to generate in the group. */

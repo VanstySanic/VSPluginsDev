@@ -6,6 +6,7 @@
 #include "CommonButtonBase.h"
 #include "CommonTextBlock.h"
 #include "VSPrivablic.h"
+#include "Blueprint/WidgetTree.h"
 #include "Input/CommonBoundActionButton.h"
 
 VS_DECLARE_PRIVABLIC_MEMBER(UCommonActionWidget, InputActions, TArray<FDataTableRowHandle>);
@@ -99,6 +100,21 @@ FVSCommonButtonActionSettings::FVSCommonButtonActionSettings(const UCommonButton
 			ActionName = TextBlock->GetText();
 		}
 	}
+	else
+	{
+		TArray<UWidget*> Widgets;
+		Button->WidgetTree->GetAllWidgets(Widgets);
+		for (UWidget* Widget : Widgets)
+		{
+			if (Widget && Widget->GetFName() == FName("Text_ActionName"))
+			{
+				if (UTextBlock* TextBlock = Cast<UTextBlock>(Widget))
+				{
+					ActionName = TextBlock->GetText();
+				}
+			}
+		}
+	}
 }
 
 void FVSCommonButtonActionSettings::ApplyToButton(UCommonButtonBase* Button) const
@@ -110,13 +126,33 @@ void FVSCommonButtonActionSettings::ApplyToButton(UCommonButtonBase* Button) con
 	if (bOverridePriority) VS_PRIVABLIC_METHOD(Button, UUserWidget,  SetInputActionPriority)(Priority);
 
 	ActionDisplaySettings.ApplyToAction(VS_PRIVABLIC_MEMBER(Button, UCommonButtonBase, InputActionWidget));
+	
 	if (bOverrideActionName)
 	{
-		if (const UCommonBoundActionButton* ActionButton = Cast<UCommonBoundActionButton>(Button))
+		auto ActionWidget = VS_PRIVABLIC_MEMBER(Button, UCommonButtonBase, InputActionWidget);
+		if (!ActionWidget)
 		{
-			if (UCommonTextBlock* TextBlock = VS_PRIVABLIC_MEMBER(ActionButton, UCommonBoundActionButton, Text_ActionName))
+			if (const UCommonBoundActionButton* ActionButton = Cast<UCommonBoundActionButton>(Button))
 			{
-				TextBlock->SetText(ActionName);
+				if (UCommonTextBlock* TextBlock = VS_PRIVABLIC_MEMBER(ActionButton, UCommonBoundActionButton, Text_ActionName))
+				{
+					TextBlock->SetText(ActionName);
+				}
+			}
+			else
+			{
+				TArray<UWidget*> Widgets;
+				Button->WidgetTree->GetAllWidgets(Widgets);
+				for (UWidget* Widget : Widgets)
+				{
+					if (Widget && Widget->GetFName() == FName("Text_ActionName"))
+					{
+						if (UTextBlock* TextBlock = Cast<UTextBlock>(Widget))
+						{
+							TextBlock->SetText(ActionName);
+						}
+					}
+				}
 			}
 		}
 	}

@@ -29,7 +29,7 @@ struct FVSArray
 
 	/** Returns the index of the element closest to Source, or INDEX_NONE if invalid. */
 	template <typename T>
-	static int32 GetArrayNearestElementIndex(T Source, const TArray<T>& Array);
+	static int32 GetArrayNearestElementIndex(const T& Source, const TArray<T>& Array);
 };
 
 template <typename T>
@@ -109,7 +109,7 @@ void FVSArray::RemoveArrayDuplicates(TArray<T>& Array)
 }
 
 template <typename T>
-int32 FVSArray::GetArrayNearestElementIndex(T Source, const TArray<T>& Array)
+int32 FVSArray::GetArrayNearestElementIndex(const T& Source, const TArray<T>& Array)
 {
 	static_assert(TIsArithmetic<T>::Value, "T must be an arithmetic type.");
 

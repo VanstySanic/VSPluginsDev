@@ -13,8 +13,6 @@ UVSSettingItem_Monitor::UVSSettingItem_Monitor(const FObjectInitializer& FObject
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.Monitor", "DisplayName", "Monitor");
 	ConfigParams.ConfigSection = FString("VS.Settings.Item.Video");
 	ConfigParams.ConfigKeyName = FString("Monitor");
-
-	SupportedWindowModes.Add(EWindowMode::WindowedFullscreen);
 }
 
 void UVSSettingItem_Monitor::Apply_Implementation()
@@ -27,10 +25,7 @@ void UVSSettingItem_Monitor::Apply_Implementation()
     	WindowMode = Window->GetWindowMode();
     }
 
-	if (!SupportedWindowModes.Contains(WindowMode))
-	{
-		return;
-	}
+	if (!bOverrideDesiredFullscreenMonitor && WindowMode == EWindowMode::Fullscreen) return;
 	
 	const FString MonitorID = GetMonitorID(EVSSettingItemValueSource::System);
 	const FVSMonitorInfo& MonitorInfo = UVSPlatformLibrary::GetMonitorInfoByID(MonitorID);

@@ -115,13 +115,14 @@ struct VSWIDGETCORE_API FVSCommonButtonActionSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverridePriority"))
 	int32 Priority = 0;
 
+	/** this only works when the button has no input action widget. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideActionName"))
 	FText ActionName;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSCommonActionWidgetSettings ActionDisplaySettings;
 
-	
+	/** this only works when the button has no input action widget. */
 	UPROPERTY(BlueprintReadWrite)
 	uint8 bOverrideInputAction : 1;
 

@@ -3,6 +3,12 @@
 #include "Classes/Settings/VSPluginsCoreEngineSettings.h"
 #include "Classes/Libraries/VSPlatformLibrary.h"
 
+TAutoConsoleVariable<FString> CVarDesiredFullscreenMonitorID(
+	TEXT("r.DesiredFullscreenMonitorID"),
+	"",
+	TEXT("Target monitor ID for exclusive fullscreen (fallbacks to primary if empty or invalid)."),
+	ECVF_Scalability);
+
 UVSPluginsCoreEngineSettings::UVSPluginsCoreEngineSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
@@ -18,6 +24,17 @@ void UVSPluginsCoreEngineSettings::PostInitProperties()
 	{
 		FSlateApplication::Get().OnApplicationActivationStateChanged().AddUObject(this, &UVSPluginsCoreEngineSettings::OnApplicationActivationStateChanged);
 	}
+}
+
+void UVSPluginsCoreEngineSettings::BeginDestroy()
+{
+	CVarDesiredFullscreenMonitorID->OnChangedDelegate().RemoveAll(this);
+	if (FSlateApplication::IsInitialized())
+	{
+		FSlateApplication::Get().OnApplicationActivationStateChanged().RemoveAll(this);
+	}
+	
+	Super::BeginDestroy();
 }
 
 FName UVSPluginsCoreEngineSettings::GetCategoryName() const

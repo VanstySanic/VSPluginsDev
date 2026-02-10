@@ -6,11 +6,7 @@
 #include "Engine/DeveloperSettings.h"
 #include "VSPluginsCoreEngineSettings.generated.h"
 
-static TAutoConsoleVariable<FString> CVarDesiredFullscreenMonitorID(
-	TEXT("r.DesiredFullscreenMonitorID"),
-	"",
-	TEXT("Target monitor ID for exclusive fullscreen (fallbacks to primary if empty or invalid)."),
-	ECVF_Scalability);
+extern TAutoConsoleVariable<FString> CVarDesiredFullscreenMonitorID;
 
 /**
  * 
@@ -23,6 +19,8 @@ class VSPLUGINSCORE_API UVSPluginsCoreEngineSettings : public UDeveloperSettings
 public:
 	//~ Begin UDeveloperSettings Interface
 	virtual void PostInitProperties() override;
+	virtual void BeginDestroy() override;
+
 	virtual FName GetCategoryName() const override;
 	//~ End UDeveloperSettings Interface
 	

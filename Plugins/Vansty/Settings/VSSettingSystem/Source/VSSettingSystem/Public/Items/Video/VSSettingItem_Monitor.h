@@ -39,8 +39,5 @@ public:
 
 public:
 	UPROPERTY(EditAnywhere, Category = "Settings")
-	TArray<TEnumAsByte<EWindowMode::Type> > SupportedWindowModes;
-	
-	UPROPERTY(EditAnywhere, Category = "Settings")
 	uint8 bOverrideDesiredFullscreenMonitor : 1;
 };

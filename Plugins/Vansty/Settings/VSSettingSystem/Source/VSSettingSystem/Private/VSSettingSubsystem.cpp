@@ -134,7 +134,7 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 	for (UVSSettingItemAgent* SettingItemAgent : AgentsToAdd)
 	{
 		SettingItems.Add(SettingItemAgent);
-		if (!SettingItemAgent->GetItemTag().IsValid())
+		if (SettingItemAgent->GetItemTag().IsValid())
 		{
 			TaggedSettingItems.Add(SettingItemAgent->GetItemTag(), SettingItemAgent);
 		}

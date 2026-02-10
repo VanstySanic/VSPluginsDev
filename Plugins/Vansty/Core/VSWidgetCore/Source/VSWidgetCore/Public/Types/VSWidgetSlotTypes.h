@@ -18,6 +18,7 @@ struct VSWIDGETCORE_API FVSCommonPanelSlotSettings
 	FVSCommonPanelSlotSettings(const UWidget* Widget = nullptr);
 	void ApplyToWidget(UWidget* Widget);
 
+	/** This may not work for all slots. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideSize"))
 	FSlateChildSize Size = FSlateChildSize(ESlateSizeRule::Fill);
 	
@@ -30,7 +31,7 @@ struct VSWIDGETCORE_API FVSCommonPanelSlotSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideVerticalAlignment"))
 	TEnumAsByte<EVerticalAlignment> VerticalAlignment = VAlign_Fill;
 	
-	
+	/** This may not work for all slots. */
 	UPROPERTY(BlueprintReadWrite)
 	uint8 bOverrideSize : 1;
 	

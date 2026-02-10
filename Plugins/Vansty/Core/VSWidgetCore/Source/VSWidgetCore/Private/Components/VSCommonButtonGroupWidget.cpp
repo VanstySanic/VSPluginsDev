@@ -120,7 +120,7 @@ void UVSCommonButtonGroupWidget::RefreshButtons()
 	for (int i = 0; i < ButtonsPrivate.Num(); ++i)
 	{
 		FVSCommonButtonActionSettings ActionSettings = ButtonActionSettings.IsValidIndex(i) ? ButtonActionSettings[i] : FVSCommonButtonActionSettings();
-		if (OverridenButtonNames.IsValidIndex(i) && OverridenButtonNames[i].IsEmpty())
+		if (OverridenButtonNames.IsValidIndex(i) && !OverridenButtonNames[i].IsEmpty())
 		{
 			ActionSettings.bOverrideActionName = true;
 			ActionSettings.ActionName = OverridenButtonNames[i];
@@ -156,6 +156,9 @@ void UVSCommonButtonGroupWidget::OnButtonGroupSelectionChanged(UCommonButtonBase
 	{
 		ButtonsPrivate[i]->SetIsSelected(i == ButtonGroupPrivate->GetSelectedButtonIndex());
 	}
+
+	OnSelectionChanged_Native.Broadcast(this, ButtonIndex);
+	OnSelectionChanged.Broadcast(this, ButtonIndex);
 }
 
 void UVSCommonButtonGroupWidget::OnButtonGroupButtonClicked(UCommonButtonBase* AssociatedButton, int32 ButtonIndex)

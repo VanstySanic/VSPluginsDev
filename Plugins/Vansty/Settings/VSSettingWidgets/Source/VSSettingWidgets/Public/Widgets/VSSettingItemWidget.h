@@ -6,7 +6,7 @@
 #include "CommonButtonBase.h"
 #include "Components/TextBlock.h"
 #include "Types/VSWidgetSlotTypes.h"
-#include "WidgetBinders/VSDesiredBoundWidgetInterface.h"
+#include "Mediator/Binders/VSDesiredBoundWidgetInterface.h"
 #include "VSSettingItemWidget.generated.h"
 
 class UVSSettingItemWidgetController;

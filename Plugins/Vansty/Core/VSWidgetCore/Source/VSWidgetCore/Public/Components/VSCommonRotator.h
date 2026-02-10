@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "CommonRotator.h"
-#include "WidgetBinders/VSDesiredBoundWidgetInterface.h"
+#include "Mediator/Binders/VSDesiredBoundWidgetInterface.h"
 #include "VSCommonRotator.generated.h"
 
 class UVSIndexImageGroupWidget;

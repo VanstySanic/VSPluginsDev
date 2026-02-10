@@ -85,7 +85,7 @@ void UVSSettingItem::SetToDefault()
 
 void UVSSettingItem::SetToGame()
 {
-	SetToBySource(EVSSettingItemValueSource::System);
+	SetToBySource(EVSSettingItemValueSource::Game);
 }
 
 void UVSSettingItem::SetToConfirmed()

@@ -3,8 +3,7 @@
 #include "Widgets/VSSettingItemWidget.h"
 #include "CommonRotator.h"
 #include "Blueprint/WidgetTree.h"
-#include "Components/ComboBoxString.h"
-#include "WidgetControllers/VSSettingItemWidgetController.h"
+#include "Mediator/VSSettingItemWidgetController.h"
 
 UVSSettingItemWidget::UVSSettingItemWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
