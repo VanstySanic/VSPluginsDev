@@ -46,7 +46,7 @@ AActor* UVSActorLibrary::DuplicateActor(AActor* Actor, const FTransform& SpawnTr
 UActorComponent* UVSActorLibrary::GetActorComponentByName(const AActor* Actor, FName ComponentName)
 {
 	if (!Actor) return nullptr;
-	const TSet<UActorComponent*>& Components = Actor->GetComponents();
+	const TSet<UActorComponent*> Components = Actor->GetComponents();
 	for (UActorComponent* Component : Components)
 	{
 		if (Component && Component->GetFName() == ComponentName)

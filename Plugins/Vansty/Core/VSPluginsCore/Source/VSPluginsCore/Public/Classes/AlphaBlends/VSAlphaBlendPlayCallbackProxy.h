@@ -33,10 +33,20 @@ public:
 	virtual void Activate() override;
 	//~ End UBlueprintAsyncActionBase Interface
 
-public:
-	UPROPERTY(BlueprintAssignable)
-	FAlphaBlendCallBackProxyEvent OnProxyCreate;
+private:
+	UFUNCTION()
+	void HandleAlphaUpdated(UVSAlphaBlendPlayProxy* InProxy, float Alpha, int32 LoopCount);
+
+	UFUNCTION()
+	void HandleLoopStart(UVSAlphaBlendPlayProxy* InProxy, float Alpha, int32 LoopCount);
+
+	UFUNCTION()
+	void HandleLoopFinished(UVSAlphaBlendPlayProxy* InProxy, float Alpha, int32 LoopCount);
+
+	UFUNCTION()
+	void HandleProxyFinished(UVSAlphaBlendPlayProxy* InProxy, float Alpha, int32 LoopCount);
 	
+public:
 	UPROPERTY(BlueprintAssignable)
 	FAlphaBlendCallBackProxyEvent OnAlphaUpdated;
 
@@ -53,16 +63,4 @@ private:
 	/** The underlying proxy object that actually drives the alpha blend. */
 	UPROPERTY()
 	TObjectPtr<UVSAlphaBlendPlayProxy> Proxy;
-	
-	UFUNCTION()
-	void HandleAlphaUpdated(UVSAlphaBlendPlayProxy* InProxy, float Alpha, int32 LoopCount);
-
-	UFUNCTION()
-	void HandleLoopStart(UVSAlphaBlendPlayProxy* InProxy, float Alpha, int32 LoopCount);
-
-	UFUNCTION()
-	void HandleLoopFinished(UVSAlphaBlendPlayProxy* InProxy, float Alpha, int32 LoopCount);
-
-	UFUNCTION()
-	void HandleProxyFinished(UVSAlphaBlendPlayProxy* InProxy, float Alpha, int32 LoopCount);
 };

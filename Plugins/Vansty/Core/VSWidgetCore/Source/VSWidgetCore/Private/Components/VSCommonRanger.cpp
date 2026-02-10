@@ -140,7 +140,7 @@ void UVSCommonRanger::SetValue(float NewValue)
 
 FText UVSCommonRanger::GetContentText() const
 {
-	const FText& ValueText = UKismetTextLibrary::Conv_DoubleToText(
+	const FText ValueText = UKismetTextLibrary::Conv_DoubleToText(
 		CurrentValue * DisplayValueMultiplier, HalfToZero,
 		false, true,
 		1, 324,
@@ -227,7 +227,7 @@ void UVSCommonRanger::RefreshContentText()
 {
 	if (TextBlock_Content)
 	{
-		const FText& ValueText = GetContentText();
+		const FText ValueText = GetContentText();
 		TextBlock_Content->SetText(ValueText);
 	}
 }

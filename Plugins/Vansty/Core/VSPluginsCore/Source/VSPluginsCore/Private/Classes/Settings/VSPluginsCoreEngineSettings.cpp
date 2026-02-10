@@ -71,9 +71,9 @@ void UVSPluginsCoreEngineSettings::CheckFullscreenDesiredMonitor()
 		
 		FVSMonitorInfo MonitorInfo = UVSPlatformLibrary::GetMonitorInfoByID(MonitorID);
 		
-		const FVector2D& WindowRootPos = UVSPlatformLibrary::GetWindowRootPosition(false);
-		const FString& WindowMonitorID = UVSPlatformLibrary::GetMonitorIDByPosition(WindowRootPos);
-		const FMonitorInfo& WindowMonitorInfo = UVSPlatformLibrary::GetNativeMonitorInfoByID(WindowMonitorID);
+		const FVector2D WindowRootPos = UVSPlatformLibrary::GetWindowRootPosition(false);
+		const FString WindowMonitorID = UVSPlatformLibrary::GetMonitorIDByPosition(WindowRootPos);
+		const FMonitorInfo WindowMonitorInfo = UVSPlatformLibrary::GetNativeMonitorInfoByID(WindowMonitorID);
 		if (!MonitorID.IsEmpty() && WindowMonitorInfo.ID != MonitorInfo.ID)
 		{
 			UVSPlatformLibrary::SwitchMonitorByID(MonitorInfo.ID);

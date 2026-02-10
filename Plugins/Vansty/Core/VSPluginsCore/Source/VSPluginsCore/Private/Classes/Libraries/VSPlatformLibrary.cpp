@@ -43,16 +43,18 @@ bool UVSPlatformLibrary::ParseSetRes(const FString& InSetRes, FIntPoint& OutReso
 	}
 
 	int32 X = 0, Y = 0;
-	if (FParse::Value(*Cmd, TEXT("x"), X))
-	{
-		const int32 XIndex = Cmd.Find(TEXT("x"));
-		const FString YStr = Cmd.Mid(XIndex + 1);
-		Y = FCString::Atoi(*YStr);
-	}
-	else
+	const int32 XIndex = Cmd.Find(TEXT("x"));
+	if (XIndex == INDEX_NONE)
 	{
 		return false;
 	}
+
+	FString XStr = Cmd.Left(XIndex);
+	FString YStr = Cmd.Mid(XIndex + 1);
+	XStr.TrimStartAndEndInline();
+	YStr.TrimStartAndEndInline();
+	X = FCString::Atoi(*XStr);
+	Y = FCString::Atoi(*YStr);
 
 	if (X <= 0 || Y <= 0)
 	{
@@ -92,8 +94,8 @@ FVector2D UVSPlatformLibrary::GetWindowCenterPosition(bool bClientOnly)
 	TSharedPtr<SWindow> Window = GetActiveWindow();
 	if (!Window) return FVector2D::ZeroVector;
 	
-	const FVector2D& RootPosition = GetWindowRootPosition(bClientOnly);
-	const FVector2D& WindowSize = GetWindowSize(bClientOnly);
+	const FVector2D RootPosition = GetWindowRootPosition(bClientOnly);
+	const FVector2D WindowSize = GetWindowSize(bClientOnly);
 
 	return RootPosition + 0.5f * WindowSize;
 }
@@ -113,8 +115,8 @@ void UVSPlatformLibrary::SetWindowCentered(bool bWorkAreaOnly)
 {
 	if (TSharedPtr<SWindow> Window = GetActiveWindow())
 	{
-		const FVector2D& CenterPos = GetWindowCenterPosition(false);
-		const FString& MonitorID = GetMonitorIDByPosition(CenterPos);
+		const FVector2D CenterPos = GetWindowCenterPosition(false);
+		const FString MonitorID = GetMonitorIDByPosition(CenterPos);
 		SetWindowCenteredAtMonitor(MonitorID, bWorkAreaOnly);
 	}
 }
@@ -123,11 +125,11 @@ void UVSPlatformLibrary::SetWindowCenteredAtMonitor(const FString& MonitorID, bo
 {
 	if (TSharedPtr<SWindow> Window = GetActiveWindow())
 	{
-		const FVSMonitorInfo& MonitorInfo = GetMonitorInfoByID(MonitorID);
+		const FVSMonitorInfo MonitorInfo = GetMonitorInfoByID(MonitorID);
 		if (!MonitorInfo.ID.IsEmpty())
 		{
-			const FVector2D& MonitorCenter = MonitorInfo.GetCenterPosition(bWorkAreaOnly);
-			const FVector2D& TargetPos = MonitorCenter - Window->GetSizeInScreen() / 2.f;
+			const FVector2D MonitorCenter = MonitorInfo.GetCenterPosition(bWorkAreaOnly);
+			const FVector2D TargetPos = MonitorCenter - Window->GetSizeInScreen() / 2.f;
 			SetWindowPosition(TargetPos);
 		}
 	}
@@ -194,14 +196,14 @@ FString UVSPlatformLibrary::GetWindowRootMonitorID()
 
 FVector2D UVSPlatformLibrary::GetMonitorRootPosition(const FString& MonitorID)
 {
-	const FMonitorInfo& MonitorInfo = GetNativeMonitorInfoByID(MonitorID);
+	const FMonitorInfo MonitorInfo = GetNativeMonitorInfoByID(MonitorID);
 	if (MonitorInfo.ID.IsEmpty()) return FVector2D::ZeroVector;
 	return FVector2D(MonitorInfo.DisplayRect.Left, MonitorInfo.DisplayRect.Top);
 }
 
 FVector2D UVSPlatformLibrary::GetMonitorCenterPosition(const FString& MonitorID, bool bWorkAreaOnly)
 {
-	const FMonitorInfo& MonitorInfo = GetNativeMonitorInfoByID(MonitorID);
+	const FMonitorInfo MonitorInfo = GetNativeMonitorInfoByID(MonitorID);
 	if (MonitorInfo.ID.IsEmpty()) return FVector2D::ZeroVector;
 	const FPlatformRect& TargetRect = bWorkAreaOnly ? MonitorInfo.WorkArea : MonitorInfo.DisplayRect;
 	return 0.5f * FVector2D(TargetRect.Left + TargetRect.Right, TargetRect.Top + TargetRect.Bottom);
@@ -209,7 +211,7 @@ FVector2D UVSPlatformLibrary::GetMonitorCenterPosition(const FString& MonitorID,
 
 FVector2D UVSPlatformLibrary::GetMonitorCurrentResolution(const FString& MonitorID, bool bWorkAreaOnly)
 {
-	const FMonitorInfo& MonitorInfo = GetNativeMonitorInfoByID(MonitorID);
+	const FMonitorInfo MonitorInfo = GetNativeMonitorInfoByID(MonitorID);
 	if (MonitorInfo.ID.IsEmpty()) return FVector2D::ZeroVector;
 	const FPlatformRect& TargetRect = bWorkAreaOnly ? MonitorInfo.WorkArea : MonitorInfo.DisplayRect;
 	return FVector2D(TargetRect.Right - TargetRect.Left + 1.f, TargetRect.Bottom - TargetRect.Top + 1.f);
@@ -220,13 +222,13 @@ FVector2D UVSPlatformLibrary::GetMonitorMaxWindowedClientSize(const FString& Mon
 	TSharedPtr<SWindow> Window = GetActiveWindow();
 	if (!Window) return FIntPoint::ZeroValue;
 
-	const FVector2D& WindowCenterPos = GetWindowCenterPosition(true);
-	const FString& MonitorIDToUse = MonitorID.IsEmpty() ? MonitorID : GetMonitorIDByPosition(WindowCenterPos);
-	const FVSMonitorInfo& MonitorInfo = GetMonitorInfoByID(MonitorIDToUse);
+	const FVector2D WindowCenterPos = GetWindowCenterPosition(true);
+	const FString MonitorIDToUse = !MonitorID.IsEmpty() ? MonitorID : GetMonitorIDByPosition(WindowCenterPos);
+	const FVSMonitorInfo MonitorInfo = GetMonitorInfoByID(MonitorIDToUse);
 
-	const FVector2D& MonitorSize = MonitorInfo.GetCurrentSize(true);
-	const FMargin& ClientPaddings = Window->GetWindowBorderSize(false);
-	const FVector2D& ClientSize = MonitorSize - FVector2D
+	const FVector2D MonitorSize = MonitorInfo.GetCurrentSize(true);
+	const FMargin ClientPaddings = Window->GetWindowBorderSize(false);
+	const FVector2D ClientSize = MonitorSize - FVector2D
 	(
 		ClientPaddings.Left + ClientPaddings.Right,
 		ClientPaddings.Bottom + ClientPaddings.Top + Window->GetTitleBarSize().Get()
@@ -263,7 +265,7 @@ bool UVSPlatformLibrary::SwitchMonitorByID(const FString& MonitorID)
 	else
 	{
 		FVector2D NewWindowPos = MonitorInfo.GetCenterPosition(true) - Window->GetSizeInScreen() / 2.f;
-		const FVector2D& WindowSize = Window->GetSizeInScreen();
+		const FVector2D WindowSize = Window->GetSizeInScreen();
 		if (WindowSize.Y > MonitorInfo.GetCurrentSize(true).Y)
 		{
 			NewWindowPos.Y = 0.f;
@@ -402,7 +404,7 @@ FSoundClassAdjuster UVSPlatformLibrary::GetActiveSoundClassAdjuster(USoundMix* S
 	{
 		auto& SoundMixClassOverrideMap = VS_PRIVABLIC_MEMBER(AudioDevice.GetAudioDevice(), FAudioDevice, SoundMixClassEffectOverrides);
 
-		if (SoundMixClassOverrideMap.Contains(SoundMix) && !SoundMixClassOverrideMap[SoundMix].Contains(SoundClass))
+		if (SoundMixClassOverrideMap.Contains(SoundMix) && SoundMixClassOverrideMap[SoundMix].Contains(SoundClass))
 		{
 			const FSoundMixClassOverride& SoundMixClassOverride = SoundMixClassOverrideMap[SoundMix][SoundClass];
 			return SoundMixClassOverride.SoundClassAdjustor;

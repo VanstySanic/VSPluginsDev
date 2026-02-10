@@ -93,7 +93,7 @@ bool UVSSettingItemMutableRangedWidgetBinder::GetExternalIsMuted_Implementation(
 void UVSSettingItemMutableRangedWidgetBinder::EditorRefreshMediator_Implementation()
 {
 	if (!GetSettingItem_Native()) return;
-	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
 	
 	if (UVSSettingSubsystem* Subsystem = UVSSettingSubsystem::Get())
 	{

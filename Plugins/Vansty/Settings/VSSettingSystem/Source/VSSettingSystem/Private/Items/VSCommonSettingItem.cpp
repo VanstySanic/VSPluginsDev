@@ -178,7 +178,7 @@ void UVSCommonSettingItem::Save_Implementation()
 
 	if (ConfigParams.bAutoDefaultConfig)
 	{
-		const FString& ConfigString = GetUnionValueString(CurrentValue);
+		const FString ConfigString = GetUnionValueString(CurrentValue);
 		GConfig->SetString(*ConfigParams.ConfigSection, *ConfigParams.ConfigKeyName, *ConfigString, ConfigParams.ConfigFileName);
 	}
 }

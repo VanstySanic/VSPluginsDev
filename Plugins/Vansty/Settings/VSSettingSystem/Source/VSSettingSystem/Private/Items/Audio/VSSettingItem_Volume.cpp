@@ -105,7 +105,7 @@ void UVSSettingItem_Volume::Apply_Implementation()
 	if (!SoundMix || !SoundClass || !FAudioDeviceManager::Get() || !FAudioDeviceManager::Get()->GetActiveAudioDevice()) return;
 
 	FAudioDeviceManager::Get()->GetActiveAudioDevice()->PushSoundMixModifier(SoundMix);
-	const FSoundClassAdjuster& SoundClassAdjuster = UVSPlatformLibrary::GetActiveSoundClassAdjuster(SoundMix, SoundClass);
+	const FSoundClassAdjuster SoundClassAdjuster = UVSPlatformLibrary::GetActiveSoundClassAdjuster(SoundMix, SoundClass);
 	FAudioDeviceManager::Get()->GetActiveAudioDevice()->SetSoundMixClassOverride(SoundMix, SoundClass, GetVolume(EVSSettingItemValueSource::System),
 		SoundClassAdjuster.PitchAdjuster, SoundMix->FadeInTime, SoundClassAdjuster.bApplyToChildren);
 }

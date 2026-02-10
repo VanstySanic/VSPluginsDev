@@ -125,7 +125,7 @@ void UVSReplicatableObject::EndReplication()
 	{
 		OuterComponent->RemoveReplicatedSubObject(this);
 	}
-	else
+	else if (OuterActorPrivate.IsValid())
 	{
 		OuterActorPrivate->RemoveReplicatedSubObject(this);
 	}

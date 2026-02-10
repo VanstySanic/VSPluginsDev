@@ -85,16 +85,16 @@ void UVSFeatureComponent::UnregisterFeatures()
 
 TArray<UVSObjectFeature*> UVSFeatureComponent::GetFeatures() const
 {
-	TArray<UVSObjectFeature*> CopiedFeatures = Features;
-	for (UVSObjectFeature* Feature : CopiedFeatures)
+	TArray<UVSObjectFeature*> OutFeatures;
+	for (UVSObjectFeature* Feature : Features)
 	{
 		if (Feature)
 		{
-			CopiedFeatures.Add(Feature);
-			CopiedFeatures.Append(Feature->GetSubFeatures());
+			OutFeatures.Add(Feature);
+			OutFeatures.Append(Feature->GetSubFeatures());
 		}
 	}
-	return CopiedFeatures;
+	return OutFeatures;
 }
 
 bool UVSFeatureComponent::HasFeature(UVSObjectFeature* Feature) const
@@ -200,7 +200,7 @@ TArray<UVSObjectFeature*> UVSFeatureComponent::GetFeaturesByClass(TSubclassOf<UV
 	TArray<UVSObjectFeature*> OutFeatures;
 	for (UVSObjectFeature* Feature : GetFeatures())
 	{
-		if (Feature->IsA(Class))
+		if (Feature && Feature->IsA(Class))
 		{
 			OutFeatures.Add(Feature);
 		}

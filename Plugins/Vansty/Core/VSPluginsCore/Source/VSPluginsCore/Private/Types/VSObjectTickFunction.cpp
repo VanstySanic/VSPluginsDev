@@ -83,6 +83,7 @@ FString FVSObjectTickFunction::DiagnosticMessage()
 
 FName FVSObjectTickFunction::DiagnosticContext(bool bDetailed)
 {
+	if (!Target.IsValid()) return FName(TEXT("EmptyTarget"));
 	if (bDetailed)
 	{
 		/** Format is "AssociationNativeClass/AssociationClass". */
@@ -100,17 +101,23 @@ void FVSObjectTickFunction::RegisterAndSetup(UObject* InTargetObject)
 	if (bTickCrossWorldIfPossible && !IsWorldRelatedObject(InTargetObject) /** && is in game */)
 	{
 		bShouldTickCrossWorld = true;
-		OnWorldInitializeDelegateHandle = FWorldDelegates::OnPostWorldInitialization.AddLambda([this] (UWorld* InWorld, FWorldInitializationValues)
+		if (!OnWorldInitializeDelegateHandle.IsValid())
 		{
-			if (!InWorld || !InWorld->GetCurrentLevel()) return;
-			UnRegisterTickFunction();
-			RegisterTickFunction(InWorld->GetCurrentLevel());
-		});
+			OnWorldInitializeDelegateHandle = FWorldDelegates::OnPostWorldInitialization.AddLambda([this] (UWorld* InWorld, FWorldInitializationValues)
+			{
+				if (!InWorld || !InWorld->GetCurrentLevel()) return;
+				UnRegisterTickFunction();
+				RegisterTickFunction(InWorld->GetCurrentLevel());
+			});
+		}
 
-		OnWorldTearDownDelegateHandle = FWorldDelegates::OnWorldBeginTearDown.AddLambda([this] (UWorld* InWorld)
+		if (!OnWorldTearDownDelegateHandle.IsValid())
 		{
-			UnRegisterTickFunction();
-		});
+			OnWorldTearDownDelegateHandle = FWorldDelegates::OnWorldBeginTearDown.AddLambda([this] (UWorld* InWorld)
+			{
+				UnRegisterTickFunction();
+			});
+		}
 
 		Target = InTargetObject;
 	}

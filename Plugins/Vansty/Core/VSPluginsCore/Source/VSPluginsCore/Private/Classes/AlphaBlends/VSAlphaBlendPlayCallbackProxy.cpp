@@ -1,6 +1,5 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
-
 #include "Classes/AlphaBlends/VSAlphaBlendPlayCallbackProxy.h"
 
 UVSAlphaBlendPlayCallBackProxy::UVSAlphaBlendPlayCallBackProxy(const FObjectInitializer& ObjectInitializer)
@@ -11,7 +10,10 @@ UVSAlphaBlendPlayCallBackProxy::UVSAlphaBlendPlayCallBackProxy(const FObjectInit
 UVSAlphaBlendPlayCallBackProxy* UVSAlphaBlendPlayCallBackProxy::CreateAlphaBlendPlayCallBackProxy(UObject* WorldContext, const FVSAlphaBlendProxyParams& Params)
 {
 	UVSAlphaBlendPlayCallBackProxy* Node = NewObject<UVSAlphaBlendPlayCallBackProxy>(WorldContext);
-	Node->Proxy = UVSAlphaBlendPlayProxy::CreateAlphaBlendPlayProxy(Node, Params);
+	check(Node);
+	
+	Node->Proxy = UVSAlphaBlendPlayProxy::CreateAlphaBlendPlayProxy(Node, Params, true);
+	check(Node->Proxy);
 	
 	Node->Proxy->OnAlphaUpdated.AddDynamic(Node, &UVSAlphaBlendPlayCallBackProxy::HandleAlphaUpdated);
 	Node->Proxy->OnLoopStart.AddDynamic(Node, &UVSAlphaBlendPlayCallBackProxy::HandleLoopStart);
@@ -31,11 +33,15 @@ void UVSAlphaBlendPlayCallBackProxy::Activate()
 		return;
 	}
 
-	if (UGameInstance* GI = GetWorld() ? GetWorld()->GetWorld()->GetGameInstance() : nullptr)
+	if (UGameInstance* GI = GetWorld() ? GetWorld()->GetGameInstance() : nullptr)
 	{
 		RegisterWithGameInstance(GI);
 
-		OnProxyCreate.Broadcast(Proxy, Proxy->GetAlpha(), Proxy->GetLoopCount());
+		Proxy->Initialize();
+	}
+	else
+	{
+		SetReadyToDestroy();
 	}
 }
 

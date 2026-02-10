@@ -69,7 +69,7 @@ void UVSSettingItemEnabledStateControlWidgetBinder_CommonPresets::EditorRefreshM
 	
 	UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get();
 	if (!GetSettingItem_Native() || !SettingSubsystem) return;
-	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
 
 	if (ItemTag == EVSSettingItem::Video::ScreenResolution)
 	{

@@ -45,9 +45,9 @@ void UVSOptionBasedWidgetBinder::BindTypedWidget_Implementation(const FName Type
 {
 	Super::BindTypedWidget_Implementation(TypeName, Widget);
 
-	const FString& CurrentOption = GetCurrentOption();
+	const FString CurrentOption = GetCurrentOption();
 	const int32 CurrentIndex = GetCurrentIndex();
-	const FString& ExternalOption = GetExternalOption();;
+	const FString ExternalOption = GetExternalOption();;
 	const int32 ExternalIndex = GetOptionIndex(ExternalOption);
 
 	if (TypeName == FName("Options"))
@@ -102,23 +102,23 @@ void UVSOptionBasedWidgetBinder::BindTypedWidget_Implementation(const FName Type
 		else if (USlider* Slider = Cast<USlider>(Widget))
 		{
 			Slider->SetMinValue(0.f);
-			Slider->SetMaxValue(Options.Num() - 1.f);
+			Slider->SetMaxValue(FMath::Max(Options.Num() - 1.f, 0.f));
 			Slider->SetStepSize(1.f);
 			Slider->MouseUsesStep = true;
 
-			Slider->SetValue((float)CurrentIndex);
+			Slider->SetValue(FMath::Max((float)CurrentIndex, 0.f));
 
 			Slider->OnValueChanged.AddDynamic(this, &UVSOptionBasedWidgetBinder::OnSliderValueChanged);
 		}
 		else if (UVSCommonRanger* CommonRanger = Cast<UVSCommonRanger>(Widget))
 		{
 			CommonRanger->ValueRange.X = 0.f;
-			CommonRanger->ValueRange.Y = Options.Num() - 1.f;
+			CommonRanger->ValueRange.Y = FMath::Max(Options.Num() - 1.f, 0.f);
 			CommonRanger->StepSize = 1.f;
 			CommonRanger->bSnapByStep = true;
 
 			CommonRanger->RefreshRanger();
-			CommonRanger->SetValue((float)CurrentIndex);
+			CommonRanger->SetValue(FMath::Max((float)CurrentIndex, 0.f));
 
 			CommonRanger->OnValueChanged.AddDynamic(this, &UVSOptionBasedWidgetBinder::OnCommonRangerValueChanged);
 		}
@@ -205,7 +205,7 @@ FString UVSOptionBasedWidgetBinder::GetExternalOption_Implementation() const
 
 FText UVSOptionBasedWidgetBinder::GetCurrentOptionText() const
 {
-	const FString& Option = GetExternalOption();
+	const FString Option = GetExternalOption();
 	int32 Index = GetOptionIndex(Option);
 	if (OptionTexts.IsValidIndex(Index))
 	{
@@ -313,17 +313,20 @@ void UVSOptionBasedWidgetBinder::OnComboBoxStringOpening()
 	if (UComboBoxString* ComboBoxString = Cast<UComboBoxString>(GetBoundTypedWidget(FName("Options"))))
 	{
 		auto ComboBox = VS_PRIVABLIC_MEMBER(ComboBoxString, UComboBoxString, MyComboBox);
+		if (!ComboBox.IsValid()) return;
 		auto ListView = VS_PRIVABLIC_MEMBER(ComboBox.Get(), SComboBoxString, ComboListView);
+		if (!ListView.IsValid()) return;
 		auto TableView = VS_PRIVABLIC_MEMBER(ListView.Get(), STableViewBase, ItemsPanel);
+		if (!TableView.IsValid()) return;
 		
-		if (TableView.IsValid() && ListView.IsValid())
+		if (TableView.IsValid() && ListView.IsValid() && GetWorld())
 		{
 			GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([this, TableView, ListView]()
 			{
-				if (!GetWorld() || !TableView.IsValid() || !ListView.IsValid()) return;
+				if (!IsValid(this) || !GetWorld() || !TableView.IsValid() || !ListView.IsValid()) return;
 				GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([this, TableView, ListView]()
 				{
-					if (!TableView.IsValid() || !ListView.IsValid()) return;
+					if (!IsValid(this) || !TableView.IsValid() || !ListView.IsValid()) return;
 					
 					int32 Index = INDEX_NONE;
 					TableView.Get()->GetChildren()->ForEachWidget([& , ListView] (SWidget& Widget)

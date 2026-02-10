@@ -453,7 +453,7 @@ FString UVSGameplayTagFeatureBase::GetDebugString()
 		+ UEnum::GetValueAsString(GetOwnerActor()->GetLocalRole()) + " / "
 		+ UEnum::GetValueAsString(GetOwnerActor()->GetRemoteRole()) + ") :";
 	
-	const FGameplayTagContainer& GameplayTags = GetGameplayTags();
+	const FGameplayTagContainer GameplayTags = GetGameplayTags();
 	if (GameplayTags.Num())
 	{
 		for (const FGameplayTag& GameplayTag : GameplayTags.GetGameplayTagArray())
@@ -781,13 +781,13 @@ void UVSGameplayTagFeatureBase::SetTagsCount_Server_Implementation(const FGamepl
 
 void UVSGameplayTagFeatureBase::SetTagsCount_Client_Implementation(const FGameplayTagContainer& GameplayTags, int32 Count)
 {
-	if (GetOwnerActor()->GetLocalRole() != ROLE_AutonomousProxy) return;
+	if (!GetOwnerActor() || GetOwnerActor()->GetLocalRole() != ROLE_AutonomousProxy) return;
 	SetTagsCountInternal(GameplayTags, Count);
 }
 
 void UVSGameplayTagFeatureBase::SetTagsCount_MultiCast_Implementation(const FGameplayTagContainer& GameplayTags, int32 Count)
 {
-	if (GetOwnerActor()->GetLocalRole() != ROLE_SimulatedProxy) return;
+	if (!GetOwnerActor() || GetOwnerActor()->GetLocalRole() != ROLE_SimulatedProxy) return;
 	SetTagsCountInternal(GameplayTags, Count);
 }
 
@@ -809,13 +809,13 @@ void UVSGameplayTagFeatureBase::NotifyTagEvent_Server_Implementation(const FGame
 
 void UVSGameplayTagFeatureBase::NotifyTagEvent_Client_Implementation(const FGameplayTag& GameplayTag)
 {
-	if (GetOwnerActor()->GetLocalRole() != ROLE_AutonomousProxy) return;
+	if (!GetOwnerActor() || GetOwnerActor()->GetLocalRole() != ROLE_AutonomousProxy) return;
 	NotifyTagEventInternal(GameplayTag);
 }
 
 void UVSGameplayTagFeatureBase::NotifyTagEvent_MultiCast_Implementation(const FGameplayTag& GameplayTag)
 {
-	if (GetOwnerActor()->GetLocalRole() != ROLE_SimulatedProxy) return;
+	if (!GetOwnerActor() || GetOwnerActor()->GetLocalRole() != ROLE_SimulatedProxy) return;
 	NotifyTagEventInternal(GameplayTag);
 }
 
@@ -837,13 +837,13 @@ void UVSGameplayTagFeatureBase::NotifyTagEvents_Server_Implementation(const FGam
 
 void UVSGameplayTagFeatureBase::NotifyTagEvents_Client_Implementation(const FGameplayTagContainer& GameplayTags)
 {
-	if (GetOwnerActor()->GetLocalRole() != ROLE_AutonomousProxy) return;
+	if (!GetOwnerActor() || GetOwnerActor()->GetLocalRole() != ROLE_AutonomousProxy) return;
 	NotifyTagEventsInternal(GameplayTags);
 }
 
 void UVSGameplayTagFeatureBase::NotifyTagEvents_MultiCast_Implementation(const FGameplayTagContainer& GameplayTags)
 {
-	if (GetOwnerActor()->GetLocalRole() != ROLE_SimulatedProxy) return;
+	if (!GetOwnerActor() || GetOwnerActor()->GetLocalRole() != ROLE_SimulatedProxy) return;
 	NotifyTagEventsInternal(GameplayTags);
 }
 

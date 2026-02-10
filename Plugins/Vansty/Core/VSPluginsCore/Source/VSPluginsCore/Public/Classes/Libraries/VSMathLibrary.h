@@ -184,7 +184,7 @@ public:
 
 	/** Diagonal size of 2D vector at yaw angle. */
 	UFUNCTION(BlueprintPure, Category = "Math|Vector2D")
-	static float CalcVector2DDiagonalSize( const FVector2D& Vector2D, float AngleYaw);
+	static float CalcVector2DDiagonalSize(const FVector2D& Vector2D, float AngleYaw);
 
 	/** Diagonal size of 3D vector at rotation. */
 	UFUNCTION(BlueprintPure, Category = "Math|Vector")

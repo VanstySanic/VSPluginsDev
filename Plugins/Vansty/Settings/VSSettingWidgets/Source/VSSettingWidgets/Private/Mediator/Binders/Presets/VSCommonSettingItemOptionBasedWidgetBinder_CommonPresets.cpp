@@ -17,7 +17,7 @@ UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::UVSCommonSettingItemO
 TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::GenerateOptions_Implementation() const
 {
 	if (!GetSettingItem_Native()) return {};
-	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
 
 	static FGameplayTag ScalabilityQualityLevelParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Scalability::QualityLevel::AntiAliasing);
 
@@ -79,7 +79,7 @@ TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::Gener
 	if (ItemTag == EVSSettingItem::Audio::Device::Output)
 	{
 		TArray<FString> DeviceOptions;
-		const TArray<FAudioOutputDeviceInfo>& DeviceInfos = UVSPlatformLibrary::GetAvailableAudioOutputDeviceInfos();
+		const TArray<FAudioOutputDeviceInfo> DeviceInfos = UVSPlatformLibrary::GetAvailableAudioOutputDeviceInfos();
 		for (const FAudioOutputDeviceInfo& DeviceInfo : DeviceInfos)
 		{
 			DeviceOptions.Add(DeviceInfo.DeviceId);
@@ -94,7 +94,7 @@ TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::Gener
 TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::GenerateDisabledOptions_Implementation() const
 {
 	if (!GetSettingItem_Native()) return {};
-	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
 	
 	return Super::GenerateDisabledOptions_Implementation();
 }

@@ -35,7 +35,7 @@ bool UVSSettingItem_AudioOutputDevice::IsValueValid_Implementation() const
 {
 	if (!Super::IsValueValid_Implementation()) return false;
 
-	const FString& DeviceID = GetStringValue(EVSSettingItemValueSource::System);
+	const FString DeviceID = GetStringValue(EVSSettingItemValueSource::System);
 	if (!UVSPlatformLibrary::IsValidAudioOutputDeviceID(DeviceID)) return false;
 	
 	return true;
@@ -62,7 +62,7 @@ void UVSSettingItem_AudioOutputDevice::Apply_Implementation()
 {
 	Super::Apply_Implementation();
 	
-	const FString& DeviceID = GetStringValue(EVSSettingItemValueSource::System);
+	const FString DeviceID = GetStringValue(EVSSettingItemValueSource::System);
 	if (UVSPlatformLibrary::IsValidAudioOutputDeviceID(DeviceID))
 	{
 		UVSPlatformLibrary::SetActiveAudioOutputDeviceByID(DeviceID);
@@ -87,7 +87,7 @@ FString UVSSettingItem_AudioOutputDevice::GetStringValue_Implementation(const EV
 
 FText UVSSettingItem_AudioOutputDevice::ValueStringToText_Implementation(const FString& String) const
 {
-	const FAudioOutputDeviceInfo& DeviceInfo = UVSPlatformLibrary::GetAudioOutputDeviceInfoByID(String);
+	const FAudioOutputDeviceInfo DeviceInfo = UVSPlatformLibrary::GetAudioOutputDeviceInfoByID(String);
 	if (!DeviceInfo.DeviceId.IsEmpty())
 	{
 		return FText::FromString(DeviceInfo.Name);

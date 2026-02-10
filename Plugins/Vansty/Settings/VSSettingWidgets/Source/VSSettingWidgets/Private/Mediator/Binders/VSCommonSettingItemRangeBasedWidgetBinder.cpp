@@ -96,7 +96,7 @@ float UVSCommonSettingItemRangeBasedWidgetBinder::GetExternalValue_Implementatio
 void UVSCommonSettingItemRangeBasedWidgetBinder::EditorRefreshMediator_Implementation()
 {
 	if (!GetSettingItem_Native()) return;
-	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
 	
 	if (UVSSettingSubsystem* Subsystem = UVSSettingSubsystem::Get())
 	{

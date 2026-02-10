@@ -37,7 +37,7 @@ void UVSSettingItemWidgetController::PostEditChangeProperty(struct FPropertyChan
 	{
 		if (LastEditorWidgetBinders != WidgetBinders)
 		{
-			const auto& Diff = FVSArray::GetArrayDifference(WidgetBinders, LastEditorWidgetBinders);
+			const auto Diff = FVSArray::GetArrayDifference(WidgetBinders, LastEditorWidgetBinders);
 			for (UVSWidgetBinder* WidgetBinder : Diff)
 			{
 				if (WidgetBinder)
@@ -112,7 +112,7 @@ void UVSSettingItemWidgetController::BindTypedWidget_Implementation(const FName 
 	if (TypeName == FName("Name"))
 	{
 		if (!SettingItemPrivate.IsValid()) return; 
-		const FText& TextToSet = SettingItemPrivate->GetItemInfo().DisplayName.IsEmpty()
+		const FText TextToSet = SettingItemPrivate->GetItemInfo().DisplayName.IsEmpty()
 			? FText::FromString("Item Name")
 			: SettingItemPrivate->GetItemInfo().DisplayName;
 		

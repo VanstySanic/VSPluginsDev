@@ -64,22 +64,22 @@ void UVSObjectFeature::RegisterFeature()
 		return;
 	}
 	
-	bIsRegistered = true;
+	const bool bOwnerActorBeginPlayStarted = OwnerActorPrivate.IsValid() ? (OwnerActorPrivate->HasActorBegunPlay() || OwnerActorPrivate->IsActorBeginningPlay()) : true;
+	const bool bOwnerFeatureBeginPlayStarted = OwnerFeaturePrivate ? (OwnerFeaturePrivate->HasBeenInitialized() || OwnerFeaturePrivate->HasBegunPlay()) : true;
 
-	OwnerActorPrivate = GetTypedOuter<AActor>();
-	if (!OwnerFeaturePrivate)
+	if (!bOwnerActorBeginPlayStarted || !bOwnerFeatureBeginPlayStarted)
 	{
-		OwnerFeaturePrivate = GetTypedOuter<UVSObjectFeature>();
+		UE_LOG(LogObjectFeature, Log, TEXT("RegisterFeature: (%s) Invalid register time. Aborting."), *GetPathName());
+		return;
 	}
+	
+	bIsRegistered = true;
 
 	/**
 	 * If not in a game world register ticks now, otherwise defer until BeginPlay.
 	 * If no owner we won't trigger BeginPlay either so register now in that case as well.
 	 */
 	{
-		const bool bOwnerActorBeginPlayStarted = OwnerActorPrivate.IsValid() ? (OwnerActorPrivate->HasActorBegunPlay() || OwnerActorPrivate->IsActorBeginningPlay()) : true;
-		const bool bOwnerFeatureBeginPlayStarted = OwnerFeaturePrivate ? (OwnerFeaturePrivate->HasBeenInitialized() || OwnerFeaturePrivate->HasBegunPlay()) : true;
-		
 		if (OwnerActorPrivate.IsValid() && OwnerActorPrivate->IsActorInitialized() && OwnerActorPrivate->GetIsReplicated()
 			&& GetIsReplicated() && IsSupportedForNetworking())
 		{
@@ -111,8 +111,12 @@ void UVSObjectFeature::RegisterFeature()
 	TArray<UVSObjectFeature*> CurrentSubFeatures = SubFeatures;
 	for (UVSObjectFeature* SubFeature : CurrentSubFeatures)
 	{
-		if (SubFeature && SubFeature->bRegisterWithOwner && !SubFeature->IsRegistered())
+		if (SubFeature && SubFeature->bRegisterWithOwner)
 		{
+			if (SubFeature->IsRegistered())
+			{
+				SubFeature->UnregisterFeature();
+			}
 			SubFeature->RegisterFeature();
 		}
 	}
@@ -206,7 +210,7 @@ void UVSObjectFeature::SetActive(bool bNewActive)
 
 TArray<UVSObjectFeature*> UVSObjectFeature::GetSubFeatures() const
 {
-	TArray<UVSObjectFeature*> Features = SubFeatures;
+	TArray<UVSObjectFeature*> Features;
 	for (UVSObjectFeature* SubFeature : SubFeatures)
 	{
 		if (SubFeature)
@@ -262,7 +266,12 @@ void UVSObjectFeature::AddSubFeatureInstance(UVSObjectFeature* Feature, bool bDe
 	}
 	
 	SubFeatures.Add(Feature);
-	
+	Feature->OwnerFeaturePrivate = this;
+
+	if (Feature->IsRegistered() && !IsRegistered())
+	{
+		Feature->UnregisterFeature();
+	}
 	if (!bDeferRegister && Feature->bRegisterWithOwner &&  IsRegistered())
 	{
 		Feature->RegisterFeature();
@@ -294,8 +303,11 @@ void UVSObjectFeature::RemoveSubFeature(UVSObjectFeature* Feature)
 		Feature->UnregisterFeature();
 	}
 
-	Feature->OwnerFeaturePrivate->SubFeatures.RemoveSingle(Feature);
-	Feature->OwnerFeaturePrivate = nullptr;
+	if (Feature->OwnerFeaturePrivate)
+	{
+		Feature->OwnerFeaturePrivate->SubFeatures.RemoveSingle(Feature);
+		Feature->OwnerFeaturePrivate = nullptr;
+	}
 }
 
 void UVSObjectFeature::SetOwnerFeature(UVSObjectFeature* Feature, bool bDeferRegister)
@@ -471,10 +483,7 @@ void UVSObjectFeature::SetTickEnabled(bool bEnabled)
 	if (!TickProxy) return;
 	if (bEnabled && !TickProxy->IsTickFunctionRegistered())
 	{
-		TickProxy->OnTick_Native.AddLambda([this] (UVSObjectTickProxy* PrimaryTickProxy, float DeltaTime, ELevelTick TickType, FVSObjectTickFunction* TickFunction)
-		{
-			TickFeature(DeltaTime, TickType, TickFunction);
-		});
+		TickProxy->OnTick_Native.AddUObject(this, &UVSObjectFeature::ReceiveProxyTick);
 		TickProxy->CanTick_Native.BindLambda([this] (UVSObjectTickProxy* PrimaryTickProxy)
 		{
 			return CanTick();
@@ -484,7 +493,7 @@ void UVSObjectFeature::SetTickEnabled(bool bEnabled)
 	else if (!bEnabled && TickProxy->IsTickFunctionRegistered())
 	{
 		TickProxy->OnTick_Native.RemoveAll(this);
-		TickProxy->CanTick.Unbind();
+		TickProxy->CanTick_Native.Unbind();
 		TickProxy->UnregisterTickFunction();
 	}
 }
@@ -507,6 +516,11 @@ void UVSObjectFeature::OnFeatureActivated_Implementation()
 void UVSObjectFeature::OnFeatureDeactivated_Implementation()
 {
 
+}
+
+void UVSObjectFeature::ReceiveProxyTick(UVSObjectTickProxy* PrimaryTickProxy, float DeltaTime, ELevelTick TickType,FVSObjectTickFunction* TickFunction)
+{
+	TickFeature(DeltaTime, TickType, TickFunction);
 }
 
 void UVSObjectFeature::OnRep_bIsActive()

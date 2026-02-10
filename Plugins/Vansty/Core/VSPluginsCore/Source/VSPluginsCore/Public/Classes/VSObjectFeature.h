@@ -214,6 +214,8 @@ protected:
 	void OnFeatureDeactivated();
 	
 private:
+	void ReceiveProxyTick(UVSObjectTickProxy* PrimaryTickProxy, float DeltaTime, ELevelTick TickType, FVSObjectTickFunction* TickFunction);
+	
 	UFUNCTION()
 	void OnRep_bIsActive();
 

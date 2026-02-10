@@ -99,6 +99,8 @@ public:
 	void Destroy();
 
 private:
+	float GetTimeByAlpha(float InAlpha);
+	
 	/** Set time and update alpha accordingly. */
 	void SetTime(float InTime);
 	
@@ -136,12 +138,12 @@ public:
 	/** What to do when the blend finishes. */
 	UPROPERTY(EditAnywhere, Category = "AlphaBlend")
 	TArray<TEnumAsByte<EVSAlphaBlendFinishAction::Type>> FinishActions;
-	
+
 private:
 	uint8 bHasBeenInitialized : 1;
 	ETimelineDirection::Type CurrentDirection = ETimelineDirection::Forward;
-	float CurrentAlpha = 0.f;
-	float CurrentTime = 0.f;
+	float CurrentAlpha = -1.f;
+	float CurrentTime = -1.f;
 	uint8 bIsAutoUpdating : 1;
 };
 
@@ -163,7 +165,7 @@ struct FVSAlphaBlendProxyParams
 
 	FVSAlphaBlendProxyParams()
 		: bLoopRequiresReversingDirection(false)
-		, DirectionReversedAtStart(false)
+		, bLoopDirectionAlreadyReversedAtStart(false)
 		, bPauseWhenFinished(true)
 		, bDestroyWhenFinished(true)
 		, bStartPaused(false)
@@ -210,7 +212,7 @@ struct FVSAlphaBlendProxyParams
 
 	/** Whether to indicate that the direction has already been reversed at start, if the loop cycle requires direction reversing. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bLoopRequiresReversingDirection"))
-	uint8 DirectionReversedAtStart : 1;
+	uint8 bLoopDirectionAlreadyReversedAtStart : 1;
 
 	/** Whether to pause when the proxy finishes. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -271,8 +273,11 @@ protected:
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend", meta = (WorldContext = "WorldContext", AutoCreateRefTerm = "Params"))
-	static UVSAlphaBlendPlayProxy* CreateAlphaBlendPlayProxy(UObject* WorldContext, const FVSAlphaBlendProxyParams& Params);
-
+	static UVSAlphaBlendPlayProxy* CreateAlphaBlendPlayProxy(UObject* WorldContext, const FVSAlphaBlendProxyParams& Params, bool bDifferInitialization = false);
+	
+	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
+	void Initialize();
+	
 	/** Get the current updated alpha. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	float GetAlpha() const;
@@ -305,14 +310,17 @@ public:
 	void Destroy();
 
 private:
-	void Initialize(const FVSAlphaBlendProxyParams& Params);
-
+	ETimelineDirection::Type CalcDefaultDirection() const;
+	void AlphaBlendPlayerFinished();
+	void CheckNextLoop();
+	void DoFinishLogics();
+	
 public:
 	FAlphaBlendProxyDelegate OnAlphaUpdated_Native;
 	FAlphaBlendProxyDelegate OnLoopStart_Native;
 	FAlphaBlendProxyDelegate OnLoopFinished_Native;
 	FAlphaBlendProxyDelegate OnProxyFinished_Native;
-	
+
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FAlphaBlendProxyEvent OnAlphaUpdated;
 	
@@ -326,15 +334,11 @@ public:
 	FAlphaBlendProxyEvent OnProxyFinished;
 
 private:
-	void AlphaBlendPlayerFinished();
-	void CheckNextLoop();
-	void DoFinishLogics();
-
-private:
 	UPROPERTY()
 	TObjectPtr<UVSAlphaBlendPlayer> AlphaBlendPlayer;
 	
 	FVSAlphaBlendProxyParams CachedProxyParams;
+	uint8 bHasBeenInitialized : 1;
 	uint8 bIsPaused : 1;
 	uint8 bHasFinished : 1;
 	int32 CurrentLoopCount = 0;

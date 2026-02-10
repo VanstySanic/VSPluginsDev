@@ -111,8 +111,8 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 
 	FORCEINLINE static FRotator ComposeRotators(const FRotator& RotatorA, const FRotator& RotatorB)
 	{
-		const FQuat& AQuat = FQuat(RotatorA);
-		const FQuat& BQuat = FQuat(RotatorB);
+		const FQuat AQuat = FQuat(RotatorA);
+		const FQuat BQuat = FQuat(RotatorB);
 		return FRotator(BQuat * AQuat);
 	}
 	
@@ -152,8 +152,8 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 	{
 		if (PlaneNormal.IsNearlyZero()) return Rotator;
 		
-		const FQuat& WorldToPlaneRotation = FQuat::FindBetweenVectors(PlaneNormal, FVector::UpVector);
-		const FQuat& PlaneToWorldRotation = WorldToPlaneRotation.Inverse();
+		const FQuat WorldToPlaneRotation = FQuat::FindBetweenVectors(PlaneNormal, FVector::UpVector);
+		const FQuat PlaneToWorldRotation = WorldToPlaneRotation.Inverse();
 		FRotator RotationRS = ComposeRotators(Rotator, PlaneToWorldRotation.Rotator());
 		RotationRS.Roll = 0.f;
 		RotationRS.Normalize();
@@ -170,9 +170,9 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		EVSRotatorAxes::Type AxesToApply = EVSRotatorAxes::Type::RollPitchYaw,
 		const FRotator& AxesSpace = FRotator::ZeroRotator)
 	{
-		const FTransform& AxesSpaceTransform = FTransform(AxesSpace);
-		const FRotator& AxesSpaceFrom = AxesSpaceTransform.InverseTransformRotation(From.Quaternion()).Rotator();
-		const FRotator& AxesSpaceTo = AxesSpaceTransform.InverseTransformRotation(To.Quaternion()).Rotator();
+		const FTransform AxesSpaceTransform = FTransform(AxesSpace);
+		const FRotator AxesSpaceFrom = AxesSpaceTransform.InverseTransformRotation(From.Quaternion()).Rotator();
+		const FRotator AxesSpaceTo = AxesSpaceTransform.InverseTransformRotation(To.Quaternion()).Rotator();
 		FRotator AxesSpaceAnsRotation = AxesSpaceFrom;
 	
 		if (AxesToApply & EVSRotatorAxes::Roll) AxesSpaceAnsRotation.Roll = AxesSpaceTo.Roll;
@@ -192,9 +192,9 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		EVSVectorAxes::Type AxesToApply = EVSVectorAxes::Type::XYZ,
 		const FRotator& AxesSpace = FRotator::ZeroRotator)
 	{
-		const FTransform& AxesSpaceTransform = FTransform(AxesSpace);
-		const FVector& AxesSpaceFrom = AxesSpaceTransform.InverseTransformVectorNoScale(From);
-		const FVector& AxesSpaceTo = AxesSpaceTransform.InverseTransformVectorNoScale(To);
+		const FTransform AxesSpaceTransform = FTransform(AxesSpace);
+		const FVector AxesSpaceFrom = AxesSpaceTransform.InverseTransformVectorNoScale(From);
+		const FVector AxesSpaceTo = AxesSpaceTransform.InverseTransformVectorNoScale(To);
 		FVector AxesSpaceAnsVector = AxesSpaceFrom;
 	
 		if (AxesToApply & EVSVectorAxes::X) AxesSpaceAnsVector.X = AxesSpaceTo.X;
@@ -214,9 +214,9 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		const FVSTransformAxes& AxesToApply = FVSTransformAxes(),
 		const FRotator& AxesSpace = FRotator::ZeroRotator)
 	{
-		const FRotator& AnsRotation = RotatorApplyAxes(From.Rotator(), To.Rotator(), AxesToApply.RotatorAxes, AxesSpace);
-		const FVector& AnsTranslation = VectorApplyAxes(From.GetTranslation(), To.GetTranslation(), AxesToApply.TranslationAxes, AxesSpace);
-		const FVector& AnsScale = VectorApplyAxes(From.GetScale3D(), To.GetScale3D(), AxesToApply.ScaleAxes, AxesSpace);
+		const FRotator AnsRotation = RotatorApplyAxes(From.Rotator(), To.Rotator(), AxesToApply.RotatorAxes, AxesSpace);
+		const FVector AnsTranslation = VectorApplyAxes(From.GetTranslation(), To.GetTranslation(), AxesToApply.TranslationAxes, AxesSpace);
+		const FVector AnsScale = VectorApplyAxes(From.GetScale3D(), To.GetScale3D(), AxesToApply.ScaleAxes, AxesSpace);
 
 		return FTransform(AnsRotation, AnsTranslation, AnsScale);
 	}
@@ -275,16 +275,16 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		float MaxTimeStep = 0.016667f,
 		const FRotator& InterpSpace = FRotator::ZeroRotator)
 	{
-		const FTransform& LagSpaceTransform = FTransform(InterpSpace);
-		const FRotator& LagSpaceFrom = LagSpaceTransform.InverseTransformRotation(From.Quaternion()).Rotator();
-		const FRotator& LagSpaceTo = LagSpaceTransform.InverseTransformRotation(To.Quaternion()).Rotator();
+		const FTransform LagSpaceTransform = FTransform(InterpSpace);
+		const FRotator LagSpaceFrom = LagSpaceTransform.InverseTransformRotation(From.Quaternion()).Rotator();
+		const FRotator LagSpaceTo = LagSpaceTransform.InverseTransformRotation(To.Quaternion()).Rotator();
 		
 		FRotator LagSpaceAns = LagSpaceFrom;
 		
 		if (MaxTimeStep > 0.f && DeltaTime > MaxTimeStep)
 		{
 			float RemainingTime = DeltaTime;
-			const FRotator& Step = (LagSpaceTo - LagSpaceFrom).GetNormalized() * (1.0 / DeltaTime);
+			const FRotator Step = (LagSpaceTo - LagSpaceFrom).GetNormalized() * (1.0 / DeltaTime);
 			FRotator LerpTarget = LagSpaceAns;
 
 			while (RemainingTime > UE_KINDA_SMALL_NUMBER)
@@ -319,7 +319,7 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		if (MaxTimeStep > 0.f && DeltaTime > MaxTimeStep)
 		{
 			float RemainingTime = DeltaTime;
-			const FVector2D& Step = (To - From) * (1.0 / DeltaTime);
+			const FVector2D Step = (To - From) * (1.0 / DeltaTime);
 			FVector2D LerpTarget = Ans;
 
 			while (RemainingTime > UE_KINDA_SMALL_NUMBER)
@@ -354,16 +354,16 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		float MaxTimeStep = 0.016667f,
 		const FRotator& InterpSpace = FRotator::ZeroRotator)
 	{
-		const FTransform& LagSpaceTransform = FTransform(InterpSpace);
-		const FVector& LagSpaceFrom = LagSpaceTransform.InverseTransformVectorNoScale(From);
-		const FVector& LagSpaceTo = LagSpaceTransform.InverseTransformVectorNoScale(To);
+		const FTransform LagSpaceTransform = FTransform(InterpSpace);
+		const FVector LagSpaceFrom = LagSpaceTransform.InverseTransformVectorNoScale(From);
+		const FVector LagSpaceTo = LagSpaceTransform.InverseTransformVectorNoScale(To);
 
 		FVector LagSpaceAns = LagSpaceFrom;
 		
 		if (MaxTimeStep > 0.f && DeltaTime > MaxTimeStep)
 		{
 			float RemainingTime = DeltaTime;
-			const FVector& Step = (LagSpaceTo - LagSpaceFrom) * (1.0 / DeltaTime);
+			const FVector Step = (LagSpaceTo - LagSpaceFrom) * (1.0 / DeltaTime);
 			FVector LerpTarget = LagSpaceAns;
 
 			while (RemainingTime > UE_KINDA_SMALL_NUMBER)
@@ -439,7 +439,7 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		const FVector& RangeMax,
 		const FTransform& ConstrainSpace = FTransform::Identity)
 	{
-		const FVector& SourceTranslationCS = ConstrainSpace.InverseTransformPosition(Source);
+		const FVector SourceTranslationCS = ConstrainSpace.InverseTransformPosition(Source);
 
 		FVector AnsTranslationCS = SourceTranslationCS;
 		AnsTranslationCS.X = Clamp(SourceTranslationCS.X, RangeMin.X, RangeMax.X);
@@ -455,8 +455,8 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		const FVector& RangeMax,
 		const FRotator& ConstrainSpace = FRotator::ZeroRotator)
 	{
-		const FTransform& ConstrainSpaceTransform = FTransform(ConstrainSpace);
-		const FVector& SourceTranslationCS = ConstrainSpaceTransform.InverseTransformVectorNoScale(Source);
+		const FTransform ConstrainSpaceTransform = FTransform(ConstrainSpace);
+		const FVector SourceTranslationCS = ConstrainSpaceTransform.InverseTransformVectorNoScale(Source);
 
 		FVector AnsTranslationCS = SourceTranslationCS;
 		AnsTranslationCS.X = Clamp(SourceTranslationCS.X, RangeMin.X, RangeMax.X);
@@ -472,16 +472,16 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		const FVector& RangeMax,
 		const FTransform& ConstrainSpace)
 	{
-		const FTransform& ScaleTransformWS = FTransform(FQuat::Identity, FVector::ZeroVector, Source);
-		const FTransform& ScaleTransformCS = ScaleTransformWS.GetRelativeTransform(ConstrainSpace);
-		const FVector& SourceScaleCS = ScaleTransformCS.GetScale3D();
+		const FTransform ScaleTransformWS = FTransform(FQuat::Identity, FVector::ZeroVector, Source);
+		const FTransform ScaleTransformCS = ScaleTransformWS.GetRelativeTransform(ConstrainSpace);
+		const FVector SourceScaleCS = ScaleTransformCS.GetScale3D();
 	
 		FVector AnsScaleCS = SourceScaleCS;
 		AnsScaleCS.X = Clamp(SourceScaleCS.X, RangeMin.X, RangeMax.X);
 		AnsScaleCS.Y = Clamp(SourceScaleCS.Y, RangeMin.Y, RangeMax.Y);
 		AnsScaleCS.Z = Clamp(SourceScaleCS.Z, RangeMin.Z, RangeMax.Z);
 
-		const FTransform& AnsTransformCS = FTransform(FQuat::Identity, FVector::ZeroVector, AnsScaleCS);
+		const FTransform AnsTransformCS = FTransform(FQuat::Identity, FVector::ZeroVector, AnsScaleCS);
 		return (AnsTransformCS * ConstrainSpace).GetScale3D();
 	}
 	
@@ -492,8 +492,8 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		const FRotator& RangeMax,
 		const FRotator& ConstrainSpace = FRotator::ZeroRotator)
 	{
-		const FTransform& ConstrainSpaceT = FTransform(ConstrainSpace);
-		const FRotator& SourceRotationCS = ConstrainSpaceT.InverseTransformRotation(Source.Quaternion()).Rotator();
+		const FTransform ConstrainSpaceT = FTransform(ConstrainSpace);
+		const FRotator SourceRotationCS = ConstrainSpaceT.InverseTransformRotation(Source.Quaternion()).Rotator();
 
 		FRotator AnsRotationCS = SourceRotationCS;
 		AnsRotationCS.Roll = ClampAngle(SourceRotationCS.Roll, RangeMin.Roll, RangeMax.Roll);
@@ -510,9 +510,9 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		const FTransform& RangeMax,
 		const FTransform& ConstrainSpace = FTransform::Identity)
 	{
-		const FRotator& AnsRotation = ClampRotator(Source.Rotator(), RangeMin.Rotator(), RangeMax.Rotator(), ConstrainSpace.Rotator());
-		const FVector& AnsTranslation = ClampVectorLocation(Source.GetTranslation(), RangeMin.GetTranslation(), RangeMax.GetTranslation(), ConstrainSpace);
-		const FVector& AnsScale = ClampVectorScale(Source.GetScale3D(), RangeMin.GetScale3D(), RangeMax.GetScale3D(), ConstrainSpace);
+		const FRotator AnsRotation = ClampRotator(Source.Rotator(), RangeMin.Rotator(), RangeMax.Rotator(), ConstrainSpace.Rotator());
+		const FVector AnsTranslation = ClampVectorLocation(Source.GetTranslation(), RangeMin.GetTranslation(), RangeMax.GetTranslation(), ConstrainSpace);
+		const FVector AnsScale = ClampVectorScale(Source.GetScale3D(), RangeMin.GetScale3D(), RangeMax.GetScale3D(), ConstrainSpace);
 	
 		return FTransform(AnsRotation.Quaternion(), AnsTranslation, AnsScale);
 	}
@@ -527,7 +527,7 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 	[[nodiscard]] FORCEINLINE static double CalcVectorDiagonalSize(const FVector& Vector, const FRotator& Rotation)
 	{
 		const float SizeXY = CalcVector2DDiagonalSize(FVector2D(Vector.X, Vector.Y), Rotation.Yaw);
-		const FVector& Direction = Rotation.Vector();
+		const FVector Direction = Rotation.Vector();
 		const float AngleZ = (180.0) / UE_DOUBLE_PI * Acos(SafeDivide(Direction.Z, Direction.Size()));
 		return CalcVector2DDiagonalSize(FVector2D(Vector.Z, SizeXY), AngleZ);
 	}

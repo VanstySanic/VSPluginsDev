@@ -14,7 +14,7 @@ UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::UVSCommonSettingItemRa
 FVector2D UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::GenerateValueRange_Implementation() const
 {
 	if (!GetSettingItem_Native()) return Super::GenerateValueRange_Implementation();
-	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
 
 	static FGameplayTag AudioVolumeParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Audio::Volume::Master);
 	
@@ -38,7 +38,7 @@ FVector2D UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::GenerateValu
 bool UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::EditorAllowChangingStepSize_Implementation() const
 {
 	if (!GetSettingItem_Native()) return Super::EditorAllowChangingStepSize_Implementation();
-	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
 
 	static FGameplayTag AudioVolumeParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Audio::Volume::Master);
 
@@ -55,7 +55,7 @@ bool UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::EditorAllowChangi
 bool UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::EditorAllowChangingSnapByStep_Implementation() const
 {
 	if (!GetSettingItem_Native()) return Super::EditorAllowChangingSnapByStep_Implementation();
-	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
 
 	static FGameplayTag AudioVolumeParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Audio::Volume::Master);
 	
@@ -74,7 +74,7 @@ void UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::EditorRefreshMedi
 	Super::EditorRefreshMediator_Implementation();
 
 	if (!GetSettingItem_Native()) return;
-	const FGameplayTag& ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
 
 	static FGameplayTag AudioVolumeParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Audio::Volume::Master);
 	

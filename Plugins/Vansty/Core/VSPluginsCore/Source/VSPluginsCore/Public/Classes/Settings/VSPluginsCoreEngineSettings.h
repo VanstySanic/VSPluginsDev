@@ -35,7 +35,6 @@ public:
 private:
 	void CheckFullscreenDesiredMonitor();
 
-private:
 	void OnCVarDesiredFullscreenMonitorIDChanged(IConsoleVariable* ConsoleVariable);
 	void OnApplicationActivationStateChanged(bool bIsApplicationActive);
 };

@@ -110,7 +110,7 @@ void UVSCommonRotator::OnButtonPrevClicked()
 	else
 	{
 		const int32 CurrentIndex = GetSelectedIndex();
-		const int32 DesiredIndex = FMath::Clamp(CurrentIndex - 1, 0, TextLabels.Num() - 1);
+		const int32 DesiredIndex = FMath::Clamp(CurrentIndex - 1, 0, FMath::Max(TextLabels.Num() - 1, 0));
 		if (CurrentIndex != DesiredIndex)
 		{
 			ShiftTextLeft();

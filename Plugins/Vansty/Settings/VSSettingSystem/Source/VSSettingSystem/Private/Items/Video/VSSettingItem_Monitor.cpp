@@ -28,14 +28,14 @@ void UVSSettingItem_Monitor::Apply_Implementation()
 	if (!bOverrideDesiredFullscreenMonitor && WindowMode == EWindowMode::Fullscreen) return;
 	
 	const FString MonitorID = GetMonitorID(EVSSettingItemValueSource::System);
-	const FVSMonitorInfo& MonitorInfo = UVSPlatformLibrary::GetMonitorInfoByID(MonitorID);
+	const FVSMonitorInfo MonitorInfo = UVSPlatformLibrary::GetMonitorInfoByID(MonitorID);
 	if (!MonitorInfo.ID.IsEmpty())
 	{
 
 		
-		const FVector2D& WindowCenterPos = UVSPlatformLibrary::GetWindowCenterPosition(false);
-		const FString& WindowMonitorID = UVSPlatformLibrary::GetMonitorIDByPosition(WindowCenterPos);
-		const FMonitorInfo& WindowMonitorInfo = UVSPlatformLibrary::GetNativeMonitorInfoByID(WindowMonitorID);
+		const FVector2D WindowCenterPos = UVSPlatformLibrary::GetWindowCenterPosition(false);
+		const FString WindowMonitorID = UVSPlatformLibrary::GetMonitorIDByPosition(WindowCenterPos);
+		const FMonitorInfo WindowMonitorInfo = UVSPlatformLibrary::GetNativeMonitorInfoByID(WindowMonitorID);
 		if (!MonitorID.IsEmpty() && WindowMonitorInfo.ID != MonitorID)
 		{
 			if (WindowMode == EWindowMode::Windowed)
@@ -57,7 +57,7 @@ void UVSSettingItem_Monitor::Apply_Implementation()
 
 bool UVSSettingItem_Monitor::IsValueValid_Implementation() const
 {
-	const FString& MonitorID = GetMonitorID(EVSSettingItemValueSource::System);
+	const FString MonitorID = GetMonitorID(EVSSettingItemValueSource::System);
 	if (!UVSPlatformLibrary::IsValidMonitorID(MonitorID)) return false;
 	
 	return Super::IsValueValid_Implementation();
@@ -69,7 +69,7 @@ void UVSSettingItem_Monitor::Validate_Implementation()
 
 	if (IsValueValid()) return;
 
-	const FString& MonitorID = GetMonitorID(EVSSettingItemValueSource::System);
+	const FString MonitorID = GetMonitorID(EVSSettingItemValueSource::System);
 	if (!UVSPlatformLibrary::IsValidMonitorID(MonitorID) && !UVSPlatformLibrary::GetPrimaryMonitorID().IsEmpty())
 	{
 		SetStringValue(UVSPlatformLibrary::GetPrimaryMonitorID());
@@ -78,7 +78,7 @@ void UVSSettingItem_Monitor::Validate_Implementation()
 
 FString UVSSettingItem_Monitor::GetStringValue_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
 {
-	if (ValueType == EVSCommonSettingValueType::Integer)
+	if (ValueType == EVSCommonSettingValueType::String)
 	{
 		switch (ValueSource)
 		{
@@ -101,7 +101,7 @@ FString UVSSettingItem_Monitor::GetStringValue_Implementation(const EVSSettingIt
 
 FText UVSSettingItem_Monitor::ValueStringToText_Implementation(const FString& String) const
 {
-	const FMonitorInfo& MonitorInfo = UVSPlatformLibrary::GetNativeMonitorInfoByID(String);
+	const FMonitorInfo MonitorInfo = UVSPlatformLibrary::GetNativeMonitorInfoByID(String);
 	FString MonitorName = MonitorInfo.Name;
 	int32 SameNameMonitorNum = 0;
 	int32 SameNameMonitorIndex = 0;

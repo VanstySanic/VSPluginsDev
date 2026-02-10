@@ -46,7 +46,7 @@ void UVSMutableRangedWidgetBinder::BindTypedWidget_Implementation(const FName Ty
 			Slider->SetMinValue(ValueRange.X * DisplayValueMultiplier);
 			Slider->SetMaxValue(ValueRange.Y * DisplayValueMultiplier);
 			Slider->SetStepSize(StepSize * DisplayValueMultiplier);
-			Slider->MouseUsesStep = bSnapByStep * DisplayValueMultiplier;
+			Slider->MouseUsesStep = bSnapByStep;
 			Slider->SetValue(ExternalNonMutedValue * DisplayValueMultiplier);
 			
 			Slider->OnValueChanged.AddDynamic(this, &UVSMutableRangedWidgetBinder::OnDisplayWidgetValueChanged);
@@ -107,7 +107,7 @@ void UVSMutableRangedWidgetBinder::BindTypedWidget_Implementation(const FName Ty
 	{
 		if (UTextBlock* TextBlock = Cast<UTextBlock>(Widget))
 		{
-			const FText& ContentText = GetContentText();
+			const FText ContentText = GetContentText();
 			TextBlock->SetText(ContentText);
 		}
 	}
@@ -213,7 +213,7 @@ FText UVSMutableRangedWidgetBinder::GetContentText() const
 		}
 	}
 	
-	const FText& ValueText = UKismetTextLibrary::Conv_DoubleToText(
+	const FText ValueText = UKismetTextLibrary::Conv_DoubleToText(
 		GetCurrentValue() * DisplayValueMultiplier, HalfToZero,
 		false, true,
 		1, 324,
