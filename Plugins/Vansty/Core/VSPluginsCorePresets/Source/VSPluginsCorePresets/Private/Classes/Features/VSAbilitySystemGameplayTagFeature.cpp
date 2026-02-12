@@ -25,7 +25,8 @@ void UVSAbilitySystemGameplayTagFeature::Initialize_Implementation()
 	check(AbilitySystemComponentPrivate.IsValid());
 	AbilitySystemGameplayTagCountContainerPtr = &VS_PRIVABLIC_MEMBER(AbilitySystemComponentPrivate.Get(), UAbilitySystemComponent, GameplayTagCountContainer);
 	check(AbilitySystemGameplayTagCountContainerPtr);
-
+	
+	/** Bind listen delegate. */
 	for (const FGameplayTag& GameplayTag : UVSPluginsCoreGameSettings::Get()->AbilitySystemListeningTags.GetGameplayTagArray())
 	{
 		FDelegateHandle DelegateHandle = AbilitySystemComponentPrivate->RegisterGameplayTagEvent(GameplayTag, EGameplayTagEventType::AnyCountChange)

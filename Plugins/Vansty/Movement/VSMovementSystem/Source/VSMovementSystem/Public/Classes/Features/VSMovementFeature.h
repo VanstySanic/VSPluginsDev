@@ -58,7 +58,7 @@ protected:
 	//~ End UVSObjectFeature Interface.
 	
 	//~ Begin IMoverInputProducerInterface
-	// virtual void ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult) override;
+	virtual void ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult) override;
 	//~ End IMoverInputProducerInterface
 
 public:

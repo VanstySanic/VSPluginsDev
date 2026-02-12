@@ -27,6 +27,7 @@ public class VSPluginsCorePresets : ModuleRules
 			{
 				"Core",
 				"GameplayTags",
+				"EnhancedInput",
 				"GameplayAbilities",
 				"DeveloperSettings",
 				// ... add other public dependencies that you statically link with here ...

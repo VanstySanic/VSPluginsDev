@@ -32,8 +32,9 @@ UVSMovementFeatureAgent* UVSMovementFeature::GetMovementFeatureAgent() const
 
 UMoverComponent* UVSMovementFeature::GetMoverComponent() const
 {
-	return MovementFeatureAgentPrivate.IsValid() ? MovementFeatureAgentPrivate.Get()->MoverComponentPrivate.Get()
-		: (GetOwnerActor() ? GetOwnerActor()->FindComponentByClass<UMoverComponent>() : nullptr);
+	if (MovementFeatureAgentPrivate.IsValid() && MovementFeatureAgentPrivate->MoverComponentPrivate.IsValid())
+		return MovementFeatureAgentPrivate.Get()->MoverComponentPrivate.Get();
+	return GetOwnerActor() ? GetOwnerActor()->FindComponentByClass<UMoverComponent>() : nullptr;
 }
 
 /** ------------------------------------------------------------------------- **/
@@ -98,16 +99,22 @@ void UVSMovementFeatureAgent::Tick_Implementation(float DeltaTime)
 	}
 }
 
-// void UVSMovementFeatureAgent::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult)
-// {
-// 	/** Produce input for the original input producer first. */
-// 	if (OriginalInputProducerPrivate.IsValid() && OriginalInputProducerPrivate->GetClass()->ImplementsInterface(UMoverInputProducerInterface::StaticClass()))
-// 	{
-// 		Execute_ProduceInput(OriginalInputProducerPrivate.Get(), SimTimeMs, InputCmdResult);
-// 	}
-//
-// 	/** Produce input on all child movement features. */
-// }
+void UVSMovementFeatureAgent::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult)
+{
+	/** Produce input for the original input producer first. */
+	if (OriginalInputProducerPrivate.IsValid() && OriginalInputProducerPrivate->GetClass()->ImplementsInterface(UMoverInputProducerInterface::StaticClass()))
+	{
+		Execute_ProduceInput(OriginalInputProducerPrivate.Get(), SimTimeMs, InputCmdResult);
+	}
+
+	for (UVSObjectFeature* SubFeature : GetSubFeatures())
+	{
+		if (SubFeature && SubFeature->GetClass()->ImplementsInterface(UMoverInputProducerInterface::StaticClass()))
+		{
+			Execute_ProduceInput(SubFeature, SimTimeMs, InputCmdResult);
+		}
+	}
+}
 
 UObject* UVSMovementFeatureAgent::GetMoverOriginalInputProducer() const
 {
