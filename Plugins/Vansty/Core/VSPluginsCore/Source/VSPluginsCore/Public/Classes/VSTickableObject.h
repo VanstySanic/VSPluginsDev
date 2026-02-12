@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Interfaces/VSTickFunctionInterface.h"
+#include "Interfaces/VSTickFunctionOwnerInterface.h"
 #include "Types/VSObjectTickFunction.h"
 #include "UObject/Object.h"
 #include "VSTickableObject.generated.h"
@@ -21,7 +21,7 @@
  * forwards to the Tick() virtual function, which may be implemented in C++ or Blueprint.
  */
 UCLASS(Abstract, Blueprintable, BlueprintType)
-class VSPLUGINSCORE_API UVSTickableObject : public UObject, public IVSTickFunctionInterface
+class VSPLUGINSCORE_API UVSTickableObject : public UObject, public IVSTickFunctionOwnerInterface
 {
 	GENERATED_UCLASS_BODY()
 

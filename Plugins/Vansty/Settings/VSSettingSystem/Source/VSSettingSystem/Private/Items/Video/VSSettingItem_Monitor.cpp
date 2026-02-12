@@ -88,7 +88,7 @@ FString UVSSettingItem_Monitor::GetStringValue_Implementation(const EVSSettingIt
 		case EVSSettingItemValueSource::Game:
 			if (auto Window = UVSPlatformLibrary::GetActiveWindow())
 			{
-				UVSPlatformLibrary::GetMonitorIDByPosition(Window->GetPositionInScreen());
+				return UVSPlatformLibrary::GetMonitorIDByPosition(Window->GetPositionInScreen());
 			}
 			return UVSPlatformLibrary::GetPrimaryMonitorID();
 			

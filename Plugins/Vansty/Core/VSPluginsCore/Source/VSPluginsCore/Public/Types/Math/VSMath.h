@@ -236,6 +236,7 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 	{
 		static_assert(!std::is_same_v<T1, bool> && !std::is_same_v<T2, bool>, "Boolean types may not be interpolated");
 		using RetType = decltype(T1() * T2() * T3() * T4() * T5());
+		static_assert(TIsArithmetic<RetType>::Value, "FInterpToAdvanced only supports arithmetic types.");
 		
 		RetType Ans = From;
 	

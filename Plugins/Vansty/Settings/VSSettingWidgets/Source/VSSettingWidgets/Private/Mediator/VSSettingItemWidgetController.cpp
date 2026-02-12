@@ -4,7 +4,7 @@
 #include "VSSettingSubsystem.h"
 #include "Components/RichTextBlock.h"
 #include "Components/TextBlock.h"
-#include "Types/Math/VSArray.h"
+#include "Types/Math/VSContainer.h"
 #include "Mediator/Binders/VSWidgetBinder.h"
 
 UVSSettingItemWidgetController::UVSSettingItemWidgetController(const FObjectInitializer& ObjectInitializer)
@@ -24,7 +24,7 @@ void UVSSettingItemWidgetController::PostEditChangeProperty(struct FPropertyChan
 			Unregister();
 		}
 
-		SettingItemPrivate = GetSettingItem_Native();
+		SettingItemPrivate = UVSSettingSubsystem::Get() ? UVSSettingSubsystem::Get()->GetSettingItemByTag(ItemTag) : GetSettingItem_Native();
 		Execute_EditorRefreshMediator(this);
 		SettingItemPrivate = nullptr;
 
@@ -99,13 +99,13 @@ void UVSSettingItemWidgetController::BindTypedWidget_Implementation(const FName 
 	
 	if (TypeName == FName("Item"))
 	{
-		if (!SettingItemPrivate.IsValid() && HasBeenInitialized())
+		if (HasBeenInitialized())
 		{
 #if WITH_EDITOR
 			if (!Widget->IsDesignTime())
 #endif
 			{
-				Widget->SetVisibility(ESlateVisibility::Collapsed);
+				Widget->SetVisibility(!SettingItemPrivate.IsValid() ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
 			}
 		}
 	}

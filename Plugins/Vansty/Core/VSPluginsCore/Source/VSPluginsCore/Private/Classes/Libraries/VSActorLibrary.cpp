@@ -128,7 +128,7 @@ UCameraComponent* UVSActorLibrary::GetActiveCameraFromActor(const AActor* Actor)
 		}
 	}
 	
-	if (const APawn* Pawn = Cast<ACharacter>(Actor))
+	if (const APawn* Pawn = Cast<APawn>(Actor))
 	{
 		if (AController* Controller = Pawn->GetController())
 		{

@@ -217,7 +217,7 @@ FVector2D UVSPlatformLibrary::GetMonitorCurrentResolution(const FString& Monitor
 	return FVector2D(TargetRect.Right - TargetRect.Left + 1.f, TargetRect.Bottom - TargetRect.Top + 1.f);
 }
 
-FVector2D UVSPlatformLibrary::GetMonitorMaxWindowedClientSize(const FString& MonitorID)
+FVector2D UVSPlatformLibrary::GetMonitorMaximunWindowedClientSize(const FString& MonitorID)
 {
 	TSharedPtr<SWindow> Window = GetActiveWindow();
 	if (!Window) return FIntPoint::ZeroValue;

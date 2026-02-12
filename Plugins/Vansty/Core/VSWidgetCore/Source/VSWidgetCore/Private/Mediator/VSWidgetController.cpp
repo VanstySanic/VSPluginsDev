@@ -142,6 +142,8 @@ void UVSWidgetController::UnbindWidget(UWidget* Widget, const FName TypeName)
 			WidgetBinder->UnbindTypedWidget(TypeName, Widget);
 		}
 	}
+	UnbindTypedWidget(TypeName, Widget);
+
 	BoundTypedWidgets.Remove(TypeName);
 }
 

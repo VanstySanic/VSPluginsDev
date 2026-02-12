@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "VSReplicatableObject.h"
-#include "Interfaces/VSTickFunctionInterface.h"
+#include "Interfaces/VSTickFunctionOwnerInterface.h"
 #include "Types/VSObjectTickFunction.h"
 #include "UObject/Object.h"
 #include "VSObjectFeature.generated.h"
@@ -26,7 +26,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogObjectFeature, Log, All);
  * and Blueprint consumers.
  */
 UCLASS(DefaultToInstanced, EditInlineNew, DisplayName = "VS.Feature.Base")
-class VSPLUGINSCORE_API UVSObjectFeature : public UVSReplicatableObject, public IVSTickFunctionInterface
+class VSPLUGINSCORE_API UVSObjectFeature : public UVSReplicatableObject, public IVSTickFunctionOwnerInterface
 {
 	GENERATED_UCLASS_BODY()
 

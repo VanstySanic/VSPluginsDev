@@ -20,7 +20,8 @@ class UWidget;
  * tick-driven updates without requiring a direct widget hierarchy.
  */
 UCLASS(Blueprintable, BlueprintType, EditInlineNew, DefaultToInstanced, DisplayName = "VS.Widget.Controller.Base")
-class VSWIDGETCORE_API UVSWidgetController : public UVSTickableObject
+class VSWIDGETCORE_API
+UVSWidgetController : public UVSTickableObject
 {
 	GENERATED_UCLASS_BODY()
 

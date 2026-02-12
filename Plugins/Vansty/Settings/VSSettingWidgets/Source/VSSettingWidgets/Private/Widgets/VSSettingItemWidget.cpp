@@ -50,13 +50,15 @@ void UVSSettingItemWidget::RefreshCoreWidget()
 		WidgetTree->RemoveWidget(CoreWidget);
 	}
 
+	if (!CoreWidgetClass) return;
+
 	CoreWidget = WidgetTree->ConstructWidget(CoreWidgetClass);
 	if (CoreWidget)
 	{
 		if (Panel_CoreWidget)
 		{
 			Panel_CoreWidget->AddChild(CoreWidget);
-			CoreWidgetPanelSlotSettings.ApplyToWidget(Panel_CoreWidget);
+			CoreWidgetPanelSlotSettings.ApplyToWidget(CoreWidget);
 		}
 
 		if (SettingWidgetController)

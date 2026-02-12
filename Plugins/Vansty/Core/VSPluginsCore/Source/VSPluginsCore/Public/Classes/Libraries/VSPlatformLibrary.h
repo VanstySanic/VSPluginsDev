@@ -70,7 +70,6 @@ class VSPLUGINSCORE_API UVSPlatformLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintPure, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "MonitorID"))
 	static FVector2D GetMonitorRootPosition(const FString& MonitorID);
 
-	/** Get the center position of a monitor. */
 	UFUNCTION(BlueprintPure, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "MonitorID"))
 	static FVector2D GetMonitorCenterPosition(const FString& MonitorID, bool bWorkAreaOnly = false);
 
@@ -80,7 +79,7 @@ class VSPLUGINSCORE_API UVSPlatformLibrary : public UBlueprintFunctionLibrary
 
 	/** Get the max client area size for a window on the monitor. */
 	UFUNCTION(BlueprintPure, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "MonitorID"))
-	static FVector2D GetMonitorMaxWindowedClientSize(const FString& MonitorID);
+	static FVector2D GetMonitorMaximunWindowedClientSize(const FString& MonitorID);
 
 	/**
 	 * Move the window to another monitor.
@@ -136,6 +135,4 @@ public:
 	
 	/** Get native monitor info by ID. */
 	static FMonitorInfo GetNativeMonitorInfoByID(const FString& MonitorID);
-
-
 };

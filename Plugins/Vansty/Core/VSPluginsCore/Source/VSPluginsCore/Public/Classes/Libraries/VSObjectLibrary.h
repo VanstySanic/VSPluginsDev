@@ -20,7 +20,6 @@ class VSPLUGINSCORE_API UVSObjectLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly, BlueprintInternalUseOnly, Category = "Object", meta = (DefaultToSelf = "Object"))
 	static bool IsObjectTemplate(UObject* Object);
 
-	/** Thread-safe IsValid wrapper. */
 	UFUNCTION(BlueprintPure, Category = "Object", meta = (BlueprintThreadSafe, DefaultToSelf = "Source"))
 	static bool IsValidThreadSafe(const UObject* Object);
 

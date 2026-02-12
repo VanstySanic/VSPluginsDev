@@ -192,7 +192,7 @@ void UVSCommonSettingItem::Confirm_Implementation()
 
 bool UVSCommonSettingItem::GetBooleanValue_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
 {
-	if (ValueType == CurrentValue.GetCurrentSubtypeIndex() - 1)
+	if (ValueType == CurrentValue.GetCurrentSubtypeIndex() + 1)
 	{
 		return GetValueFromString<bool>(GetStringValue(ValueSource));
 	}
@@ -237,11 +237,6 @@ bool UVSCommonSettingItem::GetBooleanValue_Implementation(const EVSSettingItemVa
 
 int32 UVSCommonSettingItem::GetIntegerValue_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
 {
-	if (ValueType == CurrentValue.GetCurrentSubtypeIndex() - 1)
-	{
-		return GetValueFromString<int32>(GetStringValue(ValueSource));
-	}
-	
 	switch (ValueType)
 	{
 	case EVSCommonSettingValueType::Boolean:
@@ -273,6 +268,10 @@ int32 UVSCommonSettingItem::GetIntegerValue_Implementation(const EVSSettingItemV
 		
 	case EVSCommonSettingValueType::Double:
 		return static_cast<int32>(GetDoubleValue(ValueSource));
+
+	case EVSCommonSettingValueType::None:
+	case EVSCommonSettingValueType::String:
+		return GetValueFromString<int32>(GetStringValue(ValueSource));
 		
 	default: ;
 	}
@@ -282,11 +281,6 @@ int32 UVSCommonSettingItem::GetIntegerValue_Implementation(const EVSSettingItemV
 
 int64 UVSCommonSettingItem::GetLongIntegerValue_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
 {
-	if (ValueType == CurrentValue.GetCurrentSubtypeIndex() - 1)
-	{
-		return GetValueFromString<int64>(GetStringValue(ValueSource));
-	}
-	
 	switch (ValueType)
 	{
 	case EVSCommonSettingValueType::Boolean:
@@ -318,6 +312,10 @@ int64 UVSCommonSettingItem::GetLongIntegerValue_Implementation(const EVSSettingI
 		
 	case EVSCommonSettingValueType::Double:
 		return static_cast<int64>(GetDoubleValue(ValueSource));
+
+	case EVSCommonSettingValueType::None:
+	case EVSCommonSettingValueType::String:
+		return GetValueFromString<int64>(GetStringValue(ValueSource));
 		
 	default: ;
 	}
@@ -327,11 +325,6 @@ int64 UVSCommonSettingItem::GetLongIntegerValue_Implementation(const EVSSettingI
 
 float UVSCommonSettingItem::GetFloatValue_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
 {
-	if (ValueType == CurrentValue.GetCurrentSubtypeIndex() - 1)
-	{
-		return GetValueFromString<float>(GetStringValue(ValueSource));
-	}
-	
 	switch (ValueType)
 	{
 	case EVSCommonSettingValueType::Boolean:
@@ -363,7 +356,11 @@ float UVSCommonSettingItem::GetFloatValue_Implementation(const EVSSettingItemVal
 		
 	case EVSCommonSettingValueType::Double:
 		return static_cast<float>(GetDoubleValue(ValueSource));
-	
+		
+	case EVSCommonSettingValueType::None:
+	case EVSCommonSettingValueType::String:
+		return GetValueFromString<float>(GetStringValue(ValueSource));
+
 	default: ;
 	}
 	
@@ -372,11 +369,6 @@ float UVSCommonSettingItem::GetFloatValue_Implementation(const EVSSettingItemVal
 
 double UVSCommonSettingItem::GetDoubleValue_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
 {
-	if (ValueType == CurrentValue.GetCurrentSubtypeIndex() - 1)
-	{
-		return GetValueFromString<double>(GetStringValue(ValueSource));
-	}
-	
 	switch (ValueType)
 	{
 	case EVSCommonSettingValueType::Boolean:
@@ -408,6 +400,10 @@ double UVSCommonSettingItem::GetDoubleValue_Implementation(const EVSSettingItemV
 		default: ;
 		}
 		return 0.0;
+		
+	case EVSCommonSettingValueType::None:
+	case EVSCommonSettingValueType::String:
+		return GetValueFromString<double>(GetStringValue(ValueSource));
 
 	default: ;
 	}

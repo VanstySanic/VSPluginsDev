@@ -173,7 +173,7 @@ FTickFunction* UVSObjectLibrary::GetTickFunctionPtrFromObject(UObject* Object)
 	{
 		return &ActorComponent->PrimaryComponentTick;
 	}
-	if (IVSTickFunctionInterface* TickFunctionInterface = Cast<IVSTickFunctionInterface>(Object))
+	if (IVSTickFunctionOwnerInterface* TickFunctionInterface = Cast<IVSTickFunctionOwnerInterface>(Object))
 	{
 		return TickFunctionInterface->GetPrimaryTickFunctionPtr();
 	}
