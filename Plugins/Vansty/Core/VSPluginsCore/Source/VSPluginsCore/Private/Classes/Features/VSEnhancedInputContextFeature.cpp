@@ -22,18 +22,36 @@ void UVSEnhancedInputContextFeature::Initialize_Implementation()
 	PlayerControllerPrivate = Cast<APlayerController>(UVSActorLibrary::GetControllerFromActor(GetOwnerActor()));
 	if (!PlayerControllerPrivate.IsValid() || !PlayerControllerPrivate->IsLocalController() || !PlayerControllerPrivate->GetLocalPlayer()) return;
 	
-	GameplayTagControllerPrivate = GetPrimaryGameplayTagFeature_Native();
-	check(GameplayTagControllerPrivate.IsValid());
-	GameplayTagControllerPrivate->BindDelegateForObject(this);
+	GameplayTagFeaturePrivate = GetPrimaryGameplayTagFeature_Native();
+	check(GameplayTagFeaturePrivate.IsValid());
+	GameplayTagFeaturePrivate->BindDelegateForObject(this);
 }
 
 void UVSEnhancedInputContextFeature::Uninitialize_Implementation()
 {
-	if (GameplayTagControllerPrivate.IsValid())
+	/** Remove all contexts. */
+	if (UVSActorLibrary::IsActorNetLocal(GetOwnerActor()))
 	{
-		GameplayTagControllerPrivate->UnbindDelegateForObject(this);
+		if (UEnhancedInputLocalPlayerSubsystem* LocalPlayerSubsystem = GetLocalPlayerSubsystem())
+		{
+			for (const auto& Context : ContextSettings)
+			{
+				if (!Context.Key) continue;
+				if (LocalPlayerSubsystem->HasMappingContext(Context.Key))
+				{
+					LocalPlayerSubsystem->RemoveMappingContext(Context.Key, Context.Value.AddModifyOptions);
+				}
+			}
+		}
 	}
-
+	
+	if (GameplayTagFeaturePrivate.IsValid())
+	{
+		GameplayTagFeaturePrivate->UnbindDelegateForObject(this);
+	}
+	GameplayTagFeaturePrivate.Reset();
+	PlayerControllerPrivate.Reset();
+	
 	Super::Uninitialize_Implementation();
 }
 
@@ -46,15 +64,15 @@ void UVSEnhancedInputContextFeature::BeginPlay_Implementation()
 	if (!LocalPlayerSubsystem) return;
 
 	/** Add default contexts. */
-	for (const auto& QueriedContext : QueriedContexts)
+	for (const auto& Context : ContextSettings)
 	{
-		if (!QueriedContext.Key || !QueriedContext.Value.bAddByDefault) continue;
-		if (!LocalPlayerSubsystem->HasMappingContext(QueriedContext.Key))
+		if (!Context.Key || !Context.Value.bAddByDefault) continue;
+		if (!LocalPlayerSubsystem->HasMappingContext(Context.Key))
 		{
 			LocalPlayerSubsystem->AddMappingContext(
-				QueriedContext.Key,
-				QueriedContext.Value.AddPriority,
-				QueriedContext.Value.AddModifyOptions);
+				Context.Key,
+				Context.Value.AddPriority,
+				Context.Value.AddModifyOptions);
 		}
 	}
 
@@ -64,16 +82,8 @@ void UVSEnhancedInputContextFeature::BeginPlay_Implementation()
 
 UVSGameplayTagFeatureBase* UVSEnhancedInputContextFeature::GetPrimaryGameplayTagFeature_Implementation() const
 {
-	if (GameplayTagControllerPrivate.IsValid()) return GameplayTagControllerPrivate.Get();
-	if (GetOwnerActor() && GetOwnerActor()->GetClass()->ImplementsInterface(UVSGameplayTagFeatureInterface::StaticClass()))
-	{
-		if (UVSGameplayTagFeatureBase* GameplayTagFeatureBase = Execute_GetPrimaryGameplayTagFeature(GetOwnerActor()))
-		{
-			return GameplayTagFeatureBase;	
-		}
-	}
-
-	return UVSObjectLibrary::FindFeatureByClassFromObject<UVSGameplayTagFeatureBase>(GetOwnerActor());
+	if (GameplayTagFeaturePrivate.IsValid()) return GameplayTagFeaturePrivate.Get();
+	return IVSGameplayTagFeatureInterface::GetPrimaryGameplayTagFeature_Implementation();
 }
 
 void UVSEnhancedInputContextFeature::OnGameplayTagFeatureTagsUpdated_Implementation(UVSGameplayTagFeatureBase* GameplayTagFeature)
@@ -89,30 +99,29 @@ void UVSEnhancedInputContextFeature::OnGameplayTagFeatureTagEventsNotified_Imple
 void UVSEnhancedInputContextFeature::RefreshContexts(const FGameplayTagContainer& TagEvents)
 {
 	if (!UVSActorLibrary::IsActorNetLocal(GetOwnerActor())) return;
-	if (!GameplayTagControllerPrivate.IsValid()) return;
+	if (!GameplayTagFeaturePrivate.IsValid()) return;
 	UEnhancedInputLocalPlayerSubsystem* LocalPlayerSubsystem = GetLocalPlayerSubsystem();
 	if (!LocalPlayerSubsystem) return;
-	const FGameplayTagContainer& GameplayTags = GameplayTagControllerPrivate->GetGameplayTags();
+	const FGameplayTagContainer& GameplayTags = GameplayTagFeaturePrivate->GetGameplayTags();
 	
-	for (const auto& QueriedContext : QueriedContexts)
+	for (const auto& Context : ContextSettings)
 	{
-		if (!QueriedContext.Key) continue;
-		if (QueriedContext.Value.AutoRemoveTagQuery.Matches(TagEvents, GameplayTags))
+		if (!Context.Key) continue;
+		if (Context.Value.AutoAddTagQuery.Matches(TagEvents, GameplayTags))
 		{
-			if (LocalPlayerSubsystem->HasMappingContext(QueriedContext.Key))
-			{
-				LocalPlayerSubsystem->RemoveMappingContext(QueriedContext.Key);
-				continue;
-			}
-		}
-		if (QueriedContext.Value.AutoAddTagQuery.Matches(TagEvents, GameplayTags))
-		{
-			if (!LocalPlayerSubsystem->HasMappingContext(QueriedContext.Key))
+			if (!LocalPlayerSubsystem->HasMappingContext(Context.Key))
 			{
 				LocalPlayerSubsystem->AddMappingContext(
-					QueriedContext.Key,
-					QueriedContext.Value.AddPriority,
-					QueriedContext.Value.AddModifyOptions);
+					Context.Key,
+					Context.Value.AddPriority,
+					Context.Value.AddModifyOptions);
+			}
+		}
+		if (Context.Value.AutoRemoveTagQuery.Matches(TagEvents, GameplayTags))
+		{
+			if (LocalPlayerSubsystem->HasMappingContext(Context.Key))
+			{
+				LocalPlayerSubsystem->RemoveMappingContext(Context.Key);
 			}
 		}
 	}

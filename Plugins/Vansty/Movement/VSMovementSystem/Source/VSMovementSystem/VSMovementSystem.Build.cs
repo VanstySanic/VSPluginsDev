@@ -27,6 +27,7 @@ public class VSMovementSystem : ModuleRules
 			{
 				"Core",
 				"Mover",
+				"DeveloperSettings",
 				// ... add other public dependencies that you statically link with here ...
 				"VSPluginsCore",
 			}

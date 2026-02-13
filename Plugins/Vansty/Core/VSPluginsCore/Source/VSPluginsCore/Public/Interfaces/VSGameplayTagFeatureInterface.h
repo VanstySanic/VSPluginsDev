@@ -10,7 +10,7 @@ struct FGameplayTagContainer;
 class UVSGameplayTagFeatureBase;
 
 UINTERFACE()
-class UVSGameplayTagFeatureInterface : public UInterface
+class VSPLUGINSCORE_API UVSGameplayTagFeatureInterface : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -34,4 +34,7 @@ protected:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "GameplayTags")
 	void OnGameplayTagFeatureTagEventsNotified(UVSGameplayTagFeatureBase* GameplayTagFeature, const FGameplayTagContainer& TagEvents);
+
+protected:
+	virtual UVSGameplayTagFeatureBase* GetPrimaryGameplayTagFeature_Implementation() const;
 };

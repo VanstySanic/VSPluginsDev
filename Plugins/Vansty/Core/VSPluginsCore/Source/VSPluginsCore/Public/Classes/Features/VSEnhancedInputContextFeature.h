@@ -13,11 +13,11 @@
 class UVSGameplayTagFeatureBase;
 
 USTRUCT(BlueprintType)
-struct FVSAutoContextOptions
+struct FVSEnhancedInputContextSettings
 {
 	GENERATED_BODY()
 
-	FVSAutoContextOptions()
+	FVSEnhancedInputContextSettings()
 		: bAddByDefault(false)
 	{
 	}
@@ -47,7 +47,7 @@ struct FVSAutoContextOptions
  * Only runs for locally controlled actors and uses the owning gameplay tag feature as the source.
  */
 UCLASS()
-class VSPLUGINSCOREPRESETS_API UVSEnhancedInputContextFeature : public UVSObjectFeature, public IVSGameplayTagFeatureInterface
+class VSPLUGINSCORE_API UVSEnhancedInputContextFeature : public UVSObjectFeature, public IVSGameplayTagFeatureInterface
 {
 	GENERATED_UCLASS_BODY()
 
@@ -70,9 +70,9 @@ private:
 	
 protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
-	TMap<TObjectPtr<UInputMappingContext>, FVSAutoContextOptions> QueriedContexts;
+	TMap<TObjectPtr<UInputMappingContext>, FVSEnhancedInputContextSettings> ContextSettings;
 	
 protected:
-	TWeakObjectPtr<UVSGameplayTagFeatureBase> GameplayTagControllerPrivate;
+	TWeakObjectPtr<UVSGameplayTagFeatureBase> GameplayTagFeaturePrivate;
 	TWeakObjectPtr<APlayerController> PlayerControllerPrivate;
 };

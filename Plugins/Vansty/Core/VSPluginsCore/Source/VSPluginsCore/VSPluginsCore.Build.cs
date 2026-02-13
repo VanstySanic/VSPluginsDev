@@ -29,6 +29,9 @@ public class VSPluginsCore : ModuleRules
 				"AudioMixer",
 				"NetCore",
 				"GameplayTags",
+				"GameplayAbilities",
+				"InputCore",
+				"EnhancedInput",
 				"ApplicationCore",
 				"DeveloperSettings",
 				// ... add other public dependencies that you statically link with here ...
