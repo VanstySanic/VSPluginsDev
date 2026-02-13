@@ -7,10 +7,9 @@
 #include "Classes/VSObjectFeature.h"
 #include "Interfaces/VSGameplayTagFeatureInterface.h"
 #include "Types/VSGameQueryTypes.h"
-#include "VSInputBinderFeature.generated.h"
+#include "VSInputActionAxisBinderFeature.generated.h"
 
 class UInputAction;
-
 USTRUCT(BlueprintType)
 struct FVSInputActionBinderSettings
 {
@@ -20,6 +19,14 @@ struct FVSInputActionBinderSettings
 	{
 	}
 
+	bool IsValid() const
+	{
+		if (ActionName.IsNone()) return false;
+		if (InputEvents.IsEmpty()) return false;
+
+		return true;
+	}
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName ActionName = NAME_None;
 	
@@ -27,7 +34,7 @@ struct FVSInputActionBinderSettings
 	TArray<TEnumAsByte<EInputEvent>> InputEvents;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FKey SpecifiedKey = FKey();
+	TArray<FKey> SpecifiedKeys;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSGameplayTagEventQuery AutoBindTagQuery;
@@ -52,7 +59,7 @@ struct FVSInputAxisBinderSettings
 	FName AxisName = NAME_None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FKey SpecifiedKey = FKey();
+	TArray<FKey> SpecifiedKeys;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSGameplayTagEventQuery AutoBindTagQuery;
@@ -73,14 +80,22 @@ struct FVSEnhancedInputActionBinderSettings
 	{
 	}
 	
+	bool IsValid() const
+	{
+		if (ActionName.IsNone()) return false;
+		if (!InputAction || TriggerEvents.IsEmpty()) return false;
+
+		return true;
+	}
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName ActionName = NAME_None;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UInputAction> InputAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<ETriggerEvent> TriggerEvents;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName ActionName = NAME_None;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSGameplayTagEventQuery AutoBindTagQuery;
@@ -95,7 +110,7 @@ struct FVSEnhancedInputActionBinderSettings
 /**
  * 
  */
-UCLASS()
+UCLASS(DisplayName = "VS.Feature.InputBinder.Action")
 class VSPLUGINSCORE_API UVSInputActionBinderFeature : public UVSObjectFeature, public IVSGameplayTagFeatureInterface
 {
 	GENERATED_UCLASS_BODY()
@@ -132,13 +147,23 @@ public:
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FInputActionEvent OnActionTriggered;
 
-	
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TArray<FVSInputActionBinderSettings> ActionSettings;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	int32 InputPriority = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	uint8 bBlockInput : 1;
 	
 private:
 	TWeakObjectPtr<UVSGameplayTagFeatureBase> GameplayTagFeaturePrivate;
-	TWeakObjectPtr<AController> ControllerPrivate;
+	TWeakObjectPtr<UInputComponent> FeatureInputComponent;
+	TSet<int32> BoundActionSettings;
+	TMultiMap<uint64, FKey> ActionKeyMap;
+	TMap<uint64, int32> ActionEventAnyKey;
+	TSet<uint64> ActionEventBoundKeys;
 };
 
 
@@ -148,7 +173,7 @@ private:
 /**
  * 
  */
-UCLASS()
+UCLASS(DisplayName = "VS.Feature.InputBinder.Axis")
 class VSPLUGINSCORE_API UVSInputAxisBinderFeature : public UVSObjectFeature, public IVSGameplayTagFeatureInterface
 {
 	GENERATED_UCLASS_BODY()
@@ -176,7 +201,7 @@ protected:
 private:
 	void BindAxisSettings(const FVSInputAxisBinderSettings& InActionSettings);
 	void UnbindAxisSettings(const FVSInputAxisBinderSettings& InActionSettings);
-	void RefreshAxis(const FGameplayTagContainer& TagEvents);
+	void RefreshAxes(const FGameplayTagContainer& TagEvents);
 	void HandleAxisTriggered(FName AxisName, float Value);
 
 public:
@@ -185,13 +210,23 @@ public:
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FInputAxisEvent OnAxisTriggered;
 
-	
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TArray<FVSInputAxisBinderSettings> AxisSettings;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	int32 InputPriority = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	uint8 bBlockInput : 1;
 	
 private:
 	TWeakObjectPtr<UVSGameplayTagFeatureBase> GameplayTagFeaturePrivate;
-	TWeakObjectPtr<AController> ControllerPrivate;
+	TWeakObjectPtr<UInputComponent> FeatureInputComponent;
+	TSet<int32> BoundAxisSettings;
+	TMultiMap<FKey, FName> AxisKeyNameMap;
+	TSet<FKey> AxisKeyBoundKeys;
+	TMultiMap<FName, uint8> AxisNameCounts;
 };
 
 
@@ -201,7 +236,7 @@ private:
 /**
  * 
  */
-UCLASS()
+UCLASS(DisplayName = "VS.Feature.InputBinder.EnhancedAction")
 class VSPLUGINSCORE_API UVSEnhancedInputActionBinderFeature : public UVSObjectFeature, public IVSGameplayTagFeatureInterface
 {
 	GENERATED_UCLASS_BODY()
@@ -241,8 +276,18 @@ public:
 protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TArray<FVSEnhancedInputActionBinderSettings> ActionSettings;
+	
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	int32 InputPriority = 0;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	uint8 bBlockInput : 1;
+	
 private:
 	TWeakObjectPtr<UVSGameplayTagFeatureBase> GameplayTagFeaturePrivate;
-	TWeakObjectPtr<AController> ControllerPrivate;
+	TWeakObjectPtr<UEnhancedInputComponent> FeatureInputComponent;
+	TSet<int32> BoundEnhancedActionSettings;
+	TMultiMap<uint64, FName> EnhancedActionNameCounts;
+	TMap<uint64, uint32> EnhancedBindingHandlesByKey;
 };

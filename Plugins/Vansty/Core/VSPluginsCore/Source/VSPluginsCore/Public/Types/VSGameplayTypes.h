@@ -51,7 +51,7 @@ struct FVSUserQueryParams
 	FVSUserQueryParams(ULocalPlayer* InLocalPlayer) : Key(KeyType::LocalPlayer) { Data.LocalPlayer = InLocalPlayer; }
 	FVSUserQueryParams(APlayerController* InPlayerController) : Key(KeyType::PlayerController) { Data.PlayerController = InPlayerController; }
 
-	VSPLUGINSCORE_API uint32 GetUserIndex() const;
+	VSPLUGINSCORE_API int32 GetUserIndex() const;
 	VSPLUGINSCORE_API FPlatformUserId GetUserId() const;
 
 private:

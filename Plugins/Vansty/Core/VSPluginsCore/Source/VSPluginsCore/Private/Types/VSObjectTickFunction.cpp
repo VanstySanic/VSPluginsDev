@@ -12,15 +12,21 @@ FVSObjectTickFunction::~FVSObjectTickFunction()
 	if (OnWorldInitializeDelegateHandle.IsValid())
 	{
 		FWorldDelegates::OnPostWorldInitialization.Remove(OnWorldInitializeDelegateHandle);
+		OnWorldInitializeDelegateHandle.Reset();
 	}
 	if (OnWorldTearDownDelegateHandle.IsValid())
 	{
 		FWorldDelegates::OnWorldBeginTearDown.Remove(OnWorldTearDownDelegateHandle);
+		OnWorldTearDownDelegateHandle.Reset();
 	}
 	
 	Target.Reset();
 	TypedTargetOuter.Reset();
-
+	
+	if (CanExecuteTick.IsBound())
+	{
+		CanExecuteTick.Unbind();
+	}
 	if (OnExecuteTick.IsBound())
 	{
 		OnExecuteTick.Unbind();
@@ -78,7 +84,7 @@ void FVSObjectTickFunction::ExecuteTick(float DeltaTime, ELevelTick TickType, EN
 
 FString FVSObjectTickFunction::DiagnosticMessage()
 {
-	return (Target.IsValid() ? Target->GetFullName() : "Nullptr") + TEXT("[TickObject]");
+	return (Target.IsValid() ? Target->GetFullName() : TEXT("nullptr")) + TEXT("[TickObject]");
 }
 
 FName FVSObjectTickFunction::DiagnosticContext(bool bDetailed)
@@ -103,7 +109,7 @@ void FVSObjectTickFunction::RegisterAndSetup(UObject* InTargetObject)
 		bShouldTickCrossWorld = true;
 		if (!OnWorldInitializeDelegateHandle.IsValid())
 		{
-			OnWorldInitializeDelegateHandle = FWorldDelegates::OnPostWorldInitialization.AddLambda([this] (UWorld* InWorld, FWorldInitializationValues)
+			OnWorldInitializeDelegateHandle = FWorldDelegates::OnPostWorldInitialization.AddWeakLambda(InTargetObject, [this] (UWorld* InWorld, FWorldInitializationValues)
 			{
 				if (!InWorld || !InWorld->GetCurrentLevel()) return;
 				UnRegisterTickFunction();
@@ -113,7 +119,7 @@ void FVSObjectTickFunction::RegisterAndSetup(UObject* InTargetObject)
 
 		if (!OnWorldTearDownDelegateHandle.IsValid())
 		{
-			OnWorldTearDownDelegateHandle = FWorldDelegates::OnWorldBeginTearDown.AddLambda([this] (UWorld* InWorld)
+			OnWorldTearDownDelegateHandle = FWorldDelegates::OnWorldBeginTearDown.AddWeakLambda(InTargetObject, [this] (UWorld* InWorld)
 			{
 				UnRegisterTickFunction();
 			});
@@ -157,10 +163,11 @@ void FVSObjectTickFunction::RegisterAndSetup(UObject* InTargetObject)
 
 void FVSObjectTickFunction::UnregisterAndCleanup()
 {
-	if (!IsTickFunctionRegistered()) return;
-	
 	SetTickFunctionEnable(false);
-	UnRegisterTickFunction();
+	if (IsTickFunctionRegistered())
+	{
+		UnRegisterTickFunction();
+	}
 
 	if (CanExecuteTick.IsBound()) { CanExecuteTick.Unbind(); }
 	if (OnExecuteTick.IsBound()) { OnExecuteTick.Unbind(); }
@@ -171,10 +178,12 @@ void FVSObjectTickFunction::UnregisterAndCleanup()
 	if (OnWorldInitializeDelegateHandle.IsValid())
 	{
 		FWorldDelegates::OnPostWorldInitialization.Remove(OnWorldInitializeDelegateHandle);
+		OnWorldInitializeDelegateHandle.Reset();
 	}
 	if (OnWorldTearDownDelegateHandle.IsValid())
 	{
 		FWorldDelegates::OnWorldBeginTearDown.Remove(OnWorldTearDownDelegateHandle);
+		OnWorldTearDownDelegateHandle.Reset();
 	}
 
 	bShouldTickCrossWorld = false;

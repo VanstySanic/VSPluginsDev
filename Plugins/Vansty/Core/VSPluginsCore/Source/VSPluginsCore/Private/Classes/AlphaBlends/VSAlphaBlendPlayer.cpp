@@ -62,7 +62,7 @@ void UVSAlphaBlendPlayer::SetTime(float InTime)
 	const bool PrevHasFinished = HasFinished();
 	CurrentTime = FMath::Clamp(InTime, 0.f, AlphaBlendArgs.BlendTime);
 	const float LinerAlpha = FMath::GetMappedRangeValueClamped(FVector2D(0.f, AlphaBlendArgs.BlendTime), FVector2D(0.f, 1.f), CurrentTime);
-	CurrentAlpha = FAlphaBlend::AlphaToBlendOption(LinerAlpha,AlphaBlendArgs.BlendOption, AlphaBlendArgs.CustomCurve);
+	CurrentAlpha = FAlphaBlend::AlphaToBlendOption(LinerAlpha, AlphaBlendArgs.BlendOption, AlphaBlendArgs.CustomCurve);
 
 	if (PrevAlpha != CurrentAlpha)
 	{
@@ -196,13 +196,12 @@ void UVSAlphaBlendPlayer::SetBlendTime(float BlendTime)
 UVSAlphaBlendPlayProxy::UVSAlphaBlendPlayProxy(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	AlphaBlendPlayer = CreateDefaultSubobject<UVSAlphaBlendPlayer>(TEXT("AlphaBlendPlayer"));
 }
 
 void UVSAlphaBlendPlayProxy::Tick_Implementation(float DeltaTime)
 {
 	Super::Tick_Implementation(DeltaTime);
-
+	
 	/** Sync the time interval. */
 	if (AlphaBlendPlayer && AlphaBlendPlayer->GetTickTimeInterval() != GetTickTimeInterval())
 	{
@@ -311,17 +310,20 @@ void UVSAlphaBlendPlayProxy::Initialize()
 {
 	if (bHasBeenInitialized) return;
 	bHasBeenInitialized = true;
-	
-	RemainedInitialDelay = CachedProxyParams.InitialDelay;
-	bIsPaused = CachedProxyParams.bStartPaused;
-	
-	SetTickTimeInterval(CachedProxyParams.UpdateTimeInterval);
-	SetTickableWhenPaused(CachedProxyParams.bUpdateWhenGamePaused);
-	SetTickFunctionEnabled(!CachedProxyParams.bStartPaused);
-	RegisterTickFunction();
+
+	AlphaBlendPlayer = NewObject<UVSAlphaBlendPlayer>(this);
+	check(AlphaBlendPlayer);
 	
 	if (AlphaBlendPlayer)
 	{
+		RemainedInitialDelay = CachedProxyParams.InitialDelay;
+		bIsPaused = CachedProxyParams.bStartPaused;
+	
+		SetTickTimeInterval(CachedProxyParams.UpdateTimeInterval);
+		SetTickableWhenPaused(CachedProxyParams.bUpdateWhenGamePaused);
+		SetTickFunctionEnabled(!CachedProxyParams.bStartPaused);
+		RegisterTickFunction();
+		
 		AlphaBlendPlayer->SetAlphaBlendArgs(CachedProxyParams.AlphaBlendArgs);
 		AlphaBlendPlayer->SetTickTimeInterval(CachedProxyParams.UpdateTimeInterval);
 		AlphaBlendPlayer->SetTickableWhenPaused(CachedProxyParams.bUpdateWhenGamePaused);
@@ -350,12 +352,12 @@ void UVSAlphaBlendPlayProxy::Initialize()
 		if (AlphaBlendPlayer && IsValid(AlphaBlendPlayer))
 		{
 			/** Bind delegates here. */
-			AlphaBlendPlayer->OnUpdated_Native.AddLambda([this] (UVSAlphaBlendPlayer* Feature, float Alpha)
+			AlphaBlendPlayer->OnUpdated_Native.AddWeakLambda(this, [this] (UVSAlphaBlendPlayer* Feature, float Alpha)
 			{
 				OnAlphaUpdated_Native.Broadcast(this, Alpha, CurrentLoopCount);
 				OnAlphaUpdated.Broadcast(this, Alpha, CurrentLoopCount);
 			});
-			AlphaBlendPlayer->OnFinished_Native.AddLambda([this] (UVSAlphaBlendPlayer* Feature, float Alpha)
+			AlphaBlendPlayer->OnFinished_Native.AddWeakLambda(this, [this] (UVSAlphaBlendPlayer* Feature, float Alpha)
 			{
 				AlphaBlendPlayerFinished();
 			});

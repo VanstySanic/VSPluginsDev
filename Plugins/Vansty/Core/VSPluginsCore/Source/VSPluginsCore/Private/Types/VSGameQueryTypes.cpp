@@ -8,13 +8,13 @@ bool FVSGameplayTagEventQueryParams::Matches(const FGameplayTagContainer& InTagE
 {
 	if (TagEvents.IsEmpty() && !bTriggerEventsEmptyAsPass) return false;
 	if (InTagEvents.IsEmpty() && !bPassedInEventsEmptyAsPass) return false;
-	if (!InTagEvents.IsEmpty())
+	if (!TagEvents.IsEmpty() && !InTagEvents.IsEmpty())
 	{
-		switch (ContainerMatchType)
+		switch (EventMatchType)
 		{
 		case EGameplayContainerMatchType::Any:
 			{
-				if (bMatchExactTagEvents ? !TagEvents.HasAnyExact(InTagEvents) : !TagEvents.HasAny(InTagEvents))
+				if (bMatchExactTagEvents ? !InTagEvents.HasAnyExact(TagEvents) : !InTagEvents.HasAny(TagEvents))
 				{
 					return false;
 				}
@@ -23,7 +23,7 @@ bool FVSGameplayTagEventQueryParams::Matches(const FGameplayTagContainer& InTagE
 			
 		case EGameplayContainerMatchType::All:
 			{
-				if (bMatchExactTagEvents ? !TagEvents.HasAllExact(InTagEvents) : !TagEvents.HasAll(InTagEvents))
+				if (bMatchExactTagEvents ? !InTagEvents.HasAllExact(TagEvents) : !InTagEvents.HasAll(TagEvents))
 				{
 					return false;
 				}
@@ -59,7 +59,7 @@ bool FVSGameplayTagEventQueryExpression::Matches(const FGameplayTagContainer& Ta
 				return MatchNum > 0;
 				
 			case EVSQueryMatchRange::All:
-				return MatchNum == Params.Num();
+				return MatchNum > 0 && MatchNum == Params.Num();
 
 			default: ;
 			}
@@ -85,7 +85,7 @@ bool FVSGameplayTagEventQueryExpression::Matches(const FGameplayTagContainer& Ta
 				return MatchNum > 0;
 				
 			case EVSQueryMatchRange::All:
-				return MatchNum == Params.Num();
+				return MatchNum > 0 && MatchNum == Expressions.Num();
 
 			default: ;
 			}
@@ -111,13 +111,30 @@ bool FVSGameplayTagEventQuery::Matches(const FGameplayTagContainer& TagEvents, c
 	return RootExpression.Matches(TagEvents, GameplayTags);
 }
 
+
 bool FVSSceneComponentQueryParams::Matches(const USceneComponent* Component) const
 {
 	if (!Component) return false;
+	
 	if (ComponentClasses.IsEmpty() && !bComponentClassesEmptyAsPass) return false;
-	if (!ComponentClasses.IsEmpty() && !(ComponentClasses.Contains(Component->GetClass()) && !bInverseClassAllowance)) return false;
+	if (!ComponentClasses.IsEmpty())
+	{
+		const bool bHasComponentClass = ComponentClasses.ContainsByPredicate(
+			[Component] (const TSubclassOf<USceneComponent>& Class)
+			{
+				return Class && Component->IsA(Class);
+			});
+
+		if (bInverseClassAllowance ? bHasComponentClass : !bHasComponentClass) return false;
+	}
+	
 	if (ObjectTypes.IsEmpty() && !bObjectTypesEmptyAsPass) return false;
-	if (!ObjectTypes.IsEmpty() && !(ObjectTypes.Contains(Component->GetCollisionObjectType()) && !bInverseObjectTypes)) return false;
+	if (!ObjectTypes.IsEmpty())
+	{
+		const bool bHasObjectType = ObjectTypes.Contains(Component->GetCollisionObjectType());
+		if (bInverseObjectTypes ? bHasObjectType : !bHasObjectType) return false; 
+	}
+	
 	if (ComponentTags.IsEmpty() && !bComponentTagsEmptyAsPass) return false;
 	if (!ComponentTags.IsEmpty())
 	{
@@ -130,11 +147,14 @@ bool FVSSceneComponentQueryParams::Matches(const USceneComponent* Component) con
 				break;
 			}
 		}
-		if (!(bHasComponentTag && !bInverseComponentTagAllowance)) return false;
+		if (bInverseComponentTagAllowance ? bHasComponentTag : !bHasComponentTag) return false;
 	}
+	
 	if (ActorTags.IsEmpty() && !bActorTagsEmptyAsPass) return false;
 	if (!ActorTags.IsEmpty())
 	{
+		if (!Component->GetOwner()) return false;
+		
 		bool bHasActorTag = false;
 		for (const FName& ActorTag : ActorTags)
 		{
@@ -144,7 +164,8 @@ bool FVSSceneComponentQueryParams::Matches(const USceneComponent* Component) con
 				break;
 			}
 		}
-		if (!(bHasActorTag && !bInverseActorTagAllowance)) return false;
+		
+		if (bInverseActorTagAllowance ? bHasActorTag : !bHasActorTag) return false;
 	}
 
 	return true;
@@ -172,7 +193,7 @@ bool FVSSceneComponentQueryExpression::Matches(const USceneComponent* Component)
 				return MatchNum > 0;
 				
 			case EVSQueryMatchRange::All:
-				return MatchNum == Expressions.Num();
+				return MatchNum > 0 && MatchNum == Params.Num();
 
 			default: ;
 			}
@@ -198,7 +219,7 @@ bool FVSSceneComponentQueryExpression::Matches(const USceneComponent* Component)
 				return MatchNum > 0;
 				
 			case EVSQueryMatchRange::All:
-				return MatchNum == Expressions.Num();
+				return MatchNum > 0 && MatchNum == Expressions.Num();
 
 			default: ;
 			}

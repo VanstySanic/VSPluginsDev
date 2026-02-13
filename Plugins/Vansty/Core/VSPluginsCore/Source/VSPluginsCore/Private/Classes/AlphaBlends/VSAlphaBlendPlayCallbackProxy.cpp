@@ -9,6 +9,8 @@ UVSAlphaBlendPlayCallBackProxy::UVSAlphaBlendPlayCallBackProxy(const FObjectInit
 
 UVSAlphaBlendPlayCallBackProxy* UVSAlphaBlendPlayCallBackProxy::CreateAlphaBlendPlayCallBackProxy(UObject* WorldContext, const FVSAlphaBlendProxyParams& Params)
 {
+	if (!WorldContext || !WorldContext->GetWorld()) return nullptr;
+	
 	UVSAlphaBlendPlayCallBackProxy* Node = NewObject<UVSAlphaBlendPlayCallBackProxy>(WorldContext);
 	check(Node);
 	

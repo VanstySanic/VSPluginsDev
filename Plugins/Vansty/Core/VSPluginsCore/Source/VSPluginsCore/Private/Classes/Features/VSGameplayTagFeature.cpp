@@ -11,9 +11,6 @@
 
 using GameplayTagTagCountMap = TMap<FGameplayTag, int32>;
 
-static FGameplayTagContainer EmptyGameplayTagContainer = FGameplayTagContainer();
-static TMap<FGameplayTag, int32> EmptyGameplayTagCountMap = TMap<FGameplayTag, int32>();
-
 VS_DECLARE_PRIVABLIC_MEMBER(UAbilitySystemComponent, GameplayTagCountContainer, FGameplayTagCountContainer);
 VS_DECLARE_PRIVABLIC_MEMBER(FGameplayTagCountContainer, ExplicitTags, FGameplayTagContainer);
 VS_DECLARE_PRIVABLIC_MEMBER(FGameplayTagCountContainer, ExplicitTagCountMap, GameplayTagTagCountMap);
@@ -22,6 +19,7 @@ UE_DEFINE_GAMEPLAY_TAG(VS_PLUGINSCORE_GAMEPAYTAGFEATURE_ONTAGSUPDATED, "VS.Featu
 
 UVSGameplayTagFeatureBase::UVSGameplayTagFeatureBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, bTagsDirty(false)
 {
 	SetIsReplicated(true);
 }
@@ -481,16 +479,6 @@ FString UVSGameplayTagFeatureBase::GetDebugString()
 #endif
 }
 
-FGameplayTagContainer& UVSGameplayTagFeatureBase::GetGameplayTagContainerSourceReference()
-{
-	return EmptyGameplayTagContainer;
-}
-
-TMap<FGameplayTag, int32>& UVSGameplayTagFeatureBase::GetGameplayTagCountMapSourceReference()
-{
-	return EmptyGameplayTagCountMap;
-}
-
 void UVSGameplayTagFeatureBase::ModifyTagCount(const FGameplayTag& GameplayTag, int32 NewCount)
 {
 	const int32 PrevCount = GetTagCount(GameplayTag);
@@ -926,15 +914,22 @@ void UVSAbilitySystemGameplayTagFeature::Initialize_Implementation()
 
 	AbilitySystemComponentPrivate = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwnerActor());
 	check(AbilitySystemComponentPrivate.IsValid());
-	AbilitySystemGameplayTagCountContainerPtr = &VS_PRIVABLIC_MEMBER(AbilitySystemComponentPrivate.Get(), UAbilitySystemComponent, GameplayTagCountContainer);
-	check(AbilitySystemGameplayTagCountContainerPtr);
-	
-	/** Bind listen delegate. */
-	for (const FGameplayTag& GameplayTag : UVSPluginsCoreGameSettings::Get()->AbilitySystemListeningTags.GetGameplayTagArray())
+
+	if (AbilitySystemGameplayTagCountContainerPtr)
 	{
-		FDelegateHandle DelegateHandle = AbilitySystemComponentPrivate->RegisterGameplayTagEvent(GameplayTag, EGameplayTagEventType::AnyCountChange)
-			.AddUObject(this, &UVSAbilitySystemGameplayTagFeature::OnAbilitySystemListeningTagsUpdated);
-		AbilitySystemRegisteredDelegateHandles.Emplace(GameplayTag, DelegateHandle);
+		AbilitySystemGameplayTagCountContainerPtr = &VS_PRIVABLIC_MEMBER(AbilitySystemComponentPrivate.Get(), UAbilitySystemComponent, GameplayTagCountContainer);
+		check(AbilitySystemGameplayTagCountContainerPtr);
+
+		if (AbilitySystemGameplayTagCountContainerPtr)
+		{
+			/** Bind listen delegate. */
+			for (const FGameplayTag& GameplayTag : UVSPluginsCoreGameSettings::Get()->AbilitySystemListeningTags.GetGameplayTagArray())
+			{
+				FDelegateHandle DelegateHandle = AbilitySystemComponentPrivate->RegisterGameplayTagEvent(GameplayTag, EGameplayTagEventType::AnyCountChange)
+					.AddUObject(this, &UVSAbilitySystemGameplayTagFeature::OnAbilitySystemListeningTagsUpdated);
+				AbilitySystemRegisteredDelegateHandles.Emplace(GameplayTag, DelegateHandle);
+			}
+		}
 	}
 }
 

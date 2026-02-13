@@ -34,6 +34,7 @@ namespace EVSQueryMatchType
 	};
 }
 
+
 /** Leaf query parameters used to evaluate gameplay tag events and gameplay tag state. */
 USTRUCT(BlueprintType)
 struct FVSGameplayTagEventQueryParams
@@ -41,7 +42,7 @@ struct FVSGameplayTagEventQueryParams
 	GENERATED_BODY()
 
 	FVSGameplayTagEventQueryParams()
-		: ContainerMatchType(EGameplayContainerMatchType::Any)
+		: EventMatchType(EGameplayContainerMatchType::Any)
 		, bMatchExactTagEvents(true)
 		, bTriggerEventsEmptyAsPass(false)
 		, bPassedInEventsEmptyAsPass(false)
@@ -61,8 +62,11 @@ struct FVSGameplayTagEventQueryParams
 	FGameplayTagContainer TagEvents;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EGameplayContainerMatchType ContainerMatchType;
-
+	FGameplayTagQuery TagQuery;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EGameplayContainerMatchType EventMatchType;
+	
 	/** If true, only exact tag matches are considered valid. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bMatchExactTagEvents : 1;
@@ -74,9 +78,6 @@ struct FVSGameplayTagEventQueryParams
 	/** Treats empty incoming tag events as a successful match. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bPassedInEventsEmptyAsPass : 1;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTagQuery TagQuery;
 
 	/** Treats empty tag query as a successful match. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -130,11 +131,24 @@ public:
 	static FVSGameplayTagEventQuery EmptyPass;
 };
 
+
 /** Leaf query parameters used to evaluate a scene component against type, class, and tag constraints. */
 USTRUCT(BlueprintType)
 struct FVSSceneComponentQueryParams
 {
 	GENERATED_BODY()
+
+	FVSSceneComponentQueryParams()
+		: bInverseObjectTypes(false)
+		, bInverseClassAllowance(false)
+		, bInverseComponentTagAllowance(false)
+		, bInverseActorTagAllowance(false)
+		, bComponentClassesEmptyAsPass(true)
+		, bObjectTypesEmptyAsPass(true)
+		, bComponentTagsEmptyAsPass(true)
+		, bActorTagsEmptyAsPass(true)
+	{
+	}
 
 	VSPLUGINSCORE_API bool Matches(const USceneComponent* Component) const;
 
@@ -155,35 +169,35 @@ struct FVSSceneComponentQueryParams
 
 	/** Inverts object type matching. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bInverseObjectTypes = false;
+	uint8 bInverseObjectTypes : 1;
 
 	/** Inverts component class matching. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bInverseClassAllowance = false;
+	uint8 bInverseClassAllowance : 1;
 
 	/** Inverts component tag matching. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bInverseComponentTagAllowance = false;
+	uint8 bInverseComponentTagAllowance : 1;
 
 	/** Inverts actor tag matching. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bInverseActorTagAllowance = false;
+	uint8 bInverseActorTagAllowance : 1;
 
 	/** Treats empty component class list as a successful match. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bComponentClassesEmptyAsPass = true;
+	uint8 bComponentClassesEmptyAsPass : 1;
 
 	/** Treats empty object type list as a successful match. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bObjectTypesEmptyAsPass = true;
+	uint8 bObjectTypesEmptyAsPass : 1;
 
 	/** Treats empty component tag list as a successful match. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bComponentTagsEmptyAsPass = true;
+	uint8 bComponentTagsEmptyAsPass : 1;
 
 	/** Treats empty actor tag list as a successful match. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bActorTagsEmptyAsPass = true;
+	uint8 bActorTagsEmptyAsPass : 1;
 };
 
 /** Recursive expression node combining scene component query parameters or sub-expressions. */

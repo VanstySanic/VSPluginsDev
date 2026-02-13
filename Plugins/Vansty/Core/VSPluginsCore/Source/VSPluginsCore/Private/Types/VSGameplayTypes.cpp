@@ -2,12 +2,26 @@
 
 #include "Types/VSGameplayTypes.h"
 
+FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::LocalExecution = FVSNetMethodExecutionPolicies();
+FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::AutonomousPredictedMulticast = FVSNetMethodExecutionPolicies(
+	EVSNetAutonomousMethodExecPolicy::ClientAndServer,
+	EVSNetAuthorityMethodExecPolicy::Multicast,
+	EVSNetAuthorityMethodExecPolicy::ServerAndSimulated,
+	false);
+FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::AuthorityMulticast = FVSNetMethodExecutionPolicies(
+	EVSNetAutonomousMethodExecPolicy::Server,
+	EVSNetAuthorityMethodExecPolicy::Multicast,
+	EVSNetAuthorityMethodExecPolicy::Client,
+	false);
+
+
 namespace EVSGameplayTagControllerTags
 {
 	UE_DEFINE_GAMEPLAY_TAG(Event_TagsUpdated, "VSPluginsCore.GameplayTagController.Event.TagsUpdated");
 }
 
-uint32 FVSUserQueryParams::GetUserIndex() const
+
+int32 FVSUserQueryParams::GetUserIndex() const
 {
 	switch (Key)
 	{
@@ -18,15 +32,15 @@ uint32 FVSUserQueryParams::GetUserIndex() const
 		return IPlatformInputDeviceMapper::Get().GetUserIndexForPlatformUser(Data.UserId);
 		
 	case KeyType::LocalPlayer:
-		return Data.LocalPlayer ? IPlatformInputDeviceMapper::Get().GetUserIndexForPlatformUser(Data.LocalPlayer->GetPlatformUserId()) : 0;
+		return Data.LocalPlayer ? IPlatformInputDeviceMapper::Get().GetUserIndexForPlatformUser(Data.LocalPlayer->GetPlatformUserId()) : INDEX_NONE;
 		
 	case KeyType::PlayerController:
-		return Data.PlayerController ? IPlatformInputDeviceMapper::Get().GetUserIndexForPlatformUser(Data.PlayerController->GetPlatformUserId()) : 0;
+		return Data.PlayerController ? IPlatformInputDeviceMapper::Get().GetUserIndexForPlatformUser(Data.PlayerController->GetPlatformUserId()) : INDEX_NONE;
 		
 	default: ;
 	}
 
-	return 0;
+	return INDEX_NONE;
 }
 
 FPlatformUserId FVSUserQueryParams::GetUserId() const
@@ -50,18 +64,6 @@ FPlatformUserId FVSUserQueryParams::GetUserId() const
 
 	return FPlatformUserId();
 }
-
-FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::LocalExecution = FVSNetMethodExecutionPolicies();
-FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::AutonomousPredictedMulticast = FVSNetMethodExecutionPolicies(
-	EVSNetAutonomousMethodExecPolicy::ClientAndServer,
-	EVSNetAuthorityMethodExecPolicy::Multicast,
-	EVSNetAuthorityMethodExecPolicy::ServerAndSimulated,
-	false);
-FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::AuthorityMulticast = FVSNetMethodExecutionPolicies(
-	EVSNetAutonomousMethodExecPolicy::Server,
-	EVSNetAuthorityMethodExecPolicy::Multicast,
-	EVSNetAuthorityMethodExecPolicy::Client,
-	false);
 
 bool FVSLocationUnderCursorQueryParams::IsValid() const
 {

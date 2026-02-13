@@ -8,16 +8,16 @@
 #include "Classes/VSObjectFeature.h"
 #include "Interfaces/VSGameplayTagFeatureInterface.h"
 #include "Types/VSGameQueryTypes.h"
-#include "VSEnhancedInputContextFeature.generated.h"
+#include "VSEnhancedInputContextBinderFeature.generated.h"
 
 class UVSGameplayTagFeatureBase;
 
 USTRUCT(BlueprintType)
-struct FVSEnhancedInputContextSettings
+struct FVSEnhancedInputContextBinderSettings
 {
 	GENERATED_BODY()
 
-	FVSEnhancedInputContextSettings()
+	FVSEnhancedInputContextBinderSettings()
 		: bAddByDefault(false)
 	{
 	}
@@ -46,8 +46,8 @@ struct FVSEnhancedInputContextSettings
  * Adds default contexts on BeginPlay, then applies add/remove rules driven by tag queries.
  * Only runs for locally controlled actors and uses the owning gameplay tag feature as the source.
  */
-UCLASS()
-class VSPLUGINSCORE_API UVSEnhancedInputContextFeature : public UVSObjectFeature, public IVSGameplayTagFeatureInterface
+UCLASS(DisplayName = "VS.Feature.Input.Binder.Context")
+class VSPLUGINSCORE_API UVSEnhancedInputContextBinderFeature : public UVSObjectFeature, public IVSGameplayTagFeatureInterface
 {
 	GENERATED_UCLASS_BODY()
 
@@ -70,9 +70,10 @@ private:
 	
 protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
-	TMap<TObjectPtr<UInputMappingContext>, FVSEnhancedInputContextSettings> ContextSettings;
+	TMap<TObjectPtr<UInputMappingContext>, FVSEnhancedInputContextBinderSettings> ContextSettings;
 	
 protected:
 	TWeakObjectPtr<UVSGameplayTagFeatureBase> GameplayTagFeaturePrivate;
 	TWeakObjectPtr<APlayerController> PlayerControllerPrivate;
+	TSet<TObjectPtr<UInputMappingContext>> AddedContexts;
 };

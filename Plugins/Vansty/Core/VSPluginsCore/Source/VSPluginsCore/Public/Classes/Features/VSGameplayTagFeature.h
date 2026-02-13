@@ -187,8 +187,12 @@ public:
 	FString GetDebugString();
 
 protected:
-	virtual FGameplayTagContainer& GetGameplayTagContainerSourceReference();
-	virtual TMap<FGameplayTag, int32>& GetGameplayTagCountMapSourceReference();
+	virtual FGameplayTagContainer& GetGameplayTagContainerSourceReference()
+		PURE_VIRTUAL(UVSGameplayTagFeatureBase::GetGameplayTagContainerSourceReference, static FGameplayTagContainer Empty; return Empty;);
+
+	virtual TMap<FGameplayTag, int32>& GetGameplayTagCountMapSourceReference()
+		PURE_VIRTUAL(UVSGameplayTagFeatureBase::GetGameplayTagCountMapSourceReference, static TMap<FGameplayTag, int32> Empty; return Empty;);
+
 	virtual void ModifyTagCount(const FGameplayTag& GameplayTag, int32 NewCount);
 	
 private:

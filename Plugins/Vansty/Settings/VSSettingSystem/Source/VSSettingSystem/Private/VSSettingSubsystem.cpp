@@ -13,8 +13,9 @@ UVSSettingSubsystem* UVSSettingSubsystem::Get()
 void UVSSettingSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	
-	FCoreDelegates::OnAllModuleLoadingPhasesComplete.AddLambda([this] ()
+
+	/** This is the best time to initialize settings. */
+	FCoreDelegates::OnAllModuleLoadingPhasesComplete.AddWeakLambda(this, [this] ()
 	{
 		if (GEngine && !GEngine->GameUserSettingsClass)
 		{
@@ -22,6 +23,8 @@ void UVSSettingSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		}
 		
 		AddDirectSettingItemAgentClasses(UVSSettingSystemConfig::Get()->SettingItemAgentClasses);
+		
+		FCoreDelegates::OnAllModuleLoadingPhasesComplete.RemoveAll(this);
 	});
 }
 
