@@ -26,8 +26,8 @@ public class VSPluginsCore : ModuleRules
 			new string[]
 			{
 				"Core",
-				"AudioMixer",
 				"NetCore",
+				"AudioMixer",
 				"GameplayTags",
 				"GameplayAbilities",
 				"InputCore",

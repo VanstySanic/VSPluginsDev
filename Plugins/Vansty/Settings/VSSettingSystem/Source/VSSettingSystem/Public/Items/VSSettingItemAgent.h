@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "VSSettingItem.h"
+#include "VSSettingItemBase.h"
 #include "VSSettingItemAgent.generated.h"
 
 /**
@@ -13,7 +13,7 @@
  * to its owned sub items, allowing multiple settings to be managed as a single unit.
  */
 UCLASS(DisplayName = "VS.Settings.Item.Agent")
-class VSSETTINGSYSTEM_API UVSSettingItemAgent : public UVSSettingItem
+class VSSETTINGSYSTEM_API UVSSettingItemAgent : public UVSSettingItemBase
 {
 	GENERATED_UCLASS_BODY()
 
@@ -43,15 +43,15 @@ protected:
 	virtual bool EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const override;
 	//~ End UVSSettingItemBase Interface
 
-	TArray<UVSSettingItem*> GetDirectSubSettingItems() const;
-	TArray<UVSSettingItem*> GetRecursiveSubSettingItems() const;
+	TArray<UVSSettingItemBase*> GetDirectSubSettingItems() const;
+	TArray<UVSSettingItemBase*> GetRecursiveSubSettingItems() const;
 
 private:
 	/** Instanced child setting items driven by this agent. */
 	UPROPERTY(EditAnywhere, Category = "Settings", Instanced, meta = (ConfigRestartRequired = "true"))
-	TArray<TObjectPtr<UVSSettingItem>> SubSettingItems;
+	TArray<TObjectPtr<UVSSettingItemBase>> SubSettingItems;
 
 #if WITH_EDITOR
-	TArray<TObjectPtr<UVSSettingItem>> EditorSubSettingItems;
+	TArray<TObjectPtr<UVSSettingItemBase>> EditorSubSettingItems;
 #endif
 };

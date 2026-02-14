@@ -11,8 +11,8 @@ UVSSettingItem_AntiAliasingMethod::UVSSettingItem_AntiAliasingMethod(const FObje
 {
 	ItemTag = EVSSettingItem::Graphics::AntiAliasingMethod;
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Graphics.AntiAliasingMethod", "DisplayName", "Anti-Aliasing Method");
-	ConfigParams.ConfigSection = FString("VS.SettingSystem.Item.Graphics");
-	ConfigParams.ConfigKeyName = FString("r.AntiAliasingMethod");
+	ConfigSettings.Section = "VS.SettingSystem.Item.Graphics";
+	ConfigSettings.PrimaryKey = "r.AntiAliasingMethod";
 
 	SetConsoleVariableName("r.AntiAliasingMethod");
 }

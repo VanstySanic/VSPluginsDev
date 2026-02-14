@@ -53,7 +53,7 @@ void UVSSettingItemAgent::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
 	
-	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
+	for (UVSSettingItemBase* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem && !SettingItem->HasBeenInitialized())
 		{
@@ -65,7 +65,7 @@ void UVSSettingItemAgent::Initialize_Implementation()
 
 void UVSSettingItemAgent::Uninitialize_Implementation()
 {
-	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
+	for (UVSSettingItemBase* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem && SettingItem->HasBeenInitialized())
 		{
@@ -79,7 +79,7 @@ void UVSSettingItemAgent::Uninitialize_Implementation()
 
 void UVSSettingItemAgent::Load_Implementation()
 {
-	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
+	for (UVSSettingItemBase* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem)
 		{
@@ -90,7 +90,7 @@ void UVSSettingItemAgent::Load_Implementation()
 
 void UVSSettingItemAgent::Validate_Implementation()
 {
-	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
+	for (UVSSettingItemBase* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem)
 		{
@@ -101,7 +101,7 @@ void UVSSettingItemAgent::Validate_Implementation()
 
 void UVSSettingItemAgent::Apply_Implementation()
 {
-	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
+	for (UVSSettingItemBase* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem)
 		{
@@ -112,7 +112,7 @@ void UVSSettingItemAgent::Apply_Implementation()
 
 void UVSSettingItemAgent::Confirm_Implementation()
 {
-	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
+	for (UVSSettingItemBase* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem)
 		{
@@ -123,7 +123,7 @@ void UVSSettingItemAgent::Confirm_Implementation()
 
 void UVSSettingItemAgent::Save_Implementation()
 {
-	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
+	for (UVSSettingItemBase* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem)
 		{
@@ -134,7 +134,7 @@ void UVSSettingItemAgent::Save_Implementation()
 
 bool UVSSettingItemAgent::IsValueValid_Implementation() const
 {
-	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
+	for (UVSSettingItemBase* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem && !SettingItem->IsValueValid())
 		{
@@ -147,7 +147,7 @@ bool UVSSettingItemAgent::IsValueValid_Implementation() const
 
 void UVSSettingItemAgent::SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource)
 {
-	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
+	for (UVSSettingItemBase* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem)
 		{
@@ -158,7 +158,7 @@ void UVSSettingItemAgent::SetToBySource_Implementation(const EVSSettingItemValue
 
 bool UVSSettingItemAgent::EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
 {
-	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
+	for (UVSSettingItemBase* SettingItem : GetDirectSubSettingItems())
 	{
 		if (SettingItem && !SettingItem->EqualsToBySource(ValueSource))
 		{
@@ -169,10 +169,10 @@ bool UVSSettingItemAgent::EqualsToBySource_Implementation(const EVSSettingItemVa
 	return true;
 }
 
-TArray<UVSSettingItem*> UVSSettingItemAgent::GetDirectSubSettingItems() const
+TArray<UVSSettingItemBase*> UVSSettingItemAgent::GetDirectSubSettingItems() const
 {
-	TArray<UVSSettingItem*> OutItems;
-	for (UVSSettingItem* SettingItem : SubSettingItems)
+	TArray<UVSSettingItemBase*> OutItems;
+	for (UVSSettingItemBase* SettingItem : SubSettingItems)
 	{
 		if (SettingItem && SettingItem->GetItemTag().IsValid() && SettingItem->ShouldCreateSettingItem())
 		{
@@ -183,10 +183,10 @@ TArray<UVSSettingItem*> UVSSettingItemAgent::GetDirectSubSettingItems() const
 	return OutItems;
 }
 
-TArray<UVSSettingItem*> UVSSettingItemAgent::GetRecursiveSubSettingItems() const
+TArray<UVSSettingItemBase*> UVSSettingItemAgent::GetRecursiveSubSettingItems() const
 {
-	TArray<UVSSettingItem*> OutSettingItems = SubSettingItems;
-	for (UVSSettingItem* SettingItem : GetDirectSubSettingItems())
+	TArray<UVSSettingItemBase*> OutSettingItems = SubSettingItems;
+	for (UVSSettingItemBase* SettingItem : GetDirectSubSettingItems())
 	{
 		if (!SettingItem || !SettingItem->GetItemTag().IsValid() || !SettingItem->ShouldCreateSettingItem()) continue;
 		if (UVSSettingItemAgent* Agent = Cast<UVSSettingItemAgent>(SettingItem))

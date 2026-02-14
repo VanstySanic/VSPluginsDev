@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Items/VSCommonSettingItem.h"
-#include "Items/VSSettingItem.h"
+#include "Items/VSSettingItemBase.h"
 #include "VSSettingItem_ScreenResolution.generated.h"
 
 /**

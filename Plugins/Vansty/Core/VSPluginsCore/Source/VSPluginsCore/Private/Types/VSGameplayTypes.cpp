@@ -14,13 +14,6 @@ FVSNetMethodExecutionPolicies FVSNetMethodExecutionPolicies::AuthorityMulticast 
 	EVSNetAuthorityMethodExecPolicy::Client,
 	false);
 
-
-namespace EVSGameplayTagControllerTags
-{
-	UE_DEFINE_GAMEPLAY_TAG(Event_TagsUpdated, "VSPluginsCore.GameplayTagController.Event.TagsUpdated");
-}
-
-
 int32 FVSUserQueryParams::GetUserIndex() const
 {
 	switch (Key)

@@ -7,7 +7,7 @@
 #include "VSSettingItemWidgetMediatorInterface.generated.h"
 
 class UVSSettingItemWidgetController;
-class UVSSettingItem;
+class UVSSettingItemBase;
 
 // This class does not need to be modified.
 UINTERFACE()
@@ -24,22 +24,22 @@ class VSSETTINGWIDGETS_API IVSSettingItemWidgetMediatorInterface
 	GENERATED_BODY()
 
 public:
-	UVSSettingItem* GetSettingItem_Native() const;
+	UVSSettingItemBase* GetSettingItem_Native() const;
 	
 protected:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Widget Mediator")
-	UVSSettingItem* GetSettingItem() const;
+	UVSSettingItemBase* GetSettingItem() const;
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Widget Mediator")
 	void OnCurrentSettingItemUpdated();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Widget Mediator")
-	void OnAnySettingItemUpdated(UVSSettingItem* SettingItem);
+	void OnAnySettingItemUpdated(UVSSettingItemBase* SettingItem);
 
 	/** Refresh the item's presets. Mostly called when the setting item's tag changes. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Widget Mediator")
 	void EditorRefreshMediator();
 
 protected:
-	virtual UVSSettingItem* GetSettingItem_Implementation() const;
+	virtual UVSSettingItemBase* GetSettingItem_Implementation() const;
 };

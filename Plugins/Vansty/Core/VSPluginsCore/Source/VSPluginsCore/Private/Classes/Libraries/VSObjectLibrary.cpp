@@ -160,6 +160,44 @@ UVSObjectFeature* UVSObjectLibrary::GetFeatureByNameFromObject(UObject* Object, 
 	return nullptr;
 }
 
+FString UVSObjectLibrary::ExportPropertyToText(UObject* Object, FName PropertyName)
+{
+	if (!IsValid(Object)) return FString();
+
+	FProperty* Property = FindFProperty<FProperty>(Object->GetClass(), PropertyName);
+	if (!Property) return FString();
+	
+	void* ValuePtr = Property->ContainerPtrToValuePtr<void>(Object);
+
+	FString OutString;
+	Property->ExportText_Direct(
+		OutString,
+		ValuePtr,
+		nullptr,
+		Object,
+		PPF_None
+	);
+
+	return OutString;
+}
+
+bool UVSObjectLibrary::ImportPropertyFromText(UObject* Object, FName PropertyName, const FString& Text)
+{
+	if (!IsValid(Object)) return false;
+
+	FProperty* Property = FindFProperty<FProperty>(Object->GetClass(), PropertyName);
+	if (!Property) return false;
+	void* ValuePtr = Property->ContainerPtrToValuePtr<void>(Object);
+
+	return Property->ImportText_Direct(
+		*Text,
+		ValuePtr,
+		Object,
+		PPF_None
+	) != nullptr;
+}
+
+
 FTickFunction* UVSObjectLibrary::GetTickFunctionPtrFromObject(UObject* Object)
 {
 	if (!Object) return nullptr;

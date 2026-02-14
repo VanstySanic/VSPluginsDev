@@ -10,8 +10,8 @@ UVSSettingItem_VSync::UVSSettingItem_VSync(const FObjectInitializer& FObjectInit
 {
 	ItemTag = EVSSettingItem::Video::VSync;
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.VSync", "DisplayName", "VSync");
-	ConfigParams.ConfigSection = FString("/Script/Engine.GameUserSettings");
-	ConfigParams.ConfigKeyName = FString("bUseVSync");
+	ConfigSettings.Section = "/Script/Engine.GameUserSettings";
+	ConfigSettings.PrimaryKey = "bUseVSync";
 	
 	SetConsoleVariableName("r.VSync");
 }

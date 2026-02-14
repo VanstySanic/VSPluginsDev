@@ -1,9 +1,9 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
-#include "Items/VSSettingItem.h"
+#include "Items/VSSettingItemBase.h"
 #include "VSSettingSubsystem.h"
 
-UVSSettingItem::UVSSettingItem(const FObjectInitializer& ObjectInitializer)
+UVSSettingItemBase::UVSSettingItemBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 #if WITH_EDITORONLY_DATA
@@ -13,9 +13,9 @@ UVSSettingItem::UVSSettingItem(const FObjectInitializer& ObjectInitializer)
 }
 
 #if WITH_EDITOR
-void UVSSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+void UVSSettingItemBase::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
-	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItem, ItemTag))
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase, ItemTag))
 	{
 		if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
 		{
@@ -27,7 +27,7 @@ void UVSSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& Proper
 }
 #endif
 
-void UVSSettingItem::BeginDestroy()
+void UVSSettingItemBase::BeginDestroy()
 {
 	if (HasBeenInitialized())
 	{
@@ -38,82 +38,82 @@ void UVSSettingItem::BeginDestroy()
 	UObject::BeginDestroy();
 }
 
-void UVSSettingItem::Initialize_Implementation()
+void UVSSettingItemBase::Initialize_Implementation()
 {
 
 }
 
-void UVSSettingItem::Uninitialize_Implementation()
+void UVSSettingItemBase::Uninitialize_Implementation()
 {
 
 }
 
-void UVSSettingItem::Load_Implementation()
-{
-	
-}
-
-void UVSSettingItem::Validate_Implementation()
+void UVSSettingItemBase::Load_Implementation()
 {
 	
 }
 
-void UVSSettingItem::Apply_Implementation()
+void UVSSettingItemBase::Validate_Implementation()
 {
 	
 }
 
-void UVSSettingItem::Confirm_Implementation()
-{
-
-}
-
-void UVSSettingItem::Save_Implementation()
+void UVSSettingItemBase::Apply_Implementation()
 {
 	
 }
 
-bool UVSSettingItem::IsUnconfirmed() const
+void UVSSettingItemBase::Confirm_Implementation()
+{
+
+}
+
+void UVSSettingItemBase::Save_Implementation()
+{
+	
+}
+
+bool UVSSettingItemBase::IsUnconfirmed() const
 {
 	return !EqualsToBySource(EVSSettingItemValueSource::Confirmed);
 }
 
-void UVSSettingItem::SetToDefault()
+void UVSSettingItemBase::SetToDefault()
 {
 	SetToBySource(EVSSettingItemValueSource::Default);
 }
 
-void UVSSettingItem::SetToGame()
+void UVSSettingItemBase::SetToGame()
 {
 	SetToBySource(EVSSettingItemValueSource::Game);
 }
 
-void UVSSettingItem::SetToConfirmed()
+void UVSSettingItemBase::SetToConfirmed()
 {
 	SetToBySource(EVSSettingItemValueSource::Confirmed);
 }
 
-bool UVSSettingItem::IsValueValid_Implementation() const
+bool UVSSettingItemBase::IsValueValid_Implementation() const
 {
 	return true;
 }
 
-bool UVSSettingItem::IsDirty() const
+bool UVSSettingItemBase::IsDirty() const
 {
 	return !EqualsToBySource(EVSSettingItemValueSource::Confirmed);
 }
 
-void UVSSettingItem::SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource)
+void UVSSettingItemBase::SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource)
 {
 	
 }
 
-bool UVSSettingItem::EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
+bool UVSSettingItemBase::EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
 {
 	return false;
 }
 
-void UVSSettingItem::ExecuteAction(EVSSettingItemAction::Type Action)
+void UVSSettingItemBase::ExecuteAction(EVSSettingItemAction::Type Action)
 {
 	switch (Action)
 	{
@@ -154,7 +154,7 @@ void UVSSettingItem::ExecuteAction(EVSSettingItemAction::Type Action)
 	}
 }
 
-void UVSSettingItem::ExecuteActions(const TArray<TEnumAsByte<EVSSettingItemAction::Type>>& Actions)
+void UVSSettingItemBase::ExecuteActions(const TArray<TEnumAsByte<EVSSettingItemAction::Type>>& Actions)
 {
 	for (const EVSSettingItemAction::Type Action : Actions)
 	{
@@ -162,7 +162,7 @@ void UVSSettingItem::ExecuteActions(const TArray<TEnumAsByte<EVSSettingItemActio
 	}
 }
 
-void UVSSettingItem::NotifyValueUpdated(bool bAllowCleanNotify)
+void UVSSettingItemBase::NotifyValueUpdated(bool bAllowCleanNotify)
 {
 	if (!HasBeenInitialized() || (!bAllowCleanNotify && !IsDirty()) || !ItemTag.IsValid()) return;
 	
@@ -182,24 +182,24 @@ void UVSSettingItem::NotifyValueUpdated(bool bAllowCleanNotify)
 	}
 }
 
-void UVSSettingItem::NotifyValueExternChanged(bool bAllowSameNotify)
+void UVSSettingItemBase::NotifyValueExternChanged(bool bAllowSameNotify)
 {
 	if (!HasBeenInitialized() || (!bAllowSameNotify && EqualsToBySource(EVSSettingItemValueSource::Game))) return;
 	ExecuteActions(ExternalChangeActions);
 }
 
-bool UVSSettingItem::ShouldCreateSettingItem_Implementation() const
+bool UVSSettingItemBase::ShouldCreateSettingItem_Implementation() const
 {
 	return true;
 }
 
-void UVSSettingItem::OnValueUpdated_Implementation()
+void UVSSettingItemBase::OnValueUpdated_Implementation()
 {
 	
 }
 
 #if WITH_EDITOR
-bool UVSSettingItem::EditorAllowChangingItemTag_Implementation() const
+bool UVSSettingItemBase::EditorAllowChangingItemTag_Implementation() const
 {
 	return true;
 }

@@ -25,9 +25,11 @@ UVSSettingItem_ScreenResolution::UVSSettingItem_ScreenResolution(const FObjectIn
 	
 	ItemTag = EVSSettingItem::Video::ScreenResolution;
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.ScreenResolution", "DisplayName", "Screen Resolution");
-	ConfigParams.ConfigSection = FString("/Script/Engine.GameUserSettings");
-	ConfigParams.ConfigKeyName = FString("ResolutionSize(X/Y)");
-	ConfigParams.bAutoDefaultConfig = false;
+	ConfigSettings.Section = FString("/Script/Engine.GameUserSettings");
+	ConfigSettings.AdditionalNamedKeys.Add("ResolutionSizeX", "ResolutionSizeX");
+	ConfigSettings.AdditionalNamedKeys.Add("ResolutionSizeY", "ResolutionSizeY");
+	ConfigSettings.AdditionalNamedKeys.Add("LastUserConfirmedResolutionSizeX", "LastUserConfirmedResolutionSizeX");
+	ConfigSettings.AdditionalNamedKeys.Add("LastUserConfirmedResolutionSizeX", "LastUserConfirmedResolutionSizeX");
 }
 
 #if WITH_EDITOR
@@ -55,7 +57,7 @@ void UVSSettingItem_ScreenResolution::Uninitialize_Implementation()
 
 	if (UVSSettingSubsystem::Get())
 	{
-		if (UVSSettingItem* SettingItem = UVSSettingSubsystem::Get()->GetSettingItemByTag(EVSSettingItem::Video::WindowMode))
+		if (UVSSettingItemBase* SettingItem = UVSSettingSubsystem::Get()->GetSettingItemByTag(EVSSettingItem::Video::WindowMode))
 		{
 			SettingItem->OnUpdated_Native.RemoveAll(this);
 		}
@@ -70,8 +72,8 @@ void UVSSettingItem_ScreenResolution::Load_Implementation()
 
 	FIntPoint LoadResolution = FIntPoint::ZeroValue;
 	bool bLoaded = false;
-	bLoaded = GConfig->GetInt(*ConfigParams.ConfigSection, TEXT("ResolutionSizeX"), LoadResolution.X, *ConfigParams.ConfigFileName);
-	bLoaded = GConfig->GetInt(*ConfigParams.ConfigSection, TEXT("ResolutionSizeY"), LoadResolution.Y, *ConfigParams.ConfigFileName) || bLoaded;
+	bLoaded = GConfig->GetInt(*ConfigSettings.Section, *ConfigSettings.AdditionalNamedKeys.FindRef("ResolutionSizeX"), LoadResolution.X, *ConfigSettings.FileName);
+	bLoaded = GConfig->GetInt(*ConfigSettings.Section, *ConfigSettings.AdditionalNamedKeys.FindRef("ResolutionSizeY"), LoadResolution.Y, *ConfigSettings.FileName) || bLoaded;
 	if (bLoaded)
 	{
 		SetScreenResolution(LoadResolution);
@@ -125,12 +127,11 @@ void UVSSettingItem_ScreenResolution::Confirm_Implementation()
 {
 	Super::Confirm_Implementation();
 
-	if (GEngine && GEngine->GameUserSettings)
+	if (GEngine && GEngine->GetGameUserSettings())
 	{
-		UGameUserSettings* GameUserSettings = GEngine->GetGameUserSettings();
 		const FIntPoint ScreenResolution = GetScreenResolution(EVSSettingItemValueSource::System);
-		VS_PRIVABLIC_MEMBER(GameUserSettings, UGameUserSettings, LastUserConfirmedDesiredScreenWidth) = ScreenResolution.X;
-		VS_PRIVABLIC_MEMBER(GameUserSettings, UGameUserSettings, LastUserConfirmedDesiredScreenHeight) = ScreenResolution.Y;
+		VS_PRIVABLIC_MEMBER(GEngine->GameUserSettings, UGameUserSettings, LastUserConfirmedDesiredScreenWidth) = ScreenResolution.X;
+		VS_PRIVABLIC_MEMBER(GEngine->GameUserSettings, UGameUserSettings, LastUserConfirmedDesiredScreenHeight) = ScreenResolution.Y;
 	}
 }
 
@@ -138,17 +139,20 @@ void UVSSettingItem_ScreenResolution::Save_Implementation()
 {
 	Super::Save_Implementation();
 
-	const FIntPoint ScreenResolution = GetScreenResolution(EVSSettingItemValueSource::System);
-	GConfig->SetInt(*ConfigParams.ConfigSection, TEXT("ResolutionSizeX"), ScreenResolution.X, *ConfigParams.ConfigFileName);
-	GConfig->SetInt(*ConfigParams.ConfigSection, TEXT("ResolutionSizeY"), ScreenResolution.Y, *ConfigParams.ConfigFileName);
-	
-	if (GEngine && GEngine->GetGameUserSettings())
+	if (GEngine)
 	{
-		GConfig->SetInt(*ConfigParams.ConfigSection, TEXT("LastUserConfirmedResolutionSizeX"), GEngine->GameUserSettings->GetLastConfirmedScreenResolution().X, *ConfigParams.ConfigFileName);
-		GConfig->SetInt(*ConfigParams.ConfigSection, TEXT("LastUserConfirmedResolutionSizeY"), GEngine->GameUserSettings->GetLastConfirmedScreenResolution().Y, *ConfigParams.ConfigFileName);
-	}
+		const FIntPoint ScreenResolution = GetScreenResolution(EVSSettingItemValueSource::System);
+		GConfig->SetInt(*ConfigSettings.Section, *ConfigSettings.AdditionalNamedKeys.FindRef("ResolutionSizeX"), ScreenResolution.X, *ConfigSettings.FileName);
+		GConfig->SetInt(*ConfigSettings.Section, *ConfigSettings.AdditionalNamedKeys.FindRef("ResolutionSizeY"), ScreenResolution.Y, *ConfigSettings.FileName);
 
-	GConfig->Flush(false, GGameUserSettingsIni);
+		if (GEngine->GetGameUserSettings())
+		{
+			GConfig->SetInt(*ConfigSettings.Section, *ConfigSettings.AdditionalNamedKeys.FindRef("LastUserConfirmedResolutionSizeX"), GEngine->GameUserSettings->GetLastConfirmedScreenResolution().X, *ConfigSettings.FileName);
+			GConfig->SetInt(*ConfigSettings.Section, *ConfigSettings.AdditionalNamedKeys.FindRef("LastUserConfirmedResolutionSizeX"), GEngine->GameUserSettings->GetLastConfirmedScreenResolution().Y, *ConfigSettings.FileName);
+		}
+
+		GConfig->Flush(false, GGameUserSettingsIni);
+	}
 }
 
 bool UVSSettingItem_ScreenResolution::IsValueValid_Implementation() const

@@ -6,32 +6,13 @@
 UVSMutableFloatSettingItem::UVSMutableFloatSettingItem(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	
+	ConfigSettings.AdditionalNamedKeys.Add("Muted", "None");
 }
 
 #if WITH_EDITOR
 void UVSMutableFloatSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
-	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSMutableFloatSettingItem, ConfigParams))
-	{
-		/** Clear previous config and save new one. */
-		float ConfigValue;
-		bool bConfigMuted;
-		
-		if (GConfig->GetFloat(*LastEditorConfigParams.ConfigSection, *LastEditorConfigParams.ConfigValueKeyName, ConfigValue, LastEditorConfigParams.ConfigFileName))
-		{
-			GConfig->RemoveKey(*LastEditorConfigParams.ConfigSection, *LastEditorConfigParams.ConfigValueKeyName, LastEditorConfigParams.ConfigFileName);
-			GConfig->SetFloat(*ConfigParams.ConfigSection, *ConfigParams.ConfigValueKeyName, ConfigValue, ConfigParams.ConfigFileName);
-		}
-		if (GConfig->GetBool(*LastEditorConfigParams.ConfigSection, *LastEditorConfigParams.ConfigMuteKeyName, bConfigMuted, LastEditorConfigParams.ConfigFileName))
-		{
-			GConfig->RemoveKey(*LastEditorConfigParams.ConfigSection, *LastEditorConfigParams.ConfigMuteKeyName, LastEditorConfigParams.ConfigFileName);
-			GConfig->SetBool(*ConfigParams.ConfigSection, *ConfigParams.ConfigMuteKeyName, bConfigMuted, ConfigParams.ConfigFileName);
-		}
-		
-		LastEditorConfigParams = ConfigParams;
-	}
-	else if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSMutableFloatSettingItem, EditorPreviewValue))
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSMutableFloatSettingItem, EditorPreviewValue))
 	{
 		SetValue(EditorPreviewValue);
 	}
@@ -43,15 +24,6 @@ void UVSMutableFloatSettingItem::PostEditChangeProperty(struct FPropertyChangedE
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 #endif
-
-void UVSMutableFloatSettingItem::PostLoad()
-{
-	Super::PostLoad();
-
-#if WITH_EDITOR
-	LastEditorConfigParams = ConfigParams;
-#endif
-}
 
 bool UVSMutableFloatSettingItem::IsValueValid_Implementation() const
 {
@@ -90,14 +62,17 @@ void UVSMutableFloatSettingItem::Load_Implementation()
 {
 	Super::Load_Implementation();
 	
-	float ConfigValue;
-	bool bConfigMuted;
-		
-	if (GConfig->GetFloat(*ConfigParams.ConfigSection, *ConfigParams.ConfigValueKeyName, ConfigValue, ConfigParams.ConfigFileName))
+	if (!FName(ConfigSettings.PrimaryKey).IsNone())
 	{
-		SetValue(ConfigValue);
+		float ConfigValue;
+		if (GConfig->GetFloat(*ConfigSettings.Section, *ConfigSettings.PrimaryKey, ConfigValue, ConfigSettings.FileName))
+		{
+			SetValue(ConfigValue);
+		}
 	}
-	if (GConfig->GetBool(*ConfigParams.ConfigSection, *ConfigParams.ConfigMuteKeyName, bConfigMuted, ConfigParams.ConfigFileName))
+	
+	bool bConfigMuted;
+	if (GConfig->GetBool(*ConfigSettings.Section, *ConfigSettings.AdditionalNamedKeys.FindRef("Muted"), bConfigMuted, ConfigSettings.FileName))
 	{
 		SetIsMuted(bConfigMuted);
 	}
@@ -106,9 +81,12 @@ void UVSMutableFloatSettingItem::Load_Implementation()
 void UVSMutableFloatSettingItem::Save_Implementation()
 {
 	Super::Save_Implementation();
-	
-	GConfig->SetFloat(*ConfigParams.ConfigSection, *ConfigParams.ConfigValueKeyName, GetNonMutedValue(EVSSettingItemValueSource::System), ConfigParams.ConfigFileName);
-	GConfig->SetBool(*ConfigParams.ConfigSection, *ConfigParams.ConfigMuteKeyName, GetIsMuted(EVSSettingItemValueSource::System), ConfigParams.ConfigFileName);
+
+	if (!FName(ConfigSettings.PrimaryKey).IsNone())
+	{
+		GConfig->SetFloat(*ConfigSettings.Section, *ConfigSettings.PrimaryKey, GetNonMutedValue(EVSSettingItemValueSource::System), ConfigSettings.FileName);
+	}
+	GConfig->SetBool(*ConfigSettings.Section, *ConfigSettings.AdditionalNamedKeys.FindRef("Muted"), GetIsMuted(EVSSettingItemValueSource::System), ConfigSettings.FileName);
 }
 
 void UVSMutableFloatSettingItem::Confirm_Implementation()

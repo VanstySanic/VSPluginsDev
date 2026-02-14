@@ -22,8 +22,10 @@ UVSSettingItem_WindowMode::UVSSettingItem_WindowMode(const FObjectInitializer& F
 
 	ItemTag = EVSSettingItem::Video::WindowMode;
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.WindowMode", "DisplayName", "Window Mode");
-	ConfigParams.ConfigSection = FString("/Script/Engine.GameUserSettings");
-	ConfigParams.ConfigKeyName = FString("FullscreenMode");
+	ConfigSettings.Section = "/Script/Engine.GameUserSettings";
+	ConfigSettings.PrimaryKey = "FullscreenMode";
+	ConfigSettings.AdditionalNamedKeys.Add("LastConfirmedFullscreenMode", "LastConfirmedFullscreenMode");
+	ConfigSettings.AdditionalNamedKeys.Add("PreferredFullscreenMode", "PreferredFullscreenMode");
 
 	ExternalChangeActions.Empty();
 }
@@ -96,7 +98,7 @@ void UVSSettingItem_WindowMode::Confirm_Implementation()
 {
 	Super::Confirm_Implementation();
 
-	if (GEngine && GEngine->GameUserSettings)
+	if (GEngine && GEngine->GetGameUserSettings())
 	{
 		VS_PRIVABLIC_MEMBER(GEngine->GameUserSettings, UGameUserSettings, LastConfirmedFullscreenMode) = GetIntegerValue();
 	}
@@ -105,10 +107,10 @@ void UVSSettingItem_WindowMode::Confirm_Implementation()
 void UVSSettingItem_WindowMode::Save_Implementation()
 {
 	Super::Save_Implementation();
-
-	GConfig->SetInt(*ConfigParams.ConfigSection, TEXT("LastConfirmedFullscreenMode"), GetWindowMode(EVSSettingItemValueSource::Confirmed), ConfigParams.ConfigFileName);
-	GConfig->SetInt(*ConfigParams.ConfigSection, TEXT("PreferredFullscreenMode"), GetWindowMode(EVSSettingItemValueSource::Confirmed), ConfigParams.ConfigFileName);
-	GConfig->Flush(false, ConfigParams.ConfigFileName);
+	
+	GConfig->SetInt(*ConfigSettings.Section, *ConfigSettings.AdditionalNamedKeys.FindRef("LastConfirmedFullscreenMode"), GetWindowMode(EVSSettingItemValueSource::Confirmed), ConfigSettings.FileName);
+	GConfig->SetInt(*ConfigSettings.Section, *ConfigSettings.AdditionalNamedKeys.FindRef("PreferredFullscreenMode"), GetWindowMode(EVSSettingItemValueSource::Confirmed), ConfigSettings.FileName);
+	GConfig->Flush(false, ConfigSettings.Section);
 }
 
 bool UVSSettingItem_WindowMode::IsValueValid_Implementation() const

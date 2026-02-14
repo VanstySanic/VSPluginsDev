@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "Items/VSSettingItem.h"
+#include "Items/VSSettingItemBase.h"
 #include "Subsystems/EngineSubsystem.h"
 #include "VSSettingSubsystem.generated.h"
 
 struct FGameplayTag;
 class UVSSettingItemAgent;
-class UVSSettingItem;
+class UVSSettingItemBase;
 
 /**
  * Engine subsystem that owns and coordinates all setting items.
@@ -26,8 +26,8 @@ class VSSETTINGSYSTEM_API UVSSettingSubsystem : public UEngineSubsystem
 {
 	GENERATED_BODY()
 	
-	DECLARE_MULTICAST_DELEGATE_OneParam(FSettingItemUpdateDelegate, UVSSettingItem* /** SettingItem */);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSettingItemUpdateEvent, UVSSettingItem*, SettingItem);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FSettingItemUpdateDelegate, UVSSettingItemBase* /** SettingItem */);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSettingItemUpdateEvent, UVSSettingItemBase*, SettingItem);
 	
 public:
 	static UVSSettingSubsystem* Get();
@@ -40,7 +40,7 @@ public:
 	
 	/** Returns a registered setting item by tag, or nullptr if not found. */
 	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "ItemTag"))
-	UVSSettingItem* GetSettingItemByTag(const FGameplayTag& ItemTag);
+	UVSSettingItemBase* GetSettingItemByTag(const FGameplayTag& ItemTag);
 
 	/** Loads settings for all root agents. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
@@ -86,14 +86,14 @@ public:
 	FSettingItemUpdateEvent OnItemUpdated;
 
 private:
-	void OnSettingItemUpdated(UVSSettingItem* SettingItem);
+	void OnSettingItemUpdated(UVSSettingItemBase* SettingItem);
 
 private:
 	UPROPERTY()
 	TArray<TObjectPtr<UVSSettingItemAgent>> DirectSettingItemAgents;
 	
 	UPROPERTY()
-	TArray<TObjectPtr<UVSSettingItem>> SettingItems;
+	TArray<TObjectPtr<UVSSettingItemBase>> SettingItems;
 	
-	TMap<FGameplayTag, TWeakObjectPtr<UVSSettingItem>> TaggedSettingItems;
+	TMap<FGameplayTag, TWeakObjectPtr<UVSSettingItemBase>> TaggedSettingItems;
 };

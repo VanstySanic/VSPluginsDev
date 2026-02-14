@@ -1,7 +1,6 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Items/Graphics/VSSettingItem_MotionBlur.h"
-
 #include "VSSettingSystemConfig.h"
 #include "Engine/RendererSettings.h"
 #include "Items/VSSettingSystemTags.h"
@@ -12,9 +11,9 @@ UVSSettingItem_MotionBlur::UVSSettingItem_MotionBlur(const FObjectInitializer& O
 {
 	ItemTag = EVSSettingItem::Graphics::MotionBlur;
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Graphics.MotionBlur", "DisplayName", "Motion Blur");
-	ConfigParams.ConfigFileName = GIsEditor ? "Editor" : "GameUserSettings";
-	ConfigParams.ConfigSection = FString("VS.Settings.Item.Graphics");
-	ConfigParams.ConfigKeyName = FString("r.MotionBlurQuality");
+	ConfigSettings.FileName = GIsEditor ? "Editor" : "GameUserSettings";
+	ConfigSettings.Section = "VS.Settings.Item.Graphics";
+	ConfigSettings.PrimaryKey = "MotionBlurQuality";
 
 	SetConsoleVariableName(TEXT("r.MotionBlurQuality"));
 }

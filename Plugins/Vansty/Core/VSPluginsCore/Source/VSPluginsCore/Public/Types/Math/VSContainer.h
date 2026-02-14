@@ -66,6 +66,10 @@ struct FVSMap
 	/** Copies MapA and overrides with MapB when keys collide. */
 	template <typename K, typename V>
 	static TMap<K, V> MergeMapsOverride(const TMap<K, V>& MapA, const TMap<K, V>& MapB);
+
+	/** Returns true if both maps contain the same key/value pairs. */
+	template <typename K, typename V>
+	static bool MapEqual(const TMap<K, V>& MapA, const TMap<K, V>& MapB);
 };
 
 /** Utility functions for common TMultiMap operations. */
@@ -82,6 +86,10 @@ struct FVSMultiMap
 	/** Copies MapA and appends all key/value pairs from MapB. */
 	template <typename K, typename V>
 	static TMultiMap<K, V> MergeMapsAppend(const TMultiMap<K, V>& MapA, const TMultiMap<K, V>& MapB);
+
+	/** Returns true if both multimaps contain the same key/value pairs. */
+	template <typename K, typename V>
+	static bool MapEqual(const TMultiMap<K, V>& MapA, const TMultiMap<K, V>& MapB);
 };
 
 
@@ -322,6 +330,26 @@ TMap<K, V> FVSMap::MergeMapsOverride(const TMap<K, V>& MapA, const TMap<K, V>& M
 	return Result;
 }
 
+template <typename K, typename V>
+bool FVSMap::MapEqual(const TMap<K, V>& MapA, const TMap<K, V>& MapB)
+{
+	if (MapA.Num() != MapB.Num())
+	{
+		return false;
+	}
+
+	for (const TPair<K, V>& Pair : MapA)
+	{
+		const V* OtherValue = MapB.Find(Pair.Key);
+		if (!OtherValue || *OtherValue != Pair.Value)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 
 template <typename K, typename V>
 TSet<K> FVSMultiMap::GetKeyIntersection(const TMultiMap<K, V>& MapA, const TMultiMap<K, V>& MapB)
@@ -385,4 +413,39 @@ TMultiMap<K, V> FVSMultiMap::MergeMapsAppend(const TMultiMap<K, V>& MapA, const 
 	}
 
 	return Result;
+}
+
+template <typename K, typename V>
+bool FVSMultiMap::MapEqual(const TMultiMap<K, V>& MapA, const TMultiMap<K, V>& MapB)
+{
+	if (MapA.Num() != MapB.Num())
+	{
+		return false;
+	}
+
+	TArray<K> KeysA;
+	MapA.GetKeys(KeysA);
+
+	for (const K& Key : KeysA)
+	{
+		TArray<V> ValuesA;
+		TArray<V> ValuesB;
+		MapA.MultiFind(Key, ValuesA);
+		MapB.MultiFind(Key, ValuesB);
+
+		if (ValuesA.Num() != ValuesB.Num())
+		{
+			return false;
+		}
+
+		for (const V& Value : ValuesA)
+		{
+			if (ValuesB.RemoveSingle(Value) == 0)
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
 }

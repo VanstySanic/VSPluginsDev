@@ -58,6 +58,9 @@ class VSPLUGINSCORE_API UVSObjectLibrary : public UBlueprintFunctionLibrary
 	static UVSObjectFeature* GetFeatureByNameFromObject(UObject* Object, FName Name);
 
 public:
+	static FString ExportPropertyToText(UObject* Object, FName PropertyName);
+	static bool ImportPropertyFromText(UObject* Object, FName PropertyName, const FString& Text);
+
 	/**
 	 * Find feature on object by class.
 	 * Searches both actor components and object properties.
@@ -66,8 +69,7 @@ public:
 	static T* FindFeatureByClassFromObject(UObject* Object, TSubclassOf<T> Class = T::StaticClass());
 
 	/** Get the possible tick function pointer from an object. */
-	static FTickFunction* GetTickFunctionPtrFromObject(UObject* Object);
-};
+	static FTickFunction* GetTickFunctionPtrFromObject(UObject* Object);};
 
 template <typename T>
 T* UVSObjectLibrary::FindFeatureByClassFromObject(UObject* Object, TSubclassOf<T> Class)

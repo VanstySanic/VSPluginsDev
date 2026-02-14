@@ -11,8 +11,8 @@ UVSSettingItem_Monitor::UVSSettingItem_Monitor(const FObjectInitializer& FObject
 	
 	ItemTag = EVSSettingItem::Video::Monitor;
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.Monitor", "DisplayName", "Monitor");
-	ConfigParams.ConfigSection = FString("VS.Settings.Item.Video");
-	ConfigParams.ConfigKeyName = FString("Monitor");
+	ConfigSettings.Section = "VS.Settings.Item.Video";
+	ConfigSettings.PrimaryKey = "Monitor";
 }
 
 void UVSSettingItem_Monitor::Apply_Implementation()
@@ -20,7 +20,7 @@ void UVSSettingItem_Monitor::Apply_Implementation()
 	Super::Apply_Implementation();
 	
 	EWindowMode::Type WindowMode = GSystemResolution.WindowMode;
-    if (auto Window = UVSPlatformLibrary::GetActiveWindow())
+    if (auto Window = UVSPlatformLibrary::GetGameWindow())
     {
     	WindowMode = Window->GetWindowMode();
     }
@@ -33,18 +33,18 @@ void UVSSettingItem_Monitor::Apply_Implementation()
 	{
 
 		
-		const FVector2D WindowCenterPos = UVSPlatformLibrary::GetWindowCenterPosition(false);
+		const FVector2D WindowCenterPos = UVSPlatformLibrary::GetGameWindowCenterPosition(false);
 		const FString WindowMonitorID = UVSPlatformLibrary::GetMonitorIDByPosition(WindowCenterPos);
 		const FMonitorInfo WindowMonitorInfo = UVSPlatformLibrary::GetNativeMonitorInfoByID(WindowMonitorID);
 		if (!MonitorID.IsEmpty() && WindowMonitorInfo.ID != MonitorID)
 		{
 			if (WindowMode == EWindowMode::Windowed)
 			{
-				UVSPlatformLibrary::SetWindowCenteredAtMonitor(MonitorID);
+				UVSPlatformLibrary::SetGameWindowCenteredAtMonitor(MonitorID);
 			}
 			else
 			{
-				UVSPlatformLibrary::SetWindowPosition(MonitorInfo.GetRootPosition());
+				UVSPlatformLibrary::SetGameWindowPosition(MonitorInfo.GetRootPosition());
 			}
 
 			if (bOverrideDesiredFullscreenMonitor)
@@ -86,7 +86,7 @@ FString UVSSettingItem_Monitor::GetStringValue_Implementation(const EVSSettingIt
 			return UVSPlatformLibrary::GetPrimaryMonitorID();
 			
 		case EVSSettingItemValueSource::Game:
-			if (auto Window = UVSPlatformLibrary::GetActiveWindow())
+			if (auto Window = UVSPlatformLibrary::GetGameWindow())
 			{
 				return UVSPlatformLibrary::GetMonitorIDByPosition(Window->GetPositionInScreen());
 			}

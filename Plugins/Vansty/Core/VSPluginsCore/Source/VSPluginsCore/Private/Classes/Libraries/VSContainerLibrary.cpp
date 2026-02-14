@@ -93,6 +93,16 @@ namespace VSContainerLibraryPrivate
 			&& A->KeyProp->SameType(Result->KeyProp) && A->ValueProp->SameType(Result->ValueProp);
 	}
 
+	static bool AreMapTypesCompatible(const FMapProperty* A, const FMapProperty* B)
+	{
+		if (!A || !B || !A->KeyProp || !A->ValueProp || !B->KeyProp || !B->ValueProp)
+		{
+			return false;
+		}
+
+		return A->KeyProp->SameType(B->KeyProp) && A->ValueProp->SameType(B->ValueProp);
+	}
+
 	static bool AreMapKeySetCompatible(const FMapProperty* MapProp, const FSetProperty* SetProp)
 	{
 		if (!MapProp || !SetProp || !MapProp->KeyProp || !SetProp->ElementProp)
@@ -191,6 +201,11 @@ void UVSContainerLibrary::MapKeyComplement(const TMap<int32, int32>& MapA, const
 
 void UVSContainerLibrary::MapMergeOverride(const TMap<int32, int32>& MapA, const TMap<int32, int32>& MapB, TMap<int32, int32>& Result)
 {
+}
+
+bool UVSContainerLibrary::MapEqual(const TMap<int32, int32>& MapA, const TMap<int32, int32>& MapB)
+{
+	return false;
 }
 
 
@@ -708,4 +723,61 @@ DEFINE_FUNCTION(UVSContainerLibrary::execMapMergeOverride)
 	}
 
 	ResultHelper.Rehash();
+}
+
+DEFINE_FUNCTION(UVSContainerLibrary::execMapEqual)
+{
+	Stack.StepCompiledIn<FMapProperty>(nullptr);
+	void* MapAAddr = Stack.MostRecentPropertyAddress;
+	FMapProperty* MapAProp = CastField<FMapProperty>(Stack.MostRecentProperty);
+
+	Stack.StepCompiledIn<FMapProperty>(nullptr);
+	void* MapBAddr = Stack.MostRecentPropertyAddress;
+	FMapProperty* MapBProp = CastField<FMapProperty>(Stack.MostRecentProperty);
+
+	P_FINISH;
+
+	bool bResult = false;
+
+	if (!VSContainerLibraryPrivate::AreMapTypesCompatible(MapAProp, MapBProp))
+	{
+		*static_cast<bool*>(RESULT_PARAM) = bResult;
+		return;
+	}
+
+	const FProperty* KeyProp = MapAProp->KeyProp;
+	const FProperty* ValueProp = MapAProp->ValueProp;
+	FScriptMapHelper MapAHelper(MapAProp, MapAAddr);
+	FScriptMapHelper MapBHelper(MapBProp, MapBAddr);
+
+	if (MapAHelper.Num() != MapBHelper.Num())
+	{
+		*static_cast<bool*>(RESULT_PARAM) = bResult;
+		return;
+	}
+
+	bResult = true;
+	for (int32 Index = 0; Index < MapAHelper.GetMaxIndex(); ++Index)
+	{
+		if (!MapAHelper.IsValidIndex(Index))
+		{
+			continue;
+		}
+
+		const void* KeyPtr = MapAHelper.GetKeyPtr(Index);
+		const int32 OtherIndex = VSContainerLibraryPrivate::MapFindKeyIndex(MapBHelper, KeyProp, KeyPtr);
+		if (OtherIndex == INDEX_NONE)
+		{
+			bResult = false;
+			break;
+		}
+
+		if (!ValueProp->Identical(MapAHelper.GetValuePtr(Index), MapBHelper.GetValuePtr(OtherIndex)))
+		{
+			bResult = false;
+			break;
+		}
+	}
+
+	*static_cast<bool*>(RESULT_PARAM) = bResult;
 }

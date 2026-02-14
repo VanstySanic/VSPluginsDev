@@ -6,13 +6,13 @@
 #include "GameplayTagContainer.h"
 #include "StructUtils/InstancedStruct.h"
 #include "UObject/Object.h"
-#include "VSGameQueryTypes.generated.h"
+#include "VSTreeQueryTypes.generated.h"
 
 class USceneComponent;
 
 /** Defines how multiple query results are evaluated together. */
 UENUM(BlueprintType)
-namespace EVSQueryMatchRange
+namespace EVSTreeQueryMatchRange
 {
 	enum Type
 	{
@@ -24,7 +24,7 @@ namespace EVSQueryMatchRange
 
 /** Defines the source type used by a query expression node. */
 UENUM(BlueprintType)
-namespace EVSQueryMatchType
+namespace EVSTreeQueryMatchType
 {
 	enum Type
 	{
@@ -98,15 +98,15 @@ struct FVSGameplayTagEventQueryExpression
 	FText Description;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TEnumAsByte<EVSQueryMatchRange::Type> Range = EVSQueryMatchRange::None;
+	TEnumAsByte<EVSTreeQueryMatchRange::Type> Range = EVSTreeQueryMatchRange::None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TEnumAsByte<EVSQueryMatchType::Type> Type = EVSQueryMatchType::None;
+	TEnumAsByte<EVSTreeQueryMatchType::Type> Type = EVSTreeQueryMatchType::None;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSQueryMatchType::Params", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSTreeQueryMatchType::Params", EditConditionHides))
 	TArray<FVSGameplayTagEventQueryParams> Params;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSQueryMatchType::Expression", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSTreeQueryMatchType::Expression", EditConditionHides))
 	TArray<TInstancedStruct<FVSGameplayTagEventQueryExpression>> Expressions;
 };
 
@@ -212,15 +212,15 @@ struct FVSSceneComponentQueryExpression
 	FText Description;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TEnumAsByte<EVSQueryMatchRange::Type> Range = EVSQueryMatchRange::None;
+	TEnumAsByte<EVSTreeQueryMatchRange::Type> Range = EVSTreeQueryMatchRange::None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TEnumAsByte<EVSQueryMatchType::Type> Type = EVSQueryMatchType::None;
+	TEnumAsByte<EVSTreeQueryMatchType::Type> Type = EVSTreeQueryMatchType::None;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSQueryMatchType::Params", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSTreeQueryMatchType::Params", EditConditionHides))
 	TArray<FVSSceneComponentQueryParams> Params;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSQueryMatchType::Expression", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSTreeQueryMatchType::Expression", EditConditionHides))
 	TArray<TInstancedStruct<FVSSceneComponentQueryExpression>> Expressions;
 };
 

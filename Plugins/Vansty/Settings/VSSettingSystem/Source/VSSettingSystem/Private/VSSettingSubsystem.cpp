@@ -51,7 +51,7 @@ bool UVSSettingSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 	return Super::ShouldCreateSubsystem(Outer);
 }
 
-UVSSettingItem* UVSSettingSubsystem::GetSettingItemByTag(const FGameplayTag& ItemTag)
+UVSSettingItemBase* UVSSettingSubsystem::GetSettingItemByTag(const FGameplayTag& ItemTag)
 {
 	return TaggedSettingItems.FindRef(ItemTag).Get();
 }
@@ -142,7 +142,7 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 			TaggedSettingItems.Add(SettingItemAgent->GetItemTag(), SettingItemAgent);
 		}
 		
-		for (UVSSettingItem* SettingItem : SettingItemAgent->GetRecursiveSubSettingItems())
+		for (UVSSettingItemBase* SettingItem : SettingItemAgent->GetRecursiveSubSettingItems())
 		{
 			if (!SettingItem || !SettingItem->GetItemTag().IsValid() || !SettingItem->ShouldCreateSettingItem()) continue;
 
@@ -152,8 +152,8 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 	}
 
 	/** Cache actions. */
-	TMap<UVSSettingItem*, TArray<TEnumAsByte<EVSSettingItemAction::Type>>> InternalChangeActions;
-	for (UVSSettingItem* SettingItem : SettingItems)
+	TMap<UVSSettingItemBase*, TArray<TEnumAsByte<EVSSettingItemAction::Type>>> InternalChangeActions;
+	for (UVSSettingItemBase* SettingItem : SettingItems)
 	{
 		InternalChangeActions.Add(SettingItem, SettingItem->InternalChangeActions);
 		SettingItem->InternalChangeActions.Empty();
@@ -182,12 +182,12 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 		}
 	}
 	
-	for (UVSSettingItem* SettingItem : SettingItems)
+	for (UVSSettingItemBase* SettingItem : SettingItems)
 	{
 		SettingItem->InternalChangeActions = InternalChangeActions.FindRef(SettingItem);
 	}
 
-	for (UVSSettingItem* SettingItem : SettingItems)
+	for (UVSSettingItemBase* SettingItem : SettingItems)
 	{
 		SettingItem->OnUpdated_Native.AddUObject(this, &UVSSettingSubsystem::OnSettingItemUpdated);
 	}
@@ -196,7 +196,7 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 #if WITH_EDITOR
 void UVSSettingSubsystem::ClearEditorDirectSettingItemAgents()
 {
-	for (UVSSettingItem* SettingItem : SettingItems)
+	for (UVSSettingItemBase* SettingItem : SettingItems)
 	{
 		if (SettingItem)
 		{
@@ -225,7 +225,7 @@ void UVSSettingSubsystem::RefreshEditorDirectSettingItemAgents()
 }
 #endif
 
-void UVSSettingSubsystem::OnSettingItemUpdated(UVSSettingItem* SettingItem)
+void UVSSettingSubsystem::OnSettingItemUpdated(UVSSettingItemBase* SettingItem)
 {
 	OnItemUpdated_Native.Broadcast(SettingItem);
 	OnItemUpdated.Broadcast(SettingItem);

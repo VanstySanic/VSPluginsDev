@@ -198,9 +198,9 @@ void UVSInputActionBinderFeature::BindActionSettings(const FVSInputActionBinderS
 
 		if (!InActionSettings.SpecifiedKeys.IsEmpty())
 		{
-			for (const FKey& Key : InActionSettings.SpecifiedKeys)
+			for (const FInputChord& Key : InActionSettings.SpecifiedKeys)
 			{
-				if (Key.IsValid())
+				if (Key.Key.IsValid())
 				{
 					ActionKeyMap.Add(EventKey, Key);
 				}
@@ -233,9 +233,9 @@ void UVSInputActionBinderFeature::BindActionSettings(const FVSInputActionBinderS
 				HandleActionTriggered(ActionName, InputEvent);
 			}
 
-			TArray<FKey> KeyEntries;
+			TArray<FInputChord> KeyEntries;
 			ActionKeyMap.MultiFind(EventKey, KeyEntries);
-			for (const FKey& BoundKey : KeyEntries)
+			for (const FInputChord& BoundKey : KeyEntries)
 			{
 				if (BoundKey == Key)
 				{
@@ -260,7 +260,7 @@ void UVSInputActionBinderFeature::UnbindActionSettings(const FVSInputActionBinde
 
 		if (!InActionSettings.SpecifiedKeys.IsEmpty())
 		{
-			for (const FKey& Key : InActionSettings.SpecifiedKeys)
+			for (const FInputChord& Key : InActionSettings.SpecifiedKeys)
 			{
 				ActionKeyMap.RemoveSingle(EventKey, Key);
 			}

@@ -13,7 +13,6 @@ UVSCommonSettingItem::UVSCommonSettingItem(const FObjectInitializer& ObjectIniti
 #if WITH_EDITOR
 void UVSCommonSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
-	bool bDesireReConfig = false;
 	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSCommonSettingItem, ValueType))
 	{
 		SetValueType(ValueType);
@@ -22,15 +21,8 @@ void UVSCommonSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& 
 		{
 			SetStringValue(FString());
 		}
-		
-		bDesireReConfig = true;
 	}
-	else if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSCommonSettingItem, ConfigParams))
-	{
-		bDesireReConfig = true;
-	}
-	
-	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSCommonSettingItem, ValueType)
+	else if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSCommonSettingItem, ValueType)
 		|| PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSCommonSettingItem, EditorPreviewValue))
 	{
 		if (ValueType == EVSCommonSettingValueType::None || ValueType == EVSCommonSettingValueType::String)
@@ -55,21 +47,6 @@ void UVSCommonSettingItem::PostEditChangeProperty(struct FPropertyChangedEvent& 
 			}
 		}
 	}
-
-	if (bDesireReConfig && LastEditorConfigParams.bAutoDefaultConfig && ConfigParams.bAutoDefaultConfig)
-	{
-		/** Clear previous config and save new one. */
-		FString ConfigString;
-		if (GConfig->GetString(*LastEditorConfigParams.ConfigSection, *LastEditorConfigParams.ConfigKeyName, ConfigString, LastEditorConfigParams.ConfigFileName))
-		{
-			GConfig->RemoveKey(*LastEditorConfigParams.ConfigSection, *LastEditorConfigParams.ConfigKeyName, LastEditorConfigParams.ConfigFileName);
-			
-			ConfigString = GetUnionValueString(CurrentValue);
-			GConfig->SetString(*ConfigParams.ConfigSection, *ConfigParams.ConfigKeyName, *ConfigString, ConfigParams.ConfigFileName);
-		}
-
-		LastEditorConfigParams = ConfigParams;
-	}
 	
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
@@ -83,16 +60,6 @@ void UVSCommonSettingItem::PostLoad()
 
 #if WITH_EDITOR
 	LastEditorPreviewValue = EditorPreviewValue;
-	LastEditorConfigParams = ConfigParams;
-#endif
-}
-
-void UVSCommonSettingItem::OnValueUpdated_Implementation()
-{
-	Super::OnValueUpdated_Implementation();
-
-#if WITH_EDITOR
-	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
 #endif
 }
 
@@ -161,11 +128,11 @@ bool UVSCommonSettingItem::EqualsToBySource_Implementation(const EVSSettingItemV
 void UVSCommonSettingItem::Load_Implementation()
 {
 	Super::Load_Implementation();
-
-	if (ConfigParams.bAutoDefaultConfig)
+	
+	if (!FName(ConfigSettings.PrimaryKey).IsNone())
 	{
 		FString ConfigString;
-		if (GConfig->GetString(*ConfigParams.ConfigSection, *ConfigParams.ConfigKeyName, ConfigString, ConfigParams.ConfigFileName))
+		if (GConfig->GetString(*ConfigSettings.Section, *ConfigSettings.PrimaryKey, ConfigString, ConfigSettings.FileName))
 		{
 			SetUnionValueFromString(ConfigString, CurrentValue);
 		}
@@ -176,10 +143,10 @@ void UVSCommonSettingItem::Save_Implementation()
 {
 	Super::Save_Implementation();
 
-	if (ConfigParams.bAutoDefaultConfig)
+	if (!FName(ConfigSettings.PrimaryKey).IsNone())
 	{
 		const FString ConfigString = GetUnionValueString(CurrentValue);
-		GConfig->SetString(*ConfigParams.ConfigSection, *ConfigParams.ConfigKeyName, *ConfigString, ConfigParams.ConfigFileName);
+		GConfig->SetString(*ConfigSettings.Section, *ConfigSettings.PrimaryKey, *ConfigString, ConfigSettings.FileName);
 	}
 }
 
@@ -188,6 +155,15 @@ void UVSCommonSettingItem::Confirm_Implementation()
 	Super::Confirm_Implementation();
 
 	ConfirmedValue = CurrentValue;
+}
+
+void UVSCommonSettingItem::OnValueUpdated_Implementation()
+{
+	Super::OnValueUpdated_Implementation();
+
+#if WITH_EDITOR
+	SetEditorPreviewValueString(GetStringValue(EVSSettingItemValueSource::System));
+#endif
 }
 
 bool UVSCommonSettingItem::GetBooleanValue_Implementation(const EVSSettingItemValueSource::Type ValueSource) const

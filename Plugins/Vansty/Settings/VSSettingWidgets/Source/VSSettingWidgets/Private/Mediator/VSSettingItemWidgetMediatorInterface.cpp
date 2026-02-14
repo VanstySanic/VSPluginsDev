@@ -3,7 +3,7 @@
 #include "Mediator/VSSettingItemWidgetMediatorInterface.h"
 #include "Mediator/VSSettingItemWidgetController.h"
 
-UVSSettingItem* IVSSettingItemWidgetMediatorInterface::GetSettingItem_Native() const
+UVSSettingItemBase* IVSSettingItemWidgetMediatorInterface::GetSettingItem_Native() const
 {
 	if (UObject* Object = _getUObject())
 	{
@@ -13,7 +13,7 @@ UVSSettingItem* IVSSettingItemWidgetMediatorInterface::GetSettingItem_Native() c
 	return nullptr;
 }
 
-UVSSettingItem* IVSSettingItemWidgetMediatorInterface::GetSettingItem_Implementation() const
+UVSSettingItemBase* IVSSettingItemWidgetMediatorInterface::GetSettingItem_Implementation() const
 {
 	UObject* Object = _getUObject();
 	if (!Object) return nullptr;

@@ -9,7 +9,7 @@
 #include "UObject/Object.h"
 #include "VSSettingItemWidgetController.generated.h"
 
-class UVSSettingItem;
+class UVSSettingItemBase;
 
 /**
  * 
@@ -36,22 +36,22 @@ protected:
 	//~ End UVSWidgetController Interface
 
 	//~ Begin IVSSettingItemWidgetMediatorInterface Interface
-	virtual UVSSettingItem* GetSettingItem_Implementation() const override;
+	virtual UVSSettingItemBase* GetSettingItem_Implementation() const override;
 	
 	virtual void OnCurrentSettingItemUpdated_Implementation() override;
-	virtual void OnAnySettingItemUpdated_Implementation(UVSSettingItem* SettingItem) override;
+	virtual void OnAnySettingItemUpdated_Implementation(UVSSettingItemBase* SettingItem) override;
 	virtual void EditorRefreshMediator_Implementation() override;
 	//~ End IVSSettingItemWidgetMediatorInterface Interface
 
 private:
-	void OnCurrentSettingItemUpdatedNative(UVSSettingItem* SettingItem);
+	void OnCurrentSettingItemUpdatedNative(UVSSettingItemBase* SettingItem);
 	
 protected:
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	FGameplayTag ItemTag;
 
 private:
-	TWeakObjectPtr<UVSSettingItem> SettingItemPrivate;
+	TWeakObjectPtr<UVSSettingItemBase> SettingItemPrivate;
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY()

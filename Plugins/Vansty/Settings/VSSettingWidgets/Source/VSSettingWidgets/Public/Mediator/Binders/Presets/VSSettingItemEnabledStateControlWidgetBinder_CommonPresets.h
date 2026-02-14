@@ -17,7 +17,7 @@ class VSSETTINGWIDGETS_API UVSSettingItemEnabledStateControlWidgetBinder_CommonP
 
 protected:
 	//~ Begin UVSSettingItemEnabledStateWidgetBinder Interface
-	virtual void OnAnySettingItemUpdated_Implementation(UVSSettingItem* SettingItem) override;
+	virtual void OnAnySettingItemUpdated_Implementation(UVSSettingItemBase* SettingItem) override;
 	virtual bool GetDesiredEnabledState_Implementation() override;
 	
 #if WITH_EDITOR

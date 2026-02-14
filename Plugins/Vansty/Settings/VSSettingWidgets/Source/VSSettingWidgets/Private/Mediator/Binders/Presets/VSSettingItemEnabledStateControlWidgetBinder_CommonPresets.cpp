@@ -3,7 +3,7 @@
 #include "Mediator/Binders/Presets/VSSettingItemEnabledStateControlWidgetBinder_CommonPresets.h"
 #include "VSSettingSubsystem.h"
 #include "Items/VSCommonSettingItem.h"
-#include "Items/VSSettingItem.h"
+#include "Items/VSSettingItemBase.h"
 #include "Items/VSSettingSystemTags.h"
 #include "Items/Video/VSSettingItem_Monitor.h"
 #include "Items/Video/VSSettingItem_ScreenResolution.h"
@@ -15,7 +15,7 @@ UVSSettingItemEnabledStateControlWidgetBinder_CommonPresets::UVSSettingItemEnabl
 	
 }
 
-void UVSSettingItemEnabledStateControlWidgetBinder_CommonPresets::OnAnySettingItemUpdated_Implementation(UVSSettingItem* SettingItem)
+void UVSSettingItemEnabledStateControlWidgetBinder_CommonPresets::OnAnySettingItemUpdated_Implementation(UVSSettingItemBase* SettingItem)
 {
 	Super::OnAnySettingItemUpdated_Implementation(SettingItem);
 
@@ -73,7 +73,7 @@ void UVSSettingItemEnabledStateControlWidgetBinder_CommonPresets::EditorRefreshM
 
 	if (ItemTag == EVSSettingItem::Video::ScreenResolution)
 	{
-		if (UVSSettingItem* SettingItem = GetSettingItem_Native())
+		if (UVSSettingItemBase* SettingItem = GetSettingItem_Native())
 		{
 			AutoRefreshUpdatedItems.Reset();
 			AutoRefreshUpdatedItems.AddTag(EVSSettingItem::Video::WindowMode);

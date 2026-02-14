@@ -21,34 +21,36 @@ class VSPLUGINSCORE_API UVSPlatformLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintPure, Category = "Platform|Utils", meta = (AutoCreateRefTerm = "InCmd"))
 	static bool ParseSetRes(const FString& InSetRes, FIntPoint& OutResolution, TEnumAsByte<EWindowMode::Type>& OutWindowMode);
 
+	
 	UFUNCTION(BlueprintPure, Category = "Platform|Window")
-	static FVector2D GetWindowSize(bool bClientOnly = false);
+	static FVector2D GetGameWindowSize(bool bClientOnly = false);
 
-	/** Get the window top-left position in screen space. */
+	/** Get the game window's top-left position in screen space. */
 	UFUNCTION(BlueprintPure, Category = "Platform|Window")
-	static FVector2D GetWindowRootPosition(bool bClientOnly = false);
+	static FVector2D GetGameWindowRootPosition(bool bClientOnly = false);
 
 	UFUNCTION(BlueprintPure, Category = "Platform|Window")
-	static FVector2D GetWindowCenterPosition(bool bClientOnly = false);
+	static FVector2D GetGameWindowCenterPosition(bool bClientOnly = false);
 
-	/** Move the window root to the given screen position (windowed only). */
+	/** Move the game window root to the given screen position (windowed only). */
 	UFUNCTION(BlueprintCallable, Category = "Platform|Window", meta = (AutoCreateRefTerm = "Position"))
-	static void SetWindowPosition(const FVector2D& Position);
+	static void SetGameWindowPosition(const FVector2D& Position);
 
-	/** Center the window on its current monitor. */
+	/** Center the game window on its current monitor. */
 	UFUNCTION(BlueprintCallable, Category = "Platform|Window")
-	static void SetWindowCentered(bool bWorkAreaOnly = true);
+	static void SetGameWindowCentered(bool bWorkAreaOnly = true);
 
-	/** Center the window on the specified monitor. */
+	/** Center the game window on the specified monitor. */
 	UFUNCTION(BlueprintCallable, Category = "Platform|Window", meta = (AutoCreateRefTerm = "MonitorID"))
-	static void SetWindowCenteredAtMonitor(const FString& MonitorID, bool bWorkAreaOnly = true);
+	static void SetGameWindowCenteredAtMonitor(const FString& MonitorID, bool bWorkAreaOnly = true);
+
+	
+	UFUNCTION(BlueprintPure, Category = "Platform|Monitor")
+	static FString GetPrimaryMonitorID();
 
 	/** Get monitor info for all available displays. */
 	UFUNCTION(BlueprintPure, Category = "Platform|Monitor")
 	static TArray<FVSMonitorInfo> GetAvailableMonitorInfos();
-
-	UFUNCTION(BlueprintPure, Category = "Platform|Monitor")
-	static FString GetPrimaryMonitorID();
 
 	/** Check if a monitor ID exists on the system. */
 	UFUNCTION(BlueprintPure, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "MonitorID"))
@@ -62,7 +64,7 @@ class VSPLUGINSCORE_API UVSPlatformLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintPure, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "Position"))
 	static FString GetMonitorIDByPosition(const FVector2D& Position);
 
-	/** Get the monitor ID that contains the window root position. */
+	/** Get the monitor ID that contains the game window's root position. */
 	UFUNCTION(BlueprintPure, Category = "Platform|Monitor")
 	static FString GetWindowRootMonitorID();
 
@@ -79,10 +81,10 @@ class VSPLUGINSCORE_API UVSPlatformLibrary : public UBlueprintFunctionLibrary
 
 	/** Get the max client area size for a window on the monitor. */
 	UFUNCTION(BlueprintPure, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "MonitorID"))
-	static FVector2D GetMonitorMaximunWindowedClientSize(const FString& MonitorID);
+	static FVector2D GetMonitorMaximumWindowedClientSize(const FString& MonitorID);
 
 	/**
-	 * Move the window to another monitor.
+	 * Move the game window to another monitor.
 	 * @params MonitorID The monitor id to set. If left empty, use the default one.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "MonitorID"))
@@ -92,6 +94,7 @@ class VSPLUGINSCORE_API UVSPlatformLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintCallable, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "MonitorID"))
 	static void SetDesiredFullscreenMonitorID(const FString& MonitorID);
 
+	
 	/** Get the system default audio output device ID. */
 	UFUNCTION(BlueprintPure, Category = "Platform|Audio")
 	static FString GetSystemDefaultAudioOutputDeviceID();
@@ -101,7 +104,7 @@ class VSPLUGINSCORE_API UVSPlatformLibrary : public UBlueprintFunctionLibrary
 	static FString GetActiveAudioOutputDeviceID();
 	
 	/** Get audio output device info by ID. */
-	UFUNCTION(BlueprintCallable, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "DeviceID"))
+	UFUNCTION(BlueprintCallable, Category = "Platform|Audio", meta = (AutoCreateRefTerm = "DeviceID"))
 	static FAudioOutputDeviceInfo GetAudioOutputDeviceInfoByID(const FString& DeviceID);
 	
 	/** Get all available audio output device infos. */
@@ -109,14 +112,14 @@ class VSPLUGINSCORE_API UVSPlatformLibrary : public UBlueprintFunctionLibrary
 	static TArray<FAudioOutputDeviceInfo> GetAvailableAudioOutputDeviceInfos();
 
 	/** Check if an audio device ID exists on the system. */
-	UFUNCTION(BlueprintCallable, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "DeviceID"))
+	UFUNCTION(BlueprintCallable, Category = "Platform|Audio", meta = (AutoCreateRefTerm = "DeviceID"))
 	static bool IsValidAudioOutputDeviceID(const FString& DeviceID);
 
 	/**
 	 * Request the active audio output device to switch.
 	 * @params DeviceID The device id to set. If left empty, use the primary one.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Platform|Monitor", meta = (AutoCreateRefTerm = "DeviceID"))
+	UFUNCTION(BlueprintCallable, Category = "Platform|Audio", meta = (AutoCreateRefTerm = "DeviceID"))
 	static bool SetActiveAudioOutputDeviceByID(const FString& DeviceID);
 	
 	/** Get the active sound class adjuster for a sound mix. */
@@ -124,8 +127,8 @@ class VSPLUGINSCORE_API UVSPlatformLibrary : public UBlueprintFunctionLibrary
 	static FSoundClassAdjuster GetActiveSoundClassAdjuster(USoundMix* SoundMix, USoundClass* SoundClass);
 
 public:
-	/** Get the active Slate window (if any). */
-	static TSharedPtr<SWindow> GetActiveWindow();
+	/** Get the game's slate window. */
+	static TSharedPtr<SWindow> GetGameWindow();
 	
 	/** Get native monitor info from the platform. */
 	static TArray<FMonitorInfo> GetAvailableNativeMonitorInfos();

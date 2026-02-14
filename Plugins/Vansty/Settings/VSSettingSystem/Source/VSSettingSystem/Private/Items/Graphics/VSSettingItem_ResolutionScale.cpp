@@ -10,9 +10,9 @@ UVSSettingItem_ResolutionScale::UVSSettingItem_ResolutionScale(const FObjectInit
 {
 	ItemTag = EVSSettingItem::Scalability::ResolutionScale;
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Scalability.ResolutionScale", "DisplayName", "Resolution Scale");
-	ConfigParams.ConfigFileName = GIsEditor ? "Editor" : "GameUserSettings";
-	ConfigParams.ConfigSection = FString("ScalabilityGroups");
-	ConfigParams.ConfigKeyName = FString("sg.ResolutionQuality");
+	ConfigSettings.FileName = GIsEditor ? "Editor" : "GameUserSettings";
+	ConfigSettings.Section = "ScalabilityGroups";
+	ConfigSettings.PrimaryKey = "sg.ResolutionQuality";
 
 	DisplayNumericTextFormat = FText::FromString(TEXT("{0}%"));
 	DisplayNumericFractionDigitRange = FIntPoint(0, 0);
@@ -37,8 +37,6 @@ void UVSSettingItem_ResolutionScale::Validate_Implementation()
 
 float UVSSettingItem_ResolutionScale::GetFloatValue_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
 {
-	if (!GEngine) return Super::GetFloatValue_Implementation(ValueSource);
-
 	if (ValueType == EVSCommonSettingValueType::Float)
 	{
 		switch (ValueSource)

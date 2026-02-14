@@ -31,12 +31,17 @@ void UVSConsoleVariableSettingItem::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
 
-	SetConsoleVariableName(ConsoleVariableName);
+	CurrentConsoleVariable = CurrentConsoleVariable ? CurrentConsoleVariable : IConsoleManager::Get().FindConsoleVariable(*ConsoleVariableName, false);
+	if (CurrentConsoleVariable && !CurrentConsoleVariable->OnChangedDelegate().IsBoundToObject(this))
+	{
+		CurrentConsoleVariable->OnChangedDelegate().AddUObject(this, &UVSConsoleVariableSettingItem::OnConsoleVariableChanged);
+		SetStringValue(CurrentConsoleVariable->GetString());
+	}
 }
 
 void UVSConsoleVariableSettingItem::Uninitialize_Implementation()
 {
-	if (CurrentConsoleVariable)
+	if (CurrentConsoleVariable && CurrentConsoleVariable->OnChangedDelegate().IsBoundToObject(this))
 	{
 		CurrentConsoleVariable->OnChangedDelegate().RemoveAll(this);
 	}

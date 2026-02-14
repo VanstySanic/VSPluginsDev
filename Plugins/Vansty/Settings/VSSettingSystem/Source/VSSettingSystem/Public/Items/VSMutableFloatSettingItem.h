@@ -3,44 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "VSSettingItem.h"
+#include "VSSettingItemBase.h"
 #include "VSMutableFloatSettingItem.generated.h"
-
-/**
- * Config file binding parameters for a common setting item.
- * Describes where the setting is loaded from / saved to when auto-config is enabled.
- */
-USTRUCT(BlueprintType)
-struct FVSMutableFloatSettingConfigParams
-{
-	GENERATED_USTRUCT_BODY()
-	
-	/**
-	 * Target config file (without extension), e.g. "Editor" and "GameUserSettings".
-	 * @remark In some items, the file name appears as "Editor" in editor,
-	 * but this will be "GameUserSettings" in non-editor game.
-	 */
-	UPROPERTY(EditAnywhere)
-	FString ConfigFileName = FString("GameUserSettings");
-
-	/** Config section name used to store the value. */
-	UPROPERTY(EditAnywhere)
-	FString ConfigSection = FString("VS.SettingSystem.Item");
-
-	/** Config key used to store the value. */
-	UPROPERTY(EditAnywhere)
-	FString ConfigValueKeyName;
-
-	/** Config key used to store the mute state. */
-	UPROPERTY(EditAnywhere)
-	FString ConfigMuteKeyName;
-};
 
 /**
  * 
  */
 UCLASS(Abstract, DisplayName = "VS.Settings.Item.MutableFloat")
-class VSSETTINGSYSTEM_API UVSMutableFloatSettingItem : public UVSSettingItem
+class VSSETTINGSYSTEM_API UVSMutableFloatSettingItem : public UVSSettingItemBase
 {
 	GENERATED_UCLASS_BODY()
 
@@ -49,7 +19,6 @@ public:
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
-	virtual void PostLoad() override;
 	//~ End UObject Interface
 
 protected:
@@ -102,11 +71,7 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	float MuteStateValue = 0.f;
-
-	/** Config binding parameters used when auto-config is enabled. */
-	UPROPERTY(EditAnywhere, Category = "Settings", meta = (EditCondition = "EditorAllowChangingConfigParams()"))
-	FVSMutableFloatSettingConfigParams ConfigParams;
-
+	
 public:
 	UPROPERTY(EditAnywhere, Category = "Display")
 	FText DisplayTextFormat;
@@ -139,6 +104,4 @@ private:
 	uint8 bConfirmedIsMuted : 1;
 	float CurrentValue = 0.f;
 	float ConfirmedValue = 0.f;
-
-	FVSMutableFloatSettingConfigParams LastEditorConfigParams;
 };

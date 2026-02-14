@@ -11,35 +11,70 @@
 class URichTextBlock;
 class URichTextBlockDecorator;
 
-namespace EVSGameplayTagControllerTags
-{
-	VSPLUGINSCORE_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_TagsUpdated);
-}
-
-/** Useful in multi-layer TMap with key type of ordered gameplay tags. */
-USTRUCT(BlueprintType)
-struct VSPLUGINSCORE_API FVSGameplayTagKey
-{
-	GENERATED_BODY()
-
-	FVSGameplayTagKey(const TArray<FGameplayTag>& GameplayTagKeys = TArray<FGameplayTag>())
-		: Keys(GameplayTagKeys)
-	{
-	}
-
-	bool operator==(const FVSGameplayTagKey& Other) const
-	{
-		return Keys == Other.Keys;
-	}
-
-	friend uint32 GetTypeHash(const FVSGameplayTagKey& InKey)
-	{
-		return GetTypeHash(InKey.Keys);
-	}
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ShowOnlyInnerProperties))
-	TArray<FGameplayTag> Keys;
-};
+// /** Useful in multi-layer TMap with key type of ordered gameplay tags. */
+// USTRUCT(BlueprintType)
+// struct VSPLUGINSCORE_API FVSGameplayTagKey
+// {
+// 	GENERATED_BODY()
+//
+// 	FVSGameplayTagKey(const TArray<FGameplayTag>& GameplayTagKeys = TArray<FGameplayTag>())
+// 		: Keys(GameplayTagKeys)
+// 	{
+// 	}
+//
+// 	bool operator==(const FVSGameplayTagKey& Other) const
+// 	{
+// 		return Keys == Other.Keys;
+// 	}
+//
+// 	friend uint32 GetTypeHash(const FVSGameplayTagKey& InKey)
+// 	{
+// 		return GetTypeHash(InKey.Keys);
+// 	}
+//
+// 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ShowOnlyInnerProperties))
+// 	TArray<FGameplayTag> Keys;
+// };
+//
+// USTRUCT(BlueprintType)
+// struct FVSDataTableRowHandleWrapper
+// {
+// 	GENERATED_BODY()
+//
+// 	FVSDataTableRowHandleWrapper(const FDataTableRowHandle& Row = FDataTableRowHandle())
+// 		: Row(Row)
+// 	{
+// 	}
+//
+// 	friend uint8 GetTypeHash(const FVSDataTableRowHandleWrapper& Wrap)
+// 	{
+// 		return HashCombine(GetTypeHash(Wrap.Row.DataTable), GetTypeHash(Wrap.Row.RowName.ToString()));
+// 	}
+// 	
+// 	template <typename T>
+// 	T* GetRow(const TCHAR* ContextString = nullptr) const
+// 	{
+// 		return Row.GetRow<T>(ContextString);
+// 	}
+//
+// 	VSPLUGINSCORE_API bool IsNull() const
+// 	{
+// 		return Row.IsNull();
+// 	}
+//
+// 	VSPLUGINSCORE_API bool operator==(const FVSDataTableRowHandleWrapper& Other) const
+// 	{
+// 		return Row == Other.Row;
+// 	}
+//
+// 	VSPLUGINSCORE_API bool operator!=(const FVSDataTableRowHandleWrapper& Other) const
+// 	{
+// 		return Row != Other.Row;
+// 	}
+// 	
+// 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ShowOnlyInnerProperties))
+// 	FDataTableRowHandle Row;
+// };
 
 /** Used to get user index or user id. */
 struct FVSUserQueryParams
@@ -162,49 +197,6 @@ struct FVSNetMethodExecutionPolicies
 	VSPLUGINSCORE_API static FVSNetMethodExecutionPolicies AutonomousPredictedMulticast;
 	VSPLUGINSCORE_API static FVSNetMethodExecutionPolicies AuthorityMulticast;
 };
-
-USTRUCT(BlueprintType)
-struct FVSDataTableRowHandleWrap
-{
-	GENERATED_BODY()
-
-	FVSDataTableRowHandleWrap(const FDataTableRowHandle& Row = FDataTableRowHandle())
-		: Row(Row)
-	{
-	}
-
-	friend uint8 GetTypeHash(const FVSDataTableRowHandleWrap& Wrap)
-	{
-		return HashCombine(GetTypeHash(Wrap.Row.DataTable), GetTypeHash(Wrap.Row.RowName.ToString()));
-	}
-	
-	template <typename T>
-	T* GetRow(const TCHAR* ContextString = nullptr) const;
-
-	VSPLUGINSCORE_API bool IsNull() const
-	{
-		return Row.IsNull();
-	}
-
-	VSPLUGINSCORE_API bool operator==(const FVSDataTableRowHandleWrap& Other) const
-	{
-		return Row == Other.Row;
-	}
-
-	VSPLUGINSCORE_API bool operator!=(const FVSDataTableRowHandleWrap& Other) const
-	{
-		return Row != Other.Row;
-	}
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ShowOnlyInnerProperties))
-	FDataTableRowHandle Row;
-};
-
-template <typename T>
-T* FVSDataTableRowHandleWrap::GetRow(const TCHAR* ContextString) const
-{
-	return Row.GetRow<T>(ContextString);
-}
 
 USTRUCT(BlueprintType)
 struct FVSLocationUnderCursorQueryParams

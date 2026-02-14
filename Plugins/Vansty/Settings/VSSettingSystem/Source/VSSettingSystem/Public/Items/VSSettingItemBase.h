@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "VSSettingItem.generated.h"
+#include "VSSettingItemBase.generated.h"
 
 USTRUCT(BlueprintType)
 struct FVSSettingItemInfo
@@ -59,6 +59,41 @@ namespace EVSSettingItemValueSource
 	};
 }
 
+USTRUCT(BlueprintType)
+struct FVSSettingItemConfigSettings
+{
+	GENERATED_USTRUCT_BODY()
+
+	FVSSettingItemConfigSettings()
+		// : bDesireManualConfig(false)
+	{
+	}
+	
+	/**
+	 * Target config file (without extension), e.g. "Editor" and "GameUserSettings".
+	 * @remark In some items, the file name appears as "Editor" in editor,
+	 * but this will be "GameUserSettings" in non-editor game.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString FileName = FString("GameUserSettings");
+
+	/** Config section name used to store the value. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Section = FString("VS.SettingSystem.Item");
+
+	/** Does not work when empty or none. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString PrimaryKey = FString("None");
+	
+	/** Config keys used to store the value. This should be handled by user. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TMap<FName, FString> AdditionalNamedKeys;
+
+	// /** If true, config process is desired to be handled by user. */
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	// uint8 bDesireManualConfig : 1;
+};
+
 /**
  * Base UObject representing a single configurable setting item.
  *
@@ -71,15 +106,15 @@ namespace EVSSettingItemValueSource
  * while higher-level systems coordinate persistence and synchronization.
  */
 UCLASS(Abstract, Blueprintable, BlueprintType, EditInlineNew, DisplayName = "VS.Settings.Item.Base")
-class VSSETTINGSYSTEM_API UVSSettingItem : public UObject
+class VSSETTINGSYSTEM_API UVSSettingItemBase : public UObject
 {
 GENERATED_UCLASS_BODY()
 	
 	friend class UVSSettingItemAgent;
 	friend class UVSSettingSubsystem;
 
-	DECLARE_MULTICAST_DELEGATE_OneParam(FSettingItemDelegate, UVSSettingItem* /** SettingItem */);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSettingItemEvent, UVSSettingItem*, SettingItem);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FSettingItemDelegate, UVSSettingItemBase* /** SettingItem */);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSettingItemEvent, UVSSettingItemBase*, SettingItem);
 	
 public:
 	//~ Begin UObject Interface
@@ -204,6 +239,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	FVSSettingItemInfo ItemInfo;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+	FVSSettingItemConfigSettings ConfigSettings;
 
 	/** Execute when the game value changes inside the item. Runtime only. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Action")

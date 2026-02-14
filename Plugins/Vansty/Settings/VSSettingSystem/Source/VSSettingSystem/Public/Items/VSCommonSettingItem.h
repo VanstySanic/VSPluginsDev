@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "VSSettingItem.h"
+#include "VSSettingItemBase.h"
 #include "Containers/Union.h"
 #include "VSCommonSettingItem.generated.h"
 
@@ -24,41 +24,6 @@ namespace EVSCommonSettingValueType
 }
 
 /**
- * Config file binding parameters for a common setting item.
- * Describes where the setting is loaded from / saved to when auto-config is enabled.
- */
-USTRUCT(BlueprintType)
-struct FVSCommonSettingConfigParams
-{
-	GENERATED_USTRUCT_BODY()
-
-	FVSCommonSettingConfigParams()
-		: bAutoDefaultConfig(true)
-	{
-	}
-	
-	/**
-	 * Target config file (without extension), e.g. "Editor" and "GameUserSettings".
-	 * @remark In some items, the file name appears as "Editor" in editor,
-	 * but this will be "GameUserSettings" in non-editor game.
-	 */
-	UPROPERTY(EditAnywhere)
-	FString ConfigFileName = FString("GameUserSettings");
-
-	/** Config section name used to store the value. */
-	UPROPERTY(EditAnywhere)
-	FString ConfigSection = FString("VS.SettingSystem.Item");
-
-	/** Config key used to store the value. */
-	UPROPERTY(EditAnywhere)
-	FString ConfigKeyName;
-
-	/** If true, this item will load / save its value automatically via config with the default logics. */
-	UPROPERTY(EditAnywhere)
-	uint8 bAutoDefaultConfig : 1;
-};
-
-/**
  * Base setting item that stores a single value in a small set of common types.
  *
  * Provides typed getters/setters for Blueprint and implements the setting item lifecycle
@@ -66,7 +31,7 @@ struct FVSCommonSettingConfigParams
  * Optionally binds to config to persist the system/confirmed values.
  */
 UCLASS(Abstract, DisplayName = "VS.Settings.Item.Common")
-class VSSETTINGSYSTEM_API UVSCommonSettingItem : public UVSSettingItem
+class VSSETTINGSYSTEM_API UVSCommonSettingItem : public UVSSettingItemBase
 {
 	GENERATED_UCLASS_BODY()
 
@@ -83,12 +48,12 @@ public:
 
 protected:
 	//~ Begin UVSSettingItem Interface
-	virtual void OnValueUpdated_Implementation() override;
-	virtual void SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) override;
-	virtual bool EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const override;
 	virtual void Load_Implementation() override;
 	virtual void Save_Implementation() override;
 	virtual void Confirm_Implementation() override;
+	virtual void SetToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) override;
+	virtual bool EqualsToBySource_Implementation(const EVSSettingItemValueSource::Type ValueSource) const override;
+	virtual void OnValueUpdated_Implementation() override;
 	//~ End UVSSettingItem Interface
 
 public:
@@ -187,10 +152,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Settings", meta = (EditCondition = "EditorAllowChangingValueType()"))
 	TEnumAsByte<EVSCommonSettingValueType::Type> ValueType = EVSCommonSettingValueType::None;
 
-	/** Config binding parameters used when auto-config is enabled. */
-	UPROPERTY(EditAnywhere, Category = "Settings", meta = (EditCondition = "EditorAllowChangingConfigParams()"))
-	FVSCommonSettingConfigParams ConfigParams;
-
 public:
 	/**
 	 * The content text format to display. If you want to show the digits, please put ‘{0}’ in it.
@@ -222,7 +183,6 @@ private:
 	FText EditorPreviewText;
 
 	FString LastEditorPreviewValue;
-	FVSCommonSettingConfigParams LastEditorConfigParams = FVSCommonSettingConfigParams();
 #endif
 };
 

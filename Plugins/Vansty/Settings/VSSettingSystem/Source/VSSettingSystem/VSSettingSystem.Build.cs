@@ -26,8 +26,10 @@ public class VSSettingSystem : ModuleRules
 			new string[]
 			{
 				"Core",
+				"InputCore",
 				"GameplayTags",
 				"DeveloperSettings",
+				"EnhancedInput",
 				// ... add other public dependencies that you statically link with here ...
 				"VSPluginsCore",
 				"VSPluginsCoreCpp",

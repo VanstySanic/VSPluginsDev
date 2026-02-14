@@ -6,7 +6,7 @@
 #include "EnhancedInputComponent.h"
 #include "Classes/VSObjectFeature.h"
 #include "Interfaces/VSGameplayTagFeatureInterface.h"
-#include "Types/VSGameQueryTypes.h"
+#include "Types/VSTreeQueryTypes.h"
 #include "VSInputActionAxisBinderFeature.generated.h"
 
 class UInputAction;
@@ -34,7 +34,7 @@ struct FVSInputActionBinderSettings
 	TArray<TEnumAsByte<EInputEvent>> InputEvents;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FKey> SpecifiedKeys;
+	TArray<FInputChord> SpecifiedKeys;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSGameplayTagEventQuery AutoBindTagQuery;
@@ -161,7 +161,7 @@ private:
 	TWeakObjectPtr<UVSGameplayTagFeatureBase> GameplayTagFeaturePrivate;
 	TWeakObjectPtr<UInputComponent> FeatureInputComponent;
 	TSet<int32> BoundActionSettings;
-	TMultiMap<uint64, FKey> ActionKeyMap;
+	TMultiMap<uint64, FInputChord> ActionKeyMap;
 	TMap<uint64, int32> ActionEventAnyKey;
 	TSet<uint64> ActionEventBoundKeys;
 };

@@ -89,6 +89,12 @@ public:
 			MapParam = "MapA,MapB,Result", MapTypeDependentParams = "MapA,MapB,Result"))
 	static void MapMergeOverride(const TMap<int32, int32>& MapA, const TMap<int32, int32>& MapB, TMap<int32, int32>& Result);
 
+	/** Returns true if both maps contain the same key/value pairs. */
+	UFUNCTION(BlueprintPure, CustomThunk, Category = "Container|Map",
+		meta = (DisplayName = "Map Equal", CompactNodeTitle = "Equal",
+			MapParam = "MapA,MapB", MapTypeDependentParams = "MapA,MapB"))
+	static bool MapEqual(const TMap<int32, int32>& MapA, const TMap<int32, int32>& MapB);
+
 private:
 	DECLARE_FUNCTION(execArrayIntersection);
 	DECLARE_FUNCTION(execArrayUnion);
@@ -104,4 +110,5 @@ private:
 	DECLARE_FUNCTION(execMapKeyIntersection);
 	DECLARE_FUNCTION(execMapKeyComplement);
 	DECLARE_FUNCTION(execMapMergeOverride);
+	DECLARE_FUNCTION(execMapEqual);
 };

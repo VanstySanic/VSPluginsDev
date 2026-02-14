@@ -1,6 +1,6 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
-#include "Types/VSGameQueryTypes.h"
+#include "Types/VSTreeQueryTypes.h"
 
 FVSGameplayTagEventQuery FVSGameplayTagEventQuery::Empty = FVSGameplayTagEventQuery();
 
@@ -40,7 +40,7 @@ bool FVSGameplayTagEventQueryParams::Matches(const FGameplayTagContainer& InTagE
 bool FVSGameplayTagEventQueryExpression::Matches(const FGameplayTagContainer& TagEvents, const FGameplayTagContainer& GameplayTags) const
 {
 	switch (Type) {
-	case EVSQueryMatchType::Params:
+	case EVSTreeQueryMatchType::Params:
 		{
 			int32 MatchNum = 0;
 			for (const FVSGameplayTagEventQueryParams& Param : Params)
@@ -52,13 +52,13 @@ bool FVSGameplayTagEventQueryExpression::Matches(const FGameplayTagContainer& Ta
 			}
 
 			switch (Range) {
-			case EVSQueryMatchRange::None:
+			case EVSTreeQueryMatchRange::None:
 				return MatchNum == 0;
 
-			case EVSQueryMatchRange::Any:
+			case EVSTreeQueryMatchRange::Any:
 				return MatchNum > 0;
 				
-			case EVSQueryMatchRange::All:
+			case EVSTreeQueryMatchRange::All:
 				return MatchNum > 0 && MatchNum == Params.Num();
 
 			default: ;
@@ -66,7 +66,7 @@ bool FVSGameplayTagEventQueryExpression::Matches(const FGameplayTagContainer& Ta
 		}
 		break;
 		
-	case EVSQueryMatchType::Expression:
+	case EVSTreeQueryMatchType::Expression:
 		{
 			int32 MatchNum = 0;
 			for (const TInstancedStruct<FVSGameplayTagEventQueryExpression>& Expression : Expressions)
@@ -78,13 +78,13 @@ bool FVSGameplayTagEventQueryExpression::Matches(const FGameplayTagContainer& Ta
 			}
 
 			switch (Range) {
-			case EVSQueryMatchRange::None:
+			case EVSTreeQueryMatchRange::None:
 				return MatchNum == 0;
 
-			case EVSQueryMatchRange::Any:
+			case EVSTreeQueryMatchRange::Any:
 				return MatchNum > 0;
 				
-			case EVSQueryMatchRange::All:
+			case EVSTreeQueryMatchRange::All:
 				return MatchNum > 0 && MatchNum == Expressions.Num();
 
 			default: ;
@@ -101,8 +101,8 @@ bool FVSGameplayTagEventQueryExpression::Matches(const FGameplayTagContainer& Ta
 FVSGameplayTagEventQuery FVSGameplayTagEventQuery::GetEmptyPass()
 {
 	FVSGameplayTagEventQuery Query;
-	Query.RootExpression.Range = EVSQueryMatchRange::None;
-	Query.RootExpression.Type = EVSQueryMatchType::Params;
+	Query.RootExpression.Range = EVSTreeQueryMatchRange::None;
+	Query.RootExpression.Type = EVSTreeQueryMatchType::Params;
 	return Query;
 }
 
@@ -174,7 +174,7 @@ bool FVSSceneComponentQueryParams::Matches(const USceneComponent* Component) con
 bool FVSSceneComponentQueryExpression::Matches(const USceneComponent* Component) const
 {
 	switch (Type) {
-	case EVSQueryMatchType::Params:
+	case EVSTreeQueryMatchType::Params:
 		{
 			int32 MatchNum = 0;
 			for (const FVSSceneComponentQueryParams& Param : Params)
@@ -186,13 +186,13 @@ bool FVSSceneComponentQueryExpression::Matches(const USceneComponent* Component)
 			}
 
 			switch (Range) {
-			case EVSQueryMatchRange::None:
+			case EVSTreeQueryMatchRange::None:
 				return MatchNum == 0;
 
-			case EVSQueryMatchRange::Any:
+			case EVSTreeQueryMatchRange::Any:
 				return MatchNum > 0;
 				
-			case EVSQueryMatchRange::All:
+			case EVSTreeQueryMatchRange::All:
 				return MatchNum > 0 && MatchNum == Params.Num();
 
 			default: ;
@@ -200,7 +200,7 @@ bool FVSSceneComponentQueryExpression::Matches(const USceneComponent* Component)
 		}
 		break;
 		
-	case EVSQueryMatchType::Expression:
+	case EVSTreeQueryMatchType::Expression:
 		{
 			int32 MatchNum = 0;
 			for (const TInstancedStruct<FVSSceneComponentQueryExpression>& Expression : Expressions)
@@ -212,13 +212,13 @@ bool FVSSceneComponentQueryExpression::Matches(const USceneComponent* Component)
 			}
 
 			switch (Range) {
-			case EVSQueryMatchRange::None:
+			case EVSTreeQueryMatchRange::None:
 				return MatchNum == 0;
 
-			case EVSQueryMatchRange::Any:
+			case EVSTreeQueryMatchRange::Any:
 				return MatchNum > 0;
 				
-			case EVSQueryMatchRange::All:
+			case EVSTreeQueryMatchRange::All:
 				return MatchNum > 0 && MatchNum == Expressions.Num();
 
 			default: ;

@@ -7,7 +7,7 @@
 #include "Mediator/VSSettingItemWidgetMediatorInterface.h"
 #include "VSCommonSettingItemRangeBasedWidgetBinder.generated.h"
 
-class UVSSettingItem;
+class UVSSettingItemBase;
 class UVSCommonSettingItem;
 
 /**

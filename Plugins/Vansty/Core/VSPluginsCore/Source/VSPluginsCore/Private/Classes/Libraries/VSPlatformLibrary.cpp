@@ -65,9 +65,9 @@ bool UVSPlatformLibrary::ParseSetRes(const FString& InSetRes, FIntPoint& OutReso
 	return true;
 }
 
-FVector2D UVSPlatformLibrary::GetWindowSize(bool bClientOnly)
+FVector2D UVSPlatformLibrary::GetGameWindowSize(bool bClientOnly)
 {
-	if (TSharedPtr<SWindow> Window = GetActiveWindow())
+	if (TSharedPtr<SWindow> Window = GetGameWindow())
 	{
 		return bClientOnly ? Window->GetClientSizeInScreen() : Window->GetSizeInScreen();
 	}
@@ -75,34 +75,34 @@ FVector2D UVSPlatformLibrary::GetWindowSize(bool bClientOnly)
 	return FVector2D::ZeroVector;
 }
 
-FVector2D UVSPlatformLibrary::GetWindowRootPosition(bool bClientOnly)
+FVector2D UVSPlatformLibrary::GetGameWindowRootPosition(bool bClientOnly)
 {
-	TSharedPtr<SWindow> Window = GetActiveWindow();
+	TSharedPtr<SWindow> Window = GetGameWindow();
 	if (!Window) return FVector2D::ZeroVector;
 	
 	if (bClientOnly)
 	{
-		const FVector2D SizeDelta = GetWindowSize(false) - GetWindowSize(true);
+		const FVector2D SizeDelta = GetGameWindowSize(false) - GetGameWindowSize(true);
 		return Window->GetPositionInScreen() + SizeDelta;
 	}
 		
 	return Window->GetPositionInScreen();
 }
 
-FVector2D UVSPlatformLibrary::GetWindowCenterPosition(bool bClientOnly)
+FVector2D UVSPlatformLibrary::GetGameWindowCenterPosition(bool bClientOnly)
 {
-	TSharedPtr<SWindow> Window = GetActiveWindow();
+	TSharedPtr<SWindow> Window = GetGameWindow();
 	if (!Window) return FVector2D::ZeroVector;
 	
-	const FVector2D RootPosition = GetWindowRootPosition(bClientOnly);
-	const FVector2D WindowSize = GetWindowSize(bClientOnly);
+	const FVector2D RootPosition = GetGameWindowRootPosition(bClientOnly);
+	const FVector2D WindowSize = GetGameWindowSize(bClientOnly);
 
 	return RootPosition + 0.5f * WindowSize;
 }
 
-void UVSPlatformLibrary::SetWindowPosition(const FVector2D& Position)
+void UVSPlatformLibrary::SetGameWindowPosition(const FVector2D& Position)
 {
-	if (TSharedPtr<SWindow> Window = GetActiveWindow())
+	if (TSharedPtr<SWindow> Window = GetGameWindow())
 	{
 		if (Window->GetWindowMode() ==  EWindowMode::Windowed)
 		{
@@ -111,30 +111,35 @@ void UVSPlatformLibrary::SetWindowPosition(const FVector2D& Position)
 	}
 }
 
-void UVSPlatformLibrary::SetWindowCentered(bool bWorkAreaOnly)
+void UVSPlatformLibrary::SetGameWindowCentered(bool bWorkAreaOnly)
 {
-	if (TSharedPtr<SWindow> Window = GetActiveWindow())
+	if (TSharedPtr<SWindow> Window = GetGameWindow())
 	{
-		const FVector2D CenterPos = GetWindowCenterPosition(false);
+		const FVector2D CenterPos = GetGameWindowCenterPosition(false);
 		const FString MonitorID = GetMonitorIDByPosition(CenterPos);
-		SetWindowCenteredAtMonitor(MonitorID, bWorkAreaOnly);
+		SetGameWindowCenteredAtMonitor(MonitorID, bWorkAreaOnly);
 	}
 }
 
-void UVSPlatformLibrary::SetWindowCenteredAtMonitor(const FString& MonitorID, bool bWorkAreaOnly)
+void UVSPlatformLibrary::SetGameWindowCenteredAtMonitor(const FString& MonitorID, bool bWorkAreaOnly)
 {
-	if (TSharedPtr<SWindow> Window = GetActiveWindow())
+	if (TSharedPtr<SWindow> Window = GetGameWindow())
 	{
 		const FVSMonitorInfo MonitorInfo = GetMonitorInfoByID(MonitorID);
 		if (!MonitorInfo.ID.IsEmpty())
 		{
 			const FVector2D MonitorCenter = MonitorInfo.GetCenterPosition(bWorkAreaOnly);
 			const FVector2D TargetPos = MonitorCenter - Window->GetSizeInScreen() / 2.f;
-			SetWindowPosition(TargetPos);
+			SetGameWindowPosition(TargetPos);
 		}
 	}
 }
 
+
+FString UVSPlatformLibrary::GetPrimaryMonitorID()
+{
+	return GetPrimaryNativeMonitorInfo().ID;
+}
 
 TArray<FVSMonitorInfo> UVSPlatformLibrary::GetAvailableMonitorInfos()
 {
@@ -148,11 +153,6 @@ TArray<FVSMonitorInfo> UVSPlatformLibrary::GetAvailableMonitorInfos()
 	}
 
 	return MonitorInfos;
-}
-
-FString UVSPlatformLibrary::GetPrimaryMonitorID()
-{
-	return GetPrimaryNativeMonitorInfo().ID;
 }
 
 bool UVSPlatformLibrary::IsValidMonitorID(const FString& MonitorID)
@@ -189,7 +189,7 @@ FString UVSPlatformLibrary::GetMonitorIDByPosition(const FVector2D& Position)
 
 FString UVSPlatformLibrary::GetWindowRootMonitorID()
 {
-	TSharedPtr<SWindow> Window = GetActiveWindow();
+	TSharedPtr<SWindow> Window = GetGameWindow();
 	if (!Window.IsValid()) return FString();
 	return GetMonitorIDByPosition(Window->GetPositionInScreen());
 }
@@ -217,12 +217,12 @@ FVector2D UVSPlatformLibrary::GetMonitorCurrentResolution(const FString& Monitor
 	return FVector2D(TargetRect.Right - TargetRect.Left + 1.f, TargetRect.Bottom - TargetRect.Top + 1.f);
 }
 
-FVector2D UVSPlatformLibrary::GetMonitorMaximunWindowedClientSize(const FString& MonitorID)
+FVector2D UVSPlatformLibrary::GetMonitorMaximumWindowedClientSize(const FString& MonitorID)
 {
-	TSharedPtr<SWindow> Window = GetActiveWindow();
+	TSharedPtr<SWindow> Window = GetGameWindow();
 	if (!Window) return FIntPoint::ZeroValue;
 
-	const FVector2D WindowCenterPos = GetWindowCenterPosition(true);
+	const FVector2D WindowCenterPos = GetGameWindowCenterPosition(true);
 	const FString MonitorIDToUse = !MonitorID.IsEmpty() ? MonitorID : GetMonitorIDByPosition(WindowCenterPos);
 	const FVSMonitorInfo MonitorInfo = GetMonitorInfoByID(MonitorIDToUse);
 
@@ -239,7 +239,7 @@ FVector2D UVSPlatformLibrary::GetMonitorMaximunWindowedClientSize(const FString&
 
 bool UVSPlatformLibrary::SwitchMonitorByID(const FString& MonitorID)
 {
-	TSharedPtr<SWindow> Window = GetActiveWindow();
+	TSharedPtr<SWindow> Window = GetGameWindow();
 	if (!Window.IsValid()) return false;
 
 	FVSMonitorInfo MonitorInfo;
@@ -426,25 +426,16 @@ FSoundClassAdjuster UVSPlatformLibrary::GetActiveSoundClassAdjuster(USoundMix* S
 }
 
 
-
-TSharedPtr<SWindow> UVSPlatformLibrary::GetActiveWindow()
+TSharedPtr<SWindow> UVSPlatformLibrary::GetGameWindow()
 {
-	TSharedPtr<SWindow> Window = nullptr;
-
 	if (GEngine && GEngine->GameViewport)
 	{
-		Window = GEngine->GameViewport->GetWindow();
-	}
-	if (!Window.IsValid())
-	{
-		if (FSlateApplication::IsInitialized())
-		{
-			Window = FSlateApplication::Get().GetActiveModalWindow();
-		}
+		return GEngine->GameViewport->GetWindow();
 	}
 
-	return Window;
+	return nullptr;
 }
+
 
 TArray<FMonitorInfo> UVSPlatformLibrary::GetAvailableNativeMonitorInfos()
 {

@@ -2,7 +2,7 @@
 
 #include "Mediator/Binders/Presets/VSSettingItemMutableRangedWidgetBinder_CommonPresets.h"
 #include "GameplayTagContainer.h"
-#include "Items/VSSettingItem.h"
+#include "Items/VSSettingItemBase.h"
 #include "Items/VSSettingSystemTags.h"
 
 UVSSettingItemMutableRangedWidgetBinder_CommonPresets::UVSSettingItemMutableRangedWidgetBinder_CommonPresets(const FObjectInitializer& ObjectInitializer)

@@ -69,7 +69,7 @@ void UVSSettingItemWidgetController::Initialize_Implementation()
 
 	if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
 	{
-		if (UVSSettingItem* SettingItem = SettingSubsystem->GetSettingItemByTag(ItemTag))
+		if (UVSSettingItemBase* SettingItem = SettingSubsystem->GetSettingItemByTag(ItemTag))
 		{
 			SettingItemPrivate = SettingItem;
 			SettingItemPrivate->OnUpdated_Native.AddUObject(this, &UVSSettingItemWidgetController::OnCurrentSettingItemUpdatedNative);
@@ -83,7 +83,7 @@ void UVSSettingItemWidgetController::Uninitialize_Implementation()
 	if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
 	{
 		SettingSubsystem->OnItemUpdated.RemoveDynamic(this, &UVSSettingItemWidgetController::OnAnySettingItemUpdated);
-		if (UVSSettingItem* SettingItem = SettingSubsystem->GetSettingItemByTag(ItemTag))
+		if (UVSSettingItemBase* SettingItem = SettingSubsystem->GetSettingItemByTag(ItemTag))
 		{
 			SettingItem->OnUpdated_Native.RemoveAll(this);
 		}
@@ -155,7 +155,7 @@ void UVSSettingItemWidgetController::OnCurrentSettingItemUpdated_Implementation(
 	}
 }
 
-void UVSSettingItemWidgetController::OnAnySettingItemUpdated_Implementation(UVSSettingItem* SettingItem)
+void UVSSettingItemWidgetController::OnAnySettingItemUpdated_Implementation(UVSSettingItemBase* SettingItem)
 {
 	for (UVSWidgetBinder* WidgetBinder : WidgetBinders)
 	{
@@ -177,12 +177,12 @@ void UVSSettingItemWidgetController::EditorRefreshMediator_Implementation()
 	}
 }
 
-UVSSettingItem* UVSSettingItemWidgetController::GetSettingItem_Implementation() const
+UVSSettingItemBase* UVSSettingItemWidgetController::GetSettingItem_Implementation() const
 {
 	return SettingItemPrivate.Get();
 }
 
-void UVSSettingItemWidgetController::OnCurrentSettingItemUpdatedNative(UVSSettingItem* SettingItem)
+void UVSSettingItemWidgetController::OnCurrentSettingItemUpdatedNative(UVSSettingItemBase* SettingItem)
 {
 	Execute_OnCurrentSettingItemUpdated(this);
 }

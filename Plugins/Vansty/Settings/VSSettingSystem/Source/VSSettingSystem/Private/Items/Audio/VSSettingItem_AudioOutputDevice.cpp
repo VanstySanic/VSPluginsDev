@@ -11,9 +11,9 @@ UVSSettingItem_AudioOutputDevice::UVSSettingItem_AudioOutputDevice(const FObject
 
 	ItemTag = EVSSettingItem::Audio::Device::Output;
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Audio.Device.Output", "DisplayName", "Audio Output Device");
-	ConfigParams.ConfigFileName = "GameUserSettings";
-	ConfigParams.ConfigSection = "VS.Settings.Item.Audio.Device";
-	ConfigParams.ConfigKeyName = "AudioOutputDeviceID";
+	ConfigSettings.FileName = "GameUserSettings";
+	ConfigSettings.Section = "VS.Settings.Item.Audio.Device";
+	ConfigSettings.PrimaryKey = "AudioOutputDeviceID";
 	
 	InternalChangeActions = TArray<TEnumAsByte<EVSSettingItemAction::Type>>
 	{

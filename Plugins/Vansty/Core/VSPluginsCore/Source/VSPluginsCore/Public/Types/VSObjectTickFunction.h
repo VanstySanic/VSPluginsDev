@@ -69,7 +69,7 @@ public:
 	/**
 	 * If bTickCrossWorldIfPossible is enabled and the target UObject is not explicitly world-bound,
 	 * the tick function can re-register itself when new worlds are created or torn down.
-	 * This is useful for systems that must tick even during world reloads, PIE transitions, or seamless travel.
+	 * This is useful for systems that must tick even during world reloads, transitions, or seamless travel.
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Tick", AdvancedDisplay)
 	uint8 bTickCrossWorldIfPossible : 1;
@@ -80,6 +80,7 @@ private:
 	
 	TWeakObjectPtr<UObject> Target;
 	TUnion<TWeakObjectPtr<UObject>, TWeakObjectPtr<UActorComponent>, TWeakObjectPtr<AActor>> TypedTargetOuter;
+	TWeakObjectPtr<UGameInstance> CachedGameInstance;
 
 	uint8 bShouldTickCrossWorld : 1;
 	FDelegateHandle OnWorldInitializeDelegateHandle;

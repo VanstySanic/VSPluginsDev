@@ -7,7 +7,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Classes/VSObjectFeature.h"
 #include "Interfaces/VSGameplayTagFeatureInterface.h"
-#include "Types/VSGameQueryTypes.h"
+#include "Types/VSTreeQueryTypes.h"
 #include "VSEnhancedInputContextBinderFeature.generated.h"
 
 class UVSGameplayTagFeatureBase;

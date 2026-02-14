@@ -10,9 +10,10 @@ UVSSettingItem_ScalabilityQualityLevel::UVSSettingItem_ScalabilityQualityLevel(c
 {
 	SetValueType(EVSCommonSettingValueType::Integer);
 	
-	ConfigParams.ConfigFileName = GIsEditor ? "Editor" : "GameUserSettings";
-	ConfigParams.ConfigSection = FString("ScalabilityGroups");
 	ItemTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Scalability::QualityLevel::AntiAliasing);
+
+	ConfigSettings.FileName = GIsEditor ? "Editor" : "GameUserSettings";
+	ConfigSettings.Section = FString("ScalabilityGroups");
 }
 
 #if WITH_EDITOR
@@ -21,7 +22,7 @@ void UVSSettingItem_ScalabilityQualityLevel::PostEditChangeProperty(struct FProp
 	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItem_ScalabilityQualityLevel, ItemTag))
 	{
 		SetConsoleVariableName(GetScalabilityQualityLevelConsoleVariableNames().FindRef(ItemTag));
-		ConfigParams.ConfigKeyName = GetScalabilityQualityLevelConsoleVariableNames().FindRef(ItemTag);
+		ConfigSettings.PrimaryKey = GetScalabilityQualityLevelConsoleVariableNames().FindRef(ItemTag);
 
 		bool bShouldAssignName = ItemInfo.DisplayName.IsEmpty();
 		if (!bShouldAssignName)
@@ -58,7 +59,7 @@ void UVSSettingItem_ScalabilityQualityLevel::OnValueUpdated_Implementation()
 	EditorPreviewQualityLevel = GetQualityLevel(EVSSettingItemValueSource::System);
 #endif
 	
-	if (!GEngine || !GEngine->GameUserSettings) return;
+	if (!GEngine || !GEngine->GetGameUserSettings()) return;
 
 	/** Sync to GameUserSettings. */
 	const int32 QualityLevel = GetIntegerValue(EVSSettingItemValueSource::System);

@@ -12,8 +12,8 @@ UVSSettingItem_Volume::UVSSettingItem_Volume(const FObjectInitializer& ObjectIni
 	: Super(ObjectInitializer)
 {
 	ItemTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Audio::Volume::Master);
-	ConfigParams.ConfigFileName = "GameUserSettings";
-	ConfigParams.ConfigSection = "VS.Settings.Item.Audio.Volume";
+	ConfigSettings.FileName = "GameUserSettings";
+	ConfigSettings.Section = "VS.Settings.Item.Audio.Volume";
 
 	DisplayTextFormat = FText::FromString(TEXT("{0}%"));
 	DisplayFractionDigitRange = FIntPoint(0, 0);
@@ -60,15 +60,15 @@ void UVSSettingItem_Volume::PostEditChangeProperty(struct FPropertyChangedEvent&
 			ItemInfo.DisplayName = GetVolumeTypeDisplayNames().FindRef(ItemTag);
 		}
 
-		bool bShouldAssignConfigKey = ConfigParams.ConfigValueKeyName.IsEmpty();
+		bool bShouldAssignConfigKey = FName(ConfigSettings.PrimaryKey).IsNone();
 		if (bShouldAssignConfigKey)
 		{
 			for (const TPair<FGameplayTag, FString>& VolumeTypeConfigKeyName : GetVolumeTypeConfigKeyNames())
 			{
 				if (VolumeTypeConfigKeyName.Key == ItemTag)
 				{
-					ConfigParams.ConfigValueKeyName = GetVolumeTypeConfigKeyNames().FindRef(ItemTag);
-					ConfigParams.ConfigMuteKeyName = ConfigParams.ConfigValueKeyName + ".Muted";
+					ConfigSettings.PrimaryKey = GetVolumeTypeConfigKeyNames().FindRef(ItemTag);
+					ConfigSettings.AdditionalNamedKeys.FindOrAdd("Muted", ConfigSettings.PrimaryKey + ".Muted");
 				}
 			}
 		}

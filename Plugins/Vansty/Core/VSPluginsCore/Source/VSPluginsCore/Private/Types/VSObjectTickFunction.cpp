@@ -1,6 +1,7 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Types/VSObjectTickFunction.h"
+#include "Classes/Libraries/VSGameplayLibrary.h"
 
 FVSObjectTickFunction::~FVSObjectTickFunction()
 {
@@ -112,6 +113,17 @@ void FVSObjectTickFunction::RegisterAndSetup(UObject* InTargetObject)
 			OnWorldInitializeDelegateHandle = FWorldDelegates::OnPostWorldInitialization.AddWeakLambda(InTargetObject, [this] (UWorld* InWorld, FWorldInitializationValues)
 			{
 				if (!InWorld || !InWorld->GetCurrentLevel()) return;
+				
+				/** Only handle world with the same game instance. This avoids multi-world environment errors. */
+				if (!CachedGameInstance.IsValid())
+				{
+					CachedGameInstance = InWorld->GetGameInstance();
+				}
+				else if (InWorld->GetGameInstance() != CachedGameInstance.Get())
+				{
+					return;
+				}
+				
 				UnRegisterTickFunction();
 				RegisterTickFunction(InWorld->GetCurrentLevel());
 			});
@@ -121,6 +133,7 @@ void FVSObjectTickFunction::RegisterAndSetup(UObject* InTargetObject)
 		{
 			OnWorldTearDownDelegateHandle = FWorldDelegates::OnWorldBeginTearDown.AddWeakLambda(InTargetObject, [this] (UWorld* InWorld)
 			{
+				if (CachedGameInstance.IsValid() && InWorld->GetGameInstance() != CachedGameInstance.Get()) return;
 				UnRegisterTickFunction();
 			});
 		}
@@ -129,16 +142,11 @@ void FVSObjectTickFunction::RegisterAndSetup(UObject* InTargetObject)
 	}
 	
 	UWorld* World = InTargetObject->GetWorld();
-	if (!World)
-	{
-		if (IsInGameThread())
-		{
-			World = GWorld->GetWorld();
-		}
-	}
+	World = World ? World : UVSGameplayLibrary::GetPossibleGameplayWorld();
 	if (!World) return;
 
 	Target = InTargetObject;
+	CachedGameInstance = World->GetGameInstance();
 
 	/** Find the nearest actor component or actor in the outer chain. */
 	if (UActorComponent* ActorComponent = Target->GetTypedOuter<UActorComponent>())
