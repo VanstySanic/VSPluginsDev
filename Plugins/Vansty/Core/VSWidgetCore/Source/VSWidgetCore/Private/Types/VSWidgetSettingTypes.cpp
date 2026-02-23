@@ -7,6 +7,8 @@
 #include "CommonTextBlock.h"
 #include "VSPrivablic.h"
 #include "Blueprint/WidgetTree.h"
+#include "Components/InputKeySelector.h"
+#include "Components/VSInputKeySelector.h"
 #include "Input/CommonBoundActionButton.h"
 
 VS_DECLARE_PRIVABLIC_MEMBER(UCommonActionWidget, InputActions, TArray<FDataTableRowHandle>);
@@ -155,5 +157,83 @@ void FVSCommonButtonActionSettings::ApplyToButton(UCommonButtonBase* Button) con
 				}
 			}
 		}
+	}
+}
+
+
+FVSInputKeySelectorStyleSettings::FVSInputKeySelectorStyleSettings(const UInputKeySelector* KeySelector)
+	: bOverrideButtonStyle(false)
+	, bOverrideTextStyle(false)
+	, bOverrideMargin(false)
+	, bOverrideKeySelectionText(false)
+	, bOverrideNoKeySpecifiedText(false)
+{
+	if (KeySelector)
+	{
+		ButtonStyle = KeySelector->GetButtonStyle();
+		TextStyle = KeySelector->GetTextStyle();
+		Margin = KeySelector->GetMargin();
+		KeySelectionText = KeySelector->GetKeySelectionText();
+		NoKeySpecifiedText = KeySelector->GetNoKeySpecifiedText();
+	}
+	else
+	{
+		FText::FindTextInLiveTable_Advanced(FTextKey("InputKeySelector"), FTextKey("DefaultKeySelectionText"), KeySelectionText);
+		FText::FindTextInLiveTable_Advanced(FTextKey("InputKeySelector"), FTextKey("DefaultEmptyText"), NoKeySpecifiedText);
+	}
+}
+
+void FVSInputKeySelectorStyleSettings::ApplyToKeySelector(UInputKeySelector* KeySelector) const
+{
+	if (!KeySelector) return;
+
+	if (bOverrideButtonStyle) KeySelector->SetButtonStyle(ButtonStyle);
+	if (bOverrideTextStyle) KeySelector->SetTextStyle(TextStyle);
+	if (bOverrideMargin) KeySelector->SetMargin(Margin);
+	if (bOverrideKeySelectionText) KeySelector->SetKeySelectionText(KeySelectionText);
+	if (bOverrideNoKeySpecifiedText) KeySelector->SetNoKeySpecifiedText(NoKeySpecifiedText);
+}
+
+FVSInputKeySelectorKeySettings::FVSInputKeySelectorKeySettings(const UInputKeySelector* KeySelector)
+	: bAllowModifierKeys(true)
+	, bAllowGamepadKeys(true)
+	, bAllowKeyboardKeys(true)
+	, bAllowMouseKeys(true)
+	, bOverrideAllowModifierKeys(false)
+	, bOverrideAllowGamepadKeys(false)
+	, bOverrideAllowKeyboardKeys(false)
+	, bOverrideAllowMouseKeys(false)
+	, bOverrideEscapeKeys(false)
+{
+	if (KeySelector)
+	{
+		bAllowModifierKeys = KeySelector->AllowModifierKeys();
+		bAllowGamepadKeys = KeySelector->AllowGamepadKeys();
+		EscapeKeys = KeySelector->EscapeKeys;
+		
+		if (const UVSInputKeySelector* SelectorVS = Cast<UVSInputKeySelector>(KeySelector))
+		{
+			bAllowKeyboardKeys = SelectorVS->AllowKeyboardKeys();
+			bAllowMouseKeys = SelectorVS->AllowMouseKeys();
+		}
+	}
+	else
+	{
+		EscapeKeys.Add(EKeys::Gamepad_Special_Right);
+	}
+}
+
+void FVSInputKeySelectorKeySettings::ApplyToKeySelector(UInputKeySelector* KeySelector) const
+{
+	if (!KeySelector) return;
+
+	if (bOverrideAllowModifierKeys) KeySelector->SetAllowModifierKeys(bAllowModifierKeys);
+	if (bOverrideAllowGamepadKeys) KeySelector->SetAllowGamepadKeys(bAllowGamepadKeys);
+	if (bOverrideEscapeKeys) KeySelector->SetEscapeKeys(EscapeKeys);
+
+	if (UVSInputKeySelector* SelectorVS = Cast<UVSInputKeySelector>(KeySelector))
+	{
+		if (bOverrideAllowKeyboardKeys) SelectorVS->SetAllowKeyboardKeys(bAllowKeyboardKeys);
+		if (bOverrideAllowMouseKeys) SelectorVS->SetAllowMouseKeys(bAllowKeyboardKeys);
 	}
 }

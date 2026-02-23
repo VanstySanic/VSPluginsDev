@@ -6,6 +6,7 @@
 #include "UObject/Object.h"
 #include "VSWidgetSettingTypes.generated.h"
 
+class UInputKeySelector;
 class UCommonBoundActionButton;
 class UCommonActionWidget;
 class UCommonButtonBase;
@@ -17,6 +18,7 @@ struct VSWIDGETCORE_API FVSCommonActionWidgetSettings
 	GENERATED_BODY()
 	
 	FVSCommonActionWidgetSettings(const UCommonActionWidget* ActionWidget = nullptr);
+	
 	void ApplyToAction(UCommonActionWidget* ActionWidget) const;
 	
 	/**
@@ -68,6 +70,7 @@ struct VSWIDGETCORE_API FVSCommonButtonStyleSettings
 	GENERATED_BODY()
 
 	FVSCommonButtonStyleSettings(const UCommonButtonBase* Button = nullptr);
+	
 	void ApplyToButton(UCommonButtonBase* Button) const;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideStyle"))
@@ -96,6 +99,7 @@ struct VSWIDGETCORE_API FVSCommonButtonActionSettings
 	GENERATED_BODY()
 
 	FVSCommonButtonActionSettings(const UCommonButtonBase* Button = nullptr);
+	
 	void ApplyToButton(UCommonButtonBase* Button) const;
 
 	/**
@@ -135,4 +139,88 @@ struct VSWIDGETCORE_API FVSCommonButtonActionSettings
 	/** Whether to override the action's display name over the action handle's original one. */
 	UPROPERTY(BlueprintReadWrite)
 	uint8 bOverrideActionName : 1;
+};
+
+USTRUCT(BlueprintType)
+struct VSWIDGETCORE_API FVSInputKeySelectorStyleSettings
+{
+	GENERATED_BODY()
+
+	FVSInputKeySelectorStyleSettings(const UInputKeySelector* KeySelector = nullptr);
+
+	void ApplyToKeySelector(UInputKeySelector* KeySelector) const;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideButtonStyle"))
+	FButtonStyle ButtonStyle;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideTextStyle"))
+	FTextBlockStyle TextStyle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideMargin"))
+	FMargin Margin;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideKeySelectionText"))
+	FText KeySelectionText;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideNoKeySpecifiedText"))
+	FText NoKeySpecifiedText;
+
+
+	UPROPERTY(BlueprintReadWrite)
+	uint8 bOverrideButtonStyle : 1;
+
+	UPROPERTY(BlueprintReadWrite)
+	uint8 bOverrideTextStyle : 1;
+
+	UPROPERTY(BlueprintReadWrite)
+	uint8 bOverrideMargin : 1;
+
+	UPROPERTY(BlueprintReadWrite)
+	uint8 bOverrideKeySelectionText : 1;
+
+	UPROPERTY(BlueprintReadWrite)
+	uint8 bOverrideNoKeySpecifiedText : 1;
+};
+
+USTRUCT(BlueprintType)
+struct VSWIDGETCORE_API FVSInputKeySelectorKeySettings
+{
+	GENERATED_BODY()
+
+	FVSInputKeySelectorKeySettings(const UInputKeySelector* KeySelector = nullptr);
+	
+	void ApplyToKeySelector(UInputKeySelector* KeySelector) const;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideAllowModifierKeys"))
+	uint8 bAllowModifierKeys : 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideAllowGamepadKeys"))
+	uint8 bAllowGamepadKeys : 1;
+
+	/** This only works for UVSInputKeySelector. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideAllowKeyboardKeys"))
+	uint8 bAllowKeyboardKeys : 1;
+	
+	/** This only works for UVSInputKeySelector. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideAllowMouseKeys"))
+	uint8 bAllowMouseKeys : 1;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideEscapeKeys"))
+	TArray<FKey> EscapeKeys;
+	
+	
+	UPROPERTY(BlueprintReadWrite)
+	uint8 bOverrideAllowModifierKeys : 1;
+
+	UPROPERTY(BlueprintReadWrite)
+	uint8 bOverrideAllowGamepadKeys : 1;
+	
+	UPROPERTY(BlueprintReadWrite)
+	uint8 bOverrideAllowKeyboardKeys : 1;
+
+	UPROPERTY(BlueprintReadWrite)
+	uint8 bOverrideAllowMouseKeys : 1;
+	
+	UPROPERTY(BlueprintReadWrite)
+	uint8 bOverrideEscapeKeys : 1;
 };

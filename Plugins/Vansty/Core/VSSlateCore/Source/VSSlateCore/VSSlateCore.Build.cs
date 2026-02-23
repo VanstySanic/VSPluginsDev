@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class VSWidgetCore : ModuleRules
+public class VSSlateCore : ModuleRules
 {
-	public VSWidgetCore(ReadOnlyTargetRules Target) : base(Target)
+	public VSSlateCore(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
@@ -25,16 +25,10 @@ public class VSWidgetCore : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core",
-				"UMG",
-				"InputCore",
-				"CommonUI",
-				"CommonInput",
-				"EnhancedInput",
+				"Core", 
+				"InputCore", 
 				// ... add other public dependencies that you statically link with here ...
-				"VSPluginsCore",
-				"VSPluginsCoreCPP",
-				"VSSlateCore"
+				"VSPluginsCoreCpp",
 			}
 			);
 			

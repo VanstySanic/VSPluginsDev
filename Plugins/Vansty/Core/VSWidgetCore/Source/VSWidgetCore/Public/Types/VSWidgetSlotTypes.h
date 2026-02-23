@@ -16,6 +16,7 @@ struct VSWIDGETCORE_API FVSCommonPanelSlotSettings
 	GENERATED_USTRUCT_BODY()
 
 	FVSCommonPanelSlotSettings(const UWidget* Widget = nullptr);
+	
 	void ApplyToWidget(UWidget* Widget);
 
 	/** This may not work for all slots. */
@@ -50,8 +51,9 @@ USTRUCT(BlueprintType)
 struct VSWIDGETCORE_API FVSCanvasPanelSlotSettings
 {
 	GENERATED_BODY()
-
+	
 	FVSCanvasPanelSlotSettings(const UWidget* Widget = nullptr);
+	
 	void ApplyToWidget(UWidget* Widget);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideAnchors"))
