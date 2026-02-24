@@ -38,7 +38,7 @@ FReply SVSInputKeySelector::OnPreviewKeyDown(const FGeometry& MyGeometry, const 
 	{
 		return FReply::Handled();
 	}
-
+	
 	return SInputKeySelector::OnPreviewKeyDown(MyGeometry, InKeyEvent);
 }
 
@@ -51,6 +51,39 @@ FReply SVSInputKeySelector::OnPreviewMouseButtonDown(const FGeometry& MyGeometry
 	}
 
 	return SInputKeySelector::OnPreviewMouseButtonDown(MyGeometry, MouseEvent);
+}
+
+FReply SVSInputKeySelector::OnMouseWheel(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+	if (GetIsSelectingKey() && bAllowMouseKeys)
+	{
+		const float WheelDelta = MouseEvent.GetWheelDelta();
+		if (!FMath::IsNearlyZero(WheelDelta))
+		{
+			const FKey WheelKey = WheelDelta > 0.0f ? EKeys::MouseScrollUp : EKeys::MouseScrollDown;
+			if (WheelKey.IsValid())
+			{
+				EModifierKey::Type ModifierKey = EModifierKey::FromBools(
+				MouseEvent.IsControlDown(),
+				MouseEvent.IsAltDown(),
+				MouseEvent.IsShiftDown(),
+				MouseEvent.IsCommandDown());
+
+				VS_PRIVABLIC_METHOD(this, SInputKeySelector, SetIsSelectingKey)(false);
+
+				VS_PRIVABLIC_METHOD(this, SInputKeySelector, SelectKey)(
+					WheelKey,
+					ModifierKey == EModifierKey::Shift,
+					ModifierKey == EModifierKey::Control,
+					ModifierKey == EModifierKey::Alt,
+					ModifierKey == EModifierKey::Command);
+
+				return FReply::Handled();
+			}
+		}
+	}
+	
+	return SCompoundWidget::OnMouseWheel(MyGeometry, MouseEvent);
 }
 
 FReply SVSInputKeySelector::OnKeyUp(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)

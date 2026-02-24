@@ -44,14 +44,23 @@ bool UVSInputKeySelector::AllowMouseKeys() const
 	return bAllowMouseKeys;
 }
 
+#if WITH_EDITOR
+void UVSInputKeySelector::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSInputKeySelector, EditorPreviewKey))
+	{
+		SetSelectedKey(EditorPreviewKey);
+	}
+	
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+}
+#endif
+
 void UVSInputKeySelector::SynchronizeProperties()
 {
 	Super::SynchronizeProperties();
 
-	if (!MyVSInputKeySelector.IsValid())
-	{
-		return;
-	}
+	if (!MyVSInputKeySelector.IsValid()) return;
 
 	MyVSInputKeySelector->SetAllowKeyboardKeys(bAllowKeyboardKeys);
 	MyVSInputKeySelector->SetAllowMouseKeys(bAllowMouseKeys);
@@ -80,6 +89,15 @@ TSharedRef<SWidget> UVSInputKeySelector::RebuildWidget()
 	VS_PRIVABLIC_MEMBER(this, UInputKeySelector, MyInputKeySelector) = MyVSInputKeySelector;
 
 	return MyVSInputKeySelector.ToSharedRef();
+}
+
+void UVSInputKeySelector::OnWidgetRebuilt()
+{
+	Super::OnWidgetRebuilt();
+
+#if WITH_EDITOR
+	SetSelectedKey(EditorPreviewKey);
+#endif
 }
 
 void UVSInputKeySelector::ReleaseSlateResources(bool bReleaseChildren)

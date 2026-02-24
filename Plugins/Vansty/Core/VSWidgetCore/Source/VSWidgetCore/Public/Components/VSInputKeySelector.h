@@ -18,12 +18,14 @@ class VSWIDGETCORE_API UVSInputKeySelector : public UInputKeySelector
 	
 public:
 	//~ Begin UWidget Interface
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 	virtual void SynchronizeProperties() override;
-	//~ End UWidget Interface
 
 protected:
-	//~ Begin UWidget Interface
 	virtual TSharedRef<SWidget> RebuildWidget() override;
+	virtual void OnWidgetRebuilt() override;
 	//~ End UWidget Interface
 
 	//~ Begin UVisual Interface
@@ -31,7 +33,7 @@ protected:
 	//~ End UVisual Interface
 	
 public:
-	/** Sets whether or not keyboard keys are allowed in the selected key. */
+	/** Sets whether keyboard keys are allowed in the selected key. */
 	UFUNCTION(BlueprintCallable, Category = "Widget")
 	void SetAllowKeyboardKeys(bool bInAllowKeyboardKeys);
 
@@ -48,6 +50,7 @@ public:
 	bool AllowMouseKeys() const;
 
 private:
+	// ReSharper disable once CppHidingFunction
 	void HandleIsSelectingKeyChanged();
 	
 public:
@@ -58,5 +61,10 @@ public:
 	uint8 bAllowMouseKeys : 1;
 
 private:
+#if WITH_EDITORONLY_DATA
+	UPROPERTY(EditAnywhere, DisplayName = "Preview Key", Category = "Key Selector")
+	FInputChord EditorPreviewKey;
+#endif
+	
 	TSharedPtr<SVSInputKeySelector> MyVSInputKeySelector;
 };

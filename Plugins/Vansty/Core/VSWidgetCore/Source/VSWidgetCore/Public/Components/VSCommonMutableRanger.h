@@ -61,7 +61,7 @@ public:
 	FText DisplayMutedText = FText::FromString("");
 
 protected:
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UCheckBox> CheckBox_Mute;
 	
 private:

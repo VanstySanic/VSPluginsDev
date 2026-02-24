@@ -15,6 +15,7 @@ UVSIndexImageGroupWidget::UVSIndexImageGroupWidget(const FObjectInitializer& Obj
 void UVSIndexImageGroupWidget::NativePreConstruct()
 {
 	Super::NativePreConstruct();
+	
 	if (!bDifferRefreshment
 #if WITH_EDITOR
 		|| IsDesignTime()

@@ -140,15 +140,15 @@ public:
 	TArray<FVSCommonButtonActionSettings> ButtonActionSettings;
 
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Button Group", meta = (BindWidgetOptional))
+	TObjectPtr<UButton> Button_Prev;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Button Group", meta = (BindWidgetOptional))
+	TObjectPtr<UButton> Button_Next;
+	
 	/** The panel widget that contains the buttons. */
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget), Category = "Button Group")
 	TObjectPtr<UPanelWidget> Panel_Buttons;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Button Group", meta = (BindWidgetOptional))
-	TObjectPtr<UButton> Button_Prev;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Button Group", meta = (BindWidgetOptional))
-	TObjectPtr<UButton> Button_Next;
 
 private:
 #if WITH_EDITORONLY_DATA

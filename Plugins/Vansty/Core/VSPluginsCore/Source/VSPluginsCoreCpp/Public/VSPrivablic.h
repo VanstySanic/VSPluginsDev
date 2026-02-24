@@ -30,6 +30,10 @@
     struct FVSPrivablic_Method_Address_##CLASS##_##METHOD { using Type = RETURN_TYPE (CLASS::*)(__VA_ARGS__); }; \
     template struct VS::Privablic::FPrivateMethod<FVSPrivablic_Method_Address_##CLASS##_##METHOD, &CLASS::METHOD>;
 
+#define VS_DECLARE_PRIVABLIC_METHOD_ADDRESS_CONST(CLASS, METHOD, RETURN_TYPE, ...) \
+	struct FVSPrivablic_Method_Address_Const_##CLASS##_##METHOD { using Type = RETURN_TYPE (CLASS::*)(__VA_ARGS__) const; }; \
+	template struct VS::Privablic::FPrivateMethod<FVSPrivablic_Method_Address_Const_##CLASS##_##METHOD, &CLASS::METHOD>;
+
 
 #define VS_PRIVABLIC_MEMBER(OBJECT, CLASS, MEMBER) \
     ((OBJECT)->*VS::Privablic::FMember<FVSPrivablic_Member_##CLASS##_##MEMBER>::Value)
@@ -52,50 +56,53 @@
 #define VS_PRIVABLIC_METHOD_ADDRESS(CLASS, METHOD) \
     VS::Privablic::FMethod<FVSPrivablic_Method_Address_##CLASS##_##METHOD>::Ptr
 
+#define VS_PRIVABLIC_METHOD_ADDRESS_CONST(CLASS, METHOD) \
+    VS::Privablic::FMethod<FVSPrivablic_Method_Address_Const_##CLASS##_##METHOD>::Ptr
+
 namespace VS
 {
     namespace Privablic
 	{
-#if __cplusplus >= 201703L
-    	template <class StructClass>
-    	struct FMember
-    	{
-    		static inline typename StructClass::Type Value{};
-    	};
-
-    	template <class StructClass, typename StructClass::Type MemberAddr>
-		struct FPrivateMember
-    	{
-    		struct FInit
-    		{
-    			FInit() noexcept
-    			{
-    				FMember<StructClass>::Value = MemberAddr;
-    			}
-    		};
-    		static inline FInit Instance{};
-    		static constexpr typename StructClass::Type Value = MemberAddr;
-    	};
-
-    	template <typename StructClass>
-		struct FMethod
-    	{
-    		using Type = typename StructClass::Type;
-    		static inline Type Ptr{};
-    	};
-
-    	template <typename StructClass, typename StructClass::Type FuncAddr>
-		struct FPrivateMethod : FMethod<StructClass>
-    	{
-    		struct FInit {
-    			FInit() noexcept {
-    				FMethod<StructClass>::Ptr = FuncAddr;
-    			}
-    		};
-    		static inline FInit PrivateMethodObject{};
-    		static constexpr typename StructClass::Type Ptr = FuncAddr;
-    	};
-#else
+// #if __cplusplus >= 201703L
+//     	template <class StructClass>
+//     	struct FMember
+//     	{
+//     		static inline typename StructClass::Type Value{};
+//     	};
+//
+//     	template <class StructClass, typename StructClass::Type MemberAddr>
+// 		struct FPrivateMember
+//     	{
+//     		struct FInit
+//     		{
+//     			FInit() noexcept
+//     			{
+//     				FMember<StructClass>::Value = MemberAddr;
+//     			}
+//     		};
+//     		static inline FInit Instance{};
+//     		static constexpr typename StructClass::Type Value = MemberAddr;
+//     	};
+//
+//     	template <typename StructClass>
+// 		struct FMethod
+//     	{
+//     		using Type = typename StructClass::Type;
+//     		static inline Type Ptr{};
+//     	};
+//
+//     	template <typename StructClass, typename StructClass::Type FuncAddr>
+// 		struct FPrivateMethod : FMethod<StructClass>
+//     	{
+//     		struct FInit {
+//     			FInit() noexcept {
+//     				FMethod<StructClass>::Ptr = FuncAddr;
+//     			}
+//     		};
+//     		static inline FInit PrivateMethodObject{};
+//     		static constexpr typename StructClass::Type Ptr = FuncAddr;
+//     	};
+// #else
 		template <class StructClass>
 		struct FMember
 		{
@@ -133,6 +140,6 @@ namespace VS
 		};
 		template<typename StructClass, typename StructClass::Type FuncAddr>
 		typename FPrivateMethod<StructClass, FuncAddr>::FPrivateMethodStruct FPrivateMethod<StructClass, FuncAddr>::PrivateMethodObject;
-#endif
+// #endif
     }
 }

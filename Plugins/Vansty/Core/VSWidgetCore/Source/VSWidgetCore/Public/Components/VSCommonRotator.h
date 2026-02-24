@@ -49,10 +49,10 @@ private:
 	void OnButtonNextClicked();
 
 protected:
-	UPROPERTY(BlueprintReadOnly, Category = "Rotator", meta = (BindWidgetOptional))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Rotator", meta = (BindWidgetOptional))
 	TObjectPtr<UButton> Button_Prev;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Rotator", meta = (BindWidgetOptional))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Rotator", meta = (BindWidgetOptional))
 	TObjectPtr<UButton> Button_Next;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Rotator", meta = (BindWidgetOptional))
