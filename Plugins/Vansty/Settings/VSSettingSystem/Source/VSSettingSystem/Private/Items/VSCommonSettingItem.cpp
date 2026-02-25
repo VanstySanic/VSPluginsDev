@@ -168,11 +168,6 @@ void UVSCommonSettingItem::OnValueUpdated_Implementation()
 
 bool UVSCommonSettingItem::GetBooleanValue_Implementation(const EVSSettingItemValueSource::Type ValueSource) const
 {
-	if (ValueType == CurrentValue.GetCurrentSubtypeIndex() + 1)
-	{
-		return GetValueFromString<bool>(GetStringValue(ValueSource));
-	}
-	
 	switch (ValueType)
 	{
 	case EVSCommonSettingValueType::Boolean:
@@ -204,6 +199,10 @@ bool UVSCommonSettingItem::GetBooleanValue_Implementation(const EVSSettingItemVa
 		
 	case EVSCommonSettingValueType::Double:
 		return static_cast<bool>(GetDoubleValue(ValueSource));
+
+	case EVSCommonSettingValueType::None:
+	case EVSCommonSettingValueType::String:
+		return GetValueFromString<bool>(GetStringValue(ValueSource));
 		
 	default: ;
 	}
@@ -216,7 +215,7 @@ int32 UVSCommonSettingItem::GetIntegerValue_Implementation(const EVSSettingItemV
 	switch (ValueType)
 	{
 	case EVSCommonSettingValueType::Boolean:
-		return static_cast<int32>(GetBooleanValue());
+		return static_cast<int32>(GetBooleanValue(ValueSource));
 		
 	case EVSCommonSettingValueType::Integer:
 		switch (ValueSource)
@@ -260,7 +259,7 @@ int64 UVSCommonSettingItem::GetLongIntegerValue_Implementation(const EVSSettingI
 	switch (ValueType)
 	{
 	case EVSCommonSettingValueType::Boolean:
-		return static_cast<int64>(GetBooleanValue());
+		return static_cast<int64>(GetBooleanValue(ValueSource));
 		
 	case EVSCommonSettingValueType::Integer:
 		return static_cast<int64>(GetIntegerValue(ValueSource));
@@ -304,7 +303,7 @@ float UVSCommonSettingItem::GetFloatValue_Implementation(const EVSSettingItemVal
 	switch (ValueType)
 	{
 	case EVSCommonSettingValueType::Boolean:
-		return static_cast<float>(GetBooleanValue());
+		return static_cast<float>(GetBooleanValue(ValueSource));
 		
 	case EVSCommonSettingValueType::Integer:
 		return static_cast<float>(GetIntegerValue(ValueSource));
@@ -348,7 +347,7 @@ double UVSCommonSettingItem::GetDoubleValue_Implementation(const EVSSettingItemV
 	switch (ValueType)
 	{
 	case EVSCommonSettingValueType::Boolean:
-		return static_cast<double>(GetBooleanValue());
+		return static_cast<double>(GetBooleanValue(ValueSource));
 		
 	case EVSCommonSettingValueType::Integer:
 		return static_cast<double>(GetIntegerValue(ValueSource));
@@ -450,8 +449,6 @@ void UVSCommonSettingItem::SetIntegerValue(int32 NewValue)
 {
 	const TValueUnion PrevValue = CurrentValue;
 	SetUnionValue<int32>(NewValue, CurrentValue);
-
-	UE_LOG(LogTemp, Log, TEXT("Set + %s"), *GetName());
 	
 	if (!IsValueValid())
 	{

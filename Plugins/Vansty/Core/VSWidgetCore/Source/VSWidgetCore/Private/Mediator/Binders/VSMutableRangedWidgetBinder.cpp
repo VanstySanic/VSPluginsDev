@@ -7,6 +7,7 @@
 #include "Components/TextBlock.h"
 #include "Components/VSCommonMutableRanger.h"
 #include "Kismet/KismetTextLibrary.h"
+#include "Types/Math/VSMath.h"
 
 UVSMutableRangedWidgetBinder::UVSMutableRangedWidgetBinder(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -35,8 +36,6 @@ void UVSMutableRangedWidgetBinder::BindTypedWidget_Implementation(const FName Ty
 	Super::BindTypedWidget_Implementation(TypeName, Widget);
 
 	const float ExternalNonMutedValue = GetExternalNonMutedValue();
-	const float CurrentNonMutedValue = GetCurrentNonMutedValue();
-	const bool bCurrentIsMuted = GetCurrentIsMuted();
 	const bool bExternalIsMuted = GetExternalIsMuted();
 
 	if (TypeName == FName("Range"))
@@ -85,7 +84,7 @@ void UVSMutableRangedWidgetBinder::BindTypedWidget_Implementation(const FName Ty
 			CommonRanger->SetValue(ExternalNonMutedValue);
 			if (UVSCommonMutableRanger* MutableRanger = Cast<UVSCommonMutableRanger>(Widget))
 			{
-				MutableRanger->SetIsMuted(bCurrentIsMuted);
+				MutableRanger->SetIsMuted(bExternalIsMuted);
 			}
 			
 			CommonRanger->OnValueChanged_Native.AddUObject(this, &UVSMutableRangedWidgetBinder::OnCommonRangerValueChanged);
@@ -151,9 +150,9 @@ float UVSMutableRangedWidgetBinder::GetExternalValue() const
 	return GetExternalIsMuted() ? MuteStateValue : GetExternalNonMutedValue();
 }
 
-float UVSMutableRangedWidgetBinder::GetCurrentValue() const
+float UVSMutableRangedWidgetBinder::GetWidgetValue() const
 {
-	return GetCurrentIsMuted() ? MuteStateValue : GetCurrentNonMutedValue();
+	return GetWidgetIsMuted() ? MuteStateValue : GetWidgetNonMutedValue();
 }
 
 bool UVSMutableRangedWidgetBinder::GetExternalIsMuted_Implementation() const
@@ -161,18 +160,18 @@ bool UVSMutableRangedWidgetBinder::GetExternalIsMuted_Implementation() const
 	return false;
 }
 
-float UVSMutableRangedWidgetBinder::GetCurrentNonMutedValue_Implementation() const
+float UVSMutableRangedWidgetBinder::GetWidgetNonMutedValue_Implementation() const
 {
 	UWidget* RangeWidget = GetBoundTypedWidget(FName("Range"));
 	if (!RangeWidget) return GetExternalNonMutedValue();
 	
 	if (USlider* Slider = Cast<USlider>(RangeWidget))
 	{
-		return Slider->GetValue() / DisplayValueMultiplier;
+		return FVSMath::SafeDivide(Slider->GetValue(), DisplayValueMultiplier);
 	}
 	if (USpinBox* SpinBox = Cast<USpinBox>(RangeWidget))
 	{
-		return SpinBox->GetValue() / DisplayValueMultiplier;
+		return FVSMath::SafeDivide(SpinBox->GetValue(), DisplayValueMultiplier);
 	}
 	if (UVSCommonMutableRanger* CommonRanger = Cast<UVSCommonMutableRanger>(RangeWidget))
 	{
@@ -182,7 +181,7 @@ float UVSMutableRangedWidgetBinder::GetCurrentNonMutedValue_Implementation() con
 	return GetExternalNonMutedValue();
 }
 
-bool UVSMutableRangedWidgetBinder::GetCurrentIsMuted_Implementation() const
+bool UVSMutableRangedWidgetBinder::GetWidgetIsMuted_Implementation() const
 {
 	UWidget* RangeWidget = GetBoundTypedWidget(FName("Range"));
 
@@ -205,7 +204,7 @@ bool UVSMutableRangedWidgetBinder::GetCurrentIsMuted_Implementation() const
 
 FText UVSMutableRangedWidgetBinder::GetContentText() const
 {
-	if (GetCurrentIsMuted())
+	if (GetWidgetIsMuted())
 	{
 		if (!DisplayMutedText.IsEmpty())
 		{
@@ -214,7 +213,7 @@ FText UVSMutableRangedWidgetBinder::GetContentText() const
 	}
 	
 	const FText ValueText = UKismetTextLibrary::Conv_DoubleToText(
-		GetCurrentValue() * DisplayValueMultiplier, HalfToZero,
+		GetWidgetValue() * DisplayValueMultiplier, HalfToZero,
 		false, true,
 		1, 324,
 		DisplayFractionDigitRange.X, DisplayFractionDigitRange.Y);
@@ -286,23 +285,23 @@ void UVSMutableRangedWidgetBinder::OnCommonRangerMuteStateChanged(UVSCommonMutab
 
 void UVSMutableRangedWidgetBinder::OnDisplayWidgetValueChanged(float Value)
 {
-	OnBoundWidgetValueChanged(Value / DisplayValueMultiplier);
+	OnBoundWidgetValueChanged(FVSMath::SafeDivide(Value, DisplayValueMultiplier));
 }
 
 void UVSMutableRangedWidgetBinder::OnBoundWidgetValueChanged(float Value)
 {
+	OnWidgetValueChanged(Value);
 	if (FMath::IsNearlyEqual(Value, MuteStateValue))
 	{
 		RebindWidgetByType(FName("Mute"));
 	}
 	
 	RebindWidgetByType(FName("Content"));
-	OnWidgetValueChanged(Value);
 }
 
 void UVSMutableRangedWidgetBinder::OnBoundWidgetMuteStateChanged(bool bMuted)
 {
-	if (bMuted || !FMath::IsNearlyEqual(GetCurrentNonMutedValue(), MuteStateValue))
+	if (bMuted || !FMath::IsNearlyEqual(GetWidgetNonMutedValue(), MuteStateValue))
 	{
 		OnWidgetMuteStateChanged(bMuted);
 	}

@@ -64,12 +64,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	TMap<FVSInputMappingAxisSlot, FKey> GetKeys(EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
-	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "SlottedKeys"))
-	void SetKeys(const TMap<FVSInputMappingAxisSlot, FKey>& SlottedKeys);
-
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FKey GetKey(const FVSInputMappingAxisSlot& Slot, EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
+	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "SlottedKeys"))
+	void SetKeys(const TMap<FVSInputMappingAxisSlot, FKey>& SlottedKeys);
+	
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetKey(const FVSInputMappingAxisSlot& Slot, const FKey& Key);
 

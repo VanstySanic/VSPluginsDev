@@ -64,11 +64,11 @@ void UVSCommonSettingItemRangeBasedWidgetBinder::OnWidgetValueChanged_Implementa
 	
 	if (UVSCommonSettingItem* CommonSettingItem = Cast<UVSCommonSettingItem>(GetSettingItem_Native()))
 	{
-		CommonSettingItem->SetFloatValue(GetCurrentValue());
+		CommonSettingItem->SetFloatValue(GetWidgetValue());
 	}
 	if (UVSMutableFloatSettingItem* MutableFloatSettingItem = Cast<UVSMutableFloatSettingItem>(GetSettingItem_Native()))
 	{
-		MutableFloatSettingItem->SetValue(GetCurrentValue());
+		MutableFloatSettingItem->SetValue(GetWidgetValue());
 	}
 }
 

@@ -24,7 +24,7 @@ bool UVSReplicatableObject::IsSupportedForNetworking() const
 
 int32 UVSReplicatableObject::GetFunctionCallspace(UFunction* Function, FFrame* Stack)
 {
-	if ((Function->FunctionFlags & FUNC_Static))
+	if ((Function->FunctionFlags & FUNC_Static) && GEngine)
 	{
 		return GEngine->GetGlobalFunctionCallspace(Function, this, Stack);
 	}

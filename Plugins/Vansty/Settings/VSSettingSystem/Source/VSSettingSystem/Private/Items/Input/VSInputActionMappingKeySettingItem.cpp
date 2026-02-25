@@ -146,6 +146,11 @@ TMap<FVSInputMappingKeySlot, FInputChord> UVSInputActionMappingKeySettingItem::G
 	return TMap<FVSInputMappingKeySlot, FInputChord>();
 }
 
+FInputChord UVSInputActionMappingKeySettingItem::GetKey(const FVSInputMappingKeySlot& Slot, EVSSettingItemValueSource::Type ValueSource) const
+{
+	return GetKeys(ValueSource).FindRef(Slot);
+}
+
 void UVSInputActionMappingKeySettingItem::SetKeys(const TMap<FVSInputMappingKeySlot, FInputChord>& SlottedChords)
 {
 	const TMap<FVSInputMappingKeySlot, FInputChord> PrevSlottedChords = CurrentSlottedChords;
@@ -153,7 +158,7 @@ void UVSInputActionMappingKeySettingItem::SetKeys(const TMap<FVSInputMappingKeyS
 	CurrentSlottedChords = SlottedChords;
 	for (const TPair<FVSInputMappingKeySlot, FInputChord> SlottedChord : SlottedChords)
 	{
-		if (!SlottedChord.Value.Key.IsValid())
+		if (!SlottedChord.Value.Key.IsValid() &&SlottedChord.Value == GetKey(SlottedChord.Key, EVSSettingItemValueSource::Default))
 		{
 			CurrentSlottedChords.Remove(SlottedChord.Key);
 		}
@@ -165,17 +170,12 @@ void UVSInputActionMappingKeySettingItem::SetKeys(const TMap<FVSInputMappingKeyS
 	}
 }
 
-FInputChord UVSInputActionMappingKeySettingItem::GetKey(const FVSInputMappingKeySlot& Slot, EVSSettingItemValueSource::Type ValueSource) const
-{
-	return GetKeys(ValueSource).FindRef(Slot);
-}
-
 void UVSInputActionMappingKeySettingItem::SetKey(const FVSInputMappingKeySlot& Slot, const FInputChord& Chord)
 {
 	const FInputChord PrevChord = CurrentSlottedChords.FindRef(Slot);
+	
 	CurrentSlottedChords.Emplace(Slot, Chord);
-
-	if (!Chord.Key.IsValid())
+	if (!Chord.Key.IsValid() && Chord == GetKey(Slot, EVSSettingItemValueSource::Default))
 	{
 		CurrentSlottedChords.Remove(Slot);
 	}

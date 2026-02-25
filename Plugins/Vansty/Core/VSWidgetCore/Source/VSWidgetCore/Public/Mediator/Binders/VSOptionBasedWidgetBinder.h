@@ -40,14 +40,14 @@ public:
 
 	/** Get the widget option index. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Option")
-	int32 GetCurrentIndex() const;
+	int32 GetWidgetIndex() const;
 
 	/** Get the widget option. */
 	UFUNCTION(BlueprintCallable, Category = "Option")
-	FString GetCurrentOption() const;
+	FString GetWidgetOption() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Option")
-	FText GetCurrentOptionText() const;
+	FText GetWidgetOptionText() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Option", meta = (AutoCreateRefTerm = "Option"))
 	int32 GetOptionIndex(const FString& Option) const;

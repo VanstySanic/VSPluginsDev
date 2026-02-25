@@ -45,12 +45,12 @@ void UVSSettingItemMutableRangedWidgetBinder::OnWidgetValueChanged_Implementatio
 	
 	if (UVSCommonSettingItem* CommonSettingItem = Cast<UVSCommonSettingItem>(GetSettingItem_Native()))
 	{
-		CommonSettingItem->SetFloatValue(GetCurrentValue());
+		CommonSettingItem->SetFloatValue(GetWidgetValue());
 	}
 	else if (UVSMutableFloatSettingItem* MutableFloatSettingItem = Cast<UVSMutableFloatSettingItem>(GetSettingItem_Native()))
 	{
-		MutableFloatSettingItem->SetValue(GetCurrentNonMutedValue());
-		MutableFloatSettingItem->SetIsMuted(GetCurrentIsMuted());
+		MutableFloatSettingItem->SetValue(GetWidgetNonMutedValue());
+		MutableFloatSettingItem->SetIsMuted(GetWidgetIsMuted());
 	}
 	
 	RebindWidgetByType(FName("Range"));

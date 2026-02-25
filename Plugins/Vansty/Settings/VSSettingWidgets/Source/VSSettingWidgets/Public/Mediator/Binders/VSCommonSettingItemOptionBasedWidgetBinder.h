@@ -22,11 +22,10 @@ protected:
 	//~ Begin UVSOptionBasedWidgetBinder Interface
 	virtual void BindTypedWidget_Implementation(const FName TypeName, UWidget* Widget) override;
 	virtual void UnbindTypedWidget_Implementation(const FName TypeName, UWidget* Widget) override;
-	
+	virtual void OnCurrentSettingItemUpdated_Implementation() override;
+
 	virtual FString GetExternalOption_Implementation() const override;
 	virtual FText OptionStringToText_Implementation(const FString& String) const override;
-	
 	virtual void OnWidgetOptionChanged_Implementation(int32 NewIndex) override;
-	virtual void OnCurrentSettingItemUpdated_Implementation() override;
 	//~ End UVSOptionBasedWidgetBinder Interface
 };

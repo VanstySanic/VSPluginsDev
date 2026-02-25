@@ -22,11 +22,10 @@ protected:
 	//~ Begin UVSRangeBasedWidgetBinder Interface
 	virtual void BindTypedWidget_Implementation(const FName TypeName, UWidget* Widget) override;
 	virtual void UnbindTypedWidget_Implementation(const FName TypeName, UWidget* Widget) override;
-
-	virtual void OnWidgetValueChanged_Implementation(float NewValue) override;
 	virtual void OnCurrentSettingItemUpdated_Implementation() override;
 
 	virtual float GetExternalValue_Implementation() const override;
+	virtual void OnWidgetValueChanged_Implementation(float NewValue) override;
 
 #if WITH_EDITOR
 	virtual void EditorRefreshMediator_Implementation() override;

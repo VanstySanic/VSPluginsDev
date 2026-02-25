@@ -45,8 +45,7 @@ void UVSOptionBasedWidgetBinder::BindTypedWidget_Implementation(const FName Type
 {
 	Super::BindTypedWidget_Implementation(TypeName, Widget);
 
-	const FString CurrentOption = GetCurrentOption();
-	const int32 CurrentIndex = GetCurrentIndex();
+	const FString CurrentOption = GetWidgetOption();
 	const FString ExternalOption = GetExternalOption();;
 	const int32 ExternalIndex = GetOptionIndex(ExternalOption);
 
@@ -76,12 +75,11 @@ void UVSOptionBasedWidgetBinder::BindTypedWidget_Implementation(const FName Type
 			CommonRotator->OnRotatedWithDirection.AddDynamic(this, &UVSOptionBasedWidgetBinder::OnCommonRotatorValueChanged);
 			
 			/** Common rotator does not support disabled options. Please turn the bInternalHideDisabledOptions on. */
-			bInternalHideDisabledOptions = true;
+			// bInternalHideDisabledOptions = true;
 		}
 		else if (UVSCommonButtonGroupWidget* ButtonGroupWidget = Cast<UVSCommonButtonGroupWidget>(Widget))
 		{
 			ButtonGroupWidget->ButtonActionSettings.Empty();
-			ButtonGroupWidget->ButtonActionSettings.Reserve(OptionTexts.Num());
 			ButtonGroupWidget->OverridenButtonNames.Empty();
 			ButtonGroupWidget->DefaultDisabledIndexes.Empty();
 
@@ -106,7 +104,7 @@ void UVSOptionBasedWidgetBinder::BindTypedWidget_Implementation(const FName Type
 			Slider->SetStepSize(1.f);
 			Slider->MouseUsesStep = true;
 
-			Slider->SetValue(FMath::Max((float)CurrentIndex, 0.f));
+			Slider->SetValue(FMath::Max((float)ExternalIndex, 0.f));
 
 			Slider->OnValueChanged.AddDynamic(this, &UVSOptionBasedWidgetBinder::OnSliderValueChanged);
 		}
@@ -118,7 +116,7 @@ void UVSOptionBasedWidgetBinder::BindTypedWidget_Implementation(const FName Type
 			CommonRanger->bSnapByStep = true;
 
 			CommonRanger->RefreshRanger();
-			CommonRanger->SetValue(FMath::Max((float)CurrentIndex, 0.f));
+			CommonRanger->SetValue(FMath::Max((float)ExternalIndex, 0.f));
 
 			CommonRanger->OnValueChanged.AddDynamic(this, &UVSOptionBasedWidgetBinder::OnCommonRangerValueChanged);
 		}
@@ -127,11 +125,11 @@ void UVSOptionBasedWidgetBinder::BindTypedWidget_Implementation(const FName Type
 	{
 		if (UTextBlock* TextBlock = Cast<UTextBlock>(Widget))
 		{
-			TextBlock->SetText(GetCurrentOptionText());
+			TextBlock->SetText(GetWidgetOptionText());
 		}
 		else if (URichTextBlock* RichTextBlock = Cast<URichTextBlock>(Widget))
 		{
-			RichTextBlock->SetText(GetCurrentOptionText());
+			RichTextBlock->SetText(GetWidgetOptionText());
 		}
 	}
 }
@@ -203,9 +201,9 @@ FString UVSOptionBasedWidgetBinder::GetExternalOption_Implementation() const
 	return FString();
 }
 
-FText UVSOptionBasedWidgetBinder::GetCurrentOptionText() const
+FText UVSOptionBasedWidgetBinder::GetWidgetOptionText() const
 {
-	const FString Option = GetExternalOption();
+	const FString Option = GetWidgetOption();
 	int32 Index = GetOptionIndex(Option);
 	if (OptionTexts.IsValidIndex(Index))
 	{
@@ -214,7 +212,7 @@ FText UVSOptionBasedWidgetBinder::GetCurrentOptionText() const
 	return OptionStringToText(Option);
 }
 
-int32 UVSOptionBasedWidgetBinder::GetCurrentIndex_Implementation() const
+int32 UVSOptionBasedWidgetBinder::GetWidgetIndex_Implementation() const
 {
 	UWidget* OptionWidget = GetBoundTypedWidget(FName("Options"));
 	if (!OptionWidget) return GetOptionIndex(GetExternalOption());
@@ -231,13 +229,21 @@ int32 UVSOptionBasedWidgetBinder::GetCurrentIndex_Implementation() const
 	{
 		return ButtonGroupWidget->GetButtonGroup()->GetSelectedButtonIndex();
 	}
+	if (UVSCommonRanger* CommonRanger = Cast<UVSCommonRanger>(OptionWidget))
+	{
+		return FMath::RoundToInt(CommonRanger->GetValue());
+	}
+	if (USlider* Slider = Cast<USlider>(OptionWidget))
+	{
+		return FMath::RoundToInt(Slider->GetValue());
+	}
 
 	return GetOptionIndex(GetExternalOption());
 }
 
-FString UVSOptionBasedWidgetBinder::GetCurrentOption() const
+FString UVSOptionBasedWidgetBinder::GetWidgetOption() const
 {
-	return GetOptionAtIndex(GetCurrentIndex());
+	return GetOptionAtIndex(GetWidgetIndex());
 }
 
 int32 UVSOptionBasedWidgetBinder::GetOptionIndex(const FString& Option) const
@@ -303,8 +309,8 @@ void UVSOptionBasedWidgetBinder::OnCultureChanged()
 
 void UVSOptionBasedWidgetBinder::OnBoundWidgetValueChanged(int32 Index)
 {
-	RebindWidgetByType(FName("Content"));
 	OnWidgetOptionChanged(Index);
+	RebindWidgetByType(FName("Content"));
 }
 
 void UVSOptionBasedWidgetBinder::OnComboBoxStringOpening()
@@ -321,10 +327,10 @@ void UVSOptionBasedWidgetBinder::OnComboBoxStringOpening()
 		
 		if (TableView.IsValid() && ListView.IsValid() && GetWorld())
 		{
-			GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([this, TableView, ListView]()
+			GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this, TableView, ListView]()
 			{
 				if (!IsValid(this) || !GetWorld() || !TableView.IsValid() || !ListView.IsValid()) return;
-				GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateLambda([this, TableView, ListView]()
+				GetWorld()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this, TableView, ListView]()
 				{
 					if (!IsValid(this) || !TableView.IsValid() || !ListView.IsValid()) return;
 					
@@ -349,12 +355,20 @@ void UVSOptionBasedWidgetBinder::OnComboBoxStringOpening()
 
 void UVSOptionBasedWidgetBinder::OnComboBoxStringValueChanged(FString SelectedItem, ESelectInfo::Type SelectionType)
 {
-	for (int32 i = 0; i < OptionTexts.Num(); i++)
+	if (UComboBoxString* ComboBoxString = Cast<UComboBoxString>(GetBoundTypedWidget("Options")))
 	{
-		if (OptionTexts[i].EqualTo(FText::FromString(SelectedItem)))
-		{
-			OnBoundWidgetValueChanged(i);
-		}
+		OnBoundWidgetValueChanged(ComboBoxString->GetSelectedIndex());
+	}
+	else
+	{
+		for (int32 i = 0; i < OptionTexts.Num(); i++)
+        {
+        	if (OptionTexts[i].EqualTo(FText::FromString(SelectedItem)))
+        	{
+        		OnBoundWidgetValueChanged(i);
+        		break;
+        	}
+        }
 	}
 }
 
@@ -370,10 +384,10 @@ void UVSOptionBasedWidgetBinder::OnButtonGroupValueChanged(UCommonButtonBase* As
 
 void UVSOptionBasedWidgetBinder::OnSliderValueChanged(float Value)
 {
-	OnBoundWidgetValueChanged(int32(Value));
+	OnBoundWidgetValueChanged(FMath::RoundToInt(Value));
 }
 
 void UVSOptionBasedWidgetBinder::OnCommonRangerValueChanged(UVSCommonRanger* Ranger, float Value)
 {
-	OnBoundWidgetValueChanged(int32(Value));
+	OnBoundWidgetValueChanged(FMath::RoundToInt(Value));
 }

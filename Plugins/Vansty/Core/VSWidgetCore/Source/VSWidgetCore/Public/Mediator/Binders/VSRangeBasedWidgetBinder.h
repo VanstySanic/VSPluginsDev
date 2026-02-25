@@ -32,7 +32,7 @@ public:
 	
 	/** Get the value from widget. */
 	UFUNCTION(BlueprintCallable, Category = "Range")
-	float GetCurrentValue() const;
+	float GetWidgetValue() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Range")
 	FVector2D GetValueRange() const { return ValueRange; }

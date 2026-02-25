@@ -17,7 +17,7 @@ class VSWIDGETCORE_API UVSMutableRangedWidgetBinder : public UVSWidgetBinder
 {
 	GENERATED_UCLASS_BODY()
 
-	protected:
+protected:
 	//~ Begin UVSWidgetBinder Interface
 	virtual void Initialize_Implementation() override;
 	virtual void Uninitialize_Implementation() override;
@@ -40,15 +40,15 @@ public:
 
 	/** Get the widget value that ignores the muted state. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Range")
-	float GetCurrentNonMutedValue() const;
+	float GetWidgetNonMutedValue() const;
 	
 	/** Get the widget value. */
 	UFUNCTION(BlueprintCallable, Category = "Range")
-	float GetCurrentValue() const;
+	float GetWidgetValue() const;
 	
 	/** Get the widget mute state. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Range")
-	bool GetCurrentIsMuted() const;
+	bool GetWidgetIsMuted() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Range")
 	FVector2D GetValueRange() const { return ValueRange; }

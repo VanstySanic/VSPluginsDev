@@ -6,6 +6,7 @@
 #include "UObject/Object.h"
 #include "VSWidgetSettingTypes.generated.h"
 
+class UVSContentedInputKeySelector;
 class UInputKeySelector;
 class UCommonBoundActionButton;
 class UCommonActionWidget;
@@ -147,7 +148,9 @@ struct VSWIDGETCORE_API FVSInputKeySelectorStyleSettings
 	GENERATED_BODY()
 
 	FVSInputKeySelectorStyleSettings(const UInputKeySelector* KeySelector = nullptr);
+	FVSInputKeySelectorStyleSettings(const UVSContentedInputKeySelector* KeySelector);
 
+	void ApplyToKeySelector(UVSContentedInputKeySelector* KeySelector) const;
 	void ApplyToKeySelector(UInputKeySelector* KeySelector) const;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideButtonStyle"))
@@ -188,7 +191,9 @@ struct VSWIDGETCORE_API FVSInputKeySelectorKeySettings
 	GENERATED_BODY()
 
 	FVSInputKeySelectorKeySettings(const UInputKeySelector* KeySelector = nullptr);
+	FVSInputKeySelectorKeySettings(const UVSContentedInputKeySelector* KeySelector);
 	
+	void ApplyToKeySelector(UVSContentedInputKeySelector* KeySelector) const;
 	void ApplyToKeySelector(UInputKeySelector* KeySelector) const;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideAllowModifierKeys"))

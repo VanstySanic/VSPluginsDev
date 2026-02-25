@@ -23,17 +23,28 @@ UVSContentedInputKeySelector::UVSContentedInputKeySelector(const FObjectInitiali
 void UVSContentedInputKeySelector::NativePreConstruct()
 {
 	Super::NativePreConstruct();
-
-	InputKeySelector->SetTextBlockVisibility(ESlateVisibility::Hidden);
-	Panel_Content->SetVisibility(ESlateVisibility::HitTestInvisible);
-
+	
 	if (InputKeySelector && Panel_Content)
 	{
-		InputKeySelector->OnKeySelected.AddUniqueDynamic(this, &UVSContentedInputKeySelector::OnKeySelected);
-		InputKeySelector->OnIsSelectingKeyChanged.AddUniqueDynamic(this, &UVSContentedInputKeySelector::UVSContentedInputKeySelector::OnIsSelectingChanged);
+		InputKeySelector->SetTextBlockVisibility(ESlateVisibility::Hidden);
+		Panel_Content->SetVisibility(ESlateVisibility::HitTestInvisible);
+		
+		InputKeySelector->OnKeySelected.AddUniqueDynamic(this, &UVSContentedInputKeySelector::OnSelectorKeySelected);
+		InputKeySelector->OnIsSelectingKeyChanged.AddUniqueDynamic(this, &UVSContentedInputKeySelector::OnIsSelectingChanged);
 	}
 
 	RefreshContents();
+}
+
+void UVSContentedInputKeySelector::SetSelectedKey(const FInputChord& Key)
+{
+	if (!InputKeySelector) return;
+	InputKeySelector->SetSelectedKey(Key);
+}
+
+FInputChord UVSContentedInputKeySelector::GetSelectedKey() const
+{
+	return InputKeySelector ? InputKeySelector->GetSelectedKey() : FInputChord();
 }
 
 void UVSContentedInputKeySelector::RefreshContents()
@@ -56,7 +67,7 @@ void UVSContentedInputKeySelector::RefreshContents()
 		{
 			FKey ModifiedKey = FKey();
 			if (SelectedKey.bAlt) ModifiedKey = EKeys::LeftAlt;
-			else if (SelectedKey.bCmd) ModifiedKey =  EKeys::LeftAlt;
+			else if (SelectedKey.bCmd) ModifiedKey =  EKeys::LeftCommand;
 			else if (SelectedKey.bCtrl) ModifiedKey =  EKeys::LeftControl;
 			else if (SelectedKey.bShift) ModifiedKey =  EKeys::LeftShift;
 
@@ -98,7 +109,7 @@ bool UVSContentedInputKeySelector::AddKeyIcon(const FKey& Key)
 			Image->SetBrush(Brush);
 			
 			DefaultSlotSettings.ApplyToWidget(Image);
-			ContentPanelSlotSettings.ApplyToWidget(Image);
+			ContentSlotSettings.ApplyToWidget(Image);
 			
 			return true;
 		}
@@ -131,7 +142,7 @@ void UVSContentedInputKeySelector::AddKeyText(const FKey& Key)
 		Panel_Content->AddChild(TextBlock);
 		
 		DefaultSlotSettings.ApplyToWidget(TextBlock);
-		ContentPanelSlotSettings.ApplyToWidget(TextBlock);
+		ContentSlotSettings.ApplyToWidget(TextBlock);
 	}
 }
 
@@ -157,7 +168,7 @@ void UVSContentedInputKeySelector::AddCustomText(const FText Text)
 
 		Panel_Content->AddChild(TextBlock);
 		DefaultSlotSettings.ApplyToWidget(TextBlock);
-		ContentPanelSlotSettings.ApplyToWidget(TextBlock);
+		ContentSlotSettings.ApplyToWidget(TextBlock);
 	}
 }
 
@@ -166,7 +177,10 @@ void UVSContentedInputKeySelector::OnIsSelectingChanged()
 	RefreshContents();
 }
 
-void UVSContentedInputKeySelector::OnKeySelected(FInputChord SelectedKey)
+void UVSContentedInputKeySelector::OnSelectorKeySelected(FInputChord SelectedKey)
 {
 	RefreshContents();
+
+	OnKeySelected_Native.Broadcast(this, SelectedKey);
+	OnKeySelected.Broadcast(this, SelectedKey);
 }

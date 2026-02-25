@@ -34,7 +34,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags")
 	FGameplayTagContainer InitialSimulationReplicatedGameplayTags;
 
-	/** Gameplay tags on the AbilitySystemComponent to listen to for AnyCountChange events when using the ASC as the tag source. */
+	/** Gameplay tag counts on the AbilitySystemComponent to listen to for AnyCountChange events when using the ASC as the tag source. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags")
-	FGameplayTagContainer AbilitySystemListeningTags;
+	FGameplayTagContainer AbilitySystemListeningCountedTags;
 };

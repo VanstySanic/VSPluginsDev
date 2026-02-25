@@ -110,7 +110,8 @@ void UVSSettingItem_WindowMode::Save_Implementation()
 	
 	GConfig->SetInt(*ConfigSettings.Section, *ConfigSettings.AdditionalNamedKeys.FindRef("LastConfirmedFullscreenMode"), GetWindowMode(EVSSettingItemValueSource::Confirmed), ConfigSettings.FileName);
 	GConfig->SetInt(*ConfigSettings.Section, *ConfigSettings.AdditionalNamedKeys.FindRef("PreferredFullscreenMode"), GetWindowMode(EVSSettingItemValueSource::Confirmed), ConfigSettings.FileName);
-	GConfig->Flush(false, ConfigSettings.Section);
+
+	GConfig->Flush(false, *ConfigSettings.FileName);
 }
 
 bool UVSSettingItem_WindowMode::IsValueValid_Implementation() const
@@ -170,7 +171,7 @@ int32 UVSSettingItem_WindowMode::GetIntegerValue_Implementation(const EVSSetting
 		switch (ValueSource)
 		{
 		case EVSSettingItemValueSource::Default:
-			return GEngine->GetGameUserSettings()->GetDefaultWindowMode();
+			return GEngine->GetGameUserSettings() ? GEngine->GameUserSettings->GetDefaultWindowMode() : EWindowMode::WindowedFullscreen;
 			
 		case EVSSettingItemValueSource::Game:
 			if (IConsoleVariable* CVarSetRes = IConsoleManager::Get().FindConsoleVariable(TEXT("r.SetRes"), false))

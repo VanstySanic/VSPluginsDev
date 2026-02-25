@@ -920,13 +920,15 @@ void UVSAbilitySystemGameplayTagFeature::Initialize_Implementation()
 		AbilitySystemGameplayTagCountContainerPtr = &VS_PRIVABLIC_MEMBER(AbilitySystemComponentPrivate.Get(), UAbilitySystemComponent, GameplayTagCountContainer);
 		check(AbilitySystemGameplayTagCountContainerPtr);
 
+		AbilitySystemComponentPrivate->RegisterGenericGameplayTagEvent().AddUObject(this, &UVSAbilitySystemGameplayTagFeature::OnAbilitySystemTagNewOrRemoved);
+		
 		if (AbilitySystemGameplayTagCountContainerPtr)
 		{
 			/** Bind listen delegate. */
-			for (const FGameplayTag& GameplayTag : UVSPluginsCoreGameSettings::Get()->AbilitySystemListeningTags.GetGameplayTagArray())
+			for (const FGameplayTag& GameplayTag : UVSPluginsCoreGameSettings::Get()->AbilitySystemListeningCountedTags.GetGameplayTagArray())
 			{
 				FDelegateHandle DelegateHandle = AbilitySystemComponentPrivate->RegisterGameplayTagEvent(GameplayTag, EGameplayTagEventType::AnyCountChange)
-					.AddUObject(this, &UVSAbilitySystemGameplayTagFeature::OnAbilitySystemListeningTagsUpdated);
+					.AddUObject(this, &UVSAbilitySystemGameplayTagFeature::OnAbilitySystemListeningTagCountUpdated);
 				AbilitySystemRegisteredDelegateHandles.Emplace(GameplayTag, DelegateHandle);
 			}
 		}
@@ -937,6 +939,8 @@ void UVSAbilitySystemGameplayTagFeature::Uninitialize_Implementation()
 {
 	if (AbilitySystemComponentPrivate.IsValid())
 	{
+		AbilitySystemComponentPrivate->RegisterGenericGameplayTagEvent().RemoveAll(this);
+
 		for (const TPair<FGameplayTag, FDelegateHandle>& AbilitySystemComponentRegisteredDelegateHandle : AbilitySystemRegisteredDelegateHandles)
 		{
 			if (AbilitySystemComponentRegisteredDelegateHandle.Value.IsValid())
@@ -973,7 +977,19 @@ void UVSAbilitySystemGameplayTagFeature::ModifyTagCount(const FGameplayTag& Game
 	}
 }
 
-void UVSAbilitySystemGameplayTagFeature::OnAbilitySystemListeningTagsUpdated(const FGameplayTag Tag, int32 Count)
+void UVSAbilitySystemGameplayTagFeature::OnAbilitySystemTagNewOrRemoved(const FGameplayTag Tag, int32 Count)
+{
+	if (!UVSPluginsCoreGameSettings::Get()->AbilitySystemListeningCountedTags.HasTagExact(Tag))
+	{
+		MarkTagsDirty();
+		if (bNotifyTagsUpdateInstantly)
+		{
+			NotifyTagsUpdated();
+		}
+	}
+}
+
+void UVSAbilitySystemGameplayTagFeature::OnAbilitySystemListeningTagCountUpdated(const FGameplayTag Tag, int32 Count)
 {
 	MarkTagsDirty();
 	if (bNotifyTagsUpdateInstantly)

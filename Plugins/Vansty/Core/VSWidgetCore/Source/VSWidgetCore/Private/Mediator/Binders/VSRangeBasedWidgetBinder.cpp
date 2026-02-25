@@ -7,6 +7,7 @@
 #include "Components/TextBlock.h"
 #include "Components/VSCommonRanger.h"
 #include "Kismet/KismetTextLibrary.h"
+#include "Types/Math/VSMath.h"
 
 UVSRangeBasedWidgetBinder::UVSRangeBasedWidgetBinder(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -34,7 +35,6 @@ void UVSRangeBasedWidgetBinder::BindTypedWidget_Implementation(const FName TypeN
 	Super::BindTypedWidget_Implementation(TypeName, Widget);
 
 	const float ExternalValue = GetExternalValue();
-	const float CurrentValue = GetCurrentValue();
 
 	if (TypeName == FName("Range"))
 	{
@@ -119,18 +119,18 @@ float UVSRangeBasedWidgetBinder::GetExternalValue_Implementation() const
 	return 0.f;
 }
 
-float UVSRangeBasedWidgetBinder::GetCurrentValue() const
+float UVSRangeBasedWidgetBinder::GetWidgetValue() const
 {
 	UWidget* RangeWidget = GetBoundTypedWidget(FName("Range"));
 	if (!RangeWidget) return GetExternalValue();
 	
 	if (USlider* Slider = Cast<USlider>(RangeWidget))
 	{
-		return Slider->GetValue() / DisplayValueMultiplier;
+		return FVSMath::SafeDivide(Slider->GetValue(), DisplayValueMultiplier);
 	}
 	if (USpinBox* SpinBox = Cast<USpinBox>(RangeWidget))
 	{
-		return SpinBox->GetValue() / DisplayValueMultiplier;
+		return FVSMath::SafeDivide(SpinBox->GetValue(), DisplayValueMultiplier);
 	}
 	if (UVSCommonRanger* CommonRanger = Cast<UVSCommonRanger>(RangeWidget))
 	{
@@ -143,7 +143,7 @@ float UVSRangeBasedWidgetBinder::GetCurrentValue() const
 FText UVSRangeBasedWidgetBinder::GetContentText() const
 {
 	const FText ValueText = UKismetTextLibrary::Conv_DoubleToText(
-		GetCurrentValue() * DisplayValueMultiplier, HalfToZero,
+		GetWidgetValue() * DisplayValueMultiplier, HalfToZero,
 		false, true,
 		1, 324,
 		DisplayFractionDigitRange.X, DisplayFractionDigitRange.Y);
@@ -193,12 +193,12 @@ void UVSRangeBasedWidgetBinder::OnCommonRangerValueChanged(UVSCommonRanger* Rang
 
 void UVSRangeBasedWidgetBinder::OnDisplayWidgetValueChanged(float Value)
 {
-	OnBoundWidgetValueChanged(Value / DisplayValueMultiplier);
+	OnBoundWidgetValueChanged(FVSMath::SafeDivide(Value, DisplayValueMultiplier));
 }
 
 void UVSRangeBasedWidgetBinder::OnBoundWidgetValueChanged(float Value)
 {
-	RebindWidgetByType(FName("Content"));
 	OnWidgetValueChanged(Value);
+	RebindWidgetByType(FName("Content"));
 }
 

@@ -320,7 +320,7 @@ void UVSObjectFeature::SetOwnerFeature(UVSObjectFeature* Feature, bool bDeferReg
 		return;
 	}
 
-	if (HasSubFeature(Feature) || Feature->IsInOuter(this))
+	if (HasSubFeature(Feature) || (Feature && Feature->IsInOuter(this)))
 	{
 		UE_LOG(LogObjectFeature, Warning, TEXT("SetOwnerFeature: (%s) trying to set it's sub feature as owner. Aborting."), *GetPathName());
 		return;

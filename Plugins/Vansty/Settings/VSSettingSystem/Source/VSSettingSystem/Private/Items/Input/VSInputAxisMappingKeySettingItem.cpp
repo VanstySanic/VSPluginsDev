@@ -217,6 +217,11 @@ TMap<FVSInputMappingAxisSlot, FKey> UVSInputAxisMappingKeySettingItem::GetKeys(E
 	return TMap<FVSInputMappingAxisSlot, FKey>();
 }
 
+FKey UVSInputAxisMappingKeySettingItem::GetKey(const FVSInputMappingAxisSlot& Slot, EVSSettingItemValueSource::Type ValueSource) const
+{
+	return GetKeys(ValueSource).FindRef(Slot);
+}
+
 void UVSInputAxisMappingKeySettingItem::SetKeys(const TMap<FVSInputMappingAxisSlot, FKey>& SlottedKeys)
 {
 	const TMap<FVSInputMappingAxisSlot, FKey> PrevSlottedMappings = CurrentSlottedKeys;
@@ -224,7 +229,7 @@ void UVSInputAxisMappingKeySettingItem::SetKeys(const TMap<FVSInputMappingAxisSl
 	CurrentSlottedKeys = SlottedKeys;
 	for (const TPair<FVSInputMappingAxisSlot, FKey> SlottedKey : SlottedKeys)
 	{
-		if (!SlottedKey.Value.IsValid())
+		if (!SlottedKey.Value.IsValid() && SlottedKey.Value == GetKey(SlottedKey.Key, EVSSettingItemValueSource::Default))
 		{
 			CurrentSlottedKeys.Remove(SlottedKey.Key);
 		}
@@ -236,17 +241,12 @@ void UVSInputAxisMappingKeySettingItem::SetKeys(const TMap<FVSInputMappingAxisSl
 	}
 }
 
-FKey UVSInputAxisMappingKeySettingItem::GetKey(const FVSInputMappingAxisSlot& Slot, EVSSettingItemValueSource::Type ValueSource) const
-{
-	return GetKeys(ValueSource).FindRef(Slot);
-}
-
 void UVSInputAxisMappingKeySettingItem::SetKey(const FVSInputMappingAxisSlot& Slot, const FKey& Key)
 {
 	const FKey PrevKey = CurrentSlottedKeys.FindRef(Slot);
+	
 	CurrentSlottedKeys.Emplace(Slot, Key);
-
-	if (!Key.IsValid())
+	if (!Key.IsValid() && Key == GetKey(Slot, EVSSettingItemValueSource::Default))
 	{
 		CurrentSlottedKeys.Remove(Slot);
 	}

@@ -12,28 +12,28 @@ struct FVSEnhancedInputMappingKeySlot
 {
 	GENERATED_BODY()
 	
-	FVSEnhancedInputMappingKeySlot(EPlayerMappableKeySlot Slot = EPlayerMappableKeySlot::First, FName HardwareDeviceID = NAME_None)
+	FVSEnhancedInputMappingKeySlot(EPlayerMappableKeySlot Slot = EPlayerMappableKeySlot::First)
 		: Slot(Slot)
-		, HardwareDeviceID(HardwareDeviceID)
+	{
+	}
+
+	FVSEnhancedInputMappingKeySlot(int32 Slot)
+		: Slot(EPlayerMappableKeySlot(Slot))
 	{
 	}
 
 	bool operator==(const FVSEnhancedInputMappingKeySlot& Other) const
 	{
-		return Slot == Other.Slot && HardwareDeviceID == Other.HardwareDeviceID;
+		return Slot == Other.Slot;
 	}
 
 	friend uint32 GetTypeHash(const FVSEnhancedInputMappingKeySlot& Item)
 	{
-		return HashCombine(GetTypeHash(Item.Slot), GetTypeHash(Item.HardwareDeviceID));
+		return GetTypeHash(Item.Slot);
 	}
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EPlayerMappableKeySlot Slot = EPlayerMappableKeySlot::First;
-	
-	/** An OPTIONAL specifier about what kind of hardware this mapping is for. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (GetOptions = "Engine.InputPlatformSettings.GetAllHardwareDeviceNames"))
-	FName HardwareDeviceID = NAME_None;
 };
 
 
@@ -67,12 +67,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	TMap<FVSEnhancedInputMappingKeySlot, FKey> GetKeys(EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
-	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "SlottedKeys"))
-	void SetKeys(const TMap<FVSEnhancedInputMappingKeySlot, FKey>& SlottedKeys);
-
-	
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FKey GetKey(const FVSEnhancedInputMappingKeySlot& Slot, EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "SlottedKeys"))
+	void SetKeys(const TMap<FVSEnhancedInputMappingKeySlot, FKey>& SlottedKeys);
 
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetKey(const FVSEnhancedInputMappingKeySlot& Slot, const FKey& Key);
@@ -102,6 +101,10 @@ protected:
 	 */
 	UPROPERTY(EditAnywhere, Category = "Settings", meta = (GetOptions = "GetMappingNames"))
 	FName MappingName = NAME_None;
+
+	/** An OPTIONAL specifier about what kind of hardware this mapping is for. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (GetOptions = "Engine.InputPlatformSettings.GetAllHardwareDeviceNames"))
+	FName HardwareDeviceID = NAME_None;
 
 	/** Apply to specified local player. If none, apply to 0 by default. */
 	UPROPERTY(EditAnywhere, Category = "Settings")

@@ -408,7 +408,10 @@ protected:
 
 private:
 	UFUNCTION()
-	void OnAbilitySystemListeningTagsUpdated(const FGameplayTag Tag, int32 Count);
+	void OnAbilitySystemTagNewOrRemoved(const FGameplayTag Tag, int32 Count);
+	
+	UFUNCTION()
+	void OnAbilitySystemListeningTagCountUpdated(const FGameplayTag Tag, int32 Count);
 	
 private:
 	TWeakObjectPtr<UAbilitySystemComponent> AbilitySystemComponentPrivate;

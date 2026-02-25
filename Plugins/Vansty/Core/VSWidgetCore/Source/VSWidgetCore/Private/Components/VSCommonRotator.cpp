@@ -40,12 +40,12 @@ bool UVSCommonRotator::Initialize()
 
 	if (Button_Prev)
 	{
-		Button_Prev->OnClicked.AddDynamic(this, &UVSCommonRotator::OnButtonPrevClicked);
+		Button_Prev->OnClicked.AddUniqueDynamic(this, &UVSCommonRotator::OnButtonPrevClicked);
 	}
 
 	if (Button_Next)
 	{
-		Button_Next->OnClicked.AddDynamic(this, &UVSCommonRotator::OnButtonNextClicked);
+		Button_Next->OnClicked.AddUniqueDynamic(this, &UVSCommonRotator::OnButtonNextClicked);
 	}
 
 	return true;
@@ -63,9 +63,10 @@ FNavigationReply UVSCommonRotator::NativeOnNavigation(const FGeometry& MyGeometr
 				return Super::NativeOnNavigation(MyGeometry, InNavigationEvent, InDefaultReply);
 			}
 
-			/**/
 			const int32 CurrentIndex = GetSelectedIndex();
-			const int32 DesiredIndex = FMath::Clamp(CurrentIndex + (InNavigationEvent.GetNavigationType() == EUINavigation::Left ? -1 : 1), 0, TextLabels.Num() - 1);
+			const int32 DesiredIndex =
+				FMath::Clamp(CurrentIndex + (InNavigationEvent.GetNavigationType() == EUINavigation::Left ? -1 : 1)
+					, 0, FMath::Max(TextLabels.Num() - 1, 0));
 			if (CurrentIndex != DesiredIndex)
 			{
 				return Super::NativeOnNavigation(MyGeometry, InNavigationEvent, InDefaultReply);
@@ -90,7 +91,7 @@ void UVSCommonRotator::SetSelectedItem(int32 InValue)
 	
 	if (IndexImageGroup)
 	{
-		IndexImageGroup->SetSelectedIndex(InValue);
+		IndexImageGroup->SetSelectedIndex(GetSelectedIndex());
 	}
 }
 
@@ -127,7 +128,7 @@ void UVSCommonRotator::OnButtonNextClicked()
 	else
 	{
 		const int32 CurrentIndex = GetSelectedIndex();
-		const int32 DesiredIndex = FMath::Clamp(CurrentIndex + 1, 0, TextLabels.Num() - 1);
+		const int32 DesiredIndex = FMath::Clamp(CurrentIndex + 1, 0, FMath::Max(TextLabels.Num() - 1, 0));
 		if (CurrentIndex != DesiredIndex)
 		{
 			ShiftTextRight();

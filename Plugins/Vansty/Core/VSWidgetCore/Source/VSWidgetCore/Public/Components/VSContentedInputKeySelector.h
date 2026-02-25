@@ -7,7 +7,7 @@
 #include "Types/VSWidgetSlotTypes.h"
 #include "VSContentedInputKeySelector.generated.h"
 
-class UVSInputKeySelector;
+class UInputKeySelector;
 class UVSKeyIconConfig;
 
 /**
@@ -18,13 +18,22 @@ class VSWIDGETCORE_API UVSContentedInputKeySelector : public UUserWidget
 {
 	GENERATED_UCLASS_BODY()
 
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FOnKeySelectedDelegate, UVSContentedInputKeySelector* /** Selector */, FInputChord /** SelectedKey */);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnKeySelectedEvent, UVSContentedInputKeySelector*, Selector, FInputChord, SelectedKey);
+
 public:
 	//~ Begin UUserWidget Interface 
 	virtual void NativePreConstruct() override;
 	//~ End UUserWidget Interface
 
-	UFUNCTION(BlueprintCallable, Category = "Key  Selector")
-	UVSInputKeySelector* GetInputKeySelector() const { return InputKeySelector; }
+	UFUNCTION(BlueprintCallable, Category = "Key Selector")
+	UInputKeySelector* GetInputKeySelector() const { return InputKeySelector; }
+
+	UFUNCTION(BlueprintCallable, Category = "Key Selector", meta = (AutoCreateRefTerm = "Key"))
+	void SetSelectedKey(const FInputChord& Key);
+
+	UFUNCTION(BlueprintCallable, Category = "Key Selector")
+	FInputChord GetSelectedKey() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Key  Selector")
 	void RefreshContents();
@@ -38,11 +47,17 @@ private:
 	void OnIsSelectingChanged();
 	
 	UFUNCTION()
-	void OnKeySelected(FInputChord SelectedKey);
+	void OnSelectorKeySelected(FInputChord SelectedKey);
 
+public:
+	FOnKeySelectedDelegate OnKeySelected_Native;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	FOnKeySelectedEvent OnKeySelected;
+	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
-	TObjectPtr<UVSInputKeySelector> InputKeySelector;
+	TObjectPtr<UInputKeySelector> InputKeySelector;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UPanelWidget> Panel_Content;
@@ -55,5 +70,5 @@ public:
 	FSlateBrush KeyBrush;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Selector")
-	FVSCommonPanelSlotSettings ContentPanelSlotSettings;
+	FVSCommonPanelSlotSettings ContentSlotSettings;
 };

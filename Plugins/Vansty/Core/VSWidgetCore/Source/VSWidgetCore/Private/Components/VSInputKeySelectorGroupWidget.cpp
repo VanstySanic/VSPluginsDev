@@ -4,28 +4,14 @@
 #include "Blueprint/WidgetTree.h"
 #include "Components/PanelWidget.h"
 #include "Components/VSContentedInputKeySelector.h"
-#include "Components/VSInputKeySelector.h"
 
 UVSInputKeySelectorGroupWidget::UVSInputKeySelectorGroupWidget(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, bBlockKeySelectionChanged(false)
 {
 	bLocked = true;
 
 	KeyBrush.DrawAs = ESlateBrushDrawType::NoDrawType;
 }
-
-#if WITH_EDITOR
-void UVSInputKeySelectorGroupWidget::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
-{
-	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSInputKeySelectorGroupWidget, EditorPreviewKeys))
-	{
-		
-	}
-	
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-}
-#endif
 
 void UVSInputKeySelectorGroupWidget::NativePreConstruct()
 {
@@ -53,48 +39,40 @@ UVSContentedInputKeySelector* UVSInputKeySelectorGroupWidget::GetKeySelectorAtIn
 	return KeySelectorsPrivate.IsValidIndex(Index) ? KeySelectorsPrivate[Index] : nullptr;
 }
 
-TArray<FInputChord> UVSInputKeySelectorGroupWidget::GetKeys() const
+FInputChord UVSInputKeySelectorGroupWidget::GetKeyAtIndex(int32 Index) const
 {
-	TArray<FInputChord> OutKeys;
-	for (UVSContentedInputKeySelector* InputKeySelector : KeySelectorsPrivate)
-	{
-		bool bAddKey = false;
-		if (InputKeySelector)
-		{
-			if (UVSInputKeySelector* Selector = InputKeySelector->GetInputKeySelector())
-			{
-				OutKeys.Add(Selector->GetSelectedKey());
-				bAddKey = true;
-			}
-		}
-		
-		if (!bAddKey)
-		{
-			OutKeys.Add(FInputChord());
-		}
-	}
-	return OutKeys;
+	return CurrentKeys.IsValidIndex(Index) ? CurrentKeys[Index] : FInputChord();
 }
 
 void UVSInputKeySelectorGroupWidget::SetKeys(const TArray<FInputChord>& InKeys)
 {
-	const TArray<FInputChord> PrevKeys = GetKeys();
-	
-	bBlockKeySelectionChanged = true;
-	for (int i = 0; i < InKeys.Num(); i++)
+	const TArray<FInputChord> PrevKeys = CurrentKeys;
+	CurrentKeys = InKeys;
+
+	/** Update selector key in order. */
+	for (int i = 0; i < CurrentKeys.Num(); i++)
 	{
 		if (!KeySelectorsPrivate.IsValidIndex(i)) break;
 		if (KeySelectorsPrivate[i])
 		{
-			if (UVSInputKeySelector* Selector = KeySelectorsPrivate[i]->GetInputKeySelector())
-			{
-				Selector->SetSelectedKey(InKeys[i]);
-			}
+			KeySelectorsPrivate[i]->OnKeySelected_Native.RemoveAll(this);
+			KeySelectorsPrivate[i]->SetSelectedKey(CurrentKeys[i]);
+			KeySelectorsPrivate[i]->OnKeySelected_Native.AddUObject(this, &UVSInputKeySelectorGroupWidget::OnSelectorKeySelected);
 		}
 	}
-	bBlockKeySelectionChanged = false;
 
-	if (PrevKeys != GetKeys())
+	/** Clear unset keys in selectors. */
+	for (int i = CurrentKeys.Num(); i < KeySelectorsPrivate.Num(); i++)
+	{
+		if (KeySelectorsPrivate[i])
+		{
+			KeySelectorsPrivate[i]->OnKeySelected_Native.RemoveAll(this);
+			KeySelectorsPrivate[i]->SetSelectedKey(FInputChord());
+			KeySelectorsPrivate[i]->OnKeySelected_Native.AddUObject(this, &UVSInputKeySelectorGroupWidget::OnSelectorKeySelected);
+		}
+	}
+
+	if (PrevKeys != CurrentKeys)
 	{
 		NotifyKeysUpdated();
 	}
@@ -102,10 +80,28 @@ void UVSInputKeySelectorGroupWidget::SetKeys(const TArray<FInputChord>& InKeys)
 
 void UVSInputKeySelectorGroupWidget::SetKeyAtIndex(int32 Index, const FInputChord& InKey)
 {
-	if (!KeySelectorsPrivate.IsValidIndex(Index)) return;
-	if (UVSInputKeySelector* Selector = KeySelectorsPrivate[Index]->GetInputKeySelector())
+	const FInputChord PrevKey = GetKeyAtIndex(Index);
+	
+	if (CurrentKeys.Num() <= Index)
 	{
-		Selector->SetSelectedKey(InKey);
+		CurrentKeys.SetNum(Index + 1);
+	}
+	if (CurrentKeys.IsValidIndex(Index))
+	{
+		CurrentKeys[Index] = InKey;
+	}
+	
+	if (KeySelectorsPrivate.IsValidIndex(Index) && KeySelectorsPrivate[Index])
+	{
+		KeySelectorsPrivate[Index]->OnKeySelected_Native.RemoveAll(this);
+		KeySelectorsPrivate[Index]->SetSelectedKey(InKey);
+		KeySelectorsPrivate[Index]->OnKeySelected_Native.AddUObject(this, &UVSInputKeySelectorGroupWidget::OnSelectorKeySelected);
+	}
+
+	if (PrevKey != GetKeyAtIndex(Index))
+	{
+		NotifyKeySelected(Index, InKey);
+		NotifyKeysUpdated();
 	}
 }
 
@@ -119,10 +115,7 @@ void UVSInputKeySelectorGroupWidget::RefreshKeySelectors()
 	{
 		if (PrevKeySelectors[i])
 		{
-			if (UVSInputKeySelector* InputKeySelector = PrevKeySelectors[i]->GetInputKeySelector())
-			{
-				InputKeySelector->OnKeySelected.RemoveDynamic(this, &UVSInputKeySelectorGroupWidget::OnKeySelectionChanged);
-			}
+			PrevKeySelectors[i]->OnKeySelected_Native.RemoveAll(this);
 			PrevKeySelectors[i]->RemoveFromParent();
 		}
 	}
@@ -135,30 +128,36 @@ void UVSInputKeySelectorGroupWidget::RefreshKeySelectors()
 	{
 		if (UVSContentedInputKeySelector* InputKeySelector = WidgetTree->ConstructWidget<UVSContentedInputKeySelector>(InputKeySelectorClass))
 		{
+			if (CurrentKeys.IsValidIndex(i))
+			{
+				InputKeySelector->SetSelectedKey(CurrentKeys[i]);
+			}
+			
 			KeySelectorsPrivate.Add(InputKeySelector);
 			Panel_Keys->AddChild(InputKeySelector);
-			KeyPanelSlotSettings.ApplyToWidget(InputKeySelector);
-
+			KeySlotSettings.ApplyToWidget(InputKeySelector);
+			
 			InputKeySelector->KeyIconConfig = KeyIconConfig ? KeyIconConfig : nullptr;
 			if (KeyBrush.GetDrawType() != ESlateBrushDrawType::NoDrawType)
 			{
 				InputKeySelector->KeyBrush = KeyBrush;
 			}
+			
 			InputKeySelector->RefreshContents();
 
-			UVSInputKeySelector* Selector = InputKeySelector->GetInputKeySelector();
-			if (!Selector) continue;
+			InputKeySelector->OnKeySelected_Native.AddUObject(this, &UVSInputKeySelectorGroupWidget::OnSelectorKeySelected);
 
 			/** Allpy settings. */
-			StyleSettings.ApplyToKeySelector(Selector);
-			if (KeySettings.IsValidIndex(i))
-			{
-				KeySettings[i].ApplyToKeySelector(Selector);
-			}
-			
-			Selector->OnKeySelected.AddDynamic(this, &UVSInputKeySelectorGroupWidget::OnKeySelectionChanged);
+			StyleSettings.ApplyToKeySelector(InputKeySelector);
+			KeySettings.ApplyToKeySelector(InputKeySelector);
 		}
 	}
+}
+
+void UVSInputKeySelectorGroupWidget::NotifyKeySelected(int32 Index, FInputChord SelectedKey)
+{
+	OnKeySelected_Native.Broadcast(this, Index, SelectedKey);
+	OnKeySelected.Broadcast(this, Index, SelectedKey);
 }
 
 void UVSInputKeySelectorGroupWidget::NotifyKeysUpdated()
@@ -167,10 +166,27 @@ void UVSInputKeySelectorGroupWidget::NotifyKeysUpdated()
 	OnKeysUpdated.Broadcast(this);
 }
 
-void UVSInputKeySelectorGroupWidget::OnKeySelectionChanged(FInputChord SelectedKey)
+void UVSInputKeySelectorGroupWidget::OnSelectorKeySelected(UVSContentedInputKeySelector* Selector, FInputChord SelectedKey)
 {
-	if (!bBlockKeySelectionChanged)
+	for (int i = 0; i < KeySelectorsPrivate.Num(); ++i)
 	{
-		NotifyKeysUpdated();
+		if (Selector && KeySelectorsPrivate[i] == Selector)
+		{
+			const FInputChord PrevKey = GetKeyAtIndex(i);
+
+			if (CurrentKeys.Num() <= i)
+			{
+				CurrentKeys.SetNum(i + 1);
+			}
+			CurrentKeys[i] = SelectedKey;
+
+			if (PrevKey != SelectedKey)
+			{
+				NotifyKeySelected(i, SelectedKey);
+				NotifyKeysUpdated();
+			}
+			
+			break;
+		}
 	}
 }

@@ -21,15 +21,13 @@ class VSWIDGETCORE_API UVSInputKeySelectorGroupWidget : public UCommonButtonBase
 {
 	GENERATED_UCLASS_BODY()
 
+	DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnKeySelectedDelegate, UVSInputKeySelectorGroupWidget* /** Group */, int32 /** IndexIndex */, FInputChord /** SelectedKey */);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnKeysUpdatedDelegate, UVSInputKeySelectorGroupWidget* /** Group */);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnKeySelectedEvent, UVSInputKeySelectorGroupWidget*, Group, int32, Index, FInputChord, SelectedKey);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnKeysUpdatedEvent, UVSInputKeySelectorGroupWidget*, Group);
 
 public:
 	//~ Begin UUserWidget Interface
-#if WITH_EDITOR
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
-	
 	virtual void NativePreConstruct() override;
 	//~ End UUserWidget Interface
 	
@@ -40,27 +38,35 @@ public:
 	UVSContentedInputKeySelector* GetKeySelectorAtIndex(int32 Index) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Key Selector Group")
-	TArray<FInputChord> GetKeys() const;
+	TArray<FInputChord> GetKeys() const { return CurrentKeys; }
+
+	UFUNCTION(BlueprintCallable, Category = "Key Selector Group")
+	FInputChord GetKeyAtIndex(int32 Index = 0) const;
 	
 	/** Set keys in order. If the passed-in key num is greater than widget key num, then only part of the keys will be set. */
 	UFUNCTION(BlueprintCallable, Category = "Key Selector Group", meta = (AutoCreateRefTerm = "InKeys"))
 	void SetKeys(const TArray<FInputChord>& InKeys);
 	
 	UFUNCTION(BlueprintCallable, Category = "Key Selector Group")
-	void SetKeyAtIndex(int32 Index, const FInputChord& InKey);
+	void SetKeyAtIndex(int32 Index = 0, const FInputChord& InKey = FInputChord());
 	
 	/** Rebuilds all key selectors based on the current settings. */
 	UFUNCTION(BlueprintCallable, Category = "Key Selector Group")
 	void RefreshKeySelectors();
 
 private:
+	void NotifyKeySelected(int32 Index, FInputChord SelectedKey);
 	void NotifyKeysUpdated();
-	
+
 	UFUNCTION()
-	void OnKeySelectionChanged(FInputChord SelectedKey);
+	void OnSelectorKeySelected(UVSContentedInputKeySelector* Selector, FInputChord SelectedKey);
 	
 public:
+	FOnKeySelectedDelegate OnKeySelected_Native;
 	FOnKeysUpdatedDelegate OnKeysUpdated_Native;
+	
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	FOnKeySelectedEvent OnKeySelected;
 	
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FOnKeysUpdatedEvent OnKeysUpdated;
@@ -72,16 +78,16 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Selector Group")
 	TSubclassOf<UVSContentedInputKeySelector> InputKeySelectorClass;
-			
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Selector Group")
-	FVSCommonPanelSlotSettings KeyPanelSlotSettings;
+	FVSInputKeySelectorKeySettings KeySettings;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Selector Group")
+	FVSCommonPanelSlotSettings KeySlotSettings;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Selector Group")
 	FVSInputKeySelectorStyleSettings StyleSettings;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Selector Group")
-	TArray<FVSInputKeySelectorKeySettings> KeySettings;
-
 	/** Apply if not null. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Key Selector Group")
 	TObjectPtr<UVSKeyIconConfig> KeyIconConfig;
@@ -112,6 +118,5 @@ private:
 	UPROPERTY()
 	TArray<TObjectPtr<UVSContentedInputKeySelector>> KeySelectorsPrivate;
 
-	int32 CurrentSelectedIndex = 0;
-	uint8 bBlockKeySelectionChanged : 1;
+	TArray<FInputChord> CurrentKeys;
 };

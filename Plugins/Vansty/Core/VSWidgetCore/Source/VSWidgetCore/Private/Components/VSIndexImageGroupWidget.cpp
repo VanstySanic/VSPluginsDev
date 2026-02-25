@@ -63,13 +63,12 @@ void UVSIndexImageGroupWidget::SetSelectedIndex(int32 Index)
 {
 	const int32 RealImageNum = ImagesPrivate.Num();
 
-	CurrentSelectedIndex = FMath::Clamp(Index, INDEX_NONE, RealImageNum);
+	CurrentSelectedIndex = FMath::Clamp(Index, INDEX_NONE, RealImageNum - 1);
 	
 #if WITH_EDITORONLY_DATA
 	EditorPreviewIndex = CurrentSelectedIndex;
 #endif
 
-	CurrentSelectedIndex = Index;
 	for (int i = 0; i < RealImageNum; ++i)
 	{
 		if (ImagesPrivate[i])

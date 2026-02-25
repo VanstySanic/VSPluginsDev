@@ -153,14 +153,20 @@ TMap<FVSEnhancedInputMappingKeySlot, FKey> UVSEnhancedInputMappingKeySettingItem
 	return TMap<FVSEnhancedInputMappingKeySlot, FKey>();
 }
 
+FKey UVSEnhancedInputMappingKeySettingItem::GetKey(const FVSEnhancedInputMappingKeySlot& Slot, EVSSettingItemValueSource::Type ValueSource) const
+{
+	return GetKeys(ValueSource).FindRef(Slot);
+}
+
 void UVSEnhancedInputMappingKeySettingItem::SetKeys(const TMap<FVSEnhancedInputMappingKeySlot, FKey>& SlottedKeys)
 {
 	const TMap<FVSEnhancedInputMappingKeySlot, FKey> PrevSlottedKeys = CurrentSlottedKeys;
 
 	CurrentSlottedKeys = SlottedKeys;
+	
 	for (const TPair<FVSEnhancedInputMappingKeySlot, FKey>& SlottedKey : SlottedKeys)
 	{
-		if (!SlottedKey.Value.IsValid())
+		if (!SlottedKey.Value.IsValid() && SlottedKey.Value == GetKey(SlottedKey.Key, EVSSettingItemValueSource::Default))
 		{
 			CurrentSlottedKeys.Remove(SlottedKey.Key);
 		}
@@ -172,17 +178,13 @@ void UVSEnhancedInputMappingKeySettingItem::SetKeys(const TMap<FVSEnhancedInputM
 	}
 }
 
-FKey UVSEnhancedInputMappingKeySettingItem::GetKey(const FVSEnhancedInputMappingKeySlot& Slot, EVSSettingItemValueSource::Type ValueSource) const
-{
-	return GetKeys(ValueSource).FindRef(Slot);
-}
-
 void UVSEnhancedInputMappingKeySettingItem::SetKey(const FVSEnhancedInputMappingKeySlot& Slot, const FKey& Key)
 {
 	const FKey PrevKey = CurrentSlottedKeys.FindRef(Slot);
 	
 	CurrentSlottedKeys.Emplace(Slot, Key);
-	if (!Key.IsValid())
+	
+	if (!Key.IsValid() && Key == GetKey(Slot, EVSSettingItemValueSource::Default))
 	{
 		CurrentSlottedKeys.Remove(Slot);
 	}
@@ -239,7 +241,7 @@ TMap<FVSEnhancedInputMappingKeySlot, FKey> UVSEnhancedInputMappingKeySettingItem
 	{
 		for (const FPlayerKeyMapping FindMappingsInRow : EnhancedInputUserSettings->FindMappingsInRow(MappingName))
 		{
-			const FVSEnhancedInputMappingKeySlot Slot(FindMappingsInRow.GetSlot(), FindMappingsInRow.GetHardwareDeviceId().HardwareDeviceIdentifier);
+			const FVSEnhancedInputMappingKeySlot Slot(FindMappingsInRow.GetSlot());
 			SlottedKeys.Emplace(Slot, bUseDefault ? FindMappingsInRow.GetDefaultKey() : FindMappingsInRow.GetCurrentKey());
 		}
 	}
@@ -277,7 +279,7 @@ FMapPlayerKeyArgs UVSEnhancedInputMappingKeySettingItem::MakeMapPlayerKeyArgs(FV
 	Args.MappingName = MappingName;
 	Args.ProfileId = ProfileId;
 	Args.Slot = Slot.Slot;
-	Args.HardwareDeviceId = Slot.HardwareDeviceID;
+	Args.HardwareDeviceId = HardwareDeviceID;
 	Args.NewKey = Key;
 	
 	Args.bCreateMatchingSlotIfNeeded = true;

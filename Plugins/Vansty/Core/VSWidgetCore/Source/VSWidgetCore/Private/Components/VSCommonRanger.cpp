@@ -6,6 +6,7 @@
 #include "Components/SpinBox.h"
 #include "Components/TextBlock.h"
 #include "Kismet/KismetTextLibrary.h"
+#include "Types/Math/VSMath.h"
 
 UVSCommonRanger::UVSCommonRanger(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -34,7 +35,10 @@ void UVSCommonRanger::NativePreConstruct()
 	}
 #endif
 
-	FInternationalization::Get().OnCultureChanged().AddUObject(this, &UVSCommonRanger::OnCultureChanged);;
+	if (!FInternationalization::Get().OnCultureChanged().IsBoundToObject(this))
+	{
+		FInternationalization::Get().OnCultureChanged().AddUObject(this, &UVSCommonRanger::OnCultureChanged);;
+	}
 }
 
 void UVSCommonRanger::NativeDestruct()
@@ -234,7 +238,7 @@ void UVSCommonRanger::RefreshContentText()
 
 void UVSCommonRanger::OnWidgetValueChanged(float Value)
 {
-	Value /= DisplayValueMultiplier;
+	Value = FVSMath::SafeDivide(Value, DisplayValueMultiplier);
 	if (!FMath::IsNearlyEqual(Value, CurrentValue))
 	{
 		const bool bPrevDelegatesBound = bValueDelegatesBound;

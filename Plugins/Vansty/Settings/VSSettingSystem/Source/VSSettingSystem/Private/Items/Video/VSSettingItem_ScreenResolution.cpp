@@ -29,7 +29,7 @@ UVSSettingItem_ScreenResolution::UVSSettingItem_ScreenResolution(const FObjectIn
 	ConfigSettings.AdditionalNamedKeys.Add("ResolutionSizeX", "ResolutionSizeX");
 	ConfigSettings.AdditionalNamedKeys.Add("ResolutionSizeY", "ResolutionSizeY");
 	ConfigSettings.AdditionalNamedKeys.Add("LastUserConfirmedResolutionSizeX", "LastUserConfirmedResolutionSizeX");
-	ConfigSettings.AdditionalNamedKeys.Add("LastUserConfirmedResolutionSizeX", "LastUserConfirmedResolutionSizeX");
+	ConfigSettings.AdditionalNamedKeys.Add("LastUserConfirmedResolutionSizeY", "LastUserConfirmedResolutionSizeY");
 }
 
 #if WITH_EDITOR
@@ -148,10 +148,10 @@ void UVSSettingItem_ScreenResolution::Save_Implementation()
 		if (GEngine->GetGameUserSettings())
 		{
 			GConfig->SetInt(*ConfigSettings.Section, *ConfigSettings.AdditionalNamedKeys.FindRef("LastUserConfirmedResolutionSizeX"), GEngine->GameUserSettings->GetLastConfirmedScreenResolution().X, *ConfigSettings.FileName);
-			GConfig->SetInt(*ConfigSettings.Section, *ConfigSettings.AdditionalNamedKeys.FindRef("LastUserConfirmedResolutionSizeX"), GEngine->GameUserSettings->GetLastConfirmedScreenResolution().Y, *ConfigSettings.FileName);
+			GConfig->SetInt(*ConfigSettings.Section, *ConfigSettings.AdditionalNamedKeys.FindRef("LastUserConfirmedResolutionSizeY"), GEngine->GameUserSettings->GetLastConfirmedScreenResolution().Y, *ConfigSettings.FileName);
 		}
 
-		GConfig->Flush(false, GGameUserSettingsIni);
+		GConfig->Flush(false, *ConfigSettings.FileName);
 	}
 }
 
@@ -173,7 +173,7 @@ void UVSSettingItem_ScreenResolution::Validate_Implementation()
 	ScreenResolution.X = FMath::Max(ScreenResolution.X, 0);
 	ScreenResolution.Y = FMath::Max(ScreenResolution.Y, 0);
 
-	if (ScreenResolution == FIntPoint::ZeroValue)
+	if (FVSMath::VectorHasZeroAxis(ScreenResolution))
 	{
 		TArray<FIntPoint> ScreenResolutions;
 		UKismetSystemLibrary::GetSupportedFullscreenResolutions(ScreenResolutions);
@@ -181,10 +181,7 @@ void UVSSettingItem_ScreenResolution::Validate_Implementation()
 		{
 			ScreenResolution = ScreenResolutions.Last();
 		}
-		if (ScreenResolution != FIntPoint::ZeroValue)
-		{
-			SetScreenResolution(ScreenResolution);
-		}
+		SetScreenResolution(ScreenResolution);
 	}
 }
 
@@ -214,7 +211,7 @@ FString UVSSettingItem_ScreenResolution::GetStringValue_Implementation(const EVS
 		switch (ValueSource)
 		{
 		case EVSSettingItemValueSource::Default:
-			return GEngine->GetGameUserSettings()->GetDefaultResolution().ToString();
+			return GEngine->GetGameUserSettings() ? GEngine->GameUserSettings->GetDefaultResolution().ToString() : FIntPoint::ZeroValue.ToString();
 			
 		case EVSSettingItemValueSource::Game:
 			if (IConsoleVariable* CVarSetRes = IConsoleManager::Get().FindConsoleVariable(TEXT("r.SetRes"), false))

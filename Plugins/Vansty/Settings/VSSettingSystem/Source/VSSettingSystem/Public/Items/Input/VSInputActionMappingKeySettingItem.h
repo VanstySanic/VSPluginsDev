@@ -65,11 +65,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	TMap<FVSInputMappingKeySlot, FInputChord> GetKeys(EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
-	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "SlottedChords"))
-	void SetKeys(const TMap<FVSInputMappingKeySlot, FInputChord>& SlottedChords);
-
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FInputChord GetKey(const FVSInputMappingKeySlot& Slot, EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "SlottedChords"))
+	void SetKeys(const TMap<FVSInputMappingKeySlot, FInputChord>& SlottedChords);
 
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetKey(const FVSInputMappingKeySlot& Slot, const FInputChord& Chord);

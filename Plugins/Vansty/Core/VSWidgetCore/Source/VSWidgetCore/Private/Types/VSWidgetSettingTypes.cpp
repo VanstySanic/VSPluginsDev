@@ -8,6 +8,7 @@
 #include "VSPrivablic.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/InputKeySelector.h"
+#include "Components/VSContentedInputKeySelector.h"
 #include "Components/VSInputKeySelector.h"
 #include "Input/CommonBoundActionButton.h"
 
@@ -183,6 +184,17 @@ FVSInputKeySelectorStyleSettings::FVSInputKeySelectorStyleSettings(const UInputK
 	}
 }
 
+FVSInputKeySelectorStyleSettings::FVSInputKeySelectorStyleSettings(const UVSContentedInputKeySelector* KeySelector)
+	: FVSInputKeySelectorStyleSettings(KeySelector ? KeySelector->GetInputKeySelector() : nullptr)
+{
+	
+}
+
+void FVSInputKeySelectorStyleSettings::ApplyToKeySelector(UVSContentedInputKeySelector* KeySelector) const
+{
+	ApplyToKeySelector(KeySelector ? KeySelector->GetInputKeySelector() : nullptr);
+}
+
 void FVSInputKeySelectorStyleSettings::ApplyToKeySelector(UInputKeySelector* KeySelector) const
 {
 	if (!KeySelector) return;
@@ -221,6 +233,17 @@ FVSInputKeySelectorKeySettings::FVSInputKeySelectorKeySettings(const UInputKeySe
 	{
 		EscapeKeys.Add(EKeys::Gamepad_Special_Right);
 	}
+}
+
+FVSInputKeySelectorKeySettings::FVSInputKeySelectorKeySettings(const UVSContentedInputKeySelector* KeySelector)
+	: FVSInputKeySelectorKeySettings(KeySelector ? KeySelector->GetInputKeySelector() : nullptr)
+{
+
+}
+
+void FVSInputKeySelectorKeySettings::ApplyToKeySelector(UVSContentedInputKeySelector* KeySelector) const
+{
+	ApplyToKeySelector(KeySelector ? KeySelector->GetInputKeySelector() : nullptr);
 }
 
 void FVSInputKeySelectorKeySettings::ApplyToKeySelector(UInputKeySelector* KeySelector) const
