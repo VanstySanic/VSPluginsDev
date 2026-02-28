@@ -48,7 +48,7 @@ UWidget* UVSWidgetBinder::GetBoundTypedWidget(const FName TypeName) const
 	return nullptr;
 }
 
-void UVSWidgetBinder::RebindWidgetByType(FName TypeName)
+void UVSWidgetBinder::RebindTypedWidget(FName TypeName)
 {
 	if (UWidget* Widget = GetBoundTypedWidget(TypeName))
 	{
@@ -57,7 +57,7 @@ void UVSWidgetBinder::RebindWidgetByType(FName TypeName)
 	}
 }
 
-void UVSWidgetBinder::RebindAllWidgets()
+void UVSWidgetBinder::RebindAllTypedWidgets()
 {
 	if (UVSWidgetController* WidgetController = Cast<UVSWidgetController>(WidgetControllerPrivate.Get()))
 	{

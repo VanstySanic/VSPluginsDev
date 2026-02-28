@@ -74,8 +74,8 @@ void UVSCommonSettingItemRangeBasedWidgetBinder::OnWidgetValueChanged_Implementa
 
 void UVSCommonSettingItemRangeBasedWidgetBinder::OnCurrentSettingItemUpdated_Implementation()
 {
-	RebindWidgetByType(FName("Range"));
-	RebindWidgetByType(FName("Content"));
+	RebindTypedWidget(FName("Range"));
+	RebindTypedWidget(FName("Content"));
 }
 
 float UVSCommonSettingItemRangeBasedWidgetBinder::GetExternalValue_Implementation() const

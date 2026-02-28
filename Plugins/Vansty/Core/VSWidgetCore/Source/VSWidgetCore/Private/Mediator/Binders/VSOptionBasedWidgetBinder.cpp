@@ -192,8 +192,8 @@ void UVSOptionBasedWidgetBinder::RefreshOptions()
 		OptionTexts.Add(OptionStringToText(Option));
 	}
 	
-	RebindWidgetByType(FName("Options"));
-	RebindWidgetByType(FName("Content"));
+	RebindTypedWidget(FName("Options"));
+	RebindTypedWidget(FName("Content"));
 }
 
 FString UVSOptionBasedWidgetBinder::GetExternalOption_Implementation() const
@@ -310,7 +310,7 @@ void UVSOptionBasedWidgetBinder::OnCultureChanged()
 void UVSOptionBasedWidgetBinder::OnBoundWidgetValueChanged(int32 Index)
 {
 	OnWidgetOptionChanged(Index);
-	RebindWidgetByType(FName("Content"));
+	RebindTypedWidget(FName("Content"));
 }
 
 void UVSOptionBasedWidgetBinder::OnComboBoxStringOpening()

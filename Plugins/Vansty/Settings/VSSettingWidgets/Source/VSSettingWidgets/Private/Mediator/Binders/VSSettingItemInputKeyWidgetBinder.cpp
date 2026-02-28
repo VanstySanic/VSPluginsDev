@@ -112,7 +112,7 @@ void UVSSettingItemInputKeyWidgetBinder::OnWidgetKeysUpdated_Implementation(cons
 
 void UVSSettingItemInputKeyWidgetBinder::OnCurrentSettingItemUpdated_Implementation()
 {
-	RebindWidgetByType(FName("Keys"));
+	RebindTypedWidget(FName("Keys"));
 }
 
 TArray<FInputChord> UVSSettingItemInputKeyWidgetBinder::GetExternalKeys_Implementation() const

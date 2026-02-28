@@ -44,10 +44,10 @@ protected:
 	void UpdateBinder(float DeltaTime);
 
 	UFUNCTION(BlueprintCallable, Category = "Widget Binder")
-	void RebindWidgetByType(FName TypeName);
+	void RebindTypedWidget(FName TypeName);
 
 	UFUNCTION(BlueprintCallable, Category = "Widget Binder")
-	void RebindAllWidgets();
+	void RebindAllTypedWidgets();
 
 	UFUNCTION(BlueprintCallable, Category = "Widget Binder")
 	UWidget* GetBoundTypedWidget(const FName TypeName) const;

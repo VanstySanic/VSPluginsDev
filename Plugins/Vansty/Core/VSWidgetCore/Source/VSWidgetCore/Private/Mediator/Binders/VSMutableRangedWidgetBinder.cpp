@@ -226,9 +226,9 @@ void UVSMutableRangedWidgetBinder::RefreshRange()
 	ValueRange = GenerateValueRange();
 	MuteStateValue = GenerateMuteStateValue();
 	
-	RebindWidgetByType(FName("Range"));
-	RebindWidgetByType(FName("Mute"));
-	RebindWidgetByType(FName("Content"));
+	RebindTypedWidget(FName("Range"));
+	RebindTypedWidget(FName("Mute"));
+	RebindTypedWidget(FName("Content"));
 }
 
 float UVSMutableRangedWidgetBinder::GenerateMuteStateValue_Implementation() const
@@ -293,10 +293,10 @@ void UVSMutableRangedWidgetBinder::OnBoundWidgetValueChanged(float Value)
 	OnWidgetValueChanged(Value);
 	if (FMath::IsNearlyEqual(Value, MuteStateValue))
 	{
-		RebindWidgetByType(FName("Mute"));
+		RebindTypedWidget(FName("Mute"));
 	}
 	
-	RebindWidgetByType(FName("Content"));
+	RebindTypedWidget(FName("Content"));
 }
 
 void UVSMutableRangedWidgetBinder::OnBoundWidgetMuteStateChanged(bool bMuted)
@@ -307,12 +307,12 @@ void UVSMutableRangedWidgetBinder::OnBoundWidgetMuteStateChanged(bool bMuted)
 	}
 	else
 	{
-		RebindWidgetByType(FName("Mute"));
+		RebindTypedWidget(FName("Mute"));
 
 		if (UVSCommonMutableRanger* Ranger = Cast<UVSCommonMutableRanger>(GetBoundTypedWidget(FName("Range"))))
 		{
 			Ranger->SetIsMuted(true);
-			RebindWidgetByType(FName("Range"));
+			RebindTypedWidget(FName("Range"));
 		}
 	}
 }

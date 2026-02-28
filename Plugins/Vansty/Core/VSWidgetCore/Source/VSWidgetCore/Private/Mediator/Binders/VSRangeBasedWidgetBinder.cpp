@@ -155,8 +155,8 @@ void UVSRangeBasedWidgetBinder::RefreshRange()
 {
 	ValueRange = GenerateValueRange();
 	
-	RebindWidgetByType(FName("Range"));
-	RebindWidgetByType(FName("Content"));
+	RebindTypedWidget(FName("Range"));
+	RebindTypedWidget(FName("Content"));
 }
 
 void UVSRangeBasedWidgetBinder::OnWidgetValueChanged_Implementation(float NewValue)
@@ -183,7 +183,7 @@ bool UVSRangeBasedWidgetBinder::EditorAllowChangingSnapByStep_Implementation() c
 
 void UVSRangeBasedWidgetBinder::OnCultureChanged()
 {
-	RebindWidgetByType(FName("Content"));
+	RebindTypedWidget(FName("Content"));
 }
 
 void UVSRangeBasedWidgetBinder::OnCommonRangerValueChanged(UVSCommonRanger* Ranger, float Value)
@@ -199,6 +199,6 @@ void UVSRangeBasedWidgetBinder::OnDisplayWidgetValueChanged(float Value)
 void UVSRangeBasedWidgetBinder::OnBoundWidgetValueChanged(float Value)
 {
 	OnWidgetValueChanged(Value);
-	RebindWidgetByType(FName("Content"));
+	RebindTypedWidget(FName("Content"));
 }
 

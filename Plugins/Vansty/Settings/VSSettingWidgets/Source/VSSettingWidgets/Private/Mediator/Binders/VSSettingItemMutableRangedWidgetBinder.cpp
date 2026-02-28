@@ -53,14 +53,14 @@ void UVSSettingItemMutableRangedWidgetBinder::OnWidgetValueChanged_Implementatio
 		MutableFloatSettingItem->SetIsMuted(GetWidgetIsMuted());
 	}
 	
-	RebindWidgetByType(FName("Range"));
-	RebindWidgetByType(FName("Content"));
+	RebindTypedWidget(FName("Range"));
+	RebindTypedWidget(FName("Content"));
 }
 
 void UVSSettingItemMutableRangedWidgetBinder::OnCurrentSettingItemUpdated_Implementation()
 {
-	RebindWidgetByType(FName("Range"));
-	RebindWidgetByType(FName("Content"));
+	RebindTypedWidget(FName("Range"));
+	RebindTypedWidget(FName("Content"));
 }
 
 float UVSSettingItemMutableRangedWidgetBinder::GetExternalNonMutedValue_Implementation() const

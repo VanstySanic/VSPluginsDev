@@ -123,7 +123,7 @@ void UVSInputKeyWidgetBinder::RefreshKeys()
 void UVSInputKeyWidgetBinder::OnBoundWidgetKeysUpdated()
 {
 	OnWidgetKeysUpdated(GetWidgetKeys());
-	RebindWidgetByType(FName("Keys"));
+	RebindTypedWidget(FName("Keys"));
 }
 
 void UVSInputKeyWidgetBinder::OnWidgetKeysUpdated_Implementation(const TArray<FInputChord>& NewKeys)

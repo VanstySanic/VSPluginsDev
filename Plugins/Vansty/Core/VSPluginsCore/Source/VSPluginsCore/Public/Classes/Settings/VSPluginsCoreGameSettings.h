@@ -26,15 +26,32 @@ public:
 	static const UVSPluginsCoreGameSettings* GetVSPluginsCoreGameSettings();
 
 public:
-	/** Gameplay tags whose initial explicit counts should be captured on the server and replicated once to autonomous proxies. */
+	/**
+	 * Gameplay tags whose initial counts should be captured on the server and replicated once to autonomous proxies.
+	 * Allow implicit matching.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags")
 	FGameplayTagContainer InitialAutonomousReplicatedGameplayTags;
 
-	/** Gameplay tags whose initial explicit counts should be captured on the server and replicated once to simulated proxies. */
+	/**
+	 * Gameplay tags whose initial counts should be captured on the server and replicated once to simulated proxies.
+	 * Allow implicit matching.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags")
 	FGameplayTagContainer InitialSimulationReplicatedGameplayTags;
 
-	/** Gameplay tag counts on the AbilitySystemComponent to listen to for AnyCountChange events when using the ASC as the tag source. */
+	/**
+	 * Gameplay tag counts on the ASC to listen to for AnyCountChange events when using the ASC as the tag source.
+	 * Explicit tags only.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags")
 	FGameplayTagContainer AbilitySystemListeningCountedTags;
+
+	/** Gameplay event tags to listen from ASC. Allow implicit matching. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags")
+	FGameplayTagContainer AbilitySystemListeningGameplayEventTags;
+
+	/** Gameplay event tags allowed to send to ASC. Allow implicit matching. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Config, Category = "GameplayTags")
+	FGameplayTagContainer AbilitySystemSendingGameplayEventTags;
 };

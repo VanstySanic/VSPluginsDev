@@ -127,14 +127,14 @@ void UVSGameplayTagFeatureBase::InitDefaultGameplayTags()
 		}
 		else if (GetOwnerActor()->GetLocalRole() == ROLE_AutonomousProxy)
 		{
-			if (UVSPluginsCoreGameSettings::Get()->InitialAutonomousReplicatedGameplayTags.HasTagExact(GameplayTagCountMap.Key))
+			if (GameplayTagCountMap.Key.MatchesAny(UVSPluginsCoreGameSettings::Get()->InitialAutonomousReplicatedGameplayTags))
 			{
 				bShouldRemove = true;
 			}
 		}
 		else if (GetOwnerActor()->GetLocalRole() == ROLE_SimulatedProxy)
 		{
-			if (UVSPluginsCoreGameSettings::Get()->InitialSimulationReplicatedGameplayTags.HasTagExact(GameplayTagCountMap.Key))
+			if (GameplayTagCountMap.Key.MatchesAny(UVSPluginsCoreGameSettings::Get()->InitialSimulationReplicatedGameplayTags))
 			{
 				bShouldRemove = true;
 			}
@@ -578,8 +578,12 @@ void UVSGameplayTagFeatureBase::SetTagCountInternal(const FGameplayTag& Gameplay
 	}
 		
 	bTagsDirty = true;
-		
-	UpdateInitialReplicatedTag(GameplayTag);
+
+	if (GetOwnerActor()->HasAuthority())
+	{
+		UpdateInitialReplicatedTag(GameplayTag);
+	}
+	
 	if (bNotifyTagsUpdateInstantly)
 	{
 		NotifyTagsUpdated();
@@ -617,7 +621,7 @@ void UVSGameplayTagFeatureBase::UpdateInitialReplicatedTag(const FGameplayTag& G
 {
 	if (!GetOwnerActor()->HasAuthority()) return;
 	const int32 CurrentCount = GetTagCount(GameplayTag);
-	if (UVSPluginsCoreGameSettings::Get()->InitialAutonomousReplicatedGameplayTags.HasTagExact(GameplayTag))
+	if (GameplayTag.MatchesAny(UVSPluginsCoreGameSettings::Get()->InitialAutonomousReplicatedGameplayTags))
 	{
 		const int32 CurrentIndex = InitialAutonomousReplicatedTagCounts.Tags.Find(GameplayTag);
 		if (CurrentIndex == INDEX_NONE && CurrentCount > 0)
@@ -636,7 +640,7 @@ void UVSGameplayTagFeatureBase::UpdateInitialReplicatedTag(const FGameplayTag& G
 		}
 	}
 
-	if (UVSPluginsCoreGameSettings::Get()->InitialSimulationReplicatedGameplayTags.HasTagExact(GameplayTag))
+	if (GameplayTag.MatchesAny(UVSPluginsCoreGameSettings::Get()->InitialSimulationReplicatedGameplayTags))
 	{
 		const int32 CurrentIndex = InitialSimulationReplicatedTagCounts.Tags.Find(GameplayTag);
 		if (CurrentIndex == INDEX_NONE && CurrentCount > 0)
@@ -911,36 +915,41 @@ UVSAbilitySystemGameplayTagFeature::UVSAbilitySystemGameplayTagFeature(const FOb
 void UVSAbilitySystemGameplayTagFeature::Initialize_Implementation()
 {
 	Super::Initialize_Implementation();
+	
+	OnTagEventsNotified_Native.AddUObject(this, &UVSAbilitySystemGameplayTagFeature::OnTagEventsNotified);
 
 	AbilitySystemComponentPrivate = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwnerActor());
 	check(AbilitySystemComponentPrivate.IsValid());
 
-	if (AbilitySystemGameplayTagCountContainerPtr)
+	if (AbilitySystemComponentPrivate.IsValid())
 	{
 		AbilitySystemGameplayTagCountContainerPtr = &VS_PRIVABLIC_MEMBER(AbilitySystemComponentPrivate.Get(), UAbilitySystemComponent, GameplayTagCountContainer);
 		check(AbilitySystemGameplayTagCountContainerPtr);
-
-		AbilitySystemComponentPrivate->RegisterGenericGameplayTagEvent().AddUObject(this, &UVSAbilitySystemGameplayTagFeature::OnAbilitySystemTagNewOrRemoved);
 		
-		if (AbilitySystemGameplayTagCountContainerPtr)
+		AbilitySystemComponentPrivate->RegisterGenericGameplayTagEvent().AddUObject(this, &UVSAbilitySystemGameplayTagFeature::OnAbilitySystemTagNewOrRemoved);
+		AbilitySystemGameplayEventTagContainerDelegate = AbilitySystemComponentPrivate->AddGameplayEventTagContainerDelegate(
+			UVSPluginsCoreGameSettings::Get()->AbilitySystemListeningGameplayEventTags,
+			FGameplayEventTagMulticastDelegate::FDelegate::CreateUObject(this, &UVSAbilitySystemGameplayTagFeature::OnAbilitySystemGameplayEventTriggered));
+
+		/** Bind listen delegate. */
+		for (const FGameplayTag& GameplayTag : UVSPluginsCoreGameSettings::Get()->AbilitySystemListeningCountedTags.GetGameplayTagArray())
 		{
-			/** Bind listen delegate. */
-			for (const FGameplayTag& GameplayTag : UVSPluginsCoreGameSettings::Get()->AbilitySystemListeningCountedTags.GetGameplayTagArray())
-			{
-				FDelegateHandle DelegateHandle = AbilitySystemComponentPrivate->RegisterGameplayTagEvent(GameplayTag, EGameplayTagEventType::AnyCountChange)
-					.AddUObject(this, &UVSAbilitySystemGameplayTagFeature::OnAbilitySystemListeningTagCountUpdated);
-				AbilitySystemRegisteredDelegateHandles.Emplace(GameplayTag, DelegateHandle);
-			}
+			FDelegateHandle DelegateHandle = AbilitySystemComponentPrivate->RegisterGameplayTagEvent(GameplayTag, EGameplayTagEventType::AnyCountChange)
+				.AddUObject(this, &UVSAbilitySystemGameplayTagFeature::OnAbilitySystemListeningTagCountUpdated);
+			AbilitySystemRegisteredDelegateHandles.Emplace(GameplayTag, DelegateHandle);
 		}
 	}
 }
 
 void UVSAbilitySystemGameplayTagFeature::Uninitialize_Implementation()
 {
+	OnTagEventsNotified_Native.RemoveAll(this);
+	
 	if (AbilitySystemComponentPrivate.IsValid())
 	{
 		AbilitySystemComponentPrivate->RegisterGenericGameplayTagEvent().RemoveAll(this);
-
+		AbilitySystemComponentPrivate->RemoveGameplayEventTagContainerDelegate(UVSPluginsCoreGameSettings::Get()->AbilitySystemListeningGameplayEventTags, AbilitySystemGameplayEventTagContainerDelegate);
+		
 		for (const TPair<FGameplayTag, FDelegateHandle>& AbilitySystemComponentRegisteredDelegateHandle : AbilitySystemRegisteredDelegateHandles)
 		{
 			if (AbilitySystemComponentRegisteredDelegateHandle.Value.IsValid())
@@ -953,6 +962,7 @@ void UVSAbilitySystemGameplayTagFeature::Uninitialize_Implementation()
 	AbilitySystemComponentPrivate.Reset();
 	AbilitySystemGameplayTagCountContainerPtr = nullptr;
 	AbilitySystemRegisteredDelegateHandles.Empty();
+	AbilitySystemGameplayEventTagContainerDelegate.Reset();
 	
 	Super::Uninitialize_Implementation();
 }
@@ -977,6 +987,33 @@ void UVSAbilitySystemGameplayTagFeature::ModifyTagCount(const FGameplayTag& Game
 	}
 }
 
+void UVSAbilitySystemGameplayTagFeature::OnTagEventsNotified(UVSGameplayTagFeatureBase* Feature, const FGameplayTagContainer& TagEvents)
+{
+	for (const FGameplayTag Tag : TagEvents.GetGameplayTagArray())
+	{
+		if (AbilitySystemBlockedGameplayEventCounts.Contains(Tag))
+		{
+			AbilitySystemBlockedGameplayEventCounts[Tag]--;
+			if (AbilitySystemBlockedGameplayEventCounts[Tag] <= 0)
+			{
+				AbilitySystemBlockedGameplayEventCounts.Remove(Tag);
+			}
+		}
+		else if (Tag.MatchesAny(UVSPluginsCoreGameSettings::Get()->AbilitySystemSendingGameplayEventTags))
+		{
+			if (Tag.MatchesAny(UVSPluginsCoreGameSettings::Get()->AbilitySystemListeningGameplayEventTags))
+			{
+				AbilitySystemBlockedGameplayEventCounts.FindOrAdd(Tag)++;
+			}
+			if (AbilitySystemComponentPrivate.IsValid())
+			{
+				FGameplayEventData Payload;
+				AbilitySystemComponentPrivate->HandleGameplayEvent(Tag, &Payload);
+			}
+		}
+	}
+}
+
 void UVSAbilitySystemGameplayTagFeature::OnAbilitySystemTagNewOrRemoved(const FGameplayTag Tag, int32 Count)
 {
 	if (!UVSPluginsCoreGameSettings::Get()->AbilitySystemListeningCountedTags.HasTagExact(Tag))
@@ -995,5 +1032,25 @@ void UVSAbilitySystemGameplayTagFeature::OnAbilitySystemListeningTagCountUpdated
 	if (bNotifyTagsUpdateInstantly)
 	{
 		NotifyTagsUpdated();
+	}
+}
+
+void UVSAbilitySystemGameplayTagFeature::OnAbilitySystemGameplayEventTriggered(FGameplayTag Tag, const FGameplayEventData* EventData)
+{
+	if (AbilitySystemBlockedGameplayEventCounts.Contains(Tag))
+	{
+		AbilitySystemBlockedGameplayEventCounts[Tag]--;
+		if (AbilitySystemBlockedGameplayEventCounts[Tag] <= 0)
+		{
+			AbilitySystemBlockedGameplayEventCounts.Remove(Tag);
+		}
+	}
+	else
+	{
+		if (Tag.MatchesAny(UVSPluginsCoreGameSettings::Get()->AbilitySystemSendingGameplayEventTags))
+		{
+			AbilitySystemBlockedGameplayEventCounts.FindOrAdd(Tag)++;
+		}
+		NotifyTagEvent(Tag);
 	}
 }

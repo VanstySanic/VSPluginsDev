@@ -9,6 +9,7 @@
 #include "VSGameplayTagFeature.generated.h"
 
 struct FGameplayTagCountContainer;
+struct FGameplayEventData;
 class UAbilitySystemComponent;
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(VS_PLUGINSCORE_GAMEPAYTAGFEATURE_ONTAGSUPDATED)
@@ -413,8 +414,14 @@ private:
 	UFUNCTION()
 	void OnAbilitySystemListeningTagCountUpdated(const FGameplayTag Tag, int32 Count);
 	
+	void OnTagEventsNotified(UVSGameplayTagFeatureBase* Feature, const FGameplayTagContainer& TagEvents);
+	void OnAbilitySystemGameplayEventTriggered(FGameplayTag Tag, const FGameplayEventData* EventData);
+	
 private:
 	TWeakObjectPtr<UAbilitySystemComponent> AbilitySystemComponentPrivate;
 	FGameplayTagCountContainer* AbilitySystemGameplayTagCountContainerPtr = nullptr;
+	TMap<FGameplayTag, int32> AbilitySystemBlockedGameplayEventCounts;
+
 	TMap<FGameplayTag, FDelegateHandle> AbilitySystemRegisteredDelegateHandles;
+	FDelegateHandle AbilitySystemGameplayEventTagContainerDelegate;
 };

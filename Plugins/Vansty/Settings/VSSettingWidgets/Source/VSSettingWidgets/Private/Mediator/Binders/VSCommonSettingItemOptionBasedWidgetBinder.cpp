@@ -79,6 +79,6 @@ FText UVSCommonSettingItemOptionBasedWidgetBinder::OptionStringToText_Implementa
 
 void UVSCommonSettingItemOptionBasedWidgetBinder::OnCurrentSettingItemUpdated_Implementation()
 {
-	RebindWidgetByType(FName("Options"));
+	RebindTypedWidget(FName("Options"));
 }
 
