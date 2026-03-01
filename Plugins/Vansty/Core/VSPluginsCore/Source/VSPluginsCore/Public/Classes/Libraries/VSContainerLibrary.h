@@ -96,6 +96,7 @@ public:
 	static bool MapEqual(const TMap<int32, int32>& MapA, const TMap<int32, int32>& MapB);
 
 private:
+	/** CustomThunk exec handlers (wildcard runtime marshalling). */
 	DECLARE_FUNCTION(execArrayIntersection);
 	DECLARE_FUNCTION(execArrayUnion);
 	DECLARE_FUNCTION(execArrayComplement);

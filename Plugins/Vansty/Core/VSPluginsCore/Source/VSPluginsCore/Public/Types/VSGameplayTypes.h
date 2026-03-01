@@ -76,7 +76,9 @@ class URichTextBlockDecorator;
 // 	FDataTableRowHandle Row;
 // };
 
-/** Used to get user index or user id. */
+/**
+ * Helper key that resolves either user index or platform user id.
+ */
 struct FVSUserQueryParams
 {
 	FVSUserQueryParams() = delete;
@@ -114,7 +116,9 @@ private:
 };
 
 
-/** If the local role is Authority, what will the locally-called method do with network. */
+/**
+ * Network execution policy applied when local role is Authority.
+ */
 UENUM(BlueprintType)
 namespace EVSNetAuthorityMethodExecPolicy
 {
@@ -124,9 +128,9 @@ namespace EVSNetAuthorityMethodExecPolicy
 		None						= 0,
 		/** Execute locally without sending RPC to clients. */
 		Server						= 1 << 1,
-		/** Send RPC to the owing client only without executing locally. */
+		/** Send RPC to the owning client only without executing locally. */
 		Client						= 1 << 2,
-		/** Execute locally and then send RPC to the owing client only. */
+		/** Execute locally and then send RPC to the owning client only. */
 		Simulated					= 1 << 3,
 		
 		ServerAndClient				= Server + Client,
@@ -136,7 +140,9 @@ namespace EVSNetAuthorityMethodExecPolicy
 	};
 }
 
-/** If the local role is Autonomous, what will the locally-called method do with network. */
+/**
+ * Network execution policy applied when local role is Autonomous.
+ */
 UENUM(BlueprintType)
 namespace EVSNetAutonomousMethodExecPolicy
 {
@@ -154,10 +160,7 @@ namespace EVSNetAutonomousMethodExecPolicy
 }
 
 /**
- * Defines how a locally-called method works with network under different local role.
- * Notice that this only gives policies but doesn't handle them. Users need to manually process conditions.
- * Sometimes your logic might only handle part of the policies.
- * @remarks This is set to local execution by default.
+ * Per-role network execution policies used by caller-side dispatch code.
  */
 USTRUCT(BlueprintType)
 struct FVSNetMethodExecutionPolicies
@@ -177,19 +180,19 @@ struct FVSNetMethodExecutionPolicies
 		
 	}
 	
-	/** If the local role is Autonomous, what will the locally-called method do with network. */
+	/** Network behavior when the local role is Autonomous. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<EVSNetAutonomousMethodExecPolicy::Type> AutonomousLocalPolicy;
 	
-	/** If the local role is Authority, what will the locally-called method do with network. */
+	/** Network behavior when the local role is Authority. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<EVSNetAuthorityMethodExecPolicy::Type> AuthorityLocalPolicy;
 	
-	/** If the call is from an autonomous RPC, what will the server method do with network.*/
+	/** Server-side network behavior when entered from autonomous RPC calls. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<EVSNetAuthorityMethodExecPolicy::Type> ServerRPCPolicy;
 	
-	/** If the local role is Simulated, whether to execute locally. */
+	/** Whether simulated proxies also execute the method locally. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bSimulatedLocalExecution;
 
@@ -198,6 +201,9 @@ struct FVSNetMethodExecutionPolicies
 	VSPLUGINSCORE_API static FVSNetMethodExecutionPolicies AuthorityMulticast;
 };
 
+/**
+ * Parameters for resolving a world-space location under cursor input.
+ */
 USTRUCT(BlueprintType)
 struct FVSLocationUnderCursorQueryParams
 {
@@ -205,27 +211,35 @@ struct FVSLocationUnderCursorQueryParams
 
 	VSPLUGINSCORE_API bool IsValid() const;
 
+	/** Player controller used to fetch cursor position and perform tracing. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TWeakObjectPtr<APlayerController> PlayerController;
 
+	/** If true, return location from collision trace under cursor. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bTraceByCollision = true;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	/** Collision channel used when bTraceByCollision is true. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bTraceByCollision"))
 	TEnumAsByte<ETraceTypeQuery> TraceType = TraceTypeQuery1;
 
+	/** If true, also allow resolving location by intersecting a plane. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIntersectByPlane = false;
 
+	/** Plane normal used for cursor ray/plane intersection. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bIntersectByPlane"))
 	FVector PlaneNormal = FVector::ZeroVector;
 
+	/** A point on the plane used for cursor ray/plane intersection. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bIntersectByPlane"))
 	FVector PlanePoint = FVector::ZeroVector;
 
+	/** If true, use CursorPositionOverride instead of current hardware cursor position. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bOverrideCursorPosition = false;
 
+	/** Screen-space cursor position override. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideCursorPosition"))
 	FVector2D CursorPositionOverride = FVector2D::ZeroVector;
 };

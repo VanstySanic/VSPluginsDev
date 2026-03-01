@@ -10,7 +10,10 @@ class UVSCommonRanger;
 class UVSCommonMutableRanger;
 
 /**
- * 
+ * Binder for ranged widgets with additional mute state support.
+ *
+ * Synchronizes `Range`, optional `Mute`, and optional `Content` typed
+ * widgets with external non-muted value and mute-state data.
  */
 UCLASS(DisplayName = "VS.Widget.Binder.MutableRanged")
 class VSWIDGETCORE_API UVSMutableRangedWidgetBinder : public UVSWidgetBinder
@@ -26,7 +29,7 @@ protected:
 	//~ End UVSWidgetBinder Interface
 
 public:
-	/** Get the real value in game, not in the bound widget. */
+	/** Returns external value (resolved with mute state). */
 	UFUNCTION(BlueprintCallable, Category = "Range")
 	float GetExternalValue() const;
 	
@@ -34,28 +37,30 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Range")
 	float GetExternalNonMutedValue() const;
 	
-	/** Get the real mute state in game, not in the bound widget. */
+	/** Returns external mute state. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Range")
 	bool GetExternalIsMuted() const;
 
-	/** Get the widget value that ignores the muted state. */
+	/** Returns widget value without mute-state remapping. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Range")
 	float GetWidgetNonMutedValue() const;
 	
-	/** Get the widget value. */
+	/** Returns widget value (resolved with mute state). */
 	UFUNCTION(BlueprintCallable, Category = "Range")
 	float GetWidgetValue() const;
 	
-	/** Get the widget mute state. */
+	/** Returns widget mute state. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Range")
 	bool GetWidgetIsMuted() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "Range")
 	FVector2D GetValueRange() const { return ValueRange; }
 
+	/** Returns formatted content text from current widget state. */
 	UFUNCTION(BlueprintCallable, Category = "Range")
 	FText GetContentText() const;
 	
+	/** Regenerates range/mute data and rebinds related widgets. */
 	UFUNCTION(BlueprintCallable, Category = "Range")
 	void RefreshRange();
 
@@ -108,17 +113,18 @@ protected:
 	uint8 bSnapByStep : 1;
 
 	
-	/** The content text format to display. If you want to show the digits, please put ‘{0}’ in it. */
+	/** Value text format. Use `{0}` as placeholder for numeric value text. */
 	UPROPERTY(EditAnywhere, Category = "Range")
 	FText DisplayTextFormat = FText::FromString("{0}");
 	
 	UPROPERTY(EditAnywhere, Category = "Range")
 	FIntPoint DisplayFractionDigitRange = FIntPoint(1, 324);
 
+	/** Multiplier used for UI display and formatting. */
 	UPROPERTY(EditAnywhere, Category = "Range")
 	float DisplayValueMultiplier = 1.f;
 	
-	/** The text to display when muted. Not work if left empty. */
+	/** Text used when muted. Ignored when empty. */
 	UPROPERTY(EditAnywhere, Category = "Range")
 	FText DisplayMutedText = FText::FromString("");
 };

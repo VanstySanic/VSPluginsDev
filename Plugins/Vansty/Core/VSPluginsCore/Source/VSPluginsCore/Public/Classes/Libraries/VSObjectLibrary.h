@@ -9,7 +9,7 @@
 class UVSObjectFeature;
 
 /**
- * 
+ * Blueprint object utility helpers.
  */
 UCLASS()
 class VSPLUGINSCORE_API UVSObjectLibrary : public UBlueprintFunctionLibrary
@@ -20,6 +20,7 @@ class VSPLUGINSCORE_API UVSObjectLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly, BlueprintInternalUseOnly, Category = "Object", meta = (DefaultToSelf = "Object"))
 	static bool IsObjectTemplate(UObject* Object);
 
+	/** Thread-safe UObject validity check for Blueprint utility usage. */
 	UFUNCTION(BlueprintPure, Category = "Object", meta = (BlueprintThreadSafe, DefaultToSelf = "Source"))
 	static bool IsValidThreadSafe(const UObject* Object);
 
@@ -27,48 +28,41 @@ class VSPLUGINSCORE_API UVSObjectLibrary : public UBlueprintFunctionLibrary
 	UFUNCTION(BlueprintPure, Category = "Object", meta = (DefaultToSelf = "Source"))
 	static bool HasOuterObject(const UObject* Object, const UObject* Outer);
 
-	/** Get typed outer object of given class. */
+	/** Returns first outer that is assignable to Class. */
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly, Category = "Object", meta = (DefaultToSelf = "Object", DeterminesOutputType = "Class"))
 	static UObject* GetTypedOuterObject(const UObject* Object, const TSubclassOf<UObject> Class);
 
-	/** Get outer object that implements given interface. */
+	/** Returns first outer that implements Interface. */
 	UFUNCTION(BlueprintPure, BlueprintInternalUseOnly, Category = "Object", meta = (DefaultToSelf = "Object"))
 	static UObject* GetImplementingOuterObject(const UObject* Object, const TSubclassOf<UInterface> Interface);
 
-	/** Add tick prerequisite relationship between two objects. */
+	/** Adds a tick prerequisite edge: Source ticks after PrerequisiteObject. */
 	UFUNCTION(BlueprintCallable, Category = "Object", meta = (DefaultToSelf = "Source"))
 	static void AddTickPrerequisiteObject(UObject* Source, UObject* PrerequisiteObject);
 
-	/** Remove tick prerequisite relationship between two objects. */
+	/** Removes a previously added tick prerequisite edge. */
 	UFUNCTION(BlueprintCallable, Category = "Object", meta = (DefaultToSelf = "Source"))
 	static void RemoveTickPrerequisiteObject(UObject* Source, UObject* PrerequisiteObject);
 	
-	/**
-	 * Find feature on object by class.
-	 * Searches both actor components and object properties.
-	 */
+	/** Returns first feature matching Class from actor components or object properties. */
 	UFUNCTION(BlueprintPure, Category = "Object", meta = (DefaultToSelf = "Object", DeterminesOutputType = "Class"))
 	static UVSObjectFeature* GetFeatureByClassFromObject(UObject* Object, TSubclassOf<UVSObjectFeature> Class);
 
-	/**
-	 * Find feature on object by feature name.
-	 * Searches both actor components and object properties.
-	 */
+	/** Returns first feature matching Name from actor components or object properties. */
 	UFUNCTION(BlueprintPure, Category = "Object", meta = (DefaultToSelf = "Object"))
 	static UVSObjectFeature* GetFeatureByNameFromObject(UObject* Object, FName Name);
 
 public:
+	/** Exports a property value to text using Unreal property serialization rules. */
 	static FString ExportPropertyToText(UObject* Object, FName PropertyName);
+	/** Imports a property value from text using Unreal property serialization rules. */
 	static bool ImportPropertyFromText(UObject* Object, FName PropertyName, const FString& Text);
 
-	/**
-	 * Find feature on object by class.
-	 * Searches both actor components and object properties.
-	 */
+	/** Typed wrapper of GetFeatureByClassFromObject. */
 	template <typename T>
 	static T* FindFeatureByClassFromObject(UObject* Object, TSubclassOf<T> Class = T::StaticClass());
 
-	/** Get the possible tick function pointer from an object. */
+	/** Resolves tick function pointer from an object if it exposes one. */
 	static FTickFunction* GetTickFunctionPtrFromObject(UObject* Object);};
 
 template <typename T>

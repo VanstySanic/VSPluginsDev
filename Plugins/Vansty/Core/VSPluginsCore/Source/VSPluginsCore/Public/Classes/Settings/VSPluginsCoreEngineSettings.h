@@ -9,7 +9,7 @@
 extern TAutoConsoleVariable<FString> CVarDesiredFullscreenMonitorID;
 
 /**
- * 
+ * Engine-level developer settings.
  */
 UCLASS()
 class VSPLUGINSCORE_API UVSPluginsCoreEngineSettings : public UDeveloperSettings

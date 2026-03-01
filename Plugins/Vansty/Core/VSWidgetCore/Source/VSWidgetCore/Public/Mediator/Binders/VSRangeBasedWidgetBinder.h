@@ -10,7 +10,10 @@ class UVSCommonRanger;
 class UVSCommonMutableRanger;
 
 /**
- * 
+ * Binder for range/value widgets.
+ *
+ * Synchronizes external value state with widgets bound as `Range` and
+ * optional display widgets bound as `Content`.
  */
 UCLASS(DisplayName = "VS.Widget.Binder.RangeBased")
 class VSWIDGETCORE_API UVSRangeBasedWidgetBinder : public UVSWidgetBinder
@@ -26,20 +29,22 @@ protected:
 	//~ End UVSWidgetBinder Interface
 
 public:
-	/** Get the real value in game, not in the bound widget. */
+	/** Returns external value from game data source. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Range")
 	float GetExternalValue() const;
 	
-	/** Get the value from widget. */
+	/** Returns value currently represented by bound range widget. */
 	UFUNCTION(BlueprintCallable, Category = "Range")
 	float GetWidgetValue() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Range")
 	FVector2D GetValueRange() const { return ValueRange; }
 
+	/** Returns formatted content text based on current widget value. */
 	UFUNCTION(BlueprintCallable, Category = "Range")
 	FText GetContentText() const;
 	
+	/** Regenerates range data and rebinds related widgets. */
 	UFUNCTION(BlueprintCallable, Category = "Range")
 	void RefreshRange();
 
@@ -79,13 +84,15 @@ protected:
 	uint8 bSnapByStep : 1;
 
 	
-	/** The content text format to display. If you want to show the digits, please put ‘{0}’ in it. */
+	/** Value text format. Use `{0}` as placeholder for numeric value text. */
 	UPROPERTY(EditAnywhere, Category = "Range")
 	FText DisplayTextFormat = FText::FromString("{0}");
 	
+	/** Fractional digit range used when formatting value text. */
 	UPROPERTY(EditAnywhere, Category = "Range")
 	FIntPoint DisplayFractionDigitRange = FIntPoint(0, 324);
 	
+	/** Multiplier used for UI display and formatting. */
 	UPROPERTY(EditAnywhere, Category = "Range")
 	float DisplayValueMultiplier = 1.f;
 };

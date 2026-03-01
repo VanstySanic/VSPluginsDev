@@ -214,9 +214,9 @@ void UVSAlphaBlendPlayProxy::Tick_Implementation(float DeltaTime)
 		if (RemainedInitialDelay <= 0.f)
 		{
 			RemainedInitialDelay = -1.f;
-			CurrentLoopCount++;
-			OnLoopStart_Native.Broadcast(this, GetAlpha(), CurrentLoopCount);
-			OnLoopStart.Broadcast(this, GetAlpha(), CurrentLoopCount);
+			CurrentLoop++;
+			OnLoopStart_Native.Broadcast(this, GetAlpha(), CurrentLoop);
+			OnLoopStart.Broadcast(this, GetAlpha(), CurrentLoop);
 			AlphaBlendPlayer->SetAutoUpdate(true);
 		}
 	}
@@ -273,7 +273,7 @@ float UVSAlphaBlendPlayProxy::GetAlpha() const
 void UVSAlphaBlendPlayProxy::Reset(bool bIgnoreInitialDelay, bool bKeepPauseState)
 {
 	bHasFinished = false;
-	CurrentLoopCount = 0;
+	CurrentLoop = 0;
 	RemainedDirectionTimeInterval = -1.f;
 	RemainedLoopTimeInterval = -1.f;
 	RemainedInitialDelay = bIgnoreInitialDelay ? -1.f : CachedProxyParams.InitialDelay;
@@ -288,9 +288,9 @@ void UVSAlphaBlendPlayProxy::Reset(bool bIgnoreInitialDelay, bool bKeepPauseStat
 
 	if (bIgnoreInitialDelay || CachedProxyParams.InitialDelay <= 0.f)
 	{
-		CurrentLoopCount++;
-		OnLoopStart_Native.Broadcast(this, GetAlpha(), CurrentLoopCount);
-		OnLoopStart.Broadcast(this, GetAlpha(), CurrentLoopCount);
+		CurrentLoop++;
+		OnLoopStart_Native.Broadcast(this, GetAlpha(), CurrentLoop);
+		OnLoopStart.Broadcast(this, GetAlpha(), CurrentLoop);
 	}
 }
 
@@ -336,13 +336,13 @@ void UVSAlphaBlendPlayProxy::Initialize()
 		/** Start loop during initialization. */
 		if (CachedProxyParams.InitialDelay <= 0.f)
 		{
-			CurrentLoopCount++;
-			OnLoopStart_Native.Broadcast(this, GetAlpha(), CurrentLoopCount);
-			OnLoopStart.Broadcast(this, GetAlpha(), CurrentLoopCount);
+			CurrentLoop++;
+			OnLoopStart_Native.Broadcast(this, GetAlpha(), CurrentLoop);
+			OnLoopStart.Broadcast(this, GetAlpha(), CurrentLoop);
 		}
 		
-		OnAlphaUpdated_Native.Broadcast(this, GetAlpha(), CurrentLoopCount);
-		OnAlphaUpdated.Broadcast(this, GetAlpha(), CurrentLoopCount);
+		OnAlphaUpdated_Native.Broadcast(this, GetAlpha(), CurrentLoop);
+		OnAlphaUpdated.Broadcast(this, GetAlpha(), CurrentLoop);
 		
 		if (AlphaBlendPlayer->HasFinished())
 		{
@@ -354,8 +354,8 @@ void UVSAlphaBlendPlayProxy::Initialize()
 			/** Bind delegates here. */
 			AlphaBlendPlayer->OnUpdated_Native.AddWeakLambda(this, [this] (UVSAlphaBlendPlayer* Feature, float Alpha)
 			{
-				OnAlphaUpdated_Native.Broadcast(this, Alpha, CurrentLoopCount);
-				OnAlphaUpdated.Broadcast(this, Alpha, CurrentLoopCount);
+				OnAlphaUpdated_Native.Broadcast(this, Alpha, CurrentLoop);
+				OnAlphaUpdated.Broadcast(this, Alpha, CurrentLoop);
 			});
 			AlphaBlendPlayer->OnFinished_Native.AddWeakLambda(this, [this] (UVSAlphaBlendPlayer* Feature, float Alpha)
 			{
@@ -401,8 +401,8 @@ void UVSAlphaBlendPlayProxy::AlphaBlendPlayerFinished()
 {
 	AlphaBlendPlayer->SetAutoUpdate(false);
 
-	OnLoopFinished_Native.Broadcast(this, GetAlpha(), CurrentLoopCount);
-	OnLoopFinished.Broadcast(this, GetAlpha(), CurrentLoopCount);
+	OnLoopFinished_Native.Broadcast(this, GetAlpha(), CurrentLoop);
+	OnLoopFinished.Broadcast(this, GetAlpha(), CurrentLoop);
 	
 	bool bDesireNextLoop = true;
 	if (CachedProxyParams.bLoopRequiresReversingDirection)
@@ -429,7 +429,7 @@ void UVSAlphaBlendPlayProxy::AlphaBlendPlayerFinished()
 	
 	if (bDesireNextLoop)
 	{
-		if (CachedProxyParams.LoopCount <= 0 || CurrentLoopCount < CachedProxyParams.LoopCount)
+		if (CachedProxyParams.LoopCount <= 0 || CurrentLoop < CachedProxyParams.LoopCount)
 		{
 			/** Delay and go to the next loop. */
 			if (CachedProxyParams.LoopTimeInterval > 0.f)
@@ -451,9 +451,9 @@ void UVSAlphaBlendPlayProxy::AlphaBlendPlayerFinished()
 
 void UVSAlphaBlendPlayProxy::CheckNextLoop()
 {
-	if (CachedProxyParams.LoopCount <= 0 || CurrentLoopCount < CachedProxyParams.LoopCount)
+	if (CachedProxyParams.LoopCount <= 0 || CurrentLoop < CachedProxyParams.LoopCount)
 	{
-		CurrentLoopCount++;
+		CurrentLoop++;
 		if (CachedProxyParams.bLoopRequiresReversingDirection)
 		{
 			AlphaBlendPlayer->ReverseDirection();
@@ -464,8 +464,8 @@ void UVSAlphaBlendPlayProxy::CheckNextLoop()
 		}
 		AlphaBlendPlayer->SetAutoUpdate(true);
 		
-		OnLoopStart_Native.Broadcast(this, GetAlpha(), CurrentLoopCount);
-		OnLoopStart.Broadcast(this, GetAlpha(), CurrentLoopCount);
+		OnLoopStart_Native.Broadcast(this, GetAlpha(), CurrentLoop);
+		OnLoopStart.Broadcast(this, GetAlpha(), CurrentLoop);
 	}
 	/** Proxy finish. */
 	else
@@ -488,8 +488,8 @@ void UVSAlphaBlendPlayProxy::DoFinishLogics()
 		SetPaused(true);
 	}
 	
-	OnProxyFinished_Native.Broadcast(this, GetAlpha(), CurrentLoopCount);
-	OnProxyFinished.Broadcast(this, GetAlpha(), CurrentLoopCount);
+	OnProxyFinished_Native.Broadcast(this, GetAlpha(), CurrentLoop);
+	OnProxyFinished.Broadcast(this, GetAlpha(), CurrentLoop);
 
 	if (CachedProxyParams.bDestroyWhenFinished)
 	{

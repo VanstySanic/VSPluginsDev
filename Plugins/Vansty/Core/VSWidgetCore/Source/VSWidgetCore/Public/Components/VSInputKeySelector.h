@@ -9,7 +9,7 @@
 class SVSInputKeySelector;
 
 /**
- * 
+ * InputKeySelector extension that adds keyboard/mouse key filtering support.
  */
 UCLASS()
 class VSWIDGETCORE_API UVSInputKeySelector : public UInputKeySelector
@@ -33,7 +33,7 @@ protected:
 	//~ End UVisual Interface
 	
 public:
-	/** Sets whether keyboard keys are allowed in the selected key. */
+	/** Sets whether keyboard keys are allowed in selected key. */
 	UFUNCTION(BlueprintCallable, Category = "Widget")
 	void SetAllowKeyboardKeys(bool bInAllowKeyboardKeys);
 
@@ -41,7 +41,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Widget")
 	bool AllowKeyboardKeys() const;
 
-	/** Sets whether mouse buttons are allowed in the selected key. */
+	/** Sets whether mouse keys are allowed in selected key. */
 	UFUNCTION(BlueprintCallable, Category = "Widget")
 	void SetAllowMouseKeys(bool bInAllowMouseKeys);
 
@@ -54,9 +54,11 @@ private:
 	void HandleIsSelectingKeyChanged();
 	
 public:
+	/** Whether keyboard keys are allowed as selected key. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Selection")
 	uint8 bAllowKeyboardKeys : 1;
 
+	/** Whether mouse keys are allowed as selected key. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Selection")
 	uint8 bAllowMouseKeys : 1;
 

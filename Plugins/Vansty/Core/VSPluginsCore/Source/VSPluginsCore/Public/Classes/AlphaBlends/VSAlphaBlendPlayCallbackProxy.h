@@ -10,12 +10,7 @@
 class UVSAlphaBlendPlayProxy;
 
 /**
- * Blueprint async-action class that runs an alpha-blend sequence using
- * UVSAlphaBlendPlayProxy and exposes its lifecycle events to Blueprint.
- *
- * This class is intended to be used as a single K2 node, handling proxy
- * creation, activation, and event forwarding, without requiring manual
- * proxy management in Blueprint graphs.
+ * Async Blueprint node wrapper around UVSAlphaBlendPlayProxy lifecycle events.
  */
 UCLASS()
 class VSPLUGINSCORE_API UVSAlphaBlendPlayCallBackProxy : public UBlueprintAsyncActionBase
@@ -47,15 +42,19 @@ private:
 	void HandleProxyFinished(UVSAlphaBlendPlayProxy* InProxy, float Alpha, int32 LoopCount);
 	
 public:
+	/** Broadcast whenever the internal player updates alpha. */
 	UPROPERTY(BlueprintAssignable)
 	FAlphaBlendCallBackProxyEvent OnAlphaUpdated;
 
+	/** Broadcast when a loop cycle starts. */
 	UPROPERTY(BlueprintAssignable)
 	FAlphaBlendCallBackProxyEvent OnLoopStart;
 
+	/** Broadcast when a loop cycle finishes. */
 	UPROPERTY(BlueprintAssignable)
 	FAlphaBlendCallBackProxyEvent OnLoopFinished;
 
+	/** Broadcast once when the proxy reaches final completion. */
 	UPROPERTY(BlueprintAssignable)
 	FAlphaBlendCallBackProxyEvent OnProxyFinished;
 

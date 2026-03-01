@@ -13,6 +13,9 @@ class UCommonActionWidget;
 class UCommonButtonBase;
 class UCommonButtonStyle;
 
+/**
+ * Override settings for CommonActionWidget display/action data.
+ */
 USTRUCT(BlueprintType)
 struct VSWIDGETCORE_API FVSCommonActionWidgetSettings
 {
@@ -65,6 +68,9 @@ struct VSWIDGETCORE_API FVSCommonActionWidgetSettings
 	uint8 bOverrideIconRimBrush : 1;
 };
 
+/**
+ * Override settings for CommonButtonBase style sizing and class.
+ */
 USTRUCT(BlueprintType)
 struct VSWIDGETCORE_API FVSCommonButtonStyleSettings
 {
@@ -94,6 +100,9 @@ struct VSWIDGETCORE_API FVSCommonButtonStyleSettings
 	uint8 bOverrideMinHeight : 1;
 };
 
+/**
+ * Override settings for CommonButtonBase action binding and display.
+ */
 USTRUCT(BlueprintType)
 struct VSWIDGETCORE_API FVSCommonButtonActionSettings
 {
@@ -120,14 +129,14 @@ struct VSWIDGETCORE_API FVSCommonButtonActionSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverridePriority"))
 	int32 Priority = 0;
 
-	/** this only works when the button has no input action widget. */
+	/** Only works when button has no input-action widget. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideActionName"))
 	FText ActionName;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSCommonActionWidgetSettings ActionDisplaySettings;
 
-	/** this only works when the button has no input action widget. */
+	/** Whether to override `InputAction`. */
 	UPROPERTY(BlueprintReadWrite)
 	uint8 bOverrideInputAction : 1;
 
@@ -137,11 +146,13 @@ struct VSWIDGETCORE_API FVSCommonButtonActionSettings
 	UPROPERTY(BlueprintReadWrite)
 	uint8 bOverridePriority : 1;
 	
-	/** Whether to override the action's display name over the action handle's original one. */
 	UPROPERTY(BlueprintReadWrite)
 	uint8 bOverrideActionName : 1;
 };
 
+/**
+ * Style override settings for key selector widgets.
+ */
 USTRUCT(BlueprintType)
 struct VSWIDGETCORE_API FVSInputKeySelectorStyleSettings
 {
@@ -168,10 +179,10 @@ struct VSWIDGETCORE_API FVSInputKeySelectorStyleSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideNoKeySpecifiedText"))
 	FText NoKeySpecifiedText;
 
-
+	
 	UPROPERTY(BlueprintReadWrite)
 	uint8 bOverrideButtonStyle : 1;
-
+	
 	UPROPERTY(BlueprintReadWrite)
 	uint8 bOverrideTextStyle : 1;
 
@@ -185,6 +196,9 @@ struct VSWIDGETCORE_API FVSInputKeySelectorStyleSettings
 	uint8 bOverrideNoKeySpecifiedText : 1;
 };
 
+/**
+ * Key-filter override settings for key selector widgets.
+ */
 USTRUCT(BlueprintType)
 struct VSWIDGETCORE_API FVSInputKeySelectorKeySettings
 {
@@ -202,11 +216,11 @@ struct VSWIDGETCORE_API FVSInputKeySelectorKeySettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideAllowGamepadKeys"))
 	uint8 bAllowGamepadKeys : 1;
 
-	/** This only works for UVSInputKeySelector. */
+	/** Only supported by UVSInputKeySelector. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideAllowKeyboardKeys"))
 	uint8 bAllowKeyboardKeys : 1;
 	
-	/** This only works for UVSInputKeySelector. */
+	/** Only supported by UVSInputKeySelector. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideAllowMouseKeys"))
 	uint8 bAllowMouseKeys : 1;
 	

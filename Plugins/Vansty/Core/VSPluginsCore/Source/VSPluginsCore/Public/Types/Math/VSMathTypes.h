@@ -6,7 +6,9 @@
 #include "UObject/Object.h"
 #include "VSMathTypes.generated.h"
 
-/** Bitmask defining which FRotator axes are affected. */
+/**
+ * Bitmask defining which FRotator axes are affected.
+ */
 UENUM(BlueprintType)
 namespace EVSRotatorAxes
 {
@@ -26,7 +28,9 @@ namespace EVSRotatorAxes
 	};
 }
 
-/** Bitmask defining which FVector axes are affected. */
+/**
+ * Bitmask defining which FVector axes are affected.
+ */
 UENUM(BlueprintType)
 namespace EVSVectorAxes
 {
@@ -46,7 +50,9 @@ namespace EVSVectorAxes
 	};
 }
 
-/** Defines axis swizzle order for vector component remapping. */
+/**
+ * Defines axis swizzle order for vector component remapping.
+ */
 UENUM(BlueprintType)
 namespace EVSAxesSwizzle
 {
@@ -72,7 +78,9 @@ namespace EVSAxesSwizzle
 	};
 }
 
-/** Defines which axes of a transform are affected by an operation. */
+/**
+ * Defines which axes of a transform are affected by an operation.
+ */
 USTRUCT(BlueprintType)
 struct FVSTransformAxes
 {
@@ -91,14 +99,19 @@ struct FVSTransformAxes
 	TEnumAsByte<EVSVectorAxes::Type> ScaleAxes = EVSVectorAxes::XYZ;
 };
 
-/** Defines rotation direction relative to a reference orientation. */
+/**
+ * Rotation direction relative to a reference orientation.
+ */
 UENUM(BlueprintType)
 namespace EVSRotationDirection
 {
 	enum Type
 	{
+		/** No deterministic direction can be resolved. */
 		None,
+		/** Rotates clockwise toward the target/reference. */
 		Clockwise,
+		/** Rotates counter-clockwise toward the target/reference. */
 		CounterClockwise
 	};
 }

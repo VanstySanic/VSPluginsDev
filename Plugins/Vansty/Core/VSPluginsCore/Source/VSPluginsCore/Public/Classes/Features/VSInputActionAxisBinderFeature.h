@@ -10,6 +10,8 @@
 #include "VSInputActionAxisBinderFeature.generated.h"
 
 class UInputAction;
+
+/** Binding rules for a classic input action entry. */
 USTRUCT(BlueprintType)
 struct FVSInputActionBinderSettings
 {
@@ -27,25 +29,32 @@ struct FVSInputActionBinderSettings
 		return true;
 	}
 
+	/** Action name used for InputComponent action bindings. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName ActionName = NAME_None;
 	
+	/** Input events to bind for ActionName. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<TEnumAsByte<EInputEvent>> InputEvents;
 	
+	/** Optional key filter. Empty means allow any key mapped to ActionName. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FInputChord> SpecifiedKeys;
 	
+	/** Auto-bind condition evaluated from gameplay tag events and current tags. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSGameplayTagEventQuery AutoBindTagQuery;
 
+	/** Auto-unbind condition evaluated from gameplay tag events and current tags. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSGameplayTagEventQuery AutoRemoveTagQuery;
 
+	/** If true, bind this entry on BeginPlay before query refresh. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bBindByDefault : 1;
 };
 
+/** Binding rules for a classic input axis entry. */
 USTRUCT(BlueprintType)
 struct FVSInputAxisBinderSettings
 {
@@ -55,22 +64,28 @@ struct FVSInputAxisBinderSettings
 	{
 	}
 	
+	/** Axis name used for InputComponent axis bindings. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName AxisName = NAME_None;
 
+	/** Optional key list. Empty means bind by AxisName directly. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FKey> SpecifiedKeys;
 
+	/** Auto-bind condition evaluated from gameplay tag events and current tags. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSGameplayTagEventQuery AutoBindTagQuery;
 
+	/** Auto-unbind condition evaluated from gameplay tag events and current tags. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSGameplayTagEventQuery AutoRemoveTagQuery;
 
+	/** If true, bind this entry by default before query refresh. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bBindByDefault : 1;
 };
 
+/** Binding rules for an Enhanced Input action entry. */
 USTRUCT(BlueprintType)
 struct FVSEnhancedInputActionBinderSettings
 {
@@ -88,27 +103,33 @@ struct FVSEnhancedInputActionBinderSettings
 		return true;
 	}
 	
+	/** Logical action name used when broadcasting feature delegates. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName ActionName = NAME_None;
 	
+	/** Enhanced Input action asset to bind. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UInputAction> InputAction;
 
+	/** Trigger events to bind for InputAction. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<ETriggerEvent> TriggerEvents;
 	
+	/** Auto-bind condition evaluated from gameplay tag events and current tags. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSGameplayTagEventQuery AutoBindTagQuery;
 
+	/** Auto-unbind condition evaluated from gameplay tag events and current tags. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSGameplayTagEventQuery AutoRemoveTagQuery;
 
+	/** If true, bind this entry by default before query refresh. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bBindByDefault : 1;
 };
 
 /**
- * 
+ * Gameplay-tag-driven binder for legacy InputComponent action bindings.
  */
 UCLASS(DisplayName = "VS.Feature.InputBinder.Action")
 class VSPLUGINSCORE_API UVSInputActionBinderFeature : public UVSObjectFeature, public IVSGameplayTagFeatureInterface
@@ -142,27 +163,37 @@ private:
 	void HandleActionTriggered(FName ActionName, EInputEvent InputEvent);
 
 public:
+	/** Broadcast when a configured action entry is triggered. */
 	FInputActionDelegate OnActionTriggered_Native;
 
+	/** Broadcast when a configured action entry is triggered. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FInputActionEvent OnActionTriggered;
 
 public:
+	/** Action binding entries evaluated and managed by this feature. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TArray<FVSInputActionBinderSettings> ActionSettings;
 
+	/** Priority used by the internally created InputComponent. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	int32 InputPriority = 0;
 
+	/** Whether the internally created InputComponent blocks lower-priority input. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	uint8 bBlockInput : 1;
 	
 private:
 	TWeakObjectPtr<UVSGameplayTagFeatureBase> GameplayTagFeaturePrivate;
+	/** Input component owned and pushed by this feature. */
 	TWeakObjectPtr<UInputComponent> FeatureInputComponent;
+	/** Indices currently bound from ActionSettings. */
 	TSet<int32> BoundActionSettings;
+	/** Per action-event key: configured key filters. */
 	TMultiMap<uint64, FInputChord> ActionKeyMap;
+	/** Per action-event key: number of "any key" consumers. */
 	TMap<uint64, int32> ActionEventAnyKey;
+	/** Action-event keys that currently have an InputComponent binding. */
 	TSet<uint64> ActionEventBoundKeys;
 };
 
@@ -171,7 +202,7 @@ private:
 
 
 /**
- * 
+ * Gameplay-tag-driven binder for legacy InputComponent axis bindings.
  */
 UCLASS(DisplayName = "VS.Feature.InputBinder.Axis")
 class VSPLUGINSCORE_API UVSInputAxisBinderFeature : public UVSObjectFeature, public IVSGameplayTagFeatureInterface
@@ -205,27 +236,37 @@ private:
 	void HandleAxisTriggered(FName AxisName, float Value);
 
 public:
+	/** Broadcast when a configured axis entry is triggered. */
 	FInputAxisDelegate OnAxisExecuted_Native;
 
+	/** Broadcast when a configured axis entry is triggered. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FInputAxisEvent OnAxisTriggered;
 
 public:
+	/** Axis binding entries evaluated and managed by this feature. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	TArray<FVSInputAxisBinderSettings> AxisSettings;
 
+	/** Priority used by the internally created InputComponent. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	int32 InputPriority = 0;
 
+	/** Whether the internally created InputComponent blocks lower-priority input. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	uint8 bBlockInput : 1;
 	
 private:
 	TWeakObjectPtr<UVSGameplayTagFeatureBase> GameplayTagFeaturePrivate;
+	/** Input component owned and pushed by this feature. */
 	TWeakObjectPtr<UInputComponent> FeatureInputComponent;
+	/** Indices currently bound from AxisSettings. */
 	TSet<int32> BoundAxisSettings;
+	/** Per key: mapped axis names for key-based axis binding mode. */
 	TMultiMap<FKey, FName> AxisKeyNameMap;
+	/** Keys that currently have a live AxisKeyBinding entry. */
 	TSet<FKey> AxisKeyBoundKeys;
+	/** AxisName reference counts for name-based axis binding mode. */
 	TMultiMap<FName, uint8> AxisNameCounts;
 };
 
@@ -234,7 +275,7 @@ private:
 
 
 /**
- * 
+ * Gameplay-tag-driven binder for EnhancedInputComponent action bindings.
  */
 UCLASS(DisplayName = "VS.Feature.InputBinder.EnhancedAction")
 class VSPLUGINSCORE_API UVSEnhancedInputActionBinderFeature : public UVSObjectFeature, public IVSGameplayTagFeatureInterface
@@ -268,26 +309,35 @@ private:
 	void HandleActionExecution(FName ActionName, ETriggerEvent TriggerEvent, const FInputActionInstance& ActionInstance);
 
 public:
+	/** Broadcast when a configured enhanced action entry is triggered. */
 	FInputActionDelegate OnActionTriggered_Native;
 
+	/** Broadcast when a configured enhanced action entry is triggered. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FInputActionEvent OnActionTriggered;
 	
 protected:
+	/** Enhanced action binding entries evaluated and managed by this feature. */
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TArray<FVSEnhancedInputActionBinderSettings> ActionSettings;
 	
 public:
+	/** Priority used by the internally created EnhancedInputComponent. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	int32 InputPriority = 0;
 
+	/** Whether the internally created InputComponent blocks lower-priority input. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	uint8 bBlockInput : 1;
 	
 private:
 	TWeakObjectPtr<UVSGameplayTagFeatureBase> GameplayTagFeaturePrivate;
+	/** Enhanced input component owned and pushed by this feature. */
 	TWeakObjectPtr<UEnhancedInputComponent> FeatureInputComponent;
+	/** Indices currently bound from ActionSettings. */
 	TSet<int32> BoundEnhancedActionSettings;
+	/** Per enhanced binding key: logical action names to broadcast. */
 	TMultiMap<uint64, FName> EnhancedActionNameCounts;
+	/** Per enhanced binding key: live EnhancedInput binding handle. */
 	TMap<uint64, uint32> EnhancedBindingHandlesByKey;
 };

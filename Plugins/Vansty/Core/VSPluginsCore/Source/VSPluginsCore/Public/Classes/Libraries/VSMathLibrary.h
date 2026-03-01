@@ -9,8 +9,7 @@
 #define VS_MATH_INLINE_ENABLED	(!UE_BUILD_DEBUG)
 
 /**
- * Blueprint-accessible wrapper for FVSMath helper functions.
- * Provides a set of math utilities for safe division, interpolation, clamping and geometric queries.
+ * Blueprint function-library wrapper around FVSMath utility methods.
  */
 UCLASS()
 class VSPLUGINSCORE_API UVSMathLibrary : public UBlueprintFunctionLibrary
@@ -18,44 +17,48 @@ class VSPLUGINSCORE_API UVSMathLibrary : public UBlueprintFunctionLibrary
 	GENERATED_UCLASS_BODY()
 
 public:
-	/** Safe int64 divide (A/B). Returns 0 if B is nearly zero. */
+	/** Safely divides A by B for int32 values. Returns 0 if B is 0. */
 	UFUNCTION(BlueprintPure, Category = "Math|Operators", meta = (DisplayName = "Safe Divide (int32)", CompactNodeTitle = "Safe ÷", Keywords = "/"))
 	static int32 SafeDivideInt32(int32 A, int32 B);
 	
-	/** Safe int64 divide (A/B). Returns 0 if B is nearly zero. */
+	/** Safely divides A by B for int64 values. Returns 0 if B is 0. */
 	UFUNCTION(BlueprintPure, Category = "Math|Operators", meta = (DisplayName = "Safe Divide (int64)", CompactNodeTitle = "Safe ÷", Keywords = "/"))
 	static int64 SafeDivideInt64(int64 A, int64 B);
-	
-	/** Safe FIntPoint divide (component-wise). Returns 0 if B is nearly zero. */
-	UFUNCTION(BlueprintPure, Category = "Math|Operators", meta = (DisplayName = "Safe Divide (Int Point)", CompactNodeTitle = "Safe ÷", Keywords = "/"))
+
+	/** Safely divides A by B for float values. Returns 0.f if B is nearly zero. */
+	UFUNCTION(BlueprintPure, Category = "Math|Operators", meta = (DisplayName = "Safe Divide (Float)", CompactNodeTitle = "Safe ÷", Keywords = "/"))
+	static float SafeDivideFloat(float A, float B, double Tolerance = 1e-8);
+
+	/** Safely divides A by B for double values. Returns 0.0 if B is nearly zero. */
+	UFUNCTION(BlueprintPure, Category = "Math|Operators", meta = (DisplayName = "Safe Divide (Double)", CompactNodeTitle = "Safe ÷", Keywords = "/"))
+	static double SafeDivideDouble(double A, double B, double Tolerance = 1e-8);
+		
+	/** Safely divides FIntPoint components. Each component returns 0 when its divisor is 0. */
+	UFUNCTION(BlueprintPure, Category = "Math|Operators", meta = (DisplayName = "Safe Divide (Int Point)", CompactNodeTitle = "Safe ÷", Keywords = "/", AutoCreateRefTerm = "A, B"))
 	static FIntPoint SafeDivideIntPoint(const FIntPoint& A, const FIntPoint& B);
 	
-	/** Safe float divide (A/B). Returns 0 if B is nearly zero. */
-	UFUNCTION(BlueprintPure, Category = "Math|Operators", meta = (DisplayName = "Safe Divide (Float)", CompactNodeTitle = "Safe ÷", Keywords = "/"))
-	static float SafeDivideFloat(float A, float B);
+	/** Safely divides FVector2D components. */
+	UFUNCTION(BlueprintPure, Category = "Math|Operators", meta = (CompactNodeTitle = "Safe ÷", Keywords = "/", AutoCreateRefTerm = "A, B"))
+	static FVector2D SafeDivideVector2D(const FVector2D& A, const FVector2D& B, double Tolerance = 1e-8);
 
-	/** Safe double divide (A/B). Returns 0 if B is nearly zero. */
-	UFUNCTION(BlueprintPure, Category = "Math|Operators", meta = (DisplayName = "Safe Divide (Double)", CompactNodeTitle = "Safe ÷", Keywords = "/"))
-	static double SafeDivideDouble(double A, double B);
-	
-	/** Safe Vector2D divide (component-wise). */
-	UFUNCTION(BlueprintPure, Category = "Math|Operators", meta = (CompactNodeTitle = "Safe ÷", Keywords = "/"))
-	static FVector2D SafeDivideVector2D(const FVector2D& A, const FVector2D& B);
+	/** Safely divides FVector components. */
+	UFUNCTION(BlueprintPure, Category = "Math|Operators", meta = (CompactNodeTitle = "Safe ÷", Keywords = "/", AutoCreateRefTerm = "A, B"))
+	static FVector SafeDivideVector(const FVector& A, const FVector& B, double Tolerance = 1e-8);
 
-	/** Safe Vector divide (component-wise). */
-	UFUNCTION(BlueprintPure, Category = "Math|Operators", meta = (CompactNodeTitle = "Safe ÷", Keywords = "/"))
-	static FVector SafeDivideVector(const FVector& A, const FVector& B);
-
-	/** Check if any axis of a vector is nearly zero. */
-	UFUNCTION(BlueprintPure, Category = "Math|Vector")
+	/** Returns true if any FVector component is nearly zero. */
+	UFUNCTION(BlueprintPure, Category = "Math|Vector", meta = (AutoCreateRefTerm = "Vector"))
 	static bool VectorHasZeroAxis(const FVector& Vector, double Tolerance = 1e-8);
-
-	/** Project a rotator onto a plane normal. */
-	UFUNCTION(BlueprintPure, Category = "Math|Rotator")
+	
+	/** Returns true if any FVector2D component is nearly zero. */
+	UFUNCTION(BlueprintPure, Category = "Math|Vector", meta = (AutoCreateRefTerm = "Vector"))
+	static bool VectorHasZeroAxis2D(const FVector2D& Vector, double Tolerance = 1e-8);
+	
+	/** Projects rotation onto a plane defined by PlaneNormal. */
+	UFUNCTION(BlueprintPure, Category = "Math|Rotator", meta = (AutoCreateRefTerm = "Rotator, PlaneNormal"))
 	static FRotator RotatorProjectOntoPlane(const FRotator& Rotator, const FVector& PlaneNormal);
 
 	/** Apply selected axes from another rotator in the given space. */
-	UFUNCTION(BlueprintPure, Category = "Math|Rotator")
+	UFUNCTION(BlueprintPure, Category = "Math|Rotator", meta = (AutoCreateRefTerm = "From, To, AxesSpace"))
 	static FRotator RotatorApplyAxes(
 		const FRotator& From,
 		const FRotator& To,
@@ -63,7 +66,7 @@ public:
 		const FRotator& AxesSpace = FRotator::ZeroRotator);
 
 	/** Apply selected axes of a vector in the given space. */
-	UFUNCTION(BlueprintPure, Category = "Math|Vector")
+	UFUNCTION(BlueprintPure, Category = "Math|Vector", meta = (AutoCreateRefTerm = "From, To, AxesSpace"))
 	static FVector VectorApplyAxes(
 		const FVector& From,
 		const FVector& To,
@@ -71,14 +74,14 @@ public:
 		const FRotator& AxesSpace);
 
 	/** Apply selected axes of a transform in the given space. */
-	UFUNCTION(BlueprintPure, Category = "Math|Transform")
+	UFUNCTION(BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "From, To, AxesSpace"))
 	static FTransform TransformApplyAxes(
 		const FTransform& From,
 		const FTransform& To,
 		const FVSTransformAxes& AxesToApply,
 		const FRotator& AxesSpace);
 
-	/** Advanced float interpolation (sub-stepped). */
+	/** Sub-stepped interpolation for float values. */
 	UFUNCTION(BlueprintPure, Category = "Math|Interpolation")
 	static float FloatInterpToAdvanced(
 		float From,
@@ -87,17 +90,17 @@ public:
 		float InterpSpeed = 10.f,
 		float MaxTimeStep = 0.016667f);
 
-	/** Advanced float interpolation (sub-stepped). */
+	/** Sub-stepped interpolation for double values. */
 	UFUNCTION(BlueprintPure, Category = "Math|Interpolation")
-	static float DoubleInterpToAdvanced(
+	static double DoubleInterpToAdvanced(
 		double From,
 		double To,
 		double DeltaTime,
 		double InterpSpeed = 10.f,
 		double MaxTimeStep = 0.016667f);
 
-	/** Advanced rotator interpolation (sub-stepped, space aware). */
-	UFUNCTION(BlueprintPure, Category = "Math|Interpolation")
+	/** Sub-stepped per-axis rotator interpolation in InterpSpace. */
+	UFUNCTION(BlueprintPure, Category = "Math|Interpolation", meta = (AutoCreateRefTerm = "From, To, InterpSpace"))
 	static FRotator RotatorInterpToAdvanced(
 		const FRotator& From,
 		const FRotator& To,
@@ -106,17 +109,17 @@ public:
 		float MaxTimeStep = 0.016667f,
 		const FRotator& InterpSpace = FRotator::ZeroRotator);
 
-	/** Advanced Vector2D interpolation. */
-	UFUNCTION(BlueprintPure, Category = "Math|Interpolation")
-	static FVector2D Vector2DInterpToAdvanced(
+	/** Sub-stepped per-axis FVector2D interpolation. */
+	UFUNCTION(BlueprintPure, Category = "Math|Interpolation", meta = (AutoCreateRefTerm = "From, To, InterpSpace"))
+	static FVector2D VectorInterpToAdvanced2D(
 		const FVector2D& From,
 		const FVector2D& To,
 		float DeltaTime,
 		const FVector2D& InterpSpeed,
 		float MaxTimeStep = 0.016667f);
 
-	/** Advanced vector interpolation (space aware). */
-	UFUNCTION(BlueprintPure, Category = "Math|Interpolation")
+	/** Sub-stepped per-axis FVector interpolation in InterpSpace. */
+	UFUNCTION(BlueprintPure, Category = "Math|Interpolation", meta = (AutoCreateRefTerm = "From, To, InterpSpace"))
 	static FVector VectorInterpToAdvanced(
 		const FVector& From,
 		const FVector& To,
@@ -125,8 +128,8 @@ public:
 		float MaxTimeStep = 0.016667f,
 		const FRotator& InterpSpace = FRotator::ZeroRotator);
 
-	/** Advanced transform interpolation. */
-	UFUNCTION(BlueprintPure, Category = "Math|Interpolation")
+	/** Sub-stepped transform interpolation (rotation/translation/scale). */
+	UFUNCTION(BlueprintPure, Category = "Math|Interpolation", meta = (AutoCreateRefTerm = "From, To, InterpSpace"))
 	static FTransform TransformInterpToAdvanced(
 		const FTransform& From,
 		const FTransform& To,
@@ -135,58 +138,58 @@ public:
 		float MaxTimeStep = 0.016667f,
 		const FRotator& InterpSpace = FRotator::ZeroRotator);
 
-	/** Clamp a Vector2D. */
-	UFUNCTION(BlueprintPure, Category = "Math|Vector2D")
+	/** Clamps FVector2D component-wise between RangeMin and RangeMax. */
+	UFUNCTION(BlueprintPure, Category = "Math|Vector2D", meta = (AutoCreateRefTerm = "Source, RangeMin, RangeMax"))
 	static FVector2D ClampVector2D(
 		const FVector2D& Source,
 		const FVector2D& RangeMin,
 		const FVector2D& RangeMax);
 
-	/** Clamp world location in space. */
-	UFUNCTION(BlueprintPure, Category = "Math|Vector")
+	/** Clamps world-space location in ClampSpace. */
+	UFUNCTION(BlueprintPure, Category = "Math|Vector", meta = (AutoCreateRefTerm = "Source, RangeMin, RangeMax, ClampSpace"))
 	static FVector ClampVectorLocation(
 		const FVector& Source,
 		const FVector& RangeMin,
 		const FVector& RangeMax,
-		const FTransform& ConstrainSpace);
+		const FTransform& ClampSpace);
 
-	/** Clamp direction vector in space. */
-	UFUNCTION(BlueprintPure, Category = "Math|Vector")
+	/** Clamps direction-vector components in ClampSpace. */
+	UFUNCTION(BlueprintPure, Category = "Math|Vector", meta = (AutoCreateRefTerm = "Source, RangeMin, RangeMax, ClampSpace"))
 	static FVector ClampVectorDirection(
 		const FVector& Source,
 		const FVector& RangeMin,
 		const FVector& RangeMax,
-		const FRotator& ConstrainSpace);
+		const FRotator& ClampSpace);
 
-	/** Clamp scale in space. */
-	UFUNCTION(BlueprintPure, Category = "Math|Vector")
+	/** Clamps scale components in ClampSpace. */
+	UFUNCTION(BlueprintPure, Category = "Math|Vector", meta = (AutoCreateRefTerm = "Source, RangeMin, RangeMax, ClampSpace"))
 	static FVector ClampVectorScale(
 		const FVector& Source,
 		const FVector& RangeMin,
 		const FVector& RangeMax,
-		const FTransform& ConstrainSpace);
+		const FTransform& ClampSpace);
 
-	/** Clamp a rotator (inverse range allowed). */
-	UFUNCTION(BlueprintPure, Category = "Math|Rotator")
+	/** Clamps rotator axes in ClampSpace (supports inverse ClampAngle ranges). */
+	UFUNCTION(BlueprintPure, Category = "Math|Rotator", meta = (AutoCreateRefTerm = "Source, RangeMin, RangeMax, ClampSpace"))
 	static FRotator ClampRotator(
 		const FRotator& Source,
 		const FRotator& RangeMin,
 		const FRotator& RangeMax,
-		const FRotator& ConstrainSpace);
+		const FRotator& ClampSpace);
 
-	/** Clamp a full transform. */
-	UFUNCTION(BlueprintPure, Category = "Math|Transform")
+	/** Clamps rotation, translation, and scale in ClampSpace. */
+	UFUNCTION(BlueprintPure, Category = "Math|Transform", meta = (AutoCreateRefTerm = "Source, RangeMin, RangeMax, ClampSpace"))
 	static FTransform ClampTransform(
 		const FTransform& Source,
 		const FTransform& RangeMin,
 		const FTransform& RangeMax,
-		const FTransform& ConstrainSpace);
+		const FTransform& ClampSpace);
 
-	/** Diagonal size of 2D vector at yaw angle. */
-	UFUNCTION(BlueprintPure, Category = "Math|Vector2D")
-	static float CalcVector2DDiagonalSize(const FVector2D& Vector2D, float AngleYaw);
+	/** Computes projected 2D diagonal size along a yaw angle (degrees). */
+	UFUNCTION(BlueprintPure, Category = "Math|Vector2D", meta = (AutoCreateRefTerm = "Vector2D"))
+	static float CalcVectorDiagonalSize2D(const FVector2D& Vector2D, float AngleYaw);
 
-	/** Diagonal size of 3D vector at rotation. */
-	UFUNCTION(BlueprintPure, Category = "Math|Vector")
+	/** Computes projected 3D diagonal size along a world-space rotation. */
+	UFUNCTION(BlueprintPure, Category = "Math|Vector", meta = (AutoCreateRefTerm = "Vector"))
 	static float CalcVectorDiagonalSize(const FVector& Vector, const FRotator& Rotation);
 };

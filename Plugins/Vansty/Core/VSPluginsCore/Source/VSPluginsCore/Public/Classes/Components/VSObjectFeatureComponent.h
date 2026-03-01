@@ -30,19 +30,17 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	//~ End UActorComponent Interface.
 
-	/** Register the features if possible. */
+	/** Registers owned features and propagates feature lifecycle when possible. */
 	UFUNCTION(BlueprintCallable, Category = "Features")
 	void RegisterFeatures();
 
-	/** Unregister the features if possible. */
+	/** Unregisters owned features and runs teardown lifecycle when possible. */
 	UFUNCTION(BlueprintCallable, Category = "Features")
 	void UnregisterFeatures();
 
-	/** Get all sub features recursively. */
 	UFUNCTION(BlueprintCallable, Category = "Features")
 	TArray<UVSObjectFeature*> GetFeatures() const;
 
-	/** Whether the given feature is contained as a sub feature somewhere under this feature. */
 	UFUNCTION(BlueprintCallable, Category = "Features")
 	bool HasFeature(UVSObjectFeature* Feature) const;
 
@@ -68,23 +66,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Features")
 	void RemoveFeature(UVSObjectFeature* Feature);
 	
-	/** Get the first feature of the given class. */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* GetFeatureByClass(TSubclassOf<UVSObjectFeature> Class) const;
 	
-	/** Get all features of the given class. */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	TArray<UVSObjectFeature*> GetFeaturesByClass(TSubclassOf<UVSObjectFeature> Class) const;
 
-	/** Get the first feature with the given not-none name. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	UVSObjectFeature* GetFeatureByName(FName Name) const;
 	
-	/** Get the first feature of the given class. */
 	template <typename T>
 	T* FindFeatureByClass(TSubclassOf<T> Class = T::StaticClass()) const;
 
-	/** Get all features of the given class. */
 	template <typename T>
 	TArray<T*> FindFeaturesByClass(TSubclassOf<T> Class = T::StaticClass()) const;
 

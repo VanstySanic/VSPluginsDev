@@ -10,7 +10,9 @@
 
 class USceneComponent;
 
-/** Defines how multiple query results are evaluated together. */
+/**
+ * Defines how multiple query results are evaluated together.
+ */
 UENUM(BlueprintType)
 namespace EVSTreeQueryMatchRange
 {
@@ -22,20 +24,24 @@ namespace EVSTreeQueryMatchRange
 	};
 }
 
-/** Defines the source type used by a query expression node. */
+/**
+ * Defines the source type used by a query expression node.
+ */
 UENUM(BlueprintType)
 namespace EVSTreeQueryMatchType
 {
 	enum Type
 	{
-		None	UMETA(Hidden),
-		Params,
+		None			UMETA(Hidden),
+		Param,
 		Expression
 	};
 }
 
 
-/** Leaf query parameters used to evaluate gameplay tag events and gameplay tag state. */
+/**
+ * Leaf query parameters used to evaluate gameplay tag events and gameplay tag state.
+ */
 USTRUCT(BlueprintType)
 struct FVSGameplayTagEventQueryParams
 {
@@ -54,6 +60,7 @@ struct FVSGameplayTagEventQueryParams
 		const FGameplayTagContainer& InTagEvents,
 		const FGameplayTagContainer& InGameplayTags) const;
 
+	/** Optional editor-facing note describing this params entry. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText Description;
 
@@ -61,9 +68,11 @@ struct FVSGameplayTagEventQueryParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTagContainer TagEvents;
 
+	/** Gameplay tag state query evaluated together with TagEvents. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTagQuery TagQuery;
 	
+	/** Comparison mode used when matching configured TagEvents. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EGameplayContainerMatchType EventMatchType;
 	
@@ -84,7 +93,9 @@ struct FVSGameplayTagEventQueryParams
 	uint8 bTagQueryEmptyAsPass : 1;
 };
 
-/** Recursive expression node combining gameplay tag event query parameters or sub-expressions. */
+/**
+ * Recursive expression node combining gameplay tag event query parameters or sub-expressions.
+ */
 USTRUCT(BlueprintType)
 struct FVSGameplayTagEventQueryExpression
 {
@@ -94,23 +105,30 @@ struct FVSGameplayTagEventQueryExpression
 		const FGameplayTagContainer& TagEvents = FGameplayTagContainer(),
 		const FGameplayTagContainer& GameplayTags = FGameplayTagContainer()) const;
 
+	/** Optional editor-facing note describing this expression node. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText Description;
 
+	/** How child entries are combined (Any / All). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<EVSTreeQueryMatchRange::Type> Range = EVSTreeQueryMatchRange::None;
 
+	/** Selects whether this node evaluates Params or nested Expressions. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<EVSTreeQueryMatchType::Type> Type = EVSTreeQueryMatchType::None;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSTreeQueryMatchType::Params", EditConditionHides))
+	/** Leaf parameters used when Type == Param. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSTreeQueryMatchType::Param", EditConditionHides))
 	TArray<FVSGameplayTagEventQueryParams> Params;
 
+	/** Child expression nodes used when Type == Expression. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSTreeQueryMatchType::Expression", EditConditionHides))
 	TArray<TInstancedStruct<FVSGameplayTagEventQueryExpression>> Expressions;
 };
 
-/** Root gameplay tag event query evaluated against incoming tag events and gameplay tag state. */
+/**
+ * Root gameplay tag event query evaluated against incoming tag events and gameplay tag state.
+ */
 USTRUCT(BlueprintType)
 struct FVSGameplayTagEventQuery
 {
@@ -123,6 +141,7 @@ struct FVSGameplayTagEventQuery
 		const FGameplayTagContainer& TagEvents = FGameplayTagContainer(),
 		const FGameplayTagContainer& GameplayTags = FGameplayTagContainer()) const;
 
+	/** Root expression evaluated by this query. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSGameplayTagEventQueryExpression RootExpression;
 
@@ -132,7 +151,9 @@ public:
 };
 
 
-/** Leaf query parameters used to evaluate a scene component against type, class, and tag constraints. */
+/**
+ * Leaf query parameters used to evaluate a scene component against type, class, and tag constraints.
+ */
 USTRUCT(BlueprintType)
 struct FVSSceneComponentQueryParams
 {
@@ -152,18 +173,23 @@ struct FVSSceneComponentQueryParams
 
 	VSPLUGINSCORE_API bool Matches(const USceneComponent* Component) const;
 
+	/** Optional editor-facing note describing this params entry. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText Description;
 
+	/** Allowed object types for the component's owning actor/collision object. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 
+	/** Allowed scene component classes. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<TSubclassOf<USceneComponent>> ComponentClasses;
 
+	/** Required component tags. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FName> ComponentTags;
 
+	/** Required owner-actor tags. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FName> ActorTags;
 
@@ -200,7 +226,9 @@ struct FVSSceneComponentQueryParams
 	uint8 bActorTagsEmptyAsPass : 1;
 };
 
-/** Recursive expression node combining scene component query parameters or sub-expressions. */
+/**
+ * Recursive expression node combining scene component query parameters or sub-expressions.
+ */
 USTRUCT(BlueprintType)
 struct FVSSceneComponentQueryExpression
 {
@@ -208,23 +236,30 @@ struct FVSSceneComponentQueryExpression
 
 	bool Matches(const USceneComponent* Component) const;
 
+	/** Optional editor-facing note describing this expression node. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText Description;
 
+	/** How child entries are combined (Any / All). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<EVSTreeQueryMatchRange::Type> Range = EVSTreeQueryMatchRange::None;
 
+	/** Selects whether this node evaluates Params or nested Expressions. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<EVSTreeQueryMatchType::Type> Type = EVSTreeQueryMatchType::None;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSTreeQueryMatchType::Params", EditConditionHides))
+	/** Leaf parameters used when Type == Param. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSTreeQueryMatchType::Param", EditConditionHides))
 	TArray<FVSSceneComponentQueryParams> Params;
 
+	/** Child expression nodes used when Type == Expression. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type == EVSTreeQueryMatchType::Expression", EditConditionHides))
 	TArray<TInstancedStruct<FVSSceneComponentQueryExpression>> Expressions;
 };
 
-/** Root scene component query evaluated against a target scene component. */
+/**
+ * Root scene component query evaluated against a target scene component.
+ */
 USTRUCT(BlueprintType)
 struct FVSSceneComponentQuery
 {
@@ -234,6 +269,7 @@ struct FVSSceneComponentQuery
 
 	VSPLUGINSCORE_API bool Matches(const USceneComponent* Component) const;
 
+	/** Root expression evaluated by this query. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSSceneComponentQueryExpression RootExpression;
 };

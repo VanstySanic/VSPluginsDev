@@ -10,6 +10,9 @@
 
 class UWidget;
 
+/**
+ * Generic panel-slot override settings.
+ */
 USTRUCT(BlueprintType)
 struct VSWIDGETCORE_API FVSCommonPanelSlotSettings
 {
@@ -19,7 +22,7 @@ struct VSWIDGETCORE_API FVSCommonPanelSlotSettings
 	
 	void ApplyToWidget(UWidget* Widget);
 
-	/** This may not work for all slots. */
+	/** May not be supported by every slot type. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideSize"))
 	FSlateChildSize Size = FSlateChildSize(ESlateSizeRule::Fill);
 	
@@ -32,7 +35,6 @@ struct VSWIDGETCORE_API FVSCommonPanelSlotSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideVerticalAlignment"))
 	TEnumAsByte<EVerticalAlignment> VerticalAlignment = VAlign_Fill;
 	
-	/** This may not work for all slots. */
 	UPROPERTY(BlueprintReadWrite)
 	uint8 bOverrideSize : 1;
 	
@@ -46,7 +48,9 @@ struct VSWIDGETCORE_API FVSCommonPanelSlotSettings
 	uint8 bOverrideVerticalAlignment : 1;
 };
 
-/** Panel slot settings that works for a canvas panel widget. */
+/**
+ * Canvas-panel slot override settings.
+ */
 USTRUCT(BlueprintType)
 struct VSWIDGETCORE_API FVSCanvasPanelSlotSettings
 {
@@ -54,6 +58,7 @@ struct VSWIDGETCORE_API FVSCanvasPanelSlotSettings
 	
 	FVSCanvasPanelSlotSettings(const UWidget* Widget = nullptr);
 	
+	/** Applies enabled overrides to the widget's canvas slot. */
 	void ApplyToWidget(UWidget* Widget);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideAnchors"))

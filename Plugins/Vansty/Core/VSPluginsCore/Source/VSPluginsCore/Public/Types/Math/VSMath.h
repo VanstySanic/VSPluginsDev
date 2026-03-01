@@ -5,141 +5,460 @@
 #include "CoreMinimal.h"
 #include "VSMathTypes.h"
 #include "UObject/Object.h"
+#include <type_traits>
+
+namespace VSMathPrivate
+{
+	template <typename T>
+	struct TIsNumeric : std::bool_constant<TIsFloatingPoint<T>::Value || TIsIntegral<T>::Value || std::is_enum_v<T>>
+	{
+	};
+
+	template <typename T, bool bIsEnum = std::is_enum_v<T>>
+	struct TEnumOrSelf
+	{
+		using Type = T;
+	};
+
+	template <typename T>
+	struct TEnumOrSelf<T, true>
+	{
+		using Type = std::underlying_type_t<T>;
+	};
+
+	template <typename T>
+	using TEnumOrSelf_t = typename TEnumOrSelf<T>::Type;
+
+	template <typename T>
+	struct TIsVector2 : std::false_type
+	{
+	};
+	
+	template <typename T>
+	struct TIsVector2<UE::Math::TIntPoint<T>> : std::true_type
+	{
+	};
+	
+	template <typename T>
+	struct TIsVector2<UE::Math::TIntVector2<T>> : std::true_type
+	{
+	};
+
+	template <typename T>
+	struct TIsVector2<UE::Math::TVector2<T>> : std::true_type
+	{
+	};
+
+	template <typename T>
+	struct TIsVector3 : std::false_type
+	{
+	};
+
+	template <typename T>
+	struct TIsVector3<UE::Math::TVector<T>> : std::true_type
+	{
+	};
+
+	template <typename T>
+	struct TIsVector3<UE::Math::TIntVector3<T>> : std::true_type
+	{
+	};
+
+	template <typename T>
+	struct TIsVector4 : std::false_type
+	{
+	};
+
+	template <typename T>
+	struct TIsVector4<UE::Math::TVector4<T>> : std::true_type
+	{
+	};
+
+	template <typename T>
+	struct TIsVector4<UE::Math::TIntVector4<T>> : std::true_type
+	{
+	};
+}
 
 /**
- * Math utility type extending FMath with additional helper functions.
- *
- * Provides higher-level math operations commonly used in gameplay code,
- * including safe arithmetic, axis-aware composition, space-relative
- * interpolation, and constrained clamping helpers.
+ * Math helper type extending FMath.
  */
 struct VSPLUGINSCORE_API FVSMath : public FMath
 {
+	/** Returns whether V is inside [RangeMin, RangeMax] with configurable inclusive bounds. */
 	template <typename T1, typename T2 = T1, typename T3 = T2>
-	// ReSharper disable once CppNotAllPathsReturnValue
-	[[nodiscard]] FORCEINLINE static bool IsInRange(const T1& V, const T2& RangeMin, const T3& RangeMax, bool bIncludeRangeMin = true, bool bIncludeRangeMax = true)
+	[[nodiscard]] FORCEINLINE static bool IsInRange(
+		const T1& V, const T2& RangeMin, const T3& RangeMax,
+		bool bIncludeRangeMin = true, bool bIncludeRangeMax = true)
 	{
-		using NumType = decltype(T1() * T2() * T3());
-		static_assert(TIsFloatingPoint<NumType>::Value || TIsIntegral<NumType>::Value, "SafeDivide only supports arithmetic types.");
-		
-		if (V < RangeMin || (!bIncludeRangeMin && V == RangeMin)) return false;
-		if (V > RangeMax || (!bIncludeRangeMax && V == RangeMax)) return false;
+		static_assert(
+			VSMathPrivate::TIsNumeric<T1>::value && VSMathPrivate::TIsNumeric<T2>::value && VSMathPrivate::TIsNumeric<T3>::value,
+			"IsInRange constraints: numeric overload requires numeric T1/T2/T3.");
+
+		using C1 = VSMathPrivate::TEnumOrSelf_t<T1>;
+		using C2 = VSMathPrivate::TEnumOrSelf_t<T2>;
+		using C3 = VSMathPrivate::TEnumOrSelf_t<T3>;
+		using CompareType = decltype(C1() + C2() + C3());
+
+		const CompareType Value = static_cast<CompareType>(V);
+		const CompareType MinValue = static_cast<CompareType>(RangeMin);
+		const CompareType MaxValue = static_cast<CompareType>(RangeMax);
+		if (Value < MinValue || (!bIncludeRangeMin && Value == MinValue)) return false;
+		if (Value > MaxValue || (!bIncludeRangeMax && Value == MaxValue)) return false;
 		return true;
 	}
+
+	template <typename T, typename T2, typename T3>
+	[[nodiscard]] FORCEINLINE static bool IsInRange(
+		const UE::Math::TIntPoint<T>& V, const UE::Math::TIntPoint<T2>& RangeMin, const UE::Math::TIntPoint<T3>& RangeMax,
+		bool bIncludeRangeMin = true, bool bIncludeRangeMax = true)
+	{
+		return IsInRange(V.X, RangeMin.X, RangeMax.X, bIncludeRangeMin, bIncludeRangeMax)
+			&& IsInRange(V.Y, RangeMin.Y, RangeMax.Y, bIncludeRangeMin, bIncludeRangeMax);
+	}
+
+	template <typename T, typename T2, typename T3>
+	[[nodiscard]] FORCEINLINE static bool IsInRange(
+		const UE::Math::TIntVector2<T>& V, const UE::Math::TIntVector2<T2>& RangeMin, const UE::Math::TIntVector2<T3>& RangeMax,
+		bool bIncludeRangeMin = true, bool bIncludeRangeMax = true)
+	{
+		return IsInRange(V.X, RangeMin.X, RangeMax.X, bIncludeRangeMin, bIncludeRangeMax)
+			&& IsInRange(V.Y, RangeMin.Y, RangeMax.Y, bIncludeRangeMin, bIncludeRangeMax);
+	}
+
+	template <typename T, typename T2, typename T3>
+	[[nodiscard]] FORCEINLINE static bool IsInRange(
+		const UE::Math::TVector2<T>& V, const UE::Math::TVector2<T2>& RangeMin, const UE::Math::TVector2<T3>& RangeMax,
+		bool bIncludeRangeMin = true, bool bIncludeRangeMax = true)
+	{
+		return IsInRange(V.X, RangeMin.X, RangeMax.X, bIncludeRangeMin, bIncludeRangeMax)
+			&& IsInRange(V.Y, RangeMin.Y, RangeMax.Y, bIncludeRangeMin, bIncludeRangeMax);
+	}
+
+	template <typename T, typename T2, typename T3>
+	[[nodiscard]] FORCEINLINE static bool IsInRange(
+		const UE::Math::TIntVector3<T>& V, const UE::Math::TIntVector3<T2>& RangeMin, const UE::Math::TIntVector3<T3>& RangeMax,
+		bool bIncludeRangeMin = true, bool bIncludeRangeMax = true)
+	{
+		return IsInRange(V.X, RangeMin.X, RangeMax.X, bIncludeRangeMin, bIncludeRangeMax)
+			&& IsInRange(V.Y, RangeMin.Y, RangeMax.Y, bIncludeRangeMin, bIncludeRangeMax)
+			&& IsInRange(V.Z, RangeMin.Z, RangeMax.Z, bIncludeRangeMin, bIncludeRangeMax);
+	}
+
+	template <typename T, typename T2, typename T3>
+	[[nodiscard]] FORCEINLINE static bool IsInRange(
+		const UE::Math::TVector<T>& V, const UE::Math::TVector<T2>& RangeMin, const UE::Math::TVector<T3>& RangeMax,
+		bool bIncludeRangeMin = true, bool bIncludeRangeMax = true)
+	{
+		return IsInRange(V.X, RangeMin.X, RangeMax.X, bIncludeRangeMin, bIncludeRangeMax)
+			&& IsInRange(V.Y, RangeMin.Y, RangeMax.Y, bIncludeRangeMin, bIncludeRangeMax)
+			&& IsInRange(V.Z, RangeMin.Z, RangeMax.Z, bIncludeRangeMin, bIncludeRangeMax);
+	}
 	
+	template <typename T, typename T2, typename T3>
+	[[nodiscard]] FORCEINLINE static bool IsInRange(
+		const UE::Math::TIntVector4<T>& V, const UE::Math::TIntVector4<T2>& RangeMin, const UE::Math::TIntVector4<T3>& RangeMax,
+		bool bIncludeRangeMin = true, bool bIncludeRangeMax = true)
+	{
+		return IsInRange(V.X, RangeMin.X, RangeMax.X, bIncludeRangeMin, bIncludeRangeMax)
+			&& IsInRange(V.Y, RangeMin.Y, RangeMax.Y, bIncludeRangeMin, bIncludeRangeMax)
+			&& IsInRange(V.Z, RangeMin.Z, RangeMax.Z, bIncludeRangeMin, bIncludeRangeMax)
+			&& IsInRange(V.W, RangeMin.W, RangeMax.W, bIncludeRangeMin, bIncludeRangeMax);
+	}
+
+	template <typename T, typename T2, typename T3>
+	[[nodiscard]] FORCEINLINE static bool IsInRange(
+		const UE::Math::TVector4<T>& V, const UE::Math::TVector4<T2>& RangeMin, const UE::Math::TVector4<T3>& RangeMax,
+		bool bIncludeRangeMin = true, bool bIncludeRangeMax = true)
+	{
+		return IsInRange(V.X, RangeMin.X, RangeMax.X, bIncludeRangeMin, bIncludeRangeMax)
+			&& IsInRange(V.Y, RangeMin.Y, RangeMax.Y, bIncludeRangeMin, bIncludeRangeMax)
+			&& IsInRange(V.Z, RangeMin.Z, RangeMax.Z, bIncludeRangeMin, bIncludeRangeMax)
+			&& IsInRange(V.W, RangeMin.W, RangeMax.W, bIncludeRangeMin, bIncludeRangeMax);
+	}
+	
+
 	/**
-	 * Safely divides A by B.
-	 * - For float/double: returns 0 when B is nearly zero.
-	 * - For integers: returns 0 when B is zero.
-	 * - For FVector / FVector2D / FVector4: performs component-wise safe division.
-	 *
-	 * Only supports arithmetic types and UE vector types.
+	 * Safely divides A by B and returns T1.
+	 * - Numeric T1: T2 must also be numeric.
+	 * - Vector T1: T2 must be numeric, or a vector with the same axis count.
+	 * - Floating denominator: returns 0 when denominator is nearly zero.
+	 * - Integral denominator: returns 0 when denominator is exactly zero.
 	 */
-	template <typename T>
-	// ReSharper disable once CppNotAllPathsReturnValue
-	[[nodiscard]] FORCEINLINE static T SafeDivide(const T& A, const T& B)
+	template <typename T1, typename T2 = T1>
+	[[nodiscard]] FORCEINLINE static T1 SafeDivide(const T1& A, const T2& B, const double Tolerance = 1e-8)
 	{
 		static_assert(
-			TIsFloatingPoint<T>::Value
-			|| TIsIntegral<T>::Value
-			|| std::is_same_v<T, FIntPoint>
-			|| std::is_same_v<T, FVector>
-			|| std::is_same_v<T, FVector2D>
-			|| std::is_same_v<T, FVector4>,
-			"SafeDivide only supports arithmetic types, FIntPoint, FVector, FVector2D and FVector4.");
-		
-		/** Vector types: component-wise safe division. */
-		if constexpr (std::is_same_v<T, FIntPoint>)
+			VSMathPrivate::TIsNumeric<T1>::value && VSMathPrivate::TIsNumeric<T2>::value,
+			"SafeDivide constraints: numeric overload requires numeric T1/T2.");
+
+		if constexpr (std::is_enum_v<T1> || std::is_enum_v<T2>)
 		{
-			return FIntPoint(SafeDivide(A.X, B.X), SafeDivide(A.Y, B.Y));
+			using AType = VSMathPrivate::TEnumOrSelf_t<T1>;
+			using BType = VSMathPrivate::TEnumOrSelf_t<T2>;
+			const BType Divisor = static_cast<BType>(B);
+			if constexpr (TIsFloatingPoint<BType>::Value)
+			{
+				return FMath::IsNearlyZero(static_cast<double>(Divisor), Tolerance)
+					? static_cast<T1>(0)
+					: static_cast<T1>(static_cast<AType>(A) / Divisor);
+			}
+			else
+			{
+				return (Divisor == static_cast<BType>(0))
+					? static_cast<T1>(0)
+					: static_cast<T1>(static_cast<AType>(A) / Divisor);
+			}
 		}
-		else if constexpr (std::is_same_v<T, FVector2D>)
+		else if constexpr (TIsFloatingPoint<T2>::Value)
 		{
-			return FVector2D(SafeDivide(A.X, B.X), SafeDivide(A.Y, B.Y));
+			return FMath::IsNearlyZero(static_cast<double>(B), Tolerance) ? static_cast<T1>(0) : static_cast<T1>(A / B);
 		}
-		else if constexpr (std::is_same_v<T, FVector>)
+		else
 		{
-			return FVector(SafeDivide(A.X, B.X), SafeDivide(A.Y, B.Y), SafeDivide(A.Z, B.Z));
-		}
-		else if constexpr (std::is_same_v<T, FVector4>)
-		{
-			return FVector4(SafeDivide(A.X, B.X),SafeDivide(A.Y, B.Y), SafeDivide(A.Z, B.Z), SafeDivide(A.W, B.W));
-		}
-		/** Floating point types: use nearly-zero check. */
-		else if constexpr (TIsFloatingPoint<T>::Value)
-		{
-			return FMath::IsNearlyZero(B) ? static_cast<T>(0) : A / B;
-		}
-		/** Integral types: exact zero check. */
-		else if constexpr (TIsIntegral<T>::Value)
-		{
-			return (B == static_cast<T>(0)) ? static_cast<T>(0) : A / B;
+			return (B == static_cast<T2>(0)) ? static_cast<T1>(0) : static_cast<T1>(A / B);
 		}
 	}
+
+	template <typename T, typename T2>
+	[[nodiscard]] FORCEINLINE static UE::Math::TIntPoint<T> SafeDivide(
+		const UE::Math::TIntPoint<T>& A, const T2& B, const double Tolerance = 1e-8)
+	{
+		static_assert(
+			VSMathPrivate::TIsNumeric<T2>::value || VSMathPrivate::TIsVector2<T2>::value,
+			"SafeDivide constraints: TIntPoint divisor must be numeric or Vector2.");
+
+		if constexpr (VSMathPrivate::TIsNumeric<T2>::value)
+		{
+			return UE::Math::TIntPoint<T>(SafeDivide(A.X, B, Tolerance), SafeDivide(A.Y, B, Tolerance));
+		}
+		else
+		{
+			return UE::Math::TIntPoint<T>(SafeDivide(A.X, B.X, Tolerance), SafeDivide(A.Y, B.Y, Tolerance));
+		}
+	}
+
+	template <typename T, typename T2>
+	[[nodiscard]] FORCEINLINE static UE::Math::TIntVector2<T> SafeDivide(
+		const UE::Math::TIntVector2<T>& A, const T2& B, const double Tolerance = 1e-8)
+	{
+		const UE::Math::TIntPoint<T> Ans = SafeDivide(UE::Math::TIntPoint<T>(A.X, A.Y), B, Tolerance);
+		return UE::Math::TIntVector2<T>(Ans.X, Ans.Y);
+	}
+
+	template <typename T, typename T2>
+	[[nodiscard]] FORCEINLINE static UE::Math::TVector2<T> SafeDivide(
+		const UE::Math::TVector2<T>& A, const T2& B, const double Tolerance = 1e-8)
+	{
+		static_assert(
+			VSMathPrivate::TIsNumeric<T2>::value || VSMathPrivate::TIsVector2<T2>::value,
+			"SafeDivide constraints: TVector2 divisor must be numeric or Vector2.");
+
+		if constexpr (VSMathPrivate::TIsNumeric<T2>::value)
+		{
+			return UE::Math::TVector2<T>(SafeDivide(A.X, B, Tolerance), SafeDivide(A.Y, B, Tolerance));
+		}
+		else
+		{
+			return UE::Math::TVector2<T>(SafeDivide(A.X, B.X, Tolerance), SafeDivide(A.Y, B.Y, Tolerance));
+		}
+	}
+
+	template <typename T, typename T2>
+	[[nodiscard]] FORCEINLINE static UE::Math::TIntVector3<T> SafeDivide(
+		const UE::Math::TIntVector3<T>& A, const T2& B, const double Tolerance = 1e-8)
+	{
+		static_assert(
+			VSMathPrivate::TIsNumeric<T2>::value || VSMathPrivate::TIsVector3<T2>::value,
+			"SafeDivide constraints: TIntVector3 divisor must be numeric or Vector3.");
+
+		if constexpr (VSMathPrivate::TIsNumeric<T2>::value)
+		{
+			return UE::Math::TIntVector3<T>(SafeDivide(A.X, B, Tolerance), SafeDivide(A.Y, B, Tolerance), SafeDivide(A.Z, B, Tolerance));
+		}
+		else
+		{
+			return UE::Math::TIntVector3<T>(SafeDivide(A.X, B.X, Tolerance), SafeDivide(A.Y, B.Y, Tolerance), SafeDivide(A.Z, B.Z, Tolerance));
+		}
+	}
+
+	template <typename T, typename T2>
+	[[nodiscard]] FORCEINLINE static UE::Math::TVector<T> SafeDivide(
+		const UE::Math::TVector<T>& A, const T2& B, const double Tolerance = 1e-8)
+	{
+		static_assert(
+			VSMathPrivate::TIsNumeric<T2>::value || VSMathPrivate::TIsVector3<T2>::value,
+			"SafeDivide constraints: TVector divisor must be numeric or Vector3.");
+
+		if constexpr (VSMathPrivate::TIsNumeric<T2>::value)
+		{
+			return UE::Math::TVector<T>(SafeDivide(A.X, B, Tolerance), SafeDivide(A.Y, B, Tolerance), SafeDivide(A.Z, B, Tolerance));
+		}
+		else
+		{
+			return UE::Math::TVector<T>(SafeDivide(A.X, B.X, Tolerance), SafeDivide(A.Y, B.Y, Tolerance), SafeDivide(A.Z, B.Z, Tolerance));
+		}
+	}
+
+	template <typename T, typename T2>
+	[[nodiscard]] FORCEINLINE static UE::Math::TIntVector4<T> SafeDivide(
+		const UE::Math::TIntVector4<T>& A, const T2& B, const double Tolerance = 1e-8)
+	{
+		static_assert(
+			VSMathPrivate::TIsNumeric<T2>::value || VSMathPrivate::TIsVector4<T2>::value,
+			"SafeDivide constraints: TIntVector4 divisor must be numeric or Vector4.");
+
+		if constexpr (VSMathPrivate::TIsNumeric<T2>::value)
+		{
+			return UE::Math::TIntVector4<T>(SafeDivide(A.X, B, Tolerance), SafeDivide(A.Y, B, Tolerance), SafeDivide(A.Z, B, Tolerance), SafeDivide(A.W, B, Tolerance));
+		}
+		else
+		{
+			return UE::Math::TIntVector4<T>(SafeDivide(A.X, B.X, Tolerance), SafeDivide(A.Y, B.Y, Tolerance), SafeDivide(A.Z, B.Z, Tolerance), SafeDivide(A.W, B.W, Tolerance));
+		}
+	}
+
+	template <typename T, typename T2>
+	[[nodiscard]] FORCEINLINE static UE::Math::TVector4<T> SafeDivide(
+		const UE::Math::TVector4<T>& A, const T2& B, const double Tolerance = 1e-8)
+	{
+		static_assert(
+			VSMathPrivate::TIsNumeric<T2>::value || VSMathPrivate::TIsVector4<T2>::value,
+			"SafeDivide constraints: TVector4 divisor must be numeric or Vector4.");
+
+		if constexpr (VSMathPrivate::TIsNumeric<T2>::value)
+		{
+			return UE::Math::TVector4<T>(SafeDivide(A.X, B, Tolerance), SafeDivide(A.Y, B, Tolerance), SafeDivide(A.Z, B, Tolerance), SafeDivide(A.W, B, Tolerance));
+		}
+		else
+		{
+			return UE::Math::TVector4<T>(SafeDivide(A.X, B.X, Tolerance), SafeDivide(A.Y, B.Y, Tolerance), SafeDivide(A.Z, B.Z, Tolerance), SafeDivide(A.W, B.W, Tolerance));
+		}
+	}
+
 	
-	/** Check if a vector has any axis nearly zero within tolerance. */
+	/** Returns true if any component of the vector is zero (or nearly zero for float vectors). */
 	template <typename T>
-	// ReSharper disable once CppNotAllPathsReturnValue
-	[[nodiscard]] FORCEINLINE static bool VectorHasZeroAxis(const T& Vector, const double Tolerance = 0.00000001)
+	[[nodiscard]] FORCEINLINE static bool VectorHasZeroAxis(const UE::Math::TIntPoint<T>& Vector)
 	{
-		static_assert(
-			std::is_same_v<T, FIntPoint>
-			|| std::is_same_v<T, FVector>
-			|| std::is_same_v<T, FVector2D>
-			|| std::is_same_v<T, FVector4>,
-			"SafeDivide only supports vector types.");
+		return Vector.X == static_cast<T>(0) || Vector.Y == static_cast<T>(0);
+	}
 
-		/** Vector types: component-wise safe division. */
-		if constexpr (std::is_same_v<T, FIntPoint>)
+	/** Returns true if any component of the vector is zero (or nearly zero for float vectors). */
+	template <typename T>
+	[[nodiscard]] FORCEINLINE static bool VectorHasZeroAxis(const UE::Math::TIntVector2<T>& Vector)
+	{
+		return Vector.X == static_cast<T>(0) || Vector.Y == static_cast<T>(0);
+	}
+
+	/** Returns true if any component of the vector is zero (or nearly zero for float vectors). */
+	template <typename T>
+	[[nodiscard]] FORCEINLINE static bool VectorHasZeroAxis(const UE::Math::TVector2<T>& Vector, const double Tolerance = 1e-8)
+	{
+		if constexpr (TIsFloatingPoint<T>::Value)
 		{
-			return Vector.X == 0 || Vector.Y == 0;;
+			return FMath::IsNearlyZero(static_cast<double>(Vector.X), Tolerance)
+				|| FMath::IsNearlyZero(static_cast<double>(Vector.Y), Tolerance);
 		}
-		if constexpr (std::is_same_v<T, FVector2D>)
+		else
 		{
-			return FMath::IsNearlyZero(Vector.X, Tolerance) || FMath::IsNearlyZero(Vector.Y, Tolerance);
-		}
-		else if constexpr (std::is_same_v<T, FVector>)
-		{
-			return FMath::IsNearlyZero(Vector.X, Tolerance) || FMath::IsNearlyZero(Vector.Y, Tolerance) || FMath::IsNearlyZero(Vector.Z, Tolerance);
-		}
-		else if constexpr (std::is_same_v<T, FVector4>)
-		{
-			return FMath::IsNearlyZero(Vector.X, Tolerance) || FMath::IsNearlyZero(Vector.Y, Tolerance)
-			|| FMath::IsNearlyZero(Vector.Z, Tolerance) || FMath::IsNearlyZero(Vector.W, Tolerance);
+			return Vector.X == static_cast<T>(0) || Vector.Y == static_cast<T>(0);
 		}
 	}
 
+	/** Returns true if any component of the vector is zero. */
+	template <typename T>
+	[[nodiscard]] FORCEINLINE static bool VectorHasZeroAxis(const UE::Math::TIntVector3<T>& Vector)
+	{
+		return Vector.X == static_cast<T>(0)
+			|| Vector.Y == static_cast<T>(0)
+			|| Vector.Z == static_cast<T>(0);
+	}
+
+	/** Returns true if any component of the vector is zero. */
+	template <typename T>
+	[[nodiscard]] FORCEINLINE static bool VectorHasZeroAxis(const UE::Math::TVector<T>& Vector, const double Tolerance = 1e-8)
+	{
+		if constexpr (TIsFloatingPoint<T>::Value)
+		{
+			return FMath::IsNearlyZero(static_cast<double>(Vector.X), Tolerance)
+				|| FMath::IsNearlyZero(static_cast<double>(Vector.Y), Tolerance)
+				|| FMath::IsNearlyZero(static_cast<double>(Vector.Z), Tolerance);
+		}
+		else
+		{
+			return Vector.X == static_cast<T>(0)
+				|| Vector.Y == static_cast<T>(0)
+				|| Vector.Z == static_cast<T>(0);
+		}
+	}
+
+	/** Returns true if any component of the vector is zero. */
+	template <typename T>
+	[[nodiscard]] FORCEINLINE static bool VectorHasZeroAxis(const UE::Math::TIntVector4<T>& Vector)
+	{
+		return Vector.X == static_cast<T>(0)
+			|| Vector.Y == static_cast<T>(0)
+			|| Vector.Z == static_cast<T>(0)
+			|| Vector.W == static_cast<T>(0);
+	}
+
+	template <typename T>
+	[[nodiscard]] FORCEINLINE static bool VectorHasZeroAxis(const UE::Math::TVector4<T>& Vector, const double Tolerance = 1e-8)
+	{
+		if constexpr (TIsFloatingPoint<T>::Value)
+		{
+			return FMath::IsNearlyZero(static_cast<double>(Vector.X), Tolerance)
+				|| FMath::IsNearlyZero(static_cast<double>(Vector.Y), Tolerance)
+				|| FMath::IsNearlyZero(static_cast<double>(Vector.Z), Tolerance)
+				|| FMath::IsNearlyZero(static_cast<double>(Vector.W), Tolerance);
+		}
+		else
+		{
+			return Vector.X == static_cast<T>(0)
+				|| Vector.Y == static_cast<T>(0)
+				|| Vector.Z == static_cast<T>(0)
+				|| Vector.W == static_cast<T>(0);
+		}
+	}
+
+	
+	/** Applies RotatorB after RotatorA and returns the composed rotation. */
 	FORCEINLINE static FRotator ComposeRotators(const FRotator& RotatorA, const FRotator& RotatorB)
 	{
 		const FQuat AQuat = FQuat(RotatorA);
 		const FQuat BQuat = FQuat(RotatorB);
 		return FRotator(BQuat * AQuat);
 	}
+
 	
-	/** Rearrange or swap vector axes according to swizzle rule. */
-	[[nodiscard]] FORCEINLINE static FVector VectorSwizzleAxes(const FVector& Vector, EVSAxesSwizzle::Type Swizzle = EVSAxesSwizzle::XYZ)
+	/** Rearrange or swap TVector axes according to swizzle rule. */
+	template <typename T>
+	[[nodiscard]] FORCEINLINE static UE::Math::TVector<T> VectorSwizzleAxes(
+		const UE::Math::TVector<T>& Vector,
+		EVSAxesSwizzle::Type Swizzle = EVSAxesSwizzle::XYZ)
 	{
-		FVector Value = Vector;
+		UE::Math::TVector<T> Value = Vector;
 		switch (Swizzle)
 		{
 		case EVSAxesSwizzle::YXZ:
 			Swap(Value.X, Value.Y);
 			break;
-		
+
 		case EVSAxesSwizzle::ZYX:
 			Swap(Value.X, Value.Z);
 			break;
-		
+
 		case EVSAxesSwizzle::XZY:
 			Swap(Value.Y, Value.Z);
 			break;
-		
+
 		case EVSAxesSwizzle::YZX:
-			Value = FVector(Value.Y, Value.Z, Value.X);
+			Value = UE::Math::TVector<T>(Value.Y, Value.Z, Value.X);
 			break;
-		
+
 		case EVSAxesSwizzle::ZXY:
-			Value = FVector(Value.Z, Value.X, Value.Y);
+			Value = UE::Math::TVector<T>(Value.Z, Value.X, Value.Y);
 			break;
 
 		default:;
@@ -147,7 +466,42 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		return Value;
 	}
 
-	/** Project a rotator orientation onto a plane defined by a normal. */
+	/** Rearrange or swap TIntVector3 axes according to swizzle rule. */
+	template <typename T>
+	[[nodiscard]] FORCEINLINE static UE::Math::TIntVector3<T> VectorSwizzleAxes(
+		const UE::Math::TIntVector3<T>& Vector,
+		EVSAxesSwizzle::Type Swizzle = EVSAxesSwizzle::XYZ)
+	{
+		UE::Math::TIntVector3<T> Value = Vector;
+		switch (Swizzle)
+		{
+		case EVSAxesSwizzle::YXZ:
+			Swap(Value.X, Value.Y);
+			break;
+
+		case EVSAxesSwizzle::ZYX:
+			Swap(Value.X, Value.Z);
+			break;
+
+		case EVSAxesSwizzle::XZY:
+			Swap(Value.Y, Value.Z);
+			break;
+
+		case EVSAxesSwizzle::YZX:
+			Value = UE::Math::TIntVector3<T>(Value.Y, Value.Z, Value.X);
+			break;
+
+		case EVSAxesSwizzle::ZXY:
+			Value = UE::Math::TIntVector3<T>(Value.Z, Value.X, Value.Y);
+			break;
+
+		default:;
+		}
+		return Value;
+	}
+
+	
+	/** Projects rotation onto a plane defined by PlaneNormal. */
 	[[nodiscard]] FORCEINLINE static FRotator RotatorProjectOntoPlane(const FRotator& Rotator, const FVector& PlaneNormal)
 	{
 		if (PlaneNormal.IsNearlyZero()) return Rotator;
@@ -161,8 +515,8 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 	}
 
 	/**
-	 * Make a rotator from source, applying target rotator axes in specified space.
-	 * @param AxesSpace Axes will be applied in that space.
+	 * Returns From with selected axes replaced by To, evaluated in AxesSpace.
+	 * @param AxesSpace Reference space used to compare and apply axes.
 	 */
 	[[nodiscard]] FORCEINLINE static FRotator RotatorApplyAxes(
 		const FRotator& From,
@@ -181,9 +535,72 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 
 		return AxesSpaceTransform.TransformRotation(AxesSpaceAnsRotation.Quaternion()).Rotator();
 	}
+
+	
+	/** Returns From with selected components replaced by To. */
+	template<typename T>
+	[[nodiscard]] FORCEINLINE static UE::Math::TIntVector2<T> VectorApplyAxes(
+		const UE::Math::TIntVector2<T>& From,
+		const UE::Math::TIntVector2<T>& To,
+		bool bApplyX = true, bool bApplyY = true)
+	{
+		UE::Math::TIntVector2<T> AnsVector = From;
+
+		if (bApplyX) AnsVector.X = To.X;
+		if (bApplyY) AnsVector.Y = To.Y;
+
+		return AnsVector;
+	}
+
+	/** Returns From with selected components replaced by To. */
+	template<typename T>
+	[[nodiscard]] FORCEINLINE static UE::Math::TIntPoint<T> VectorApplyAxes(
+		const UE::Math::TIntPoint<T>& From,
+		const UE::Math::TIntPoint<T>& To,
+		bool bApplyX = true, bool bApplyY = true)
+	{
+		UE::Math::TIntPoint<T> AnsVector = From;
+
+		if (bApplyX) AnsVector.X = To.X;
+		if (bApplyY) AnsVector.Y = To.Y;
+
+		return AnsVector;
+	}
+	
+	/** Returns From with selected components replaced by To. */
+	template<typename T>
+	[[nodiscard]] FORCEINLINE static UE::Math::TVector<T> VectorApplyAxes(
+		const UE::Math::TVector<T>& From,
+		const UE::Math::TVector<T>& To,
+		EVSVectorAxes::Type AxesToApply = EVSVectorAxes::Type::XYZ)
+	{
+		UE::Math::TVector<T> AnsVector = From;
+
+		if (AxesToApply & EVSVectorAxes::X) AnsVector.X = To.X;
+		if (AxesToApply & EVSVectorAxes::Y) AnsVector.Y = To.Y;
+		if (AxesToApply & EVSVectorAxes::Z) AnsVector.Z = To.Z;
+
+		return AnsVector;
+	}
+	
+	/** Returns From with selected components replaced by To. */
+	template<typename T>
+	[[nodiscard]] FORCEINLINE static UE::Math::TIntVector3<T> VectorApplyAxes(
+		const UE::Math::TIntVector3<T>& From,
+		const UE::Math::TIntVector3<T>& To,
+		EVSVectorAxes::Type AxesToApply = EVSVectorAxes::Type::XYZ)
+	{
+		UE::Math::TIntVector3<T> AnsVector = From;
+
+		if (AxesToApply & EVSVectorAxes::X) AnsVector.X = To.X;
+		if (AxesToApply & EVSVectorAxes::Y) AnsVector.Y = To.Y;
+		if (AxesToApply & EVSVectorAxes::Z) AnsVector.Z = To.Z;
+
+		return AnsVector;
+	}
 	
 	/**
-	 * Make a vector from source, applying To target axes in specified space.
+	 * Make an FVector from source, applying To target axes in specified space.
 	 * @param AxesSpace Axes will be applied in that space.
 	 */
 	[[nodiscard]] FORCEINLINE static FVector VectorApplyAxes(
@@ -203,10 +620,11 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 
 		return AxesSpaceTransform.TransformVectorNoScale(AxesSpaceAnsVector);
 	}
+
 	
 	/**
-	 * Make a transform from source, applying target transform axes in specified space.
-	 * @param AxesSpace Axes will be applied in that space.
+	 * Returns From with selected transform axes replaced by To, evaluated in AxesSpace.
+	 * @param AxesSpace Reference space used to compare and apply axes.
 	 */
 	[[nodiscard]] FORCEINLINE static FTransform TransformApplyAxes(
 		const FTransform& From,
@@ -222,9 +640,9 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 	}
 
 	/**
-	 * Interpolate float from Current to Target with sub time-stepping. Scaled by distance to Target, so it has a strong start speed and ease out.
-	*  @param InterpSpeed Interpolation will be executed in that space.
-	 * @param MaxTimeStep Max time step used when sub-stepping interpolation. If > 0.f, it will handle fluctuating frame rates well (though this comes at a cost).
+	 * Interpolates scalar values with optional sub-stepping for large DeltaTime.
+	 * @param InterpSpeed Interpolation speed passed to FInterpTo.
+	 * @param MaxTimeStep Maximum sub-step size. Set <= 0 to disable sub-stepping.
 	 */
 	template<typename T1, typename T2 = T1, typename T3 = T2, typename T4 = T3, typename T5 = T4>
 	[[nodiscard]] FORCEINLINE static T1 FInterpToAdvanced(
@@ -264,9 +682,10 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 	}
 	
 	/**
-	 * Interpolate a rotator in specified space with optional time sub-stepping.
-	 * @param InterpSpeed Interpolation will be executed in that space.
-	 * @param MaxTimeStep Max time step used when sub-stepping interpolation. If > 0.f, it will handle fluctuating frame rates well (though this comes at a cost).
+	 * Interpolates rotation per-axis in InterpSpace with optional DeltaTime sub-stepping.
+	 * @param InterpSpeed Per-axis interpolation speed (Roll/Pitch/Yaw).
+	 * @param MaxTimeStep Maximum sub-step size. Set <= 0 to disable sub-stepping.
+	 * @param InterpSpace Reference space used for interpolation.
 	 */
 	[[nodiscard]] FORCEINLINE static FRotator RInterpToAdvanced(
 		const FRotator& From,
@@ -309,7 +728,8 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		return LagSpaceTransform.TransformRotation(LagSpaceAns.Quaternion()).Rotator();
 	}
 
-	[[nodiscard]] FORCEINLINE static FVector2D VInterpTo2DAdvanced(
+	/** Interpolates FVector2D per-axis with optional DeltaTime sub-stepping. */
+	[[nodiscard]] FORCEINLINE static FVector2D VInterpToAdvanced2D(
 		const FVector2D& From,
 		const FVector2D& To,
 		float DeltaTime,
@@ -343,9 +763,9 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 	}
 	
 	/**
-	 * Interpolate a vector in specified space with optional time sub-stepping.
-	 * @param InterpSpace Interpolation will be executed in that space.
-	 * @param MaxTimeStep Max time step used when sub-stepping interpolation. If > 0.f, it will handle fluctuating frame rates well (though this comes at a cost).
+	 * Interpolates vector components in InterpSpace with optional DeltaTime sub-stepping.
+	 * @param MaxTimeStep Maximum sub-step size. Set <= 0 to disable sub-stepping.
+	 * @param InterpSpace Reference space used for interpolation.
 	 */
 	[[nodiscard]] FORCEINLINE static FVector VInterpToAdvanced(
 		const FVector& From,
@@ -389,9 +809,9 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 	}
 	
 	/**
-	 * Interpolate a transform in specified space with optional time sub-stepping.
-	 * @param InterpSpace Interpolation will be executed in that space.
-	 * @param MaxTimeStep Max time step used when sub-stepping interpolation. If > 0.f, it will handle fluctuating frame rates well (though this comes at a cost).
+	 * Interpolates transform rotation/translation/scale with optional DeltaTime sub-stepping.
+	 * @param MaxTimeStep Maximum sub-step size. Set <= 0 to disable sub-stepping.
+	 * @param InterpSpace Reference space used for rotation and translation interpolation.
 	 */
 	[[nodiscard]] FORCEINLINE static FTransform TransformInterpTo(
 		const FTransform& From,
@@ -422,18 +842,109 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		return FTransform(AnsRot, AnsTrans, AnsScale);
 	}
 	
-	[[nodiscard]] FORCEINLINE static FVector2D ClampVector2D(
-		const FVector2D& Source,
-		const FVector2D& RangeMin,
-		const FVector2D& RangeMax)
-	{
-		FVector2D Ans = Source;
-		Ans.X = Clamp(Ans.X, RangeMin.X, RangeMax.X);
-		Ans.Y = Clamp(Ans.Y, RangeMin.Y, RangeMax.Y);
 
-		return Ans;
+	/** Clamps TIntPoint with per-axis point min/max. */
+	template <typename T, typename MinT, typename MaxT>
+	[[nodiscard]] FORCEINLINE static UE::Math::TIntPoint<T> ClampVector(
+		const UE::Math::TIntPoint<T>& Source,
+		const UE::Math::TIntPoint<MinT>& RangeMin,
+		const UE::Math::TIntPoint<MaxT>& RangeMax)
+	{
+		return UE::Math::TIntPoint<T>(
+			Clamp(static_cast<T>(Source.X), static_cast<T>(RangeMin.X), static_cast<T>(RangeMax.X)),
+			Clamp(static_cast<T>(Source.Y), static_cast<T>(RangeMin.Y), static_cast<T>(RangeMax.Y)));
+	}
+
+	/** Clamps TIntVector2 with scalar min/max applied to all axes. */
+	template <typename T, typename MinT, typename MaxT>
+	[[nodiscard]] FORCEINLINE static UE::Math::TIntVector2<T> ClampVector(
+		const UE::Math::TIntVector2<T>& Source,
+		const MinT& RangeMin,
+		const MaxT& RangeMax)
+	{
+		const UE::Math::TIntPoint<T> Ans = ClampVector(UE::Math::TIntPoint<T>(Source.X, Source.Y), RangeMin, RangeMax);
+		return UE::Math::TIntVector2<T>(Ans.X, Ans.Y);
+	}
+
+	/** Clamps TIntVector2 with per-axis vector min/max. */
+	template <typename T, typename MinT, typename MaxT>
+	[[nodiscard]] FORCEINLINE static UE::Math::TIntVector2<T> ClampVector(
+		const UE::Math::TIntVector2<T>& Source,
+		const UE::Math::TIntVector2<MinT>& RangeMin,
+		const UE::Math::TIntVector2<MaxT>& RangeMax)
+	{
+		return UE::Math::TIntVector2<T>(
+			Clamp(static_cast<T>(Source.X), static_cast<T>(RangeMin.X), static_cast<T>(RangeMax.X)),
+			Clamp(static_cast<T>(Source.Y), static_cast<T>(RangeMin.Y), static_cast<T>(RangeMax.Y)));
+	}
+
+	/** Clamps TVector2 with per-axis vector min/max. */
+	template <typename T, typename MinT, typename MaxT>
+	[[nodiscard]] FORCEINLINE static UE::Math::TVector2<T> ClampVector(
+		const UE::Math::TVector2<T>& Source,
+		const UE::Math::TVector2<MinT>& RangeMin,
+		const UE::Math::TVector2<MaxT>& RangeMax)
+	{
+		return UE::Math::TVector2<T>(
+			Clamp(static_cast<T>(Source.X), static_cast<T>(RangeMin.X), static_cast<T>(RangeMax.X)),
+			Clamp(static_cast<T>(Source.Y), static_cast<T>(RangeMin.Y), static_cast<T>(RangeMax.Y)));
+	}
+
+	/** Clamps TIntVector3 with per-axis vector min/max. */
+	template <typename T, typename MinT, typename MaxT>
+	[[nodiscard]] FORCEINLINE static UE::Math::TIntVector3<T> ClampVector(
+		const UE::Math::TIntVector3<T>& Source,
+		const UE::Math::TIntVector3<MinT>& RangeMin,
+		const UE::Math::TIntVector3<MaxT>& RangeMax)
+	{
+		return UE::Math::TIntVector3<T>(
+			Clamp(static_cast<T>(Source.X), static_cast<T>(RangeMin.X), static_cast<T>(RangeMax.X)),
+			Clamp(static_cast<T>(Source.Y), static_cast<T>(RangeMin.Y), static_cast<T>(RangeMax.Y)),
+			Clamp(static_cast<T>(Source.Z), static_cast<T>(RangeMin.Z), static_cast<T>(RangeMax.Z)));
+	}
+
+	/** Clamps TVector with per-axis vector min/max. */
+	template <typename T, typename MinT, typename MaxT>
+	[[nodiscard]] FORCEINLINE static UE::Math::TVector<T> ClampVector(
+		const UE::Math::TVector<T>& Source,
+		const UE::Math::TVector<MinT>& RangeMin,
+		const UE::Math::TVector<MaxT>& RangeMax)
+	{
+		return UE::Math::TVector<T>(
+			Clamp(static_cast<T>(Source.X), static_cast<T>(RangeMin.X), static_cast<T>(RangeMax.X)),
+			Clamp(static_cast<T>(Source.Y), static_cast<T>(RangeMin.Y), static_cast<T>(RangeMax.Y)),
+			Clamp(static_cast<T>(Source.Z), static_cast<T>(RangeMin.Z), static_cast<T>(RangeMax.Z)));
+	}
+
+	/** Clamps TIntVector4 with per-axis vector min/max. */
+	template <typename T, typename MinT, typename MaxT>
+	[[nodiscard]] FORCEINLINE static UE::Math::TIntVector4<T> ClampVector(
+		const UE::Math::TIntVector4<T>& Source,
+		const UE::Math::TIntVector4<MinT>& RangeMin,
+		const UE::Math::TIntVector4<MaxT>& RangeMax)
+	{
+		return UE::Math::TIntVector4<T>(
+			Clamp(static_cast<T>(Source.X), static_cast<T>(RangeMin.X), static_cast<T>(RangeMax.X)),
+			Clamp(static_cast<T>(Source.Y), static_cast<T>(RangeMin.Y), static_cast<T>(RangeMax.Y)),
+			Clamp(static_cast<T>(Source.Z), static_cast<T>(RangeMin.Z), static_cast<T>(RangeMax.Z)),
+			Clamp(static_cast<T>(Source.W), static_cast<T>(RangeMin.W), static_cast<T>(RangeMax.W)));
+	}
+
+	/** Clamps TVector4 with per-axis vector min/max. */
+	template <typename T, typename MinT, typename MaxT>
+	[[nodiscard]] FORCEINLINE static UE::Math::TVector4<T> ClampVector(
+		const UE::Math::TVector4<T>& Source,
+		const UE::Math::TVector4<MinT>& RangeMin,
+		const UE::Math::TVector4<MaxT>& RangeMax)
+	{
+		return UE::Math::TVector4<T>(
+			Clamp(static_cast<T>(Source.X), static_cast<T>(RangeMin.X), static_cast<T>(RangeMax.X)),
+			Clamp(static_cast<T>(Source.Y), static_cast<T>(RangeMin.Y), static_cast<T>(RangeMax.Y)),
+			Clamp(static_cast<T>(Source.Z), static_cast<T>(RangeMin.Z), static_cast<T>(RangeMax.Z)),
+			Clamp(static_cast<T>(Source.W), static_cast<T>(RangeMin.W), static_cast<T>(RangeMax.W)));
 	}
 	
+	/** Clamps world location in ConstrainSpace, then transforms the result back to world space. */
 	[[nodiscard]] FORCEINLINE static FVector ClampVectorLocation(
 		const FVector& Source,
 		const FVector& RangeMin,
@@ -450,6 +961,7 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		return ConstrainSpace.TransformPosition(AnsTranslationCS);
 	}
 	
+	/** Clamps direction vector components in ConstrainSpace (no scale), then transforms back. */
 	[[nodiscard]] FORCEINLINE static FVector ClampVectorDirection(
 		const FVector& Source,
 		const FVector& RangeMin,
@@ -467,6 +979,7 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		return ConstrainSpaceTransform.TransformVectorNoScale(AnsTranslationCS);
 	}
 	
+	/** Clamps scale components in ConstrainSpace and returns world-space scale. */
 	[[nodiscard]] FORCEINLINE static FVector ClampVectorScale(
 		const FVector& Source,
 		const FVector& RangeMin,
@@ -486,7 +999,7 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		return (AnsTransformCS * ConstrainSpace).GetScale3D();
 	}
 	
-	/** Clamp rotation angle. Range min larger than range max indicates the inversed area. */
+	/** Clamps Euler angles in ConstrainSpace. If Min > Max, ClampAngle inverse range behavior applies. */
 	[[nodiscard]] FORCEINLINE static FRotator ClampRotator(
 		const FRotator& Source,
 		const FRotator& RangeMin,
@@ -504,7 +1017,7 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		return ConstrainSpaceT.TransformRotation(AnsRotationCS.Quaternion()).Rotator();
 	}
 
-	/** Clamp transform for all axes. Rotation range min larger than range max means inverse. */
+	/** Clamps transform rotation, translation, and scale in ConstrainSpace. */
 	[[nodiscard]] FORCEINLINE static FTransform ClampTransform(
 		const FTransform& Source,
 		const FTransform& RangeMin,
@@ -518,13 +1031,13 @@ struct VSPLUGINSCORE_API FVSMath : public FMath
 		return FTransform(AnsRotation.Quaternion(), AnsTranslation, AnsScale);
 	}
 	
-	/** Get diagonal size of a 2D vector along specified yaw angle. */
+	/** Computes projected 2D diagonal size along a yaw angle (degrees). */
 	[[nodiscard]] FORCEINLINE static double CalcVector2DDiagonalSize(const FVector2D& Vector2D, float AngleYaw)
 	{
 		return Abs(SafeDivide(Vector2D.X * Vector2D.Y, (Vector2D.X * Sin(UE_DOUBLE_PI / (180.0) * AngleYaw)) + Vector2D.Y * Cos(UE_DOUBLE_PI / (180.0) * AngleYaw)));
 	}
 	
-	/** Get diagonal size of a 3D vector along specified rotation. */
+	/** Computes projected 3D diagonal size along a world-space rotation. */
 	[[nodiscard]] FORCEINLINE static double CalcVectorDiagonalSize(const FVector& Vector, const FRotator& Rotation)
 	{
 		const float SizeXY = CalcVector2DDiagonalSize(FVector2D(Vector.X, Vector.Y), Rotation.Yaw);

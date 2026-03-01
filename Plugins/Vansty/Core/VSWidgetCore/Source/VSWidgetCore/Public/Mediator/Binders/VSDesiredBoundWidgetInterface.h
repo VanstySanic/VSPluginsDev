@@ -15,13 +15,16 @@ class UVSDesiredBoundWidgetInterface : public UInterface
 };
 
 /**
- * 
+ * Interface for widgets that can expose extra typed widgets to a controller.
+ *
+ * Allows one bound widget to contribute additional (Widget, TypeName) pairs.
  */
 class VSWIDGETCORE_API IVSDesiredBoundWidgetInterface
 {
 	GENERATED_BODY()
 
 public:
+	/** Native wrapper for calling Blueprint implementation safely. */
 	TMap<UWidget*, FName> GetDesiredBoundTypedWidgets_Native() const;
 	
 protected:

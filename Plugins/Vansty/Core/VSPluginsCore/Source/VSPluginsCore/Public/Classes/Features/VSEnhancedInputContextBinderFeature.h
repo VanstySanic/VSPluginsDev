@@ -12,6 +12,7 @@
 
 class UVSGameplayTagFeatureBase;
 
+/** Per-context rules used by UVSEnhancedInputContextBinderFeature. */
 USTRUCT(BlueprintType)
 struct FVSEnhancedInputContextBinderSettings
 {
@@ -22,21 +23,27 @@ struct FVSEnhancedInputContextBinderSettings
 	{
 	}
 	
+	/** Priority passed to AddMappingContext. Higher values win conflicts. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 AddPriority = 0;
 
+	/** Adds the context when this query matches incoming tag events and current tags. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSGameplayTagEventQuery AutoAddTagQuery;
 
+	/** Removes the context when this query matches incoming tag events and current tags. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVSGameplayTagEventQuery AutoRemoveTagQuery;
 	
+	/** Options used when adding the context. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FModifyContextOptions AddModifyOptions;
 
+	/** Options used when removing the context. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FModifyContextOptions RemoveModifyOptions;
 
+	/** If true, add this mapping context by default before query refresh. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bAddByDefault : 1;
 };
@@ -69,11 +76,13 @@ private:
 	UEnhancedInputLocalPlayerSubsystem* GetLocalPlayerSubsystem() const;
 	
 protected:
+	/** Mapping contexts and their add/remove rules. */
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TMap<TObjectPtr<UInputMappingContext>, FVSEnhancedInputContextBinderSettings> ContextSettings;
 	
 protected:
 	TWeakObjectPtr<UVSGameplayTagFeatureBase> GameplayTagFeaturePrivate;
 	TWeakObjectPtr<APlayerController> PlayerControllerPrivate;
+	/** Contexts currently added by this feature instance. */
 	TSet<TObjectPtr<UInputMappingContext>> AddedContexts;
 };

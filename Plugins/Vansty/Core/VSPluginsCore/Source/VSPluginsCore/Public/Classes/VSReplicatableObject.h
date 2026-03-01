@@ -7,15 +7,7 @@
 #include "VSReplicatableObject.generated.h"
 
 /**
- * Base UObject that supports Unreal Engine network replication.
- *
- * This class enables property replication and RPC execution for instanced
- * UObject types that are owned by, and replicate alongside, an Actor or
- * ActorComponent. Replication is routed through the owning object's
- * networking context and lifecycle.
- *
- * Instances may be created or destroyed via network replication and can
- * override replication lifecycle callbacks to react to those events.
+ * Base UObject that supports property replication and RPC routing through an owning Actor context.
  */
 UCLASS(Abstract, Blueprintable, BlueprintType)
 class VSPLUGINSCORE_API UVSReplicatableObject : public UObject
@@ -38,11 +30,11 @@ public:
 	virtual void OnDestroyedFromReplication();
 	//~ End IInterface_ActorSubobject Interface
 	
-	/** Set whether this object should replicate or is replicating. */
+	/** Enables/disables replication participation for this object. */
 	UFUNCTION(BlueprintCallable, Category = "Replication")
 	void SetIsReplicated(bool bShouldReplicate);
 
-	/** Get whether this object should replicate or is replicating. */
+	/** Returns whether this object is currently marked to replicate. */
 	UFUNCTION(BlueprintCallable, Category = "Replication")
 	bool GetIsReplicated() const { return bReplicates; }
 

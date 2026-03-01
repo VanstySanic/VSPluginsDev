@@ -6,6 +6,9 @@
 #include "UObject/Object.h"
 #include "VSPlatformTypes.generated.h"
 
+/**
+ * Blueprint-friendly snapshot of a physical monitor descriptor.
+ */
 USTRUCT(BlueprintType)
 struct VSPLUGINSCORE_API FVSMonitorInfo
 {
@@ -28,24 +31,32 @@ struct VSPLUGINSCORE_API FVSMonitorInfo
 	FVector2D GetCenterPosition(bool bWorkAreaOnly = false) const;
 	FVector2D GetCurrentSize(bool bWorkAreaOnly = false) const;
 
+	/** Display name reported by the platform. */
 	UPROPERTY(BlueprintReadOnly)
 	FString Name;
 
+	/** Stable monitor identifier reported by the platform. */
 	UPROPERTY(BlueprintReadOnly)
 	FString ID;
 
+	/** Native panel pixel size. */
 	UPROPERTY(BlueprintReadOnly)
 	FIntPoint NativeSize = FIntPoint::ZeroValue;
 
+	/** Max selectable resolution reported by the platform. */
 	UPROPERTY(BlueprintReadOnly)
-	FIntPoint MaxResolution = FIntPoint(ForceInitToZero);
+	FIntPoint MaxResolution = FIntPoint::ZeroValue;
 
+	/** Full monitor rect in desktop coordinates. */
 	UPROPERTY(BlueprintReadOnly)
 	FIntRect DisplayRect;
 	
+	/** Work-area rect in desktop coordinates (taskbar excluded). */
 	UPROPERTY(BlueprintReadOnly)
 	FIntRect WorkArea;
 
+	/** True when this monitor is the platform primary display. */
 	bool bIsPrimary = false;
+	/** Display DPI reported by the platform. */
 	int32 DPI = 0;
 };

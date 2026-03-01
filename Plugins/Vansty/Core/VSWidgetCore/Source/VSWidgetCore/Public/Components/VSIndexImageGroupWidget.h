@@ -44,8 +44,8 @@ public:
 	FVSCommonPanelSlotSettings ImageSlotSettings;
 	
 	/**
-	 * If false, a refreshment of images will be done during pre-construction.
-	 * If true, image refreshment should be executed manually.
+	 * If false, images are refreshed in pre-construct.
+	 * If true, call RefreshIndexImages manually.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Index Image Group")
 	uint8 bDifferRefreshment : 1;
@@ -57,7 +57,7 @@ public:
 	FSlateBrush UnselectedBrush;
 	
 protected:
-	/** The panel widget that contains the buttons. */
+	/** The panel widget that contains generated index images. */
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UPanelWidget> Panel_Images;
 	

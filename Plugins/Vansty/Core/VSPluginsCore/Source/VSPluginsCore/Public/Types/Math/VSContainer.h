@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 
-/** Utility functions for common TArray set-like operations. */
+/**
+ * Utility functions for common TArray set-like operations.
+ */
 struct FVSArray
 {
 	/** Returns elements common to both arrays (unique). */
@@ -32,7 +34,9 @@ struct FVSArray
 	static int32 GetArrayNearestElementIndex(const T& Source, const TArray<T>& Array);
 };
 
-/** Utility functions for common TSet operations. */
+/**
+ * Utility functions for common TSet operations.
+ */
 struct FVSSet
 {
 	/** Returns elements common to both sets. */
@@ -52,7 +56,9 @@ struct FVSSet
 	static TSet<T> GetSetDifference(const TSet<T>& SetA, const TSet<T>& SetB);
 };
 
-/** Utility functions for common TMap operations. */
+/**
+ * Utility functions for common TMap operations.
+ */
 struct FVSMap
 {
 	/** Returns keys present in both maps. */
@@ -72,7 +78,9 @@ struct FVSMap
 	static bool MapEqual(const TMap<K, V>& MapA, const TMap<K, V>& MapB);
 };
 
-/** Utility functions for common TMultiMap operations. */
+/**
+ * Utility functions for common TMultiMap operations.
+ */
 struct FVSMultiMap
 {
 	/** Returns keys present in both multimaps. */

@@ -8,7 +8,7 @@
 #include "VSPluginsCoreGameSettings.generated.h"
 
 /**
- * 
+ * Project gameplay settings.
  */
 UCLASS(Config = Game, DefaultConfig)
 class VSPLUGINSCORE_API UVSPluginsCoreGameSettings : public UDeveloperSettings

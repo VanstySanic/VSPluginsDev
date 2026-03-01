@@ -7,7 +7,11 @@
 #include "VSHighlightableWidget.generated.h"
 
 /**
- * 
+ * User widget that exposes a unified highlighted/unhighlighted state.
+ *
+ * Highlight state is driven by mouse hover (mouse mode) and focus-path
+ * changes (keyboard/gamepad mode), then forwarded to native and Blueprint
+ * delegates/events.
  */
 UCLASS()
 class VSWIDGETCORE_API UVSHighlightableWidget : public UUserWidget
@@ -29,10 +33,12 @@ public:
 	virtual void NativeOnUnhighlighted();
 	
 public:
+	/** Called when this widget enters highlighted state. */
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "OnHighlighted", Category = "Highlight")
 	// ReSharper disable once CppUEBlueprintImplementableEventNotImplemented
 	void OnWidgetHighlighted();
 
+	/** Called when this widget leaves highlighted state. */
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "OnUnhighlighted", Category = "Highlight")
 	// ReSharper disable once CppUEBlueprintImplementableEventNotImplemented
 	void OnWidgetUnhighlighted();
@@ -42,12 +48,16 @@ private:
 	void UnhighlightInternal();
 	
 public:
+	/** Broadcast when highlighted. */
 	FItemWidgetDelegate OnHighlighted_Native;
+	/** Broadcast when unhighlighted. */
 	FItemWidgetDelegate OnUnhighlighted_Native;
 	
+	/** Broadcast when highlighted. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FHighlightEvent OnHighlighted;
 
+	/** Broadcast when unhighlighted. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FHighlightEvent OnUnhighlighted;
 

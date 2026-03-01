@@ -39,7 +39,7 @@ protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "Widget Binder")
 	void UnbindTypedWidget(const FName TypeName, UWidget* Widget);
 
-	/** Works as tick. Called in parent widget controller. */
+	/** Per-frame update called by owning widget controller. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Widget Binder")
 	void UpdateBinder(float DeltaTime);
 

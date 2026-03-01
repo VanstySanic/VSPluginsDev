@@ -40,7 +40,7 @@ bool FVSGameplayTagEventQueryParams::Matches(const FGameplayTagContainer& InTagE
 bool FVSGameplayTagEventQueryExpression::Matches(const FGameplayTagContainer& TagEvents, const FGameplayTagContainer& GameplayTags) const
 {
 	switch (Type) {
-	case EVSTreeQueryMatchType::Params:
+	case EVSTreeQueryMatchType::Param:
 		{
 			int32 MatchNum = 0;
 			for (const FVSGameplayTagEventQueryParams& Param : Params)
@@ -102,7 +102,7 @@ FVSGameplayTagEventQuery FVSGameplayTagEventQuery::GetEmptyPass()
 {
 	FVSGameplayTagEventQuery Query;
 	Query.RootExpression.Range = EVSTreeQueryMatchRange::None;
-	Query.RootExpression.Type = EVSTreeQueryMatchType::Params;
+	Query.RootExpression.Type = EVSTreeQueryMatchType::Param;
 	return Query;
 }
 
@@ -174,7 +174,7 @@ bool FVSSceneComponentQueryParams::Matches(const USceneComponent* Component) con
 bool FVSSceneComponentQueryExpression::Matches(const USceneComponent* Component) const
 {
 	switch (Type) {
-	case EVSTreeQueryMatchType::Params:
+	case EVSTreeQueryMatchType::Param:
 		{
 			int32 MatchNum = 0;
 			for (const FVSSceneComponentQueryParams& Param : Params)

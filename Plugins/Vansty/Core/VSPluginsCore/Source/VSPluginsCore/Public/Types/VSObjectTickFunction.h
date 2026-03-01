@@ -6,18 +6,7 @@
 #include "VSObjectTickFunction.generated.h"
 
 /**
- * FVSObjectTickFunction
- *
- * Custom FTickFunction implementation that enables UObjects to participate
- * in the engine tick system.
- *
- * This tick function mirrors the behavior of Actor and Component tick
- * functions, while being applicable to non-Actor, non-Component objects.
- * It resolves an appropriate outer context for ticking and forwards execution
- * to user-provided delegates.
- *
- * The tick function supports conditional execution and integrates with the
- * engine tick dependency graph and lifetime management.
+ * Custom FTickFunction that enables UObject-based ticking with delegate dispatch.
  */
 USTRUCT()
 struct VSPLUGINSCORE_API FVSObjectTickFunction : public FTickFunction
@@ -56,7 +45,7 @@ struct VSPLUGINSCORE_API FVSObjectTickFunction : public FTickFunction
 	void UnregisterAndCleanup();
 
 protected:
-	/** Whether the object is explicitly world-bound (e.g. Actor, ActorComponent, WorldSubsystem, transient gameplay objects) */
+	/** Returns true for objects whose tick lifetime is directly world-bound. */
 	virtual bool IsWorldRelatedObject(const UObject* Object);
 
 public:

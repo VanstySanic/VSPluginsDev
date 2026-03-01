@@ -90,8 +90,11 @@ protected:
 	TArray<TObjectPtr<UVSWidgetBinder>> WidgetBinders;
 
 private:
+	/** True after Register until Unregister. */
 	uint8 bIsRegistered : 1;
+	/** True after Initialize until Uninitialize. */
 	uint8 bHasBeenInitialized : 1;
 
+	/** TypeName -> currently bound widget. */
 	TMap<FName, TWeakObjectPtr<UWidget>> BoundTypedWidgets;
 };

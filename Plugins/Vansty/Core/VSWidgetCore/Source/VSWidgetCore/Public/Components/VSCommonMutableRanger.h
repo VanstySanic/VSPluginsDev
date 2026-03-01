@@ -7,7 +7,10 @@
 #include "VSCommonMutableRanger.generated.h"
 
 /**
- * 
+ * Ranger widget with a dedicated mute state.
+ *
+ * When muted, exposed value becomes MuteStateValue and display text can be
+ * replaced by DisplayMutedText.
  */
 UCLASS()
 class VSWIDGETCORE_API UVSCommonMutableRanger : public UVSCommonRanger
@@ -27,9 +30,11 @@ public:
 	virtual void RefreshRanger() override;
 	virtual FText GetContentText() const override;
 
+	/** Returns current mute state. */
 	UFUNCTION(BlueprintCallable, Category = "Ranger")
 	bool GetIsMuted() const { return bIsMuted; }
 
+	/** Sets current mute state. */
 	UFUNCTION(BlueprintCallable, Category = "Ranger")
 	void SetIsMuted(bool bMuted);
 	
@@ -43,20 +48,25 @@ private:
 	void OnWidgetMuteStateChanged(bool bMuted);
 	
 public:
+	/** Broadcast when non-muted value changes. */
 	FValueChangedSignature OnNonMutedValueChanged_Native;
+	/** Broadcast when mute state changes. */
 	FMuteStateChangedSignature OnMuteStateChanged_Native;
 
+	/** Broadcast when non-muted value changes. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FValueChangedEvent OnNonMutedValueChanged;
 
+	/** Broadcast when mute state changes. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FMuteStateChangedEvent OnMuteStateChanged;
 	
 public:
+	/** Value exposed when muted. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
 	float MuteStateValue = 0.f;
 	
-	/** The text to display when muted. Not work if left empty. */
+	/** Text used when muted. Ignored when empty. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
 	FText DisplayMutedText = FText::FromString("");
 

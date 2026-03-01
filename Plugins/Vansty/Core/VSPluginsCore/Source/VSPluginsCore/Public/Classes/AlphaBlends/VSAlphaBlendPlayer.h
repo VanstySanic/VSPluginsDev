@@ -7,25 +7,29 @@
 #include "Components/TimelineComponent.h"
 #include "VSAlphaBlendPlayer.generated.h"
 
-/** Tickable wrapper around FAlphaBlend with direction control and auto-update support. */
+/**
+ * Tickable wrapper around FAlphaBlend with direction control and auto-update support.
+ */
 UENUM(BlueprintType)
 namespace EVSAlphaBlendFinishAction
 {
 	enum Type
 	{
+		/** Keep current state after reaching an end. */
 		None,
+		/** Snap to the opposite end once finished (0 <-> 1). */
 		JumpToAnotherPole,
+		/** Reverse playback direction and continue. */
 		ReverseDirection,
+		/** Disable Tick-driven updates after finish. */
 		StopAutoUpdating,
+		/** Destroy the player object after finish. */
 		Destroy,
 	};	
 }
 
 /**
- * Parameter set describing how an alpha-blend play proxy executes.
- *
- * Defines timing, looping behavior, direction rules, pause semantics,
- * and lifecycle options used to configure a proxy-driven blend sequence.
+ * Tickable alpha-blend player with direction control and optional auto update.
  */
 UCLASS(BlueprintType, DefaultToInstanced, EditInlineNew)
 class VSPLUGINSCORE_API UVSAlphaBlendPlayer : public UVSTickableObject
@@ -41,50 +45,44 @@ protected:
 	//~ End UVSObjectFeature Interface.
 
 public:
+	/** Initializes runtime state from defaults. Safe to call repeatedly. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	void Initialize();
 
-	/** Get current alpha blend args. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	FAlphaBlendArgs GetAlphaBlendArgs() const { return AlphaBlendArgs; }
 
-	/** Set new alpha blend args and keep current alpha. */
+	/** Replaces blend args while preserving the current normalized alpha. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend", meta = (AutoCreateRefTerm = "NewArgs"))
 	void SetAlphaBlendArgs(const FAlphaBlendArgs& NewArgs);
 
-	/** Set the blend time in args. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	void SetBlendTime(float BlendTime);
 	
-	/** Get current alpha. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	float GetAlpha() const { return CurrentAlpha; }
 
-	/** Whether alpha blend has finished. */
+	/** Returns true when current direction has reached its terminal end. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	bool HasFinished() const;
 
-	/** Enable or disable auto updating. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	void SetAutoUpdate(bool bEnabled);
 
-	/** Whether alpha blend is auto updating. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	bool IsAutoUpdating() const { return bIsAutoUpdating; }
 	
-	/** Set alpha and update time accordingly. */
+	/** Sets alpha directly and synchronizes internal playback time. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	void SetAlpha(float InAlpha);
 
-	/** Update alpha blend manually with DeltaTime. */
+	/** Advances alpha by DeltaTime using current direction and blend args. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	void Update(float DeltaTime);
 
-	/** Set whether to update forward or backward. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	void SetDirection(ETimelineDirection::Type Direction);
 	
-	/** Reverse current playback direction. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	void ReverseDirection();
 
@@ -95,54 +93,61 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	void Reset(bool bKeepAutoUpdatingState = true);
 
+	/** Explicitly destroys this runtime player object. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	void Destroy();
 
 private:
 	float GetTimeByAlpha(float InAlpha);
 	
-	/** Set time and update alpha accordingly. */
+	/** Sets playback time and recomputes alpha from blend settings. */
 	void SetTime(float InTime);
 	
 	/** Execute logic when blend is finished. */
 	void FinishInternal();
 	
 public:
+	/** Native event fired whenever alpha changes. */
 	FAlphaBlendDelegate OnUpdated_Native;
+	/** Native event fired when current direction reaches its terminal edge. */
 	FAlphaBlendDelegate OnFinished_Native;
 	
+	/** Blueprint mirror of OnUpdated_Native. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FAlphaBlendEvent OnUpdated;
 
+	/** Blueprint mirror of OnFinished_Native. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FAlphaBlendEvent OnFinished;
 	
 protected:
-	/** Defines the blend time and curves. */
+	/** Blend curve and timing configuration. */
 	UPROPERTY(EditAnywhere, Category = "AlphaBlend")
 	FAlphaBlendArgs AlphaBlendArgs;
 
 public:
-	/** The timeline direction to define forward or backward updating behavior. */
+	/** Default direction applied during Initialize. */
 	UPROPERTY(EditAnywhere, Category = "AlphaBlend")
 	TEnumAsByte<ETimelineDirection::Type> DefaultDirection = ETimelineDirection::Forward;
 	
-	/** The default alpha to apply during initialization. */
+	/** Default alpha applied during Initialize (clamped to [0,1]). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AlphaBlend", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float DefaultAlpha = 0.f;
 		
-	/** Whether to enable auto update during initialization. */
+	/** Default Tick-driven update state applied during Initialize. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AlphaBlend")
 	uint8 bDefaultAutoUpdate : 1;
 	
-	/** What to do when the blend finishes. */
+	/** Ordered actions executed when FinishInternal is reached. */
 	UPROPERTY(EditAnywhere, Category = "AlphaBlend")
 	TArray<TEnumAsByte<EVSAlphaBlendFinishAction::Type>> FinishActions;
 
 private:
 	uint8 bHasBeenInitialized : 1;
 	ETimelineDirection::Type CurrentDirection = ETimelineDirection::Forward;
+	/** Normalized alpha; < 0 means uninitialized. */
 	float CurrentAlpha = -1.f;
+	/** Playback time in seconds; < 0 means uninitialized. */
 	float CurrentTime = -1.f;
 	uint8 bIsAutoUpdating : 1;
 };
@@ -152,11 +157,7 @@ private:
 
 
 /**
- * High-level controller for executing alpha-blend sequences.
- *
- * Manages one or more blend cycles using an internal alpha-blend player,
- * handling delays, looping, optional direction reversal, pause control,
- * and lifecycle completion, with Blueprint-friendly events.
+ * Runtime parameters used to initialize and run UVSAlphaBlendPlayProxy.
  */
 USTRUCT(BlueprintType)
 struct FVSAlphaBlendProxyParams
@@ -174,35 +175,35 @@ struct FVSAlphaBlendProxyParams
 		
 	}
 
-	/** Defines the numerical alpha blending performance with time. */
+	/** Blend curve and timing used by the internal player. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FAlphaBlendArgs AlphaBlendArgs;
 	
-	/** The default direction to set. */
+	/** Direction used when each loop starts. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TEnumAsByte<ETimelineDirection::Type> StartDirection = ETimelineDirection::Forward;
 	
-	/** The count to perform loops. If <= 0, the loops will last forever. */
+	/** Number of loops to run. <= 0 means infinite looping. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 LoopCount = 0;
 	
-	/** The default alpha to set. */
+	/** Initial alpha used before first update. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float StartAlpha = 0.f;
 	
-	/** The time to delay before the blending starts. */
+	/** Delay before first loop starts. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float InitialDelay = 0.f;
 
-	/** The time interval to delay the start for the next cycle when the previous cycle finishes. */
+	/** Delay between completed loops. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float LoopTimeInterval = 0.f;
 
-	/** Used to optimize performance. If 0.f, update every frame. */
+	/** Fixed update step. 0 means update every tick. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float UpdateTimeInterval = 0.f;
 
-	/** The directional time delay before the direction reverse. */
+	/** Delay before reversing direction in ping-pong mode. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bLoopRequiresReversingDirection"))
 	float DirectionReverseTimeInterval = 0.0;
 	
@@ -210,60 +211,37 @@ struct FVSAlphaBlendProxyParams
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bLoopRequiresReversingDirection : 1;
 
-	/** Whether to indicate that the direction has already been reversed at start, if the loop cycle requires direction reversing. */
+	/** If true, starts the cycle in already-reversed state for ping-pong loops. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bLoopRequiresReversingDirection"))
 	uint8 bLoopDirectionAlreadyReversedAtStart : 1;
 
-	/** Whether to pause when the proxy finishes. */
+	/** Pause proxy when all requested loops complete. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bPauseWhenFinished : 1;
 	
-	/** Whether to destroy the proxy when it finishes. */
+	/** Destroy proxy automatically when all requested loops complete. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bDestroyWhenFinished : 1;
 
-	/** Whether to pause when the proxy is created. If true, user should toggle the pause state manually. */
+	/** Start paused and wait for an explicit SetPaused(false). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bStartPaused : 1;
 
-	/** Whether to update when the game is paused. */
+	/** If true, proxy ticks while the world is paused. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bUpdateWhenGamePaused : 1;
 };
 
 /**
- * UVSAlphaBlendPlayProxy
- *
- * High-level controller that executes one or more alpha-blend cycles using a
- * UVSAlphaBlendPlayer instance, with optional delays, loop logic, and pause
- * control. Designed for Blueprint-friendly sequence playback.
- *
- * -------------------------------------------------------------------------
- * Key Features
- * -------------------------------------------------------------------------
- * - Handles initial delay, per-loop delay, and optional direction reversing.
- * - Supports pausing, resetting, and update-interval throttling.
- * - Tracks loop index and completion state.
- *
- * - Events:
- *   - OnAlphaUpdated
- *   - OnLoopStart / OnLoopFinished
- *   - OnProxyFinished
- *
- * -------------------------------------------------------------------------
- * Usage
- * -------------------------------------------------------------------------
- * - Create via CreateAlphaBlendPlayProxy(WorldContext, Params).
- * - Bind to events for per-frame and per-cycle notifications.
- * - Use SetPaused(), Reset(), Destroy() when needed.
+ * Proxy that plays one or more alpha-blend cycles with delay/loop/pause support.
  */
 UCLASS(BlueprintType)
 class VSPLUGINSCORE_API UVSAlphaBlendPlayProxy : public UVSTickableObject
 {
 	GENERATED_UCLASS_BODY()
 
-	DECLARE_MULTICAST_DELEGATE_ThreeParams(FAlphaBlendProxyDelegate, UVSAlphaBlendPlayProxy* /** Proxy */, float /** Alpha */, int32 /** LoopCount */);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAlphaBlendProxyEvent, UVSAlphaBlendPlayProxy*, Proxy, float, Alpha, int32, LoopCount);
+	DECLARE_MULTICAST_DELEGATE_ThreeParams(FAlphaBlendProxyDelegate, UVSAlphaBlendPlayProxy* /** Proxy */, float /** Alpha */, int32 /** CurrentLoop */);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAlphaBlendProxyEvent, UVSAlphaBlendPlayProxy*, Proxy, float, Alpha, int32, CurrentLoop);
 
 protected:
 	//~ Begin UVSObjectFeature Interface.
@@ -272,40 +250,38 @@ protected:
 	//~ End UVSObjectFeature Interface.
 	
 public:
+	/** Factory that creates and optionally defers initialization of the proxy. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend", meta = (WorldContext = "WorldContext", AutoCreateRefTerm = "Params"))
 	static UVSAlphaBlendPlayProxy* CreateAlphaBlendPlayProxy(UObject* WorldContext, const FVSAlphaBlendProxyParams& Params, bool bDifferInitialization = false);
 	
+	/** Initializes runtime state from cached proxy params. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	void Initialize();
 	
-	/** Get the current updated alpha. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	float GetAlpha() const;
 
-	/** Get the current loop count index. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
-	int32 GetLoopCount() const { return CurrentLoopCount; }
+	int32 GetCurrentLoop() const { return CurrentLoop; }
 
-	/** Get the params that defines the alpha blending. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	FVSAlphaBlendProxyParams GetProxyParams() const { return CachedProxyParams; }
 
-	/** Is the alpha blending totally finished. */
+	/** Returns true when proxy has completed all loops and finish logic. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	bool HasFinished() const { return bHasFinished; }
 
-	/** Reset the proxy to the initial states. */
+	/** Resets loop/delay/player state to initial values. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	void Reset(bool bIgnoreInitialDelay = false, bool bKeepPauseState = true);
 
-	/** Set whether to pause the update. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	void SetPaused(bool bPaused);
 
-	/** Whether the update is paused. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	bool IsPaused() const { return bIsPaused; }
 
+	/** Destroys the proxy and releases its internal player. */
 	UFUNCTION(BlueprintCallable, Category = "AlphaBlend")
 	void Destroy();
 
@@ -316,34 +292,47 @@ private:
 	void DoFinishLogics();
 	
 public:
+	/** Broadcast whenever the internal player updates alpha. */
 	FAlphaBlendProxyDelegate OnAlphaUpdated_Native;
+	/** Broadcast when a loop cycle starts. */
 	FAlphaBlendProxyDelegate OnLoopStart_Native;
+	/** Broadcast when a loop cycle finishes. */
 	FAlphaBlendProxyDelegate OnLoopFinished_Native;
+	/** Broadcast once when the proxy reaches final completion. */
 	FAlphaBlendProxyDelegate OnProxyFinished_Native;
 
+	/** Broadcast whenever the internal player updates alpha. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FAlphaBlendProxyEvent OnAlphaUpdated;
 	
+	/** Broadcast when a loop cycle starts. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FAlphaBlendProxyEvent OnLoopStart;
 	
+	/** Broadcast when a loop cycle finishes. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FAlphaBlendProxyEvent OnLoopFinished;
 	
+	/** Broadcast once when the proxy reaches final completion. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FAlphaBlendProxyEvent OnProxyFinished;
 
 private:
+	/** Internal player that evaluates and updates alpha over time. */
 	UPROPERTY()
 	TObjectPtr<UVSAlphaBlendPlayer> AlphaBlendPlayer;
 	
+	/** Immutable copy of create-time configuration used for resets/re-init. */
 	FVSAlphaBlendProxyParams CachedProxyParams;
 	uint8 bHasBeenInitialized : 1;
 	uint8 bIsPaused : 1;
 	uint8 bHasFinished : 1;
-	int32 CurrentLoopCount = 0;
+	/** 1-based loop counter after first loop starts. */
+	int32 CurrentLoop = 0;
+	/** Seconds; < 0 means delay not initialized. */
 	float RemainedInitialDelay = -1.f;
+	/** Seconds; < 0 means interval delay not initialized. */
 	float RemainedLoopTimeInterval = -1.f;
+	/** Seconds; < 0 means reverse delay not initialized. */
 	float RemainedDirectionTimeInterval = -1.f;
 };
-

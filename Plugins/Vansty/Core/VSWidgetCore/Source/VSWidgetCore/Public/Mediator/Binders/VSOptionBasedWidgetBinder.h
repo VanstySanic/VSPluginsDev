@@ -34,15 +34,15 @@ protected:
 	//~ End UVSWidgetBinder Interface
 
 public:
-	/** Get the real option in game, not in the bound widget. Need to be overriden. */
+	/** Returns external option string from game data source. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Option")
 	FString GetExternalOption() const;
 
-	/** Get the widget option index. */
+	/** Returns selected option index from bound widget. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Option")
 	int32 GetWidgetIndex() const;
 
-	/** Get the widget option. */
+	/** Returns selected option string from bound widget. */
 	UFUNCTION(BlueprintCallable, Category = "Option")
 	FString GetWidgetOption() const;
 	
@@ -76,7 +76,7 @@ protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "Option")
 	TArray<FString> GenerateOptions() const;
 
-	/** Generate the options that can be displayed but should be disabled from widget selection. */
+	/** Generates options that should appear disabled in widget selection. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Option")
 	TArray<FString> GenerateDisabledOptions() const;
 	

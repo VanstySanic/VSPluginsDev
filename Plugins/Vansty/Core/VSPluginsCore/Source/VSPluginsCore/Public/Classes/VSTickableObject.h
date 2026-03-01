@@ -9,16 +9,7 @@
 #include "VSTickableObject.generated.h"
 
 /**
- * Base UObject that provides per-frame ticking support through a custom
- * FVSObjectTickFunction.
- *
- * This class allows non-Actor, non-Component UObject instances to participate
- * in the engine tick without requiring scene presence or world placement.
- * It encapsulates tick registration, execution, and latent action processing
- * in a lightweight, reusable form.
- *
- * Tick execution is driven by an internal FVSObjectTickFunction and ultimately
- * forwards to the Tick() virtual function, which may be implemented in C++ or Blueprint.
+ * Base UObject that participates in ticking through FVSObjectTickFunction.
  */
 UCLASS(Abstract, Blueprintable, BlueprintType)
 class VSPLUGINSCORE_API UVSTickableObject : public UObject, public IVSTickFunctionOwnerInterface
@@ -40,11 +31,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Tick")
 	virtual void UnregisterTickFunction();
 	
-	/** Whether the primary tick function is registered. */
 	UFUNCTION(BlueprintCallable, BlueprintCallable, Category = "Tick")
 	bool IsTickFunctionRegistered() const;
 
-	/** Tick function will execute only if this method returns true. */
+	/** Tick is executed only when this returns true. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Tick")
 	bool CanExecuteTick() const;
 
@@ -94,7 +84,7 @@ protected:
 	void Tick(float DeltaTime);
 
 public:
-	/** Main tick function for the object. */
+	/** Configurable primary tick settings for this object. */
 	UPROPERTY(EditDefaultsOnly, Category = "Tick")
 	FVSObjectTickFunction PrimaryObjectTick;
 };
@@ -104,30 +94,7 @@ public:
 
 
 /**
- * UVSObjectTickProxy
- *
- * A lightweight tick-forwarding UObject that exposes per-frame updates
- * to both C++ and Blueprint. Intended for cases where Blueprint scripts
- * or external systems need tick behavior on a UObject without creating
- * additional native subclasses.
- *
- * -------------------------------------------------------------------------
- * Key Features
- * -------------------------------------------------------------------------
- * - Forwards UVSTickableObject's tick into C++ and Blueprint delegates.
- * - Provides a native multicast tick delegate (OnTick) with full tick data.
- * - Provides a BlueprintAssignable tick event (EventOnTick) with DeltaTime.
- * - Includes an optional Blueprint-driven predicate (EventCanTick) that
- *   native code may execute to decide whether tick logic should proceed.
- *
- * -------------------------------------------------------------------------
- * Usage
- * -------------------------------------------------------------------------
- * - Create or instance this object inside an Actor or UObject.
- * - Call RegisterTickFunction() to start receiving ticks.
- * - Bind to OnTick (C++) or EventOnTick (Blueprint) for per-frame logic.
- * - Optionally bind EventCanTick in Blueprint and evaluate it from C++.
- * - Call UnregisterTickFunction() when ticking is no longer needed.
+ * Tick-forwarding object that exposes per-frame delegates for native and Blueprint consumers.
  */
 UCLASS(NotBlueprintable, DefaultToInstanced, EditInlineNew)
 class VSPLUGINSCORE_API UVSObjectTickProxy final : public UVSTickableObject
@@ -142,19 +109,20 @@ class VSPLUGINSCORE_API UVSObjectTickProxy final : public UVSTickableObject
 public:
 	virtual void TickObject(float DeltaTime, ELevelTick TickType, FVSObjectTickFunction* TickFunction) override;
 
-	/** Requires both CanTick_Native and CanTick return true. */
+	/** Requires both native and Blueprint can-tick checks to pass. */
 	virtual bool CanExecuteTick_Implementation() const override;
 
 public:
-	/** If not bound, returns as true. */
+	/** Optional native predicate; unbound means "allow tick". */
 	FCanTickDelegate CanTick_Native;
+	/** Broadcast every tick. */
 	FOnTickDelegate OnTick_Native;
 
-	/** If not bound, returns as true. */
+	/** Optional Blueprint predicate; unbound means "allow tick". */
 	UPROPERTY(BlueprintReadOnly, DisplayName = "CanTick")
 	FCanTickEvent CanTick;
 	
-	/** Event broadcast every tick. */
+	/** Broadcast every tick. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable, DisplayName = "OnTick")
 	FOnTickEvent OnTick;
 };

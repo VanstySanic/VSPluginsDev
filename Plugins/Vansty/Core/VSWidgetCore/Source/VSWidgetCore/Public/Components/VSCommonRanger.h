@@ -12,7 +12,10 @@ class USpinBox;
 class USlider;
 
 /**
- * 
+ * Widget that provides ranged value editing.
+ *
+ * Supports slider/spinbox inputs, optional navigation stepping, and
+ * formatted content text output.
  */
 UCLASS()
 class VSWIDGETCORE_API UVSCommonRanger : public UCommonButtonBase
@@ -30,15 +33,19 @@ public:
 	virtual FNavigationReply NativeOnNavigation(const FGeometry& MyGeometry, const FNavigationEvent& InNavigationEvent, const FNavigationReply& InDefaultReply) override;
 	//~ End UCommonButtonBase Interface
 	
+	/** Sets current value (clamped to ValueRange). */
 	UFUNCTION(BlueprintCallable, Category = "Ranger")
 	void SetValue(float NewValue);
 
+	/** Returns current value. */
 	UFUNCTION(BlueprintCallable, Category = "Ranger")
 	virtual float GetValue() const { return CurrentValue; }
 	
+	/** Returns formatted content text for current value. */
 	UFUNCTION(BlueprintCallable, Category = "Ranger")
 	virtual FText GetContentText() const;
 
+	/** Applies current settings to bound widget parts. */
 	UFUNCTION(BlueprintCallable, Category = "Ranger")
 	virtual void RefreshRanger();
 
@@ -56,7 +63,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<USlider> Slider;
 
-	/** Auxiliary value and display. */
+	/** Optional numeric input bound to the same value. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<USpinBox> SpinBox;
 	
@@ -64,46 +71,53 @@ protected:
 	TObjectPtr<UTextBlock> TextBlock_Content;
 
 public:
+	/** Native event fired when value changes. */
 	FValueChangedSignature OnValueChanged_Native;
 
+	/** Blueprint event fired when value changes. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FValueChangedEvent OnValueChanged;
 	
 public:
+	/** Min/max value range. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
 	FVector2D ValueRange = FVector2D(0.0, 1.0);
 
+	/** Step size used by navigation/slider/spinbox. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
 	float StepSize = 0.f;
 	
+	/** Whether input should snap to StepSize. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
 	uint8 bSnapByStep : 1;
 
 	/**
-	 * If false, a refreshment of widgets will be done during pre-construction.
-	 * If true, widgets refreshment should be executed manually.
+	 * If false, widget state is refreshed in pre-construct.
+	 * If true, call RefreshRanger manually.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
 	uint8 bDifferRefreshment : 1;
 	
-	/** The content text format to display. If you want to show the digits, please put ‘{0}’ in it. */
+	/** Value text format. Use `{0}` as placeholder for numeric value text. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
 	FText DisplayTextFormat = FText::FromString("{0}");
 	
+	/** Fractional digit range used when formatting value text. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
 	FIntPoint DisplayFractionDigitRange = FIntPoint(0, 324);
 
+	/** Multiplier used for UI display and formatting. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
 	float DisplayValueMultiplier = 1.f;
 
 private:
 #if WITH_EDITORONLY_DATA
-	/** Non muted. */
+	/** Editor preview non-muted value. */
 	UPROPERTY(EditAnywhere, DisplayName = "Preview Value", Category = "Ranger")
 	float EditorPreviewValue = 0.f;
 #endif
 
-	/** The value that is set and is not concerned with mutation. Sync with slider and spinbox. */
+	/** Raw value synchronized with Slider and SpinBox. */
 	float CurrentValue = 0.f;
 	uint8 bValueDelegatesBound : 1;
 };

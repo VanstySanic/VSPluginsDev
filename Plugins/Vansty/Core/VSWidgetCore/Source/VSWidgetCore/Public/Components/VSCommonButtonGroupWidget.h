@@ -13,21 +13,8 @@ class UCommonButtonGroupBase;
 class UCommonButtonBase;
 
 /**
- * A CommonUI-based widget that manages a group of buttons as a single
- * selectable option set.
- *
- * This widget dynamically generates and owns a collection of CommonButton
- * instances, routes selection and navigation through an internal
- * UCommonButtonGroupBase, and exposes unified focus, navigation, and
- * refresh behavior to both C++ and Blueprint.
- *
- * It supports controller/keyboard navigation (horizontal or vertical),
- * optional wrapping, external Prev/Next controls, and per-index button
- * configuration through style and action settings.
- *
- * The button group can be refreshed at runtime to reflect changes in
- * option count, layout, or binding state, and notifies listeners when
- * regeneration is complete.
+ * Widget that manages multiple generated buttons as one
+ * selectable option group.
  */
 UCLASS()
 class VSWIDGETCORE_API UVSCommonButtonGroupWidget : public UCommonButtonBase
@@ -48,22 +35,19 @@ protected:
 	//~ End UUserWidget Interface
 
 public:
-	/**
-	 * Regenerate all buttons in response to changes in the count or layout.
-	 * @note Don't forget to bind your delegates for buttons after the refreshment if necessary.
-	 */
+	/** Regenerates all buttons from current settings. */
 	UFUNCTION(BlueprintCallable, Category = "Button Group")
 	void RefreshButtons();
 	
 	/**
-	 * Get the button group object to bind delegates or process selection.
+	 * Returns internal button group for selection query/binding.
 	 * @warning Do not add, remove or modify buttons here.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Button Group")
 	UCommonButtonGroupBase* GetButtonGroup() const { return ButtonGroupPrivate; }
 
 private:
-	/** Handle and use controller navigation to rotate text */
+	/** Handles keyboard/gamepad navigation and updates selected button. */
 	TSharedPtr<SWidget> HandleNavigation(EUINavigation UINavigation);
 	
 	UFUNCTION()
@@ -79,12 +63,16 @@ private:
 	void OnButtonNextClicked();
 	
 public:
+	/** Broadcast after button regeneration. */
 	FOnRefreshedDelegate OnRefreshed_Native;
+	/** Broadcast selected index changes. */
 	FOnSelectionChangedDelegate OnSelectionChanged_Native;
 	
+	/** Broadcast after button regeneration. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FOnRefreshedEvent OnRefreshed;
 	
+	/** Broadcast when selected index changes. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FOnSelectionChangedEvent OnSelectionChanged;
 	
@@ -97,15 +85,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")
 	int32 ButtonNum = 1;
 
-	/** Override the button action names if not empty, and the name in array is not empty. */
+	/** Per-index display name override when entry text is non-empty. */
 	UPROPERTY(EditAnywhere, Category = "Rotator")
 	TArray<FText> OverridenButtonNames;
 
-	/** Disable buttons of these indexes when refreshed. */
+	/** Indices that should be disabled after regeneration. */
 	UPROPERTY(EditAnywhere, Category = "Rotator")
 	TArray<int32> DefaultDisabledIndexes;
 	
-	/** Only works when greater than zero. */
+	/** Desired focus target index after refresh. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group", meta = (EditCondition = "bSupportButtonFocus"))
 	int32 DesiredFocusButtonIndex = INDEX_NONE;
 
@@ -122,20 +110,21 @@ public:
 	uint8 bVerticalFlowDirection : 1;
 	
 	/**
-	 * If false, a refreshment of buttons will be done during pre-construction.
-	 * If true, button refreshment should be executed manually.
+	 * If false, buttons are refreshed in pre-construct.
+	 * If true, call RefreshButtons manually.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")
 	uint8 bDifferRefreshment : 1;
 	
-	
+	/** Slot settings applied to generated buttons. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")
 	FVSCommonPanelSlotSettings ButtonSlotSettings;
 
+	/** Style settings applied to generated buttons. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")
 	FVSCommonButtonStyleSettings ButtonStyleSettings;
 
-	/** Apply by index. */
+	/** Per-index action settings for generated buttons. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")
 	TArray<FVSCommonButtonActionSettings> ButtonActionSettings;
 
@@ -159,6 +148,7 @@ private:
 	UPROPERTY()
 	TObjectPtr<UCommonButtonGroupBase> ButtonGroupPrivate;
 
+	/** Generated buttons owned by this widget. */
 	UPROPERTY()
 	TArray<TObjectPtr<UCommonButtonBase>> ButtonsPrivate;
 

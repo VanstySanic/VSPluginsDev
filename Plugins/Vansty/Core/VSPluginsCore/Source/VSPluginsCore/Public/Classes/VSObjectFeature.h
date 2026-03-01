@@ -14,16 +14,7 @@ class UVSObjectTickProxy;
 DECLARE_LOG_CATEGORY_EXTERN(LogObjectFeature, Log, All);
 
 /**
- * Feature object that provides GameplayTag ownership, replication, and
- * notification support for an Actor.
- *
- * This feature manages GameplayTags with full count-based semantics and may
- * operate independently or integrate with an AbilitySystemComponent as a
- * backing tag source. Tag state can be modified locally or via network-aware
- * policies and is kept consistent across network roles.
- *
- * The feature also exposes tag change and event notifications for native
- * and Blueprint consumers.
+ * Base instanced feature object attached to an Actor or another feature.
  */
 UCLASS(DefaultToInstanced, EditInlineNew, DisplayName = "VS.Feature.Base")
 class VSPLUGINSCORE_API UVSObjectFeature : public UVSReplicatableObject, public IVSTickFunctionOwnerInterface
@@ -48,60 +39,66 @@ protected:
 	//~ End IInterface_ActorSubobject Interface
 
 public:
-	/** Get the actor that actually owes this feature. */
+	/** Returns the owning actor resolved for this feature hierarchy. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	AActor* GetOwnerActor() const;
-	
-	/** Get the feature that directly contain this feature as sub feature. */
+
+	/** Returns the direct owner feature in the feature hierarchy. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	UVSObjectFeature* GetOwnerFeature() const { return OwnerFeaturePrivate.Get(); }
 
-	/** Get the tick proxy that actually performs ticking for this feature. Can be null if ticking is not required. */
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	/** Tick proxy used by this feature. Can be null when ticking is not needed. */
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	UVSObjectTickProxy* GetTickProxy() const { return TickProxy; }
 	
 	/**
 	 * Register the feature, set up the tick function and replication.
 	 * This will call the initialize and begin play process, and will register sub features if possible.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void RegisterFeature();
 
 	/**
 	 * Unregister the feature, clean up the tick function and replication.
 	 * This will call the uninitialize and end play process, and will uninitialize sub features if possible.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void UnregisterFeature();
 	
 	/** Destroy this feature and its sub features. This will do the unregistration and end play process.*/
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void DestroyFeature();
 
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	/** Runtime registration state set by RegisterFeature / UnregisterFeature. */
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	bool IsRegistered() const { return bIsRegistered; }
 
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	/** True after Initialize has executed at least once. */
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	bool HasBeenInitialized() const { return bHasBeenInitialized; }
 
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	/** True after BeginPlay has executed. */
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	bool HasBegunPlay() const { return bHasBegunPlay; }
 
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	/** True while destruction/unregistration teardown is in progress. */
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	bool IsBeingDestroyed() const { return bIsBeingDestroyed; }
 	
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void SetActive(bool bNewActive);
 
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	/**
+	 * Whether the feature is currently active.
+	 * Notice that the result only works as a mark and does not affect functionality by default.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	bool IsActive() const { return bIsActive; }
 
-	/** Get all sub features recursively. */
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	TArray<UVSObjectFeature*> GetSubFeatures() const;
 
-	/** Whether the given feature is contained as a sub feature somewhere under this feature. */
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	bool HasSubFeature(UVSObjectFeature* Feature) const;
 
 	/**
@@ -109,7 +106,7 @@ public:
 	 * Will re-parent and (re)register the feature if needed.
 	 * @param bDeferRegister If true, the feature will be forced not be registered automatically even bRegisterWithOwner is true.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void AddSubFeatureInstance(UVSObjectFeature* Feature, bool bDeferRegister = false);
 
 	/**
@@ -117,73 +114,70 @@ public:
 	 * @param Class Class of the feature to create and attach.
 	 * @param bDeferRegister If true, the feature will be forced not be registered automatically even if bRegisterWithOwner is true.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	UVSObjectFeature* AddSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class, bool bDeferRegister = false);
 
 	/**
 	 * Detach and optionally destroy the given sub feature from this feature's hierarchy.
 	 * Will unregister the feature if it is currently registered.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void RemoveSubFeature(UVSObjectFeature* Feature);
 
 	/**
 	 * Set a new owner feature for this feature.
 	 * This will re-parent the feature in the hierarchy and adjust registration if necessary.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void SetOwnerFeature(UVSObjectFeature* Feature, bool bDeferRegister = false);
 
-	/** Whether the given feature appears in this feature's owner chain. */
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	bool HasOwnerFeature(UVSObjectFeature* Feature) const;
 
-	/** Get the nearest owner feature of the given class. */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* GetOwnerFeatureByClass(TSubclassOf<UVSObjectFeature> Class) const;
 
-	/** Get the first sub feature of the given class. */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* GetSubFeatureByClass(TSubclassOf<UVSObjectFeature> Class) const;
 	
-	/** Get all sub features of the given class. */
 	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
 	TArray<UVSObjectFeature*> GetSubFeaturesByClass(TSubclassOf<UVSObjectFeature> Class) const;
 
-	/** Get the first sub-feature with the given not-none name. */
 	UFUNCTION(BlueprintCallable, Category = "Feature")
 	UVSObjectFeature* GetSubFeatureByName(FName Name) const;
 	
-	/** Get the first sub feature of the given class. */
 	template <typename T>
 	T* FindSubFeatureByClass(TSubclassOf<T> Class = T::StaticClass()) const;
 
-	/** Get all sub features of the given class. */
 	template <typename T>
 	TArray<T*> FindSubFeaturesByClass(TSubclassOf<T> Class = T::StaticClass()) const;
 	
-	/** Get the first sub-feature with the given not-none name. */
 	template <typename T>
 	T* FindOwnerFeatureByClass(TSubclassOf<T> Class = T::StaticClass()) const;
 
 protected:
-	UFUNCTION(BlueprintNativeEvent, Category = "Features")
+	/** Feature lifecycle hook. Called during RegisterFeature before BeginPlay. */
+	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
 	void Initialize();
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Features")
+	/** Feature lifecycle hook. Called during UnregisterFeature teardown. */
+	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
 	void Uninitialize();
 	
-	UFUNCTION(BlueprintNativeEvent, Category = "Features")
+	/** Feature lifecycle hook mapped to play start for this feature. */
+	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
 	void BeginPlay();
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Features")
+	/** Feature lifecycle hook mapped to play end for this feature. */
+	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
 	void EndPlay();
 
-	UFUNCTION(BlueprintCallable, Category = "Features")
+	/** Enables/disables the internal tick proxy registration state. */
+	UFUNCTION(BlueprintCallable, Category = "Feature")
 	void SetTickEnabled(bool bEnabled);
 
-	/** Whether the tick function can be executed at this frame. */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Features")
+	/** Per-frame gate for Tick execution. */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Feature")
 	bool CanTick() const;
 	
 	/**
@@ -203,17 +197,20 @@ protected:
 	 * @param DeltaTime The time since the last tick.
 	 * @remarks You might need to call the super native implementation manually in blueprints.
 	 */
-	UFUNCTION(BlueprintNativeEvent, Category = "Features")
+	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
 	void Tick(float DeltaTime);
 
 protected:
-	UFUNCTION(BlueprintNativeEvent, Category = "Features")
+	/** Called when active flag transitions to true. */
+	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
 	void OnFeatureActivated();
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Features")
+	/** Called when active flag transitions to false. */
+	UFUNCTION(BlueprintNativeEvent, Category = "Feature")
 	void OnFeatureDeactivated();
 	
 private:
+	/** Tick-proxy bridge that forwards proxy ticks into TickFeature/Tick. */
 	void ReceiveProxyTick(UVSObjectTickProxy* PrimaryTickProxy, float DeltaTime, ELevelTick TickType, FVSObjectTickFunction* TickFunction);
 	
 	UFUNCTION()
@@ -224,47 +221,51 @@ private:
 	
 public:
 	/** Literal name for the feature to distinguish between features. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Features")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Feature")
 	FName FeatureName = NAME_None;
 
-	/** Whether the feature should activate automatically after BeginPlay. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Features")
+	/** If true, feature auto-activates after BeginPlay. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Feature")
 	uint8 bAutoActivate : 1;
 
 	/**
 	 * If true, feature will be registered when its owner feature is registered or reparenting.
 	 * Otherwise, you should manually register the feature.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Features")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Feature")
 	uint8 bRegisterWithOwner : 1;
 
 protected:
 	/** All direct sub features owned by this feature. May contain nested hierarchies. */
-	UPROPERTY(EditAnywhere, Replicated, Instanced, Category = "Features")
+	UPROPERTY(EditAnywhere, Replicated, Instanced, Category = "Feature")
 	TArray<TObjectPtr<UVSObjectFeature>> SubFeatures;
 
 	/**
 	 * The proxy that actually handles ticking.
 	 * If your class needs no ticking method, you can set this to null to save some memory.
 	 */
-	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Features")
+	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Feature")
 	TObjectPtr<UVSObjectTickProxy> TickProxy;
 
 private:
-	/** Feature that owes this as sub feature. */
+	/** Direct owner feature in the feature hierarchy. */
 	UPROPERTY(ReplicatedUsing = "OnRep_OwnerFeaturePrivate")
 	TObjectPtr<UVSObjectFeature> OwnerFeaturePrivate;
 	
-	/** Whether the feature is currently active. */
+	/**
+	 * Whether the feature is currently active.
+	 * Notice that this is only a mark and does not affect functionality by default.
+	 */
 	UPROPERTY(ReplicatedUsing = "OnRep_bIsActive")
 	uint8 bIsActive : 1;
 	
+	/** Internal lifecycle flags. */
 	uint8 bIsRegistered: 1;
 	uint8 bHasBeenInitialized : 1;
 	uint8 bHasBegunPlay : 1;
 	uint8 bIsBeingDestroyed : 1;
 
-	/** Actor that owes this feature. */
+	/** Cached owner actor pointer for fast access. */
 	TWeakObjectPtr<AActor> OwnerActorPrivate;
 };
 

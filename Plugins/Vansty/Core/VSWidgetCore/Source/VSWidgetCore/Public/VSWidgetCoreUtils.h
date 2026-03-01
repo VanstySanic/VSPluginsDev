@@ -9,7 +9,7 @@
 class UWidget;
 
 /**
- * 
+ * Blueprint function library for widgets.
  */
 UCLASS()
 class VSWIDGETCORE_API UVSWidgetCoreUtils : public UBlueprintFunctionLibrary

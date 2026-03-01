@@ -12,7 +12,10 @@ class UVSInputKeySelectorGroupWidget;
 class UVSKeyIconConfig;
 
 /**
- * 
+ * Binder that synchronizes key-selection widgets with external key data.
+ *
+ * Supports single-key and multi-key selector widgets bound under type
+ * name `Keys`.
  */
 UCLASS()
 class VSWIDGETCORE_API UVSInputKeyWidgetBinder : public UVSWidgetBinder
@@ -28,18 +31,23 @@ protected:
 	//~ End UVSWidgetBinder Interface
 
 public:
+	/** Returns current key list from external game data. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Key")
 	TArray<FInputChord> GetExternalKeys() const;
 	
+	/** Returns current key list from bound widget. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Key")
 	TArray<FInputChord> GetWidgetKeys() const;
 
+	/** Returns external key at index, or empty chord when out of range. */
 	UFUNCTION(BlueprintCallable, Category = "Key")
 	FInputChord GetExternalKeyAtIndex(int32 Index = 0);
 
+	/** Returns widget key at index, or empty chord when out of range. */
 	UFUNCTION(BlueprintCallable, Category = "Key")
 	FInputChord GetWidgetKeyAtIndex(int32 Index = 0) const;
 	
+	/** Refreshes key settings/content on bound key widget. */
 	UFUNCTION(BlueprintCallable, Category = "Key Selector Group")
 	void RefreshKeys();
 	

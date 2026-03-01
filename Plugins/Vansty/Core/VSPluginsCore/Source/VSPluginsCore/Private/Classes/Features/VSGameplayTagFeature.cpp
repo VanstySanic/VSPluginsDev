@@ -41,13 +41,13 @@ void UVSGameplayTagFeatureBase::BeginPlay_Implementation()
 	
 	InitDefaultGameplayTags();
 
-	/** Refresh from replication for safety. */
+	/** Apply initial replicated snapshots once for safety. */
 	OnRep_InitialAutonomousReplicatedTagCounts();
 	OnRep_InitialSimulationReplicatedTagCounts();
 	
 	NotifyTagsUpdated();
 
-	/** Auto bind delegates. */
+	/** Auto-bind delegates if requested. */
 	if (bBindDelegatesDuringBeginPlay)
 	{
 		BindDelegateForObject(GetOwnerActor());
@@ -116,7 +116,7 @@ void UVSGameplayTagFeatureBase::InitDefaultGameplayTags()
 		}
 	}
 
-	/** Filter the map to skip replicated tags. */
+	// Filter defaults that are already provided through initial replication.
 	TMap<FGameplayTag, int> FilteredDefaultMap = DefaultGameplayTagCounts;
 	for (const TPair<FGameplayTag, int>& GameplayTagCountMap : DefaultGameplayTagCounts)
 	{
@@ -424,7 +424,7 @@ void UVSGameplayTagFeatureBase::BindDelegateForObject(UObject* Object)
 {
 	if (!Object || !Object->GetClass()->ImplementsInterface(UVSGameplayTagFeatureInterface::StaticClass())) return;
 
-	/** Unbind first for safety. */
+	// Remove existing bindings first to avoid duplicates.
 	UnbindDelegateForObject(Object);
 	
 	TScriptDelegate Delegate;
@@ -435,7 +435,7 @@ void UVSGameplayTagFeatureBase::BindDelegateForObject(UObject* Object)
 	Delegate.BindUFunction(Object, "OnGameplayTagFeatureTagEventsNotified");
 	OnTagEventsNotified.Add(Delegate);
 
-	/** Immediately push current state once so the listener starts from a consistent view. */
+	// Push current state once so the listener starts from a consistent view.
 	IVSGameplayTagFeatureInterface::Execute_OnGameplayTagFeatureTagsUpdated(Object, this);
 	IVSGameplayTagFeatureInterface::Execute_OnGameplayTagFeatureTagEventsNotified(Object, this, FGameplayTagContainer(VS_PLUGINSCORE_GAMEPAYTAGFEATURE_ONTAGSUPDATED));
 }
@@ -562,7 +562,7 @@ void UVSGameplayTagFeatureBase::SetTagCountInternal(const FGameplayTag& Gameplay
 	const int32 CurrentCount = GetTagCount(GameplayTag);
 	if (CurrentCount == PrevCount) return;
 
-	/** Update implicit tag count. */
+	// Update implicit parent tag counts.
 	for (const FGameplayTag& Tag : GameplayTag.GetGameplayTagParents())
 	{
 		const int32 PrevImplicitCount = LocalImplicitTagCounts.FindRef(Tag);
@@ -931,7 +931,7 @@ void UVSAbilitySystemGameplayTagFeature::Initialize_Implementation()
 			UVSPluginsCoreGameSettings::Get()->AbilitySystemListeningGameplayEventTags,
 			FGameplayEventTagMulticastDelegate::FDelegate::CreateUObject(this, &UVSAbilitySystemGameplayTagFeature::OnAbilitySystemGameplayEventTriggered));
 
-		/** Bind listen delegate. */
+		// Bind per-tag count listeners from settings.
 		for (const FGameplayTag& GameplayTag : UVSPluginsCoreGameSettings::Get()->AbilitySystemListeningCountedTags.GetGameplayTagArray())
 		{
 			FDelegateHandle DelegateHandle = AbilitySystemComponentPrivate->RegisterGameplayTagEvent(GameplayTag, EGameplayTagEventType::AnyCountChange)

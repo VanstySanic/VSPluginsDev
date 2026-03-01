@@ -10,16 +10,10 @@
 class UVSIndexImageGroupWidget;
 
 /**
- * CommonUI rotator extension that behaves as a single option selector.
+ * Rotator extension used as a settings-style option selector.
  *
- * This widget wraps UCommonRotator with extra UX features for settings-like
- * option cycling, including optional Prev/Next buttons, navigation wrapping
- * control, and an optional index image group to visualize the current
- * selection state.
- *
- * It can populate default option texts at design/runtime, keeps auxiliary
- * visuals synchronized when the selected item changes, and exposes itself
- * as a desired bind target (typed as "Options") for external binder systems.
+ * Supports optional Prev/Next buttons, optional no-wrap navigation, and an
+ * optional index-image group synchronized with current selection.
  */
 UCLASS()
 class VSWIDGETCORE_API UVSCommonRotator : public UCommonRotator, public IVSDesiredBoundWidgetInterface

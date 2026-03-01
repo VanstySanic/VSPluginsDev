@@ -14,7 +14,7 @@ class UVSInputKeySelector;
 class UVSKeyIconConfig;
 
 /**
- * 
+ * Widget that manages multiple key selectors as one key-list editor.
  */
 UCLASS()
 class VSWIDGETCORE_API UVSInputKeySelectorGroupWidget : public UCommonButtonBase
@@ -34,12 +34,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Key Selector Group")
 	TArray<UVSContentedInputKeySelector*> GetKeySelectors() const { return KeySelectorsPrivate; }
 
+	/** Returns key selector at index, or nullptr when out of range. */
 	UFUNCTION(BlueprintCallable, Category = "Key Selector Group")
 	UVSContentedInputKeySelector* GetKeySelectorAtIndex(int32 Index) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Key Selector Group")
 	TArray<FInputChord> GetKeys() const { return CurrentKeys; }
 
+	/** Returns key at index, or empty chord when out of range. */
 	UFUNCTION(BlueprintCallable, Category = "Key Selector Group")
 	FInputChord GetKeyAtIndex(int32 Index = 0) const;
 	
@@ -47,6 +49,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Key Selector Group", meta = (AutoCreateRefTerm = "InKeys"))
 	void SetKeys(const TArray<FInputChord>& InKeys);
 	
+	/** Sets key at index and notifies events when changed. */
 	UFUNCTION(BlueprintCallable, Category = "Key Selector Group")
 	void SetKeyAtIndex(int32 Index = 0, const FInputChord& InKey = FInputChord());
 	
@@ -62,12 +65,16 @@ private:
 	void OnSelectorKeySelected(UVSContentedInputKeySelector* Selector, FInputChord SelectedKey);
 	
 public:
+	/** Broadcast when one selector key changes. */
 	FOnKeySelectedDelegate OnKeySelected_Native;
+	/** Broadcast when key list changes. */
 	FOnKeysUpdatedDelegate OnKeysUpdated_Native;
 	
+	/** Broadcast when one selector key changes. */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	FOnKeySelectedEvent OnKeySelected;
 	
+	/** Broadcast when key list changes. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FOnKeysUpdatedEvent OnKeysUpdated;
 
@@ -76,15 +83,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Selector Group")
 	int32 KeyNum = 1;
 	
+	/** Key selector class used when generating selector widgets. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Selector Group")
 	TSubclassOf<UVSContentedInputKeySelector> InputKeySelectorClass;
 
+	/** Key filtering settings applied to generated selectors. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Selector Group")
 	FVSInputKeySelectorKeySettings KeySettings;
 
+	/** Slot settings applied to generated selectors. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Selector Group")
 	FVSCommonPanelSlotSettings KeySlotSettings;
 
+	/** Style settings applied to generated selectors. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Selector Group")
 	FVSInputKeySelectorStyleSettings StyleSettings;
 	
@@ -92,13 +103,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Key Selector Group")
 	TObjectPtr<UVSKeyIconConfig> KeyIconConfig;
 
-	/** Apply if KeyBrush.DrawAs != ESlateBrushDrawType::NoDrawType */
+	/** Applies only when `KeyBrush.DrawAs` is not `NoDrawType`. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Key Selector Group")
 	FSlateBrush KeyBrush;
 	
 	/**
-	 * If false, a refreshment of widgets will be done during pre-construction.
-	 * If true, refreshment should be executed manually.
+	 * If false, selectors are refreshed in pre-construct.
+	 * If true, call RefreshKeySelectors manually.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Selector Group")
 	uint8 bDifferRefreshment : 1;

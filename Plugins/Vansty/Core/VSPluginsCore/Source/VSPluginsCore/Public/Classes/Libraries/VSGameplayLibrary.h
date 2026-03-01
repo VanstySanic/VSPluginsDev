@@ -7,7 +7,7 @@
 #include "VSGameplayLibrary.generated.h"
 
 /**
- * 
+ * Blueprint gameplay utility helpers.
  */
 UCLASS()
 class VSPLUGINSCORE_API UVSGameplayLibrary : public UBlueprintFunctionLibrary

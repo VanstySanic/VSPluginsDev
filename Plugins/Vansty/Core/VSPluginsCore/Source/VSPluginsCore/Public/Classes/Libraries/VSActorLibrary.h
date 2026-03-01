@@ -10,7 +10,7 @@ class UCameraComponent;
 class UVSObjectFeature;
 
 /**
- * 
+ * Blueprint actor utility helpers.
  */
 UCLASS()
 class VSPLUGINSCORE_API UVSActorLibrary : public UBlueprintFunctionLibrary
