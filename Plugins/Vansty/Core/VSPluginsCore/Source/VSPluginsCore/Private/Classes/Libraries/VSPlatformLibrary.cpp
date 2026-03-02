@@ -6,7 +6,7 @@
 #include "AudioMixerDevice.h"
 #include "Classes/Settings/VSPluginsCoreEngineSettings.h"
 #include "Types/Math/VSMath.h"
-#include "VSPluginsCoreCpp/Public/VSPrivablic.h"
+#include "VSPrivablic.h"
 
 typedef TMap<USoundMix*, TMap<USoundClass*, FSoundMixClassOverride>> FVSSoundMixClassOverrideMap;
 VS_DECLARE_PRIVABLIC_MEMBER(FAudioDevice, SoundMixClassEffectOverrides, FVSSoundMixClassOverrideMap);

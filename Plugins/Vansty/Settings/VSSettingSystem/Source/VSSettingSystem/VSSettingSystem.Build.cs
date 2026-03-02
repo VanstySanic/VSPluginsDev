@@ -32,7 +32,7 @@ public class VSSettingSystem : ModuleRules
 				"EnhancedInput",
 				// ... add other public dependencies that you statically link with here ...
 				"VSPluginsCore",
-				"VSPluginsCoreCpp",
+				"VSCppCore",
 			}
 			);
 			
@@ -57,3 +57,4 @@ public class VSSettingSystem : ModuleRules
 			);
 	}
 }
+

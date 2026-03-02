@@ -7,7 +7,7 @@
 #include "Interfaces/VSGameplayTagFeatureInterface.h"
 #include "Net/UnrealNetwork.h"
 #include "Types/VSTreeQueryTypes.h"
-#include "VSPluginsCoreCpp/Public/VSPrivablic.h"
+#include "VSPrivablic.h"
 
 using GameplayTagTagCountMap = TMap<FGameplayTag, int32>;
 

@@ -33,7 +33,7 @@ public class VSWidgetCore : ModuleRules
 				"EnhancedInput",
 				// ... add other public dependencies that you statically link with here ...
 				"VSPluginsCore",
-				"VSPluginsCoreCPP",
+				"VSCppCore",
 				"VSSlateCore"
 			}
 			);
@@ -59,3 +59,4 @@ public class VSWidgetCore : ModuleRules
 			);
 	}
 }
+

@@ -13,6 +13,16 @@
 	"IsBetaVersion": false,
 	"IsExperimentalVersion": false,
 	"Installed": false,
+	"Plugins": [
+		{
+			"Name": "VSPluginsCore",
+			"Enabled": true
+		},
+		{
+			"Name": "VSCppCore",
+			"Enabled": true
+		}
+	],
 	"Modules": [
 		{
 			"Name": "VSSettingSystem",
@@ -21,3 +31,4 @@
 		}
 	]
 }
+

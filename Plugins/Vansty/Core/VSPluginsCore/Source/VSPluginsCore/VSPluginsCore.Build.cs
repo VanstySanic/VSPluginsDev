@@ -35,6 +35,7 @@ public class VSPluginsCore : ModuleRules
 				"ApplicationCore",
 				"DeveloperSettings",
 				// ... add other public dependencies that you statically link with here ...
+				"VSCppCore",
 			}
 			);
 			
@@ -59,3 +60,4 @@ public class VSPluginsCore : ModuleRules
 			);
 	}
 }
+

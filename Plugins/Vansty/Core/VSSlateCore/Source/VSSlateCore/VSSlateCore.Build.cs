@@ -28,7 +28,7 @@ public class VSSlateCore : ModuleRules
 				"Core", 
 				"InputCore", 
 				// ... add other public dependencies that you statically link with here ...
-				"VSPluginsCoreCpp",
+				"VSCppCore",
 			}
 			);
 			
@@ -53,3 +53,4 @@ public class VSSlateCore : ModuleRules
 			);
 	}
 }
+

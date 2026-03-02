@@ -1,8 +1,10 @@
-﻿using UnrealBuildTool;
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
-public class VSPluginsCoreCpp : ModuleRules
+using UnrealBuildTool;
+
+public class VSCppCore : ModuleRules
 {
-    public VSPluginsCoreCpp(ReadOnlyTargetRules Target) : base(Target)
+    public VSCppCore(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
