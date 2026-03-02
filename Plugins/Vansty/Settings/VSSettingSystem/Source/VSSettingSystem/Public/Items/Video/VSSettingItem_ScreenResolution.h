@@ -8,7 +8,9 @@
 #include "VSSettingItem_ScreenResolution.generated.h"
 
 /**
- * 
+ * Screen-resolution setting item.
+ *
+ * Manages resolution value, validates supported modes, and applies it to user settings.
  */
 UCLASS(DisplayName = "VS.SettingSystem.Item.Video.ScreenResolution")
 class VSSETTINGSYSTEM_API UVSSettingItem_ScreenResolution : public UVSCommonSettingItem
@@ -52,6 +54,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FIntPoint GetScreenResolution(EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
+	/** Parses serialized resolution string (`X=.. Y=..`) to `FIntPoint`. */
 	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "String"))
 	FIntPoint StringToScreenResolution(const FString& String) const;
 
@@ -59,10 +62,11 @@ private:
 	void OnSystemResolutionChanged(uint32 ResX, uint32  ResY);
 	
 public:
+	/** Disables this setting while in windowed-fullscreen mode. */
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	uint8 DisableInWindowedFullscreenMode : 1;
 	
-	/** Used when applying. */
+	/** Whether command-line resolution overrides should be honored when applying. */
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	uint8 bCheckForCommandLineOverrides : 1;
 

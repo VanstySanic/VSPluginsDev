@@ -30,12 +30,15 @@ struct FVSInputMappingAxisSlot
 		return GetTypeHash(Item.Index);
 	}
 
+	/** Legacy axis mapping slot index wrapper. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Index = 0;
 };
 
 /**
- * 
+ * Legacy input axis-mapping key setting item.
+ *
+ * Manages slotted axis keys and applies them through `UPlayerInput`.
  */
 UCLASS()
 class VSSETTINGSYSTEM_API UVSInputAxisMappingKeySettingItem : public UVSSettingItemBase
@@ -61,21 +64,26 @@ protected:
 	//~ End UVSSettingItem Interface
 
 public:
+	/** Returns slotted axis keys for the requested source. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	TMap<FVSInputMappingAxisSlot, FKey> GetKeys(EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
+	/** Returns axis key at a specific slot for the requested source. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FKey GetKey(const FVSInputMappingAxisSlot& Slot, EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
+	/** Replaces all current slotted axis keys. */
 	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "SlottedKeys"))
 	void SetKeys(const TMap<FVSInputMappingAxisSlot, FKey>& SlottedKeys);
 	
+	/** Sets/replaces one axis key slot. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetKey(const FVSInputMappingAxisSlot& Slot, const FKey& Key);
 
 private:
 	FInputAxisKeyMapping MakeAxisMapping(const FKey& Key, float Scale) const;
 	float GetDesiredScaleForSlot(int32 SlotIndex, const UPlayerInput* PlayerInput) const;
+	
 	UPlayerInput* GetPlayerInput() const;
 	TMap<FVSInputMappingAxisSlot, FKey> GetKeysFromPlayerInput(const UPlayerInput* PlayerInput) const;
 	TMap<FVSInputMappingAxisSlot, FKey> GetKeysFromInputSettings(const UInputSettings* InputSettings) const;

@@ -11,7 +11,10 @@ class UVSSettingItemBase;
 class UVSCommonSettingItem;
 
 /**
- * 
+ * Range binder adapter for float-based common setting items.
+ *
+ * It routes the generic "Core" widget to the range channel and synchronizes float value changes
+ * between UI widgets and the resolved setting item.
  */
 UCLASS()
 class VSSETTINGWIDGETS_API UVSCommonSettingItemRangeBasedWidgetBinder : public UVSRangeBasedWidgetBinder, public IVSSettingItemWidgetMediatorInterface

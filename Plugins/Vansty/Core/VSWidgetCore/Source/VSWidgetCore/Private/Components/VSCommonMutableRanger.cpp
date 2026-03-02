@@ -113,7 +113,7 @@ void UVSCommonMutableRanger::OnValueChangedInternal()
 	OnNonMutedValueChanged_Native.Broadcast(this, NonMutedValue);
 	OnNonMutedValueChanged.Broadcast(this, NonMutedValue);
 
-	/** Ensure same value mute. */
+	/** Force mute when non-muted value reaches configured mute sentinel value. */
 	bool bMuteStateChanged = false;
 	if (FMath::IsNearlyEqual(NonMutedValue, MuteStateValue))
 	{

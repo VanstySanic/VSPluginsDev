@@ -7,7 +7,9 @@
 #include "VSSettingItem_Monitor.generated.h"
 
 /**
- * 
+ * Monitor selection setting item.
+ *
+ * Stores display monitor ID and applies monitor targeting for fullscreen modes.
  */
 UCLASS(DisplayName = "VS.SettingSystem.Item.Video.Monitor")
 class VSSETTINGSYSTEM_API UVSSettingItem_Monitor : public UVSCommonSettingItem
@@ -38,6 +40,7 @@ public:
 	FString GetMonitorID(EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
 public:
+	/** Whether this setting should override desired fullscreen monitor selection. */
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	uint8 bOverrideDesiredFullscreenMonitor : 1;
 };

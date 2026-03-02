@@ -7,7 +7,9 @@
 #include "VSSettingItem_VSync.generated.h"
 
 /**
- * 
+ * VSync setting item.
+ *
+ * Converts boolean enabled state to/from its underlying cvar representation.
  */
 UCLASS(DisplayName = "VS.SettingSystem.Item.Video.VSync")
 class VSSETTINGSYSTEM_API UVSSettingItem_VSync : public UVSConsoleVariableSettingItem

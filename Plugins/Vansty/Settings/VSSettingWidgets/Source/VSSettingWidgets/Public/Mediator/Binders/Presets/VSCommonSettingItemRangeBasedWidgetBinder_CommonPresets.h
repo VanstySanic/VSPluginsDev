@@ -7,7 +7,7 @@
 #include "VSCommonSettingItemRangeBasedWidgetBinder_CommonPresets.generated.h"
 
 /**
- * 
+ * Common preset range provider keyed by built-in setting item gameplay tags.
  */
 UCLASS()
 class VSSETTINGWIDGETS_API UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets : public UVSCommonSettingItemRangeBasedWidgetBinder

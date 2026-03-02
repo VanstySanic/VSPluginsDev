@@ -7,7 +7,9 @@
 #include "VSSettingItem_AudioOutputDevice.generated.h"
 
 /**
- * 
+ * Audio output-device setting item.
+ *
+ * Stores and applies the selected output device ID.
  */
 UCLASS(DisplayName = "VS.SettingSystem.Item.Audio.Device.Output")
 class VSSETTINGSYSTEM_API UVSSettingItem_AudioOutputDevice : public UVSCommonSettingItem
@@ -29,9 +31,11 @@ protected:
 	//~ End UVSSettingItem Interface
 
 public:
+	/** Sets the target audio output device ID. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
-	void SetAudioOutputDeviceID(const FString& MonitorID);
+	void SetAudioOutputDeviceID(const FString& DeviceID);
 
+	/** Returns the audio output device ID for the requested source. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FString GetAudioOutputDeviceID(EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 };

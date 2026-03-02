@@ -7,7 +7,9 @@
 #include "VSSettingItem_ResolutionScale.generated.h"
 
 /**
- * 
+ * Resolution-scale setting item.
+ *
+ * Controls render resolution scale percentage through its bound cvar.
  */
 UCLASS(DisplayName = "VS.SettingSystem.Item.Scalability.ResolutionScale")
 class VSSETTINGSYSTEM_API UVSSettingItem_ResolutionScale : public UVSConsoleVariableSettingItem

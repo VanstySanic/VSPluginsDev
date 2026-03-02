@@ -43,17 +43,20 @@ private:
 	void OnButtonNextClicked();
 
 protected:
+	/** Optional previous-step button used by custom navigation UI. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Rotator", meta = (BindWidgetOptional))
 	TObjectPtr<UButton> Button_Prev;
 
+	/** Optional next-step button used by custom navigation UI. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Rotator", meta = (BindWidgetOptional))
 	TObjectPtr<UButton> Button_Next;
 
+	/** Optional index image group synchronized with current selected index. */
 	UPROPERTY(BlueprintReadOnly, Category = "Rotator", meta = (BindWidgetOptional))
 	TObjectPtr<UVSIndexImageGroupWidget> IndexImageGroup;
 
 public:
-	/** Populate if not empty. */
+	/** Optional labels used to populate options in `NativePreConstruct` when non-empty. */
 	UPROPERTY(EditAnywhere, Category = "Rotator")
 	TArray<FText> DefaultOptionTexts;
 	
@@ -63,7 +66,7 @@ public:
 
 private:
 #if WITH_EDITORONLY_DATA
-	UPROPERTY(EditAnywhere, Category = "Rotator")
+	UPROPERTY(EditAnywhere, DisplayName = "Preview Index", Category = "Rotator")
 	int32 EditorPreviewIndex = INDEX_NONE;
 #endif
 };

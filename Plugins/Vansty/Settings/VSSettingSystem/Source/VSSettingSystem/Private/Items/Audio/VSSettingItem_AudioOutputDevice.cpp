@@ -96,9 +96,9 @@ FText UVSSettingItem_AudioOutputDevice::ValueStringToText_Implementation(const F
 	return Super::ValueStringToText_Implementation(String);
 }
 
-void UVSSettingItem_AudioOutputDevice::SetAudioOutputDeviceID(const FString& MonitorID)
+void UVSSettingItem_AudioOutputDevice::SetAudioOutputDeviceID(const FString& DeviceID)
 {
-	SetStringValue(MonitorID);	
+	SetStringValue(DeviceID);	
 }
 
 FString UVSSettingItem_AudioOutputDevice::GetAudioOutputDeviceID(EVSSettingItemValueSource::Type ValueSource) const

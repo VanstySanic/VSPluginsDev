@@ -48,13 +48,13 @@ namespace EVSSettingItemValueSource
 		/** The engine's default value. */
 		Default,
 		
-		/** The real value set on your game. This could be different form the setting system value.*/
+		/** Actual value currently active in game runtime. May differ from the setting-system value. */
 		Game,
 		
-		/** Value in the setting system. This could be different form the current value. */
+		/** Working value stored in this setting item. May differ from runtime game value. */
 		System,
 		
-		/** Value that is confirmed from setting system's. */
+		/** Last confirmed value tracked by the setting system. */
 		Confirmed
 	};
 }
@@ -81,7 +81,7 @@ struct FVSSettingItemConfigSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString Section = FString("VS.SettingSystem.Item");
 
-	/** Does not work when empty or none. */
+	/** Primary config key used to store/read the value. Ignored when empty or "None". */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString PrimaryKey = FString("None");
 	
@@ -227,8 +227,10 @@ protected:
 #endif
 	
 public:
+	/** Broadcast when this setting item reports a value update. */
 	FSettingItemDelegate OnUpdated_Native;
 	
+	/** Broadcast when this setting item reports a value update. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FSettingItemEvent OnUpdated;
 	
@@ -237,9 +239,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (EditCondition = "EditorAllowChangingItemTag()"))
 	FGameplayTag ItemTag;
 	
+	/** Readable metadata shown in setting widgets. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	FVSSettingItemInfo ItemInfo;
 
+	/** Config persistence parameters used by item implementations. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	FVSSettingItemConfigSettings ConfigSettings;
 

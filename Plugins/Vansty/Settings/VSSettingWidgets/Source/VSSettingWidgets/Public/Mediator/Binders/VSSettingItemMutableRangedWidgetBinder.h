@@ -8,7 +8,7 @@
 #include "VSSettingItemMutableRangedWidgetBinder.generated.h"
 
 /**
- * 
+ * Mutable range binder adapter that supports value + mute state synchronization.
  */
 UCLASS()
 class VSSETTINGWIDGETS_API UVSSettingItemMutableRangedWidgetBinder : public UVSMutableRangedWidgetBinder, public IVSSettingItemWidgetMediatorInterface

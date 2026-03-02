@@ -7,7 +7,7 @@
 #include "VSCommonSettingItemOptionBasedWidgetBinder_CommonPresets.generated.h"
 
 /**
- * 
+ * Common preset option provider keyed by built-in setting item gameplay tags.
  */
 UCLASS()
 class VSSETTINGWIDGETS_API UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets : public UVSCommonSettingItemOptionBasedWidgetBinder
@@ -19,7 +19,4 @@ protected:
 	virtual TArray<FString> GenerateOptions_Implementation() const override;
 	virtual TArray<FString> GenerateDisabledOptions_Implementation() const override;
 	//~ End UVSOptionBasedWidgetBinder Interface
-	
-public:
-
 };

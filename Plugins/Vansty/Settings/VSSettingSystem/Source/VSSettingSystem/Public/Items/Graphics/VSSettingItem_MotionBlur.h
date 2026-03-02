@@ -7,7 +7,9 @@
 #include "VSSettingItem_MotionBlur.generated.h"
 
 /**
- * 
+ * Motion blur quality setting item.
+ *
+ * Exposes quality-level control and convenience enabled-state query.
  */
 UCLASS(DisplayName = "VS.SettingSystem.Item.Graphics.MotionBlur")
 class VSSETTINGSYSTEM_API UVSSettingItem_MotionBlur : public UVSConsoleVariableSettingItem
@@ -30,6 +32,7 @@ protected:
 	//~ End UVSSettingItem Interface
 
 public:
+	/** Sets motion blur quality level (typically 0-4). */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetMotionBlurQualityLevel(int32 QualityLevel);
 

@@ -21,7 +21,7 @@ class VSWIDGETCORE_API UVSInputKeySelectorGroupWidget : public UCommonButtonBase
 {
 	GENERATED_UCLASS_BODY()
 
-	DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnKeySelectedDelegate, UVSInputKeySelectorGroupWidget* /** Group */, int32 /** IndexIndex */, FInputChord /** SelectedKey */);
+	DECLARE_MULTICAST_DELEGATE_ThreeParams(FOnKeySelectedDelegate, UVSInputKeySelectorGroupWidget* /** Group */, int32 /** Index */, FInputChord /** SelectedKey */);
 	DECLARE_MULTICAST_DELEGATE_OneParam(FOnKeysUpdatedDelegate, UVSInputKeySelectorGroupWidget* /** Group */);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnKeySelectedEvent, UVSInputKeySelectorGroupWidget*, Group, int32, Index, FInputChord, SelectedKey);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnKeysUpdatedEvent, UVSInputKeySelectorGroupWidget*, Group);
@@ -45,7 +45,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Key Selector Group")
 	FInputChord GetKeyAtIndex(int32 Index = 0) const;
 	
-	/** Set keys in order. If the passed-in key num is greater than widget key num, then only part of the keys will be set. */
+	/** Sets keys in order; extra keys beyond generated selector count are only stored in `CurrentKeys`. */
 	UFUNCTION(BlueprintCallable, Category = "Key Selector Group", meta = (AutoCreateRefTerm = "InKeys"))
 	void SetKeys(const TArray<FInputChord>& InKeys);
 	
@@ -99,7 +99,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Selector Group")
 	FVSInputKeySelectorStyleSettings StyleSettings;
 	
-	/** Apply if not null. */
+	/** Optional icon config propagated to generated selectors when set. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Key Selector Group")
 	TObjectPtr<UVSKeyIconConfig> KeyIconConfig;
 
@@ -107,10 +107,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Key Selector Group")
 	FSlateBrush KeyBrush;
 	
-	/**
-	 * If false, selectors are refreshed in pre-construct.
-	 * If true, call RefreshKeySelectors manually.
-	 */
+	/** If true, skips runtime auto-refresh in `NativePreConstruct` and expects manual `RefreshKeySelectors`. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key Selector Group")
 	uint8 bDifferRefreshment : 1;
 
@@ -129,5 +126,6 @@ private:
 	UPROPERTY()
 	TArray<TObjectPtr<UVSContentedInputKeySelector>> KeySelectorsPrivate;
 
+	/** Backing key list synchronized with child selectors. */
 	TArray<FInputChord> CurrentKeys;
 };

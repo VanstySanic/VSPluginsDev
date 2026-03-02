@@ -7,7 +7,7 @@
 #include "VSSettingSystemUtils.generated.h"
 
 /**
- * 
+ * Blueprint utility library for settings.
  */
 UCLASS()
 class VSSETTINGSYSTEM_API UVSSettingSystemUtils : public UBlueprintFunctionLibrary

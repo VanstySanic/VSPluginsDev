@@ -7,7 +7,9 @@
 #include "VSSettingItem_WindowMode.generated.h"
 
 /**
- * 
+ * Window-mode setting item.
+ *
+ * Tracks and applies `EWindowMode::Type` while reacting to viewport changes.
  */
 UCLASS(DisplayName = "VS.Settings.Item.Video.WindowMode")
 class VSSETTINGSYSTEM_API UVSSettingItem_WindowMode : public UVSCommonSettingItem
@@ -52,15 +54,16 @@ public:
 	EWindowMode::Type GetWindowMode(EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
 private:
+	/** Handles external viewport resize changes to trigger external-change actions. */
 	void OnViewportResized(FViewport* Viewport, uint32 Value);
 
 protected:
+	/** Whether command-line window-mode overrides should be honored when applying. */
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	uint8 bCheckForCommandLineOverrides : 1;
 	
 private:
 #if WITH_EDITORONLY_DATA
-	/** Preview window mode that can be modified in editor. */
 	UPROPERTY(EditAnywhere, DisplayName = "Preview Window Mode", Category = "Settings", Transient)
 	TEnumAsByte<EWindowMode::Type> EditorPreviewWindowMode;
 #endif

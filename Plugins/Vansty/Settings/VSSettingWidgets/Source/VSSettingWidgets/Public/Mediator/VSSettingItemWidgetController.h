@@ -12,7 +12,10 @@
 class UVSSettingItemBase;
 
 /**
- * 
+ * Widget controller that resolves one setting item by tag and fans updates out to binder mediators.
+ *
+ * It binds to the setting subsystem at runtime, listens to both "current item" and "any item" updates,
+ * and forwards these events to child binders implementing the mediator interface.
  */
 UCLASS()
 class VSSETTINGWIDGETS_API UVSSettingItemWidgetController : public UVSWidgetController, public IVSSettingItemWidgetMediatorInterface
@@ -47,6 +50,7 @@ private:
 	void OnCurrentSettingItemUpdatedNative(UVSSettingItemBase* SettingItem);
 	
 protected:
+	/** Target setting item tag resolved through UVSSettingSubsystem. */
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	FGameplayTag ItemTag;
 

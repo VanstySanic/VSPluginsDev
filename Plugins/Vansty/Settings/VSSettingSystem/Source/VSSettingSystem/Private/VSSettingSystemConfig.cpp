@@ -55,7 +55,7 @@ const UVSSettingSystemConfig* UVSSettingSystemConfig::Get()
 	return GetDefault<UVSSettingSystemConfig>();
 }
 
-const UVSSettingSystemConfig* UVSSettingSystemConfig::GetSettingSystemConfig_VS()
+const UVSSettingSystemConfig* UVSSettingSystemConfig::GetVSSettingSystemConfig()
 {
 	return GetDefault<UVSSettingSystemConfig>();
 }

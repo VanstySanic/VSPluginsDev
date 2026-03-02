@@ -41,12 +41,13 @@ protected:
 	virtual bool EditorAllowChangingValueType_Implementation() const override;
 	//~ End UVSSettingItem Interface
 	
-	/** Whether EditorPreviewValue can be edited in the editor for this item. */
+	/** Whether ConsoleVariableName can be edited in the editor for this item. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
 	bool EditorAllowChangingConsoleVariableName() const;
 #endif
 
 	IConsoleVariable* GetConsoleVariable() const { return CurrentConsoleVariable; }
+	/** Resolves and rebinds to a new console variable name. */
 	void SetConsoleVariableName(FString VariableName);
 	void OnConsoleVariableChanged(IConsoleVariable* Variable);
 	

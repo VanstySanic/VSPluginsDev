@@ -11,7 +11,10 @@ class UVSSettingItemBase;
 class UVSCommonSettingItem;
 
 /**
- * 
+ * Option binder adapter for UVSCommonSettingItem string options.
+ *
+ * It maps the generic "Core" widget to the option channel and syncs selected option text/value
+ * with the resolved setting item.
  */
 UCLASS()
 class VSSETTINGWIDGETS_API UVSCommonSettingItemOptionBasedWidgetBinder : public UVSOptionBasedWidgetBinder, public IVSSettingItemWidgetMediatorInterface

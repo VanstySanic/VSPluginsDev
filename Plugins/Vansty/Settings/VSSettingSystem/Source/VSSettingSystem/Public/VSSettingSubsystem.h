@@ -18,8 +18,7 @@ class UVSSettingItemBase;
  * Builds the runtime setting item registry from configured root agents, provides tag-based lookup,
  * and exposes batch operations (load/validate/apply/confirm/save) for the entire setting tree.
  *
- * In editor builds, it also supports registering/unregistering transient setting items and tracking
- * tag changes for live iteration.
+ * In editor builds, it also supports clearing/rebuilding direct agents for live iteration.
  */
 UCLASS()
 class VSSETTINGSYSTEM_API UVSSettingSubsystem : public UEngineSubsystem
@@ -30,6 +29,7 @@ class VSSETTINGSYSTEM_API UVSSettingSubsystem : public UEngineSubsystem
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FSettingItemUpdateEvent, UVSSettingItemBase*, SettingItem);
 	
 public:
+	/** Returns the engine-global setting subsystem instance, or nullptr when engine is unavailable. */
 	static UVSSettingSubsystem* Get();
 
 	//~ Begin UEngineSubsystem Interface
@@ -74,26 +74,32 @@ public:
 	void AddDirectSettingItemAgentClasses(const TArray<TSoftClassPtr<UVSSettingItemAgent>>& SettingItemAgentClasses);
 
 #if WITH_EDITOR
-	/** Removes previously registered root agents from the editor registry. */
+	/** Clears all current direct agents/items and unbinds update delegates in editor-only refresh flow. */
 	void ClearEditorDirectSettingItemAgents();
+	/** Rebuilds direct agents/items from config for editor live iteration. */
 	void RefreshEditorDirectSettingItemAgents();
 #endif
-
+	
+private:
+	void OnSettingItemUpdated(UVSSettingItemBase* SettingItem);
+	
 public:
+	/** Broadcast whenever any registered setting item broadcasts an update. */
 	FSettingItemUpdateDelegate OnItemUpdated_Native;
 	
+	/** Broadcast whenever any registered setting item broadcasts an update. */
 	UPROPERTY(BlueprintReadOnly, BlueprintAssignable)
 	FSettingItemUpdateEvent OnItemUpdated;
 
 private:
-	void OnSettingItemUpdated(UVSSettingItemBase* SettingItem);
-
-private:
+	/** Root agents currently registered in this subsystem. */
 	UPROPERTY()
 	TArray<TObjectPtr<UVSSettingItemAgent>> DirectSettingItemAgents;
 	
+	/** Flat cache of all registered setting items (including root agents and sub items). */
 	UPROPERTY()
 	TArray<TObjectPtr<UVSSettingItemBase>> SettingItems;
 	
+	/** Fast lookup table from valid item tag to setting item. */
 	TMap<FGameplayTag, TWeakObjectPtr<UVSSettingItemBase>> TaggedSettingItems;
 };

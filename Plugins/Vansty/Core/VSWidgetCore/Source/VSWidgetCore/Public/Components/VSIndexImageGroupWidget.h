@@ -40,19 +40,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Index Image Group")
 	int32 ImageNum = 1;
 		
+	/** Slot settings applied to each generated image. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Index Image Group")
 	FVSCommonPanelSlotSettings ImageSlotSettings;
 	
-	/**
-	 * If false, images are refreshed in pre-construct.
-	 * If true, call RefreshIndexImages manually.
-	 */
+	/** If true, skips runtime auto-refresh in `NativePreConstruct` and expects manual `RefreshIndexImages`. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Index Image Group")
 	uint8 bDifferRefreshment : 1;
 	
+	/** Brush used for selected index image. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Index Image Group")
 	FSlateBrush SelectedBrush;
 
+	/** Brush used for unselected index images. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Index Image Group")
 	FSlateBrush UnselectedBrush;
 	
@@ -70,5 +70,6 @@ private:
 	UPROPERTY()
 	TArray<TObjectPtr<UImage>> ImagesPrivate;
 
+	/** Current selected index in generated image array. */
 	int32 CurrentSelectedIndex = 0;
 };

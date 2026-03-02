@@ -60,13 +60,15 @@ private:
 	void OnCultureChanged();
 	
 protected:
+	/** Optional slider used for ranged input. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<USlider> Slider;
 
-	/** Optional numeric input bound to the same value. */
+	/** Optional spin box used for ranged input. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<USpinBox> SpinBox;
 	
+	/** Optional display text showing the formatted current value. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> TextBlock_Content;
 
@@ -91,10 +93,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
 	uint8 bSnapByStep : 1;
 
-	/**
-	 * If false, widget state is refreshed in pre-construct.
-	 * If true, call RefreshRanger manually.
-	 */
+	/** If true, skips runtime auto-refresh in `NativePreConstruct` and expects manual `RefreshRanger`. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ranger")
 	uint8 bDifferRefreshment : 1;
 	
@@ -119,5 +118,6 @@ private:
 
 	/** Raw value synchronized with Slider and SpinBox. */
 	float CurrentValue = 0.f;
+	/** Tracks whether slider/spinbox delegates are currently bound. */
 	uint8 bValueDelegatesBound : 1;
 };

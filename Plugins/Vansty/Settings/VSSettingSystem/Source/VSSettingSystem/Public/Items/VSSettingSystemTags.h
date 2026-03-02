@@ -6,6 +6,7 @@
 #include "NativeGameplayTags.h"
 #include "UObject/Object.h"
 
+/** Canonical gameplay tags used to identify built-in setting items. */
 namespace EVSSettingItem
 {
 	namespace Video

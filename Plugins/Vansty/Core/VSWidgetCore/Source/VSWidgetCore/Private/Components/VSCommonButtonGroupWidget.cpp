@@ -150,7 +150,7 @@ void UVSCommonButtonGroupWidget::OnButtonGroupSelectionChanged(UCommonButtonBase
 	EditorPreviewIndex = ButtonIndex;
 #endif
 
-	/** Update button selection. */
+	/** Keep each generated button's selected state in sync with group selection. */
 	const int32 ActualButtonNum = ButtonsPrivate.Num();
 	for (int i = 0; i < ActualButtonNum; i++)
 	{
@@ -220,7 +220,7 @@ TSharedPtr<SWidget> UVSCommonButtonGroupWidget::HandleNavigation(EUINavigation U
 	case EUINavigation::Down:
 		if (bSupportButtonFocus && ButtonGroupPrivate->GetSelectedButtonBase())
 		{
-			/** Don't know why the internal button is always not focusable even if set. Need to hack in that way. */
+			/** Workaround: focus the underlying Slate button directly after selection. */
 			if (UCommonButtonInternalBase* InternalButton = VS_PRIVABLIC_MEMBER(ButtonGroupPrivate->GetSelectedButtonBase(), UCommonButtonBase, RootButton).Get())
 			{
 				if (TSharedPtr<SCommonButton> SlateButton = VS_PRIVABLIC_MEMBER(InternalButton, UCommonButtonInternalBase, MyCommonButton))

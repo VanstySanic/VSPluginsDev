@@ -13,8 +13,7 @@ class UCommonButtonGroupBase;
 class UCommonButtonBase;
 
 /**
- * Widget that manages multiple generated buttons as one
- * selectable option group.
+ * Composite common button that owns a generated selectable button group.
  */
 UCLASS()
 class VSWIDGETCORE_API UVSCommonButtonGroupWidget : public UCommonButtonBase
@@ -40,14 +39,14 @@ public:
 	void RefreshButtons();
 	
 	/**
-	 * Returns internal button group for selection query/binding.
-	 * @warning Do not add, remove or modify buttons here.
+	 * Returns the internal group used for selection query/binding.
+	 * @warning Treat this as read-only from outside; button lifetime is managed by `RefreshButtons`.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Button Group")
 	UCommonButtonGroupBase* GetButtonGroup() const { return ButtonGroupPrivate; }
 
 private:
-	/** Handles keyboard/gamepad navigation and updates selected button. */
+	/** Handle and use controller navigation to rotate text */
 	TSharedPtr<SWidget> HandleNavigation(EUINavigation UINavigation);
 	
 	UFUNCTION()
@@ -85,7 +84,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")
 	int32 ButtonNum = 1;
 
-	/** Per-index display name override when entry text is non-empty. */
+	/** Optional per-index action name override (ignored when text is empty). */
 	UPROPERTY(EditAnywhere, Category = "Rotator")
 	TArray<FText> OverridenButtonNames;
 
@@ -93,7 +92,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Rotator")
 	TArray<int32> DefaultDisabledIndexes;
 	
-	/** Desired focus target index after refresh. */
+	/** Desired selected-button focus target after refresh, when focus support is enabled. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group", meta = (EditCondition = "bSupportButtonFocus"))
 	int32 DesiredFocusButtonIndex = INDEX_NONE;
 
@@ -109,10 +108,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")
 	uint8 bVerticalFlowDirection : 1;
 	
-	/**
-	 * If false, buttons are refreshed in pre-construct.
-	 * If true, call RefreshButtons manually.
-	 */
+	/** If true, skip runtime auto-refresh in `NativePreConstruct` and call `RefreshButtons` manually. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Button Group")
 	uint8 bDifferRefreshment : 1;
 	
@@ -129,9 +125,11 @@ public:
 	TArray<FVSCommonButtonActionSettings> ButtonActionSettings;
 
 protected:
+	/** Optional previous-step button used by custom navigation UI. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Button Group", meta = (BindWidgetOptional))
 	TObjectPtr<UButton> Button_Prev;
 
+	/** Optional next-step button used by custom navigation UI. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Button Group", meta = (BindWidgetOptional))
 	TObjectPtr<UButton> Button_Next;
 	
@@ -152,5 +150,6 @@ private:
 	UPROPERTY()
 	TArray<TObjectPtr<UCommonButtonBase>> ButtonsPrivate;
 
+	/** Bound navigation callback used by `FNavigationReply::Custom`. */
 	FNavigationDelegate OnNavigation;
 };

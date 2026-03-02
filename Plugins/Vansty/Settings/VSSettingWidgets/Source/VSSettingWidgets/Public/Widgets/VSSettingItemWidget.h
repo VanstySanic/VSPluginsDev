@@ -12,7 +12,7 @@
 class UVSSettingItemWidgetController;
 
 /**
- * 
+ * Composite setting entry widget that hosts a title and a dynamic core editor widget.
  */
 UCLASS()
 class VSSETTINGWIDGETS_API UVSSettingItemWidget : public UCommonButtonBase, public IVSDesiredBoundWidgetInterface
@@ -29,26 +29,32 @@ public:
 	//~ End UVSWidgetBinder Interface
 	
 private:
+	/** Recreates CoreWidget from CoreWidgetClass and rebinds it to SettingWidgetController. */
 	void RefreshCoreWidget();
 	
 protected:
-	UPROPERTY(BlueprintReadOnly, Category = "Settings")
+	/** Optional title text widget, bound as typed widget "Name". */
+	UPROPERTY(VisibleAnywhere, Category = "Settings", meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> TextBlock_Name;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Settings")
+	/** Panel used to host CoreWidget instance. */
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UPanelWidget> Panel_CoreWidget;
 
+	/** Runtime-created core editor widget, bound as typed widget "Core". */
 	UPROPERTY(BlueprintReadOnly, Category = "Settings")
 	TObjectPtr<UWidget> CoreWidget;
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
-	TSubclassOf<UWidget> CoreWidgetClass;
-	
+	/** Per-item controller that resolves item by tag and coordinates binder updates. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Settings")
 	TObjectPtr<UVSSettingItemWidgetController> SettingWidgetController;
+	
+	/** Core editor widget class instantiated during pre-construct. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
+	TSubclassOf<UWidget> CoreWidgetClass;
 
+	/** Slot settings applied when CoreWidget is attached to Panel_CoreWidget. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	FVSCommonPanelSlotSettings CoreWidgetPanelSlotSettings;
-
 };

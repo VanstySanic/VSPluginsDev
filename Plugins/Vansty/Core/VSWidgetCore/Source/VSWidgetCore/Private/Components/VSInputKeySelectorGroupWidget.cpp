@@ -49,7 +49,7 @@ void UVSInputKeySelectorGroupWidget::SetKeys(const TArray<FInputChord>& InKeys)
 	const TArray<FInputChord> PrevKeys = CurrentKeys;
 	CurrentKeys = InKeys;
 
-	/** Update selector key in order. */
+	/** Apply provided keys to selectors in order. */
 	for (int i = 0; i < CurrentKeys.Num(); i++)
 	{
 		if (!KeySelectorsPrivate.IsValidIndex(i)) break;
@@ -61,7 +61,7 @@ void UVSInputKeySelectorGroupWidget::SetKeys(const TArray<FInputChord>& InKeys)
 		}
 	}
 
-	/** Clear unset keys in selectors. */
+	/** Clear remaining selector keys not covered by CurrentKeys. */
 	for (int i = CurrentKeys.Num(); i < KeySelectorsPrivate.Num(); i++)
 	{
 		if (KeySelectorsPrivate[i])
@@ -109,7 +109,7 @@ void UVSInputKeySelectorGroupWidget::RefreshKeySelectors()
 {
 	if (!Panel_Keys || !InputKeySelectorClass) return;
 	
-	/** Remove current. */
+	/** Remove previously generated selectors and unbind delegates. */
 	const TArray<UVSContentedInputKeySelector*> PrevKeySelectors = KeySelectorsPrivate;
 	for (int i = 0; i < PrevKeySelectors.Num(); i++)
 	{
@@ -123,7 +123,7 @@ void UVSInputKeySelectorGroupWidget::RefreshKeySelectors()
 	KeySelectorsPrivate.Empty();
 	Panel_Keys->ClearChildren();
 
-	/** Generate new. */
+	/** Recreate selectors from current class/settings. */
 	for (int i = 0; i < KeyNum; i++)
 	{
 		if (UVSContentedInputKeySelector* InputKeySelector = WidgetTree->ConstructWidget<UVSContentedInputKeySelector>(InputKeySelectorClass))
@@ -147,7 +147,7 @@ void UVSInputKeySelectorGroupWidget::RefreshKeySelectors()
 
 			InputKeySelector->OnKeySelected_Native.AddUObject(this, &UVSInputKeySelectorGroupWidget::OnSelectorKeySelected);
 
-			/** Allpy settings. */
+			/** Apply style/key filter settings to generated selector. */
 			StyleSettings.ApplyToKeySelector(InputKeySelector);
 			KeySettings.ApplyToKeySelector(InputKeySelector);
 		}

@@ -31,12 +31,15 @@ struct FVSInputMappingKeySlot
 		return GetTypeHash(Item.Index);
 	}
 
+	/** Legacy input mapping slot index wrapper. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Index = 0;
 };
 
 /**
- * 
+ * Legacy input action-mapping key setting item.
+ *
+ * Manages slotted action chords and applies them through `UPlayerInput`.
  */
 UCLASS()
 class VSSETTINGSYSTEM_API UVSInputActionMappingKeySettingItem : public UVSSettingItemBase
@@ -62,15 +65,19 @@ protected:
 	//~ End UVSSettingItem Interface
 
 public:
+	/** Returns slotted action chords for the requested source. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	TMap<FVSInputMappingKeySlot, FInputChord> GetKeys(EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
+	/** Returns action chord at a specific slot for the requested source. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FInputChord GetKey(const FVSInputMappingKeySlot& Slot, EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
+	/** Replaces all current slotted action chords. */
 	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "SlottedChords"))
 	void SetKeys(const TMap<FVSInputMappingKeySlot, FInputChord>& SlottedChords);
 
+	/** Sets/replaces one action chord slot. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetKey(const FVSInputMappingKeySlot& Slot, const FInputChord& Chord);
 

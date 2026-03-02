@@ -105,6 +105,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "NewValue"))
 	void SetStringValue(const FString& NewValue);
 	
+	/** Converts a raw stored string into display text. */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "String"))
 	FText ValueStringToText(const FString& String) const;
 	
@@ -153,17 +154,15 @@ protected:
 	TEnumAsByte<EVSCommonSettingValueType::Type> ValueType = EVSCommonSettingValueType::None;
 
 public:
-	/**
-	 * The content text format to display. If you want to show the digits, please put ‘{0}’ in it.
-	 * Only work with numeric types, and this may not work if you override the function.
-	 */
+	/** Numeric display text format. Use `{0}` as the numeric placeholder. */
 	UPROPERTY(EditAnywhere, Category = "Display")
 	FText DisplayNumericTextFormat = FText::FromString("{0}");
 	
-	/** Only work with float and numeric types. */
+	/** Fractional digit range used when formatting numeric display text. */
 	UPROPERTY(EditAnywhere, Category = "Display")
 	FIntPoint DisplayNumericFractionDigitRange = FIntPoint(0, 324);
 	
+	/** Multiplier applied before numeric value is converted to display text. */
 	UPROPERTY(EditAnywhere, Category = "Display")
 	double DisplayNumericValueMultiplier = 1.f;
 
@@ -182,6 +181,7 @@ private:
 	UPROPERTY(VisibleAnywhere, DisplayName = "Preview Text", Category = "Settings", Transient)
 	FText EditorPreviewText;
 
+	/** Cached preview input used to rollback invalid editor edits. */
 	FString LastEditorPreviewValue;
 #endif
 };

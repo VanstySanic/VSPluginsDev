@@ -43,7 +43,9 @@ public:
 	void RefreshContents();
 
 private:
+	/** Adds key icon content when icon exists in `KeyIconConfig`. */
 	bool AddKeyIcon(const FKey& Key);
+	/** Adds key display-name text content. */
 	void AddKeyText(const FKey& Key);
 	void AddCustomText(const FText Text);
 	
@@ -62,9 +64,11 @@ public:
 	FOnKeySelectedEvent OnKeySelected;
 	
 protected:
+	/** Internal key selector that handles key capture and selection state. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UInputKeySelector> InputKeySelector;
 
+	/** Content panel used to render icon/text representation of selected key. */
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UPanelWidget> Panel_Content;
 

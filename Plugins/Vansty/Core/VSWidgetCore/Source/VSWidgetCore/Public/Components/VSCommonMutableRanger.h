@@ -34,7 +34,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Ranger")
 	bool GetIsMuted() const { return bIsMuted; }
 
-	/** Sets current mute state. */
+	/** Sets mute state. May stay muted when current non-muted value equals `MuteStateValue`. */
 	UFUNCTION(BlueprintCallable, Category = "Ranger")
 	void SetIsMuted(bool bMuted);
 	
@@ -71,6 +71,7 @@ public:
 	FText DisplayMutedText = FText::FromString("");
 
 protected:
+	/** Optional mute checkbox bound to `bIsMuted`. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (BindWidgetOptional))
 	TObjectPtr<UCheckBox> CheckBox_Mute;
 	
@@ -84,6 +85,8 @@ private:
 #endif
 	
 	uint8 bIsMuted : 1;
+	/** Last refreshed mute value used to detect editor/runtime display refresh needs. */
 	float LastRefreshedMutedValue = 0.f;
+	/** Tracks whether checkbox delegate is currently bound. */
 	uint8 bMuteDelegateBound : 1;
 };

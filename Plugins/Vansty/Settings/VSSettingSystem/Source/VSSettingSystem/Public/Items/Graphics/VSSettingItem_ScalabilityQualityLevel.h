@@ -7,7 +7,9 @@
 #include "VSSettingItem_ScalabilityQualityLevel.generated.h"
 
 /**
- * 
+ * Generic scalability quality-level setting item.
+ *
+ * Maps integer quality values to `EPerQualityLevels` for display and control.
  */
 UCLASS(DisplayName = "VS.SettingSystem.Item.Scalability.QualityLevel")
 class VSSETTINGSYSTEM_API UVSSettingItem_ScalabilityQualityLevel : public UVSConsoleVariableSettingItem
@@ -52,7 +54,6 @@ private:
 	
 protected:
 #if WITH_EDITORONLY_DATA
-	/** Preview window mode that can be modified in editor. */
 	UPROPERTY(EditAnywhere, DisplayName = "Preview Quality Level", Category = "Settings", Transient)
 	EPerQualityLevels EditorPreviewQualityLevel;
 #endif

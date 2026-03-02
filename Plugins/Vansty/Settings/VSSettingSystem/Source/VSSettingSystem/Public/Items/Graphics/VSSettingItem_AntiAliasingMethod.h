@@ -7,7 +7,9 @@
 #include "VSSettingItem_AntiAliasingMethod.generated.h"
 
 /**
- * 
+ * Anti-aliasing method setting item.
+ *
+ * Wraps AA-method selection and maps values to display text.
  */
 UCLASS(DisplayName = "VS.SettingSystem.Item.Graphics.AntiAliasingMethod")
 class VSSETTINGSYSTEM_API UVSSettingItem_AntiAliasingMethod : public UVSConsoleVariableSettingItem
@@ -46,7 +48,7 @@ public:
 	
 private:
 #if WITH_EDITORONLY_DATA
-	/** Preview window mode that can be modified in editor. */
+	/** Editor preview mirror of current anti-aliasing method. */
 	UPROPERTY(EditAnywhere, DisplayName = "Preview Anti-Aliasing Method", Category = "Settings", Transient)
 	TEnumAsByte<EAntiAliasingMethod> EditorPreviewAntiAliasingMethod;
 #endif

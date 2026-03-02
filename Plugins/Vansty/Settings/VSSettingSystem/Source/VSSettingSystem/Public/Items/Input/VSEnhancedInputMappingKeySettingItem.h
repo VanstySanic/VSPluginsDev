@@ -32,13 +32,16 @@ struct FVSEnhancedInputMappingKeySlot
 		return GetTypeHash(Item.Slot);
 	}
 	
+	/** Enhanced Input mapping slot index wrapper. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EPlayerMappableKeySlot Slot = EPlayerMappableKeySlot::First;
 };
 
 
 /**
- * 
+ * Enhanced Input key-mapping setting item.
+ *
+ * Stores per-slot mapped keys and applies them through `UEnhancedInputUserSettings`.
  */
 UCLASS()
 class VSSETTINGSYSTEM_API UVSEnhancedInputMappingKeySettingItem : public UVSSettingItemBase
@@ -64,15 +67,19 @@ protected:
 	//~ End UVSSettingItem Interface
 
 public:
+	/** Returns slotted keys for the requested source. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	TMap<FVSEnhancedInputMappingKeySlot, FKey> GetKeys(EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
+	/** Returns key at a specific slot for the requested source. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FKey GetKey(const FVSEnhancedInputMappingKeySlot& Slot, EVSSettingItemValueSource::Type ValueSource = EVSSettingItemValueSource::System) const;
 
+	/** Replaces all current slotted keys. */
 	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "SlottedKeys"))
 	void SetKeys(const TMap<FVSEnhancedInputMappingKeySlot, FKey>& SlottedKeys);
 
+	/** Sets/replaces one key slot. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void SetKey(const FVSEnhancedInputMappingKeySlot& Slot, const FKey& Key);
 

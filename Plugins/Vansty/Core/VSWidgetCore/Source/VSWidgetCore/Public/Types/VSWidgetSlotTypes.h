@@ -34,6 +34,7 @@ struct VSWIDGETCORE_API FVSCommonPanelSlotSettings
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideVerticalAlignment"))
 	TEnumAsByte<EVerticalAlignment> VerticalAlignment = VAlign_Fill;
+
 	
 	UPROPERTY(BlueprintReadWrite)
 	uint8 bOverrideSize : 1;
@@ -70,10 +71,10 @@ struct VSWIDGETCORE_API FVSCanvasPanelSlotSettings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideAlignment"))
 	FVector2D Alignment = FVector2D::ZeroVector;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideAutoSize"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideZOrder"))
 	int32 ZOrder = 0;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideZOrder"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "bOverrideAutoSize"))
 	uint8 bAutoSize : 1;
 	
 	

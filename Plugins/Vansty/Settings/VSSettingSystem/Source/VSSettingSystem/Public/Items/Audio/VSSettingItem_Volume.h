@@ -7,7 +7,9 @@
 #include "VSSettingItem_Volume.generated.h"
 
 /**
- * 
+ * Audio volume setting item backed by `USoundMix`/`USoundClass`.
+ *
+ * Applies mutable float + mute-state values to the configured sound class.
  */
 UCLASS(DisplayName = "VS.SettingSystem.Item.Audio.Volume")
 class VSSETTINGSYSTEM_API UVSSettingItem_Volume : public UVSMutableFloatSettingItem
@@ -30,9 +32,11 @@ protected:
 	//~ End UVSSettingItem Interface
 
 public:
+	/** Returns volume value with mute handling for the requested source. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	float GetVolume(EVSSettingItemValueSource::Type Source = EVSSettingItemValueSource::System) const;
 
+	/** Returns raw volume value without mute-state substitution. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	float GetNonMutedVolume(EVSSettingItemValueSource::Type Source = EVSSettingItemValueSource::System) const;
 	
@@ -43,9 +47,11 @@ private:
 #endif
 
 protected:
+	/** Sound mix used when applying this volume setting. */
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	TObjectPtr<USoundMix> SoundMix;
 
+	/** Target sound class whose properties are modified by this setting. */
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	TObjectPtr<USoundClass> SoundClass;
 };
