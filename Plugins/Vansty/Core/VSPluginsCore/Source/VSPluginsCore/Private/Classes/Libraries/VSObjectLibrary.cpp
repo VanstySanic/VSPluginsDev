@@ -20,19 +20,17 @@ bool UVSObjectLibrary::IsValidThreadSafe(const UObject* Object)
 
 bool UVSObjectLibrary::HasOuterObject(const UObject* Source, const UObject* Outer)
 {
-	if (!Source) return false;
-	return Source->IsInOuter(Outer);
+	return Source ? Source->IsInOuter(Outer) : false;
 }
 
 UObject* UVSObjectLibrary::GetTypedOuterObject(const UObject* Object, const TSubclassOf<UObject> Class)
 {
-	return Object->GetTypedOuter(Class);
+	return Object ? Object->GetTypedOuter(Class) : nullptr;
 }
 
 UObject* UVSObjectLibrary::GetImplementingOuterObject(const UObject* Object, const TSubclassOf<UInterface> Interface)
 {
-	if (!Object) return nullptr;
-	return static_cast<UObject*>(Object->GetImplementingOuterObject(Interface));
+	return Object ? static_cast<UObject*>(Object->GetImplementingOuterObject(Interface)) : nullptr;
 }
 
 void UVSObjectLibrary::AddTickPrerequisiteObject(UObject* Source, UObject* PrerequisiteObject)
@@ -115,7 +113,7 @@ UVSObjectFeature* UVSObjectLibrary::GetFeatureByNameFromObject(UObject* Object, 
 	if (AActor* Actor = Cast<AActor>(Object))
 	{
 		TArray<UActorComponent*> Components;
-		Actor->GetComponents(UVSObjectFeature::StaticClass(), Components);
+		Actor->GetComponents(UVSFeatureComponent::StaticClass(), Components);
 		for (UActorComponent* Component : Components)
 		{
 			if (UVSFeatureComponent* FeatureComponent = Cast<UVSFeatureComponent>(Component))
@@ -221,9 +219,13 @@ FTickFunction* UVSObjectLibrary::GetTickFunctionPtrFromObject(UObject* Object)
 	{
 		if(FStructProperty* StructProperty = CastField<FStructProperty>(Property))
 		{
-			if (FTickFunction* TickFunction = StructProperty->ContainerPtrToValuePtr<FTickFunction>(Object))
+			UScriptStruct* StructType = StructProperty->Struct;
+			if (StructType && StructType->IsChildOf(TBaseStructure<FTickFunction>::Get()))
 			{
-				return TickFunction;
+				if (FTickFunction* TickFunction = StructProperty->ContainerPtrToValuePtr<FTickFunction>(Object))
+				{
+					return TickFunction;
+				}
 			}
 		}
 	}

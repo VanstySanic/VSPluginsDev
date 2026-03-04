@@ -106,7 +106,8 @@ void UVSMovementFeatureAgent::Tick_Implementation(float DeltaTime)
 void UVSMovementFeatureAgent::ProduceInput_Implementation(int32 SimTimeMs, FMoverInputCmdContext& InputCmdResult)
 {
 	/** Produce input for the original input producer first. */
-	if (OriginalInputProducerPrivate.IsValid() && OriginalInputProducerPrivate->GetClass()->ImplementsInterface(UMoverInputProducerInterface::StaticClass()))
+	if (OriginalInputProducerPrivate.IsValid() && OriginalInputProducerPrivate.Get() != this
+		&& OriginalInputProducerPrivate->GetClass()->ImplementsInterface(UMoverInputProducerInterface::StaticClass()))
 	{
 		CallProduceInput_NoExecute(OriginalInputProducerPrivate.Get(), SimTimeMs, InputCmdResult);
 	}

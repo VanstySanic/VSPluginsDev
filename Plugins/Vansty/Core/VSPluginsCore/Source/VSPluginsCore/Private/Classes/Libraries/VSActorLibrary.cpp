@@ -118,6 +118,7 @@ AController* UVSActorLibrary::GetControllerFromActor(AActor* Actor)
 UCameraComponent* UVSActorLibrary::GetActiveCameraFromActor(const AActor* Actor)
 {
 	if (!Actor) return nullptr;
+	
 	TArray<UCameraComponent*> Components;
 	Actor->GetComponents(UCameraComponent::StaticClass(), Components);
 	for (UCameraComponent* Component : Components)
@@ -132,6 +133,7 @@ UCameraComponent* UVSActorLibrary::GetActiveCameraFromActor(const AActor* Actor)
 	{
 		if (AController* Controller = Pawn->GetController())
 		{
+			if (Controller->GetViewTarget() == Actor) return nullptr;
 			return GetActiveCameraFromActor(Controller->GetViewTarget());
 		}		
 	}

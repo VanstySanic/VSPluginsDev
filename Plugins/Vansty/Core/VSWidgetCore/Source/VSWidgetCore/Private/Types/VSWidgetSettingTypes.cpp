@@ -132,8 +132,7 @@ void FVSCommonButtonActionSettings::ApplyToButton(UCommonButtonBase* Button) con
 	
 	if (bOverrideActionName)
 	{
-		auto ActionWidget = VS_PRIVABLIC_MEMBER(Button, UCommonButtonBase, InputActionWidget);
-		if (!ActionWidget)
+		if (auto ActionWidget = VS_PRIVABLIC_MEMBER(Button, UCommonButtonBase, InputActionWidget))
 		{
 			if (const UCommonBoundActionButton* ActionButton = Cast<UCommonBoundActionButton>(Button))
 			{
@@ -257,6 +256,6 @@ void FVSInputKeySelectorKeySettings::ApplyToKeySelector(UInputKeySelector* KeySe
 	if (UVSInputKeySelector* SelectorVS = Cast<UVSInputKeySelector>(KeySelector))
 	{
 		if (bOverrideAllowKeyboardKeys) SelectorVS->SetAllowKeyboardKeys(bAllowKeyboardKeys);
-		if (bOverrideAllowMouseKeys) SelectorVS->SetAllowMouseKeys(bAllowKeyboardKeys);
+		if (bOverrideAllowMouseKeys) SelectorVS->SetAllowMouseKeys(bAllowMouseKeys);
 	}
 }

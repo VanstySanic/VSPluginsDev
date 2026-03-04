@@ -35,7 +35,7 @@ int32 UVSReplicatableObject::GetFunctionCallspace(UFunction* Function, FFrame* S
 bool UVSReplicatableObject::CallRemoteFunction(UFunction* Function, void* Parms, FOutParmRec* OutParms, FFrame* Stack)
 {
 	bool bProcessed = false;
-	if (OuterActorPrivate.IsValid())
+	if (OuterActorPrivate.IsValid() && GEngine)
 	{
 		FWorldContext* const Context = GEngine->GetWorldContextFromWorld(GetWorld());
 		if (Context != nullptr)

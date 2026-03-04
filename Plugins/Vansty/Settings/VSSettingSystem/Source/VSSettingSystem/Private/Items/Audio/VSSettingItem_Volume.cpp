@@ -112,6 +112,8 @@ void UVSSettingItem_Volume::Apply_Implementation()
 
 float UVSSettingItem_Volume::GetNonMutedValue_Implementation(EVSSettingItemValueSource::Type Source) const
 {
+	if (!SoundMix || !SoundClass) return Super::GetNonMutedValue_Implementation(Source);
+	
 	switch (Source)
 	{
 	case EVSSettingItemValueSource::Default:
@@ -135,6 +137,8 @@ float UVSSettingItem_Volume::GetNonMutedValue_Implementation(EVSSettingItemValue
 
 bool UVSSettingItem_Volume::GetIsMuted_Implementation(EVSSettingItemValueSource::Type Source) const
 {
+	if (!SoundMix || !SoundClass) return Super::GetIsMuted_Implementation(Source);
+
 	switch (Source)
 	{
 	case EVSSettingItemValueSource::Default:

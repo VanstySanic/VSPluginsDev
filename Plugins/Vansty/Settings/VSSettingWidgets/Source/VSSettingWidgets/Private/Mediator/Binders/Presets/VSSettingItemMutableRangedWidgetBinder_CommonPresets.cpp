@@ -49,7 +49,7 @@ bool UVSSettingItemMutableRangedWidgetBinder_CommonPresets::EditorAllowChangingS
 
 bool UVSSettingItemMutableRangedWidgetBinder_CommonPresets::EditorAllowChangingSnapByStep_Implementation() const
 {
-	if (!GetSettingItem_Native()) return Super::EditorAllowChangingStepSize_Implementation();
+	if (!GetSettingItem_Native()) return Super::EditorAllowChangingSnapByStep_Implementation();
 	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
 
 	static FGameplayTag AudioVolumeParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Audio::Volume::Master);

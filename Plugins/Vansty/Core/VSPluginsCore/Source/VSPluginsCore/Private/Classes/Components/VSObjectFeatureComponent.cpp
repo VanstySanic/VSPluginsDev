@@ -110,7 +110,7 @@ bool UVSFeatureComponent::HasFeature(UVSObjectFeature* Feature) const
 
 void UVSFeatureComponent::AddFeatureInstance(UVSObjectFeature* Feature, bool bDeferRegister)
 {
-	if (!Feature) return;
+	if (!Feature || HasFeature(Feature)) return;
 	
 	if (Feature->GetOwnerActor() != GetOwner())
 	{

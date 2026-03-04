@@ -235,12 +235,24 @@ void UVSInputActionBinderFeature::BindActionSettings(const FVSInputActionBinderS
 
 			TArray<FInputChord> KeyEntries;
 			ActionKeyMap.MultiFind(EventKey, KeyEntries);
+			APlayerController* PlayerController = FeatureInputComponent.IsValid() ? Cast<APlayerController>(FeatureInputComponent->GetOwner()) : nullptr;
+			const bool bShiftDown = PlayerController && (PlayerController->IsInputKeyDown(EKeys::LeftShift) || PlayerController->IsInputKeyDown(EKeys::RightShift));
+			const bool bCtrlDown = PlayerController && (PlayerController->IsInputKeyDown(EKeys::LeftControl) || PlayerController->IsInputKeyDown(EKeys::RightControl));
+			const bool bAltDown = PlayerController && (PlayerController->IsInputKeyDown(EKeys::LeftAlt) || PlayerController->IsInputKeyDown(EKeys::RightAlt));
+			const bool bCmdDown = PlayerController && (PlayerController->IsInputKeyDown(EKeys::LeftCommand) || PlayerController->IsInputKeyDown(EKeys::RightCommand));
 			for (const FInputChord& BoundKey : KeyEntries)
 			{
-				if (BoundKey == Key)
+				if (BoundKey.Key != Key) { continue; }
+
+				if ((BoundKey.bShift && !bShiftDown)
+					|| (BoundKey.bCtrl && !bCtrlDown)
+					|| (BoundKey.bAlt && !bAltDown)
+					|| (BoundKey.bCmd && !bCmdDown))
 				{
-					HandleActionTriggered(ActionName, InputEvent);
+					continue;
 				}
+
+				HandleActionTriggered(ActionName, InputEvent);
 			}
 		});
 		

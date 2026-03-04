@@ -71,6 +71,7 @@ bool FVSGameplayTagEventQueryExpression::Matches(const FGameplayTagContainer& Ta
 			int32 MatchNum = 0;
 			for (const TInstancedStruct<FVSGameplayTagEventQueryExpression>& Expression : Expressions)
 			{
+				if (!Expression.IsValid()) continue;
 				if (Expression.Get<FVSGameplayTagEventQueryExpression>().Matches(TagEvents, GameplayTags))
 				{
 					MatchNum++;

@@ -326,7 +326,8 @@ void UVSObjectFeature::SetOwnerFeature(UVSObjectFeature* Feature, bool bDeferReg
 		return;
 	}
 	
-	if (Feature->OwnerActorPrivate.IsValid() && Feature->OwnerActorPrivate != OwnerActorPrivate)
+	if (Feature && Feature->OwnerActorPrivate.IsValid()
+		&& Feature->OwnerActorPrivate.IsValid() && Feature->OwnerActorPrivate != OwnerActorPrivate)
 	{
 		UE_LOG(LogObjectFeature, Warning, TEXT("SetOwnerFeature: (%s) has different owner actor from (%s). Aborting."), *GetPathName(), *Feature->GetPathName());
 		return;
@@ -530,7 +531,8 @@ void UVSObjectFeature::OnRep_bIsActive()
 
 void UVSObjectFeature::OnRep_OwnerFeaturePrivate(UVSObjectFeature* PrevOwnerFeature)
 {
-	if (OwnerFeaturePrivate == PrevOwnerFeature) return;
+	UVSObjectFeature* NewOwnerFeature = OwnerFeaturePrivate.Get();
+	if (NewOwnerFeature == PrevOwnerFeature) return;
 	if (PrevOwnerFeature)
 	{
 		if (PrevOwnerFeature->HasSubFeature(this))
@@ -542,11 +544,11 @@ void UVSObjectFeature::OnRep_OwnerFeaturePrivate(UVSObjectFeature* PrevOwnerFeat
 			UnregisterFeature();
 		}
 	}
-	if (OwnerFeaturePrivate)
+	if (NewOwnerFeature)
 	{
-		if (!OwnerFeaturePrivate->HasSubFeature(this))
+		if (!NewOwnerFeature->HasSubFeature(this))
 		{
-			OwnerFeaturePrivate->AddSubFeatureInstance(this);
+			NewOwnerFeature->AddSubFeatureInstance(this);
 		}
 		else if (!IsRegistered())
 		{

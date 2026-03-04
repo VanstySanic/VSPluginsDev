@@ -79,14 +79,8 @@ FVector2D UVSPlatformLibrary::GetGameWindowRootPosition(bool bClientOnly)
 {
 	TSharedPtr<SWindow> Window = GetGameWindow();
 	if (!Window) return FVector2D::ZeroVector;
-	
-	if (bClientOnly)
-	{
-		const FVector2D SizeDelta = GetGameWindowSize(false) - GetGameWindowSize(true);
-		return Window->GetPositionInScreen() + SizeDelta;
-	}
-		
-	return Window->GetPositionInScreen();
+
+	return bClientOnly ? Window->GetClientRectInScreen().GetTopLeft() : Window->GetPositionInScreen();
 }
 
 FVector2D UVSPlatformLibrary::GetGameWindowCenterPosition(bool bClientOnly)
@@ -268,7 +262,7 @@ bool UVSPlatformLibrary::SwitchMonitorByID(const FString& MonitorID)
 		const FVector2D WindowSize = Window->GetSizeInScreen();
 		if (WindowSize.Y > MonitorInfo.GetCurrentSize(true).Y)
 		{
-			NewWindowPos.Y = 0.f;
+			NewWindowPos.Y = MonitorInfo.DisplayRect.Min.Y;
 		}
 		Window->MoveWindowTo(NewWindowPos);
 	}
