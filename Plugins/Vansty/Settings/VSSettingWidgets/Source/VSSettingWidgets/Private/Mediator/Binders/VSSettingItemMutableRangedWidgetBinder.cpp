@@ -1,7 +1,7 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Mediator/Binders/VSSettingItemMutableRangedWidgetBinder.h"
-#include "VSSettingSubsystem.h"
+#include "VSSettingSystemUtils.h"
 #include "Mediator/VSWidgetController.h"
 #include "Components/VSCommonRanger.h"
 #include "Items/VSCommonSettingItem.h"
@@ -93,17 +93,17 @@ bool UVSSettingItemMutableRangedWidgetBinder::GetExternalIsMuted_Implementation(
 void UVSSettingItemMutableRangedWidgetBinder::EditorRefreshMediator_Implementation()
 {
 	if (!GetSettingItem_Native()) return;
-	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemIdentifier = GetSettingItem_Native()->GetItemIdentifier();
 	
-	if (UVSSettingSubsystem* Subsystem = UVSSettingSubsystem::Get())
+	if (UVSSettingSystemUtils::GetSettingSubsystemVS())
 	{
-		if (UVSCommonSettingItem* CommonSettingItem = Cast<UVSCommonSettingItem>(Subsystem->GetSettingItemByTag(ItemTag)))
+		if (UVSCommonSettingItem* CommonSettingItem = Cast<UVSCommonSettingItem>(UVSSettingSystemUtils::GetSettingItemByIdentifier(ItemIdentifier)))
 		{
 			DisplayTextFormat = CommonSettingItem->DisplayNumericTextFormat;
 			DisplayFractionDigitRange = CommonSettingItem->DisplayNumericFractionDigitRange;
 			DisplayValueMultiplier = CommonSettingItem->DisplayNumericValueMultiplier;
 		}
-		else if (UVSMutableFloatSettingItem* MutableRanger = Cast<UVSMutableFloatSettingItem>(Subsystem->GetSettingItemByTag(ItemTag)))
+		else if (UVSMutableFloatSettingItem* MutableRanger = Cast<UVSMutableFloatSettingItem>(UVSSettingSystemUtils::GetSettingItemByIdentifier(ItemIdentifier)))
 		{
 			DisplayTextFormat = MutableRanger->DisplayTextFormat;
 			DisplayFractionDigitRange = MutableRanger->DisplayFractionDigitRange;

@@ -174,7 +174,7 @@ TArray<UVSSettingItemBase*> UVSSettingItemAgent::GetDirectSubSettingItems() cons
 	TArray<UVSSettingItemBase*> OutItems;
 	for (UVSSettingItemBase* SettingItem : SubSettingItems)
 	{
-		if (SettingItem && SettingItem->GetItemTag().IsValid() && SettingItem->ShouldCreateSettingItem())
+		if (SettingItem && SettingItem->GetItemIdentifier().IsValid() && SettingItem->ShouldCreateSettingItem())
 		{
 			OutItems.Add(SettingItem);
 		}
@@ -188,7 +188,7 @@ TArray<UVSSettingItemBase*> UVSSettingItemAgent::GetRecursiveSubSettingItems() c
 	TArray<UVSSettingItemBase*> OutSettingItems = SubSettingItems;
 	for (UVSSettingItemBase* SettingItem : GetDirectSubSettingItems())
 	{
-		if (!SettingItem || !SettingItem->GetItemTag().IsValid() || !SettingItem->ShouldCreateSettingItem()) continue;
+		if (!SettingItem || !SettingItem->GetItemIdentifier().IsValid() || !SettingItem->ShouldCreateSettingItem()) continue;
 		if (UVSSettingItemAgent* Agent = Cast<UVSSettingItemAgent>(SettingItem))
 		{
 			OutSettingItems.Append(Agent->GetRecursiveSubSettingItems());

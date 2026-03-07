@@ -20,7 +20,8 @@ UVSSettingItem_WindowMode::UVSSettingItem_WindowMode(const FObjectInitializer& F
 {
 	SetValueType(EVSCommonSettingValueType::Integer);
 
-	ItemTag = EVSSettingItem::Video::WindowMode;
+	ItemIdentifier = EVSSettingItem::Video::WindowMode;
+	ItemInfo.ItemTags.AddTag(EVSSettingItem::Video::WindowMode.GetTag().RequestDirectParent());
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.WindowMode", "DisplayName", "Window Mode");
 	ConfigSettings.Section = "/Script/Engine.GameUserSettings";
 	ConfigSettings.PrimaryKey = "FullscreenMode";

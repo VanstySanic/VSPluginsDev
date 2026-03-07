@@ -2,7 +2,7 @@
 
 #include "Items/Video/VSSettingItem_ScreenResolution.h"
 #include "VSPrivablic.h"
-#include "VSSettingSubsystem.h"
+#include "VSSettingSystemUtils.h"
 #include "VSSettingSystemConfig.h"
 #include "Classes/Libraries/VSPlatformLibrary.h"
 #include "Engine/GameEngine.h"
@@ -23,7 +23,8 @@ UVSSettingItem_ScreenResolution::UVSSettingItem_ScreenResolution(const FObjectIn
 {
 	SetValueType(EVSCommonSettingValueType::String);
 	
-	ItemTag = EVSSettingItem::Video::ScreenResolution;
+	ItemIdentifier = EVSSettingItem::Video::ScreenResolution;
+	ItemInfo.ItemTags.AddTag(EVSSettingItem::Video::ScreenResolution.GetTag().RequestDirectParent());
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.ScreenResolution", "DisplayName", "Screen Resolution");
 	ConfigSettings.Section = FString("/Script/Engine.GameUserSettings");
 	ConfigSettings.AdditionalNamedKeys.Add("ResolutionSizeX", "ResolutionSizeX");
@@ -55,12 +56,9 @@ void UVSSettingItem_ScreenResolution::Uninitialize_Implementation()
 {
 	FCoreDelegates::OnSystemResolutionChanged.RemoveAll(this);
 
-	if (UVSSettingSubsystem::Get())
+	if (UVSSettingItemBase* SettingItem = UVSSettingSystemUtils::GetSettingItemByIdentifier(EVSSettingItem::Video::WindowMode))
 	{
-		if (UVSSettingItemBase* SettingItem = UVSSettingSubsystem::Get()->GetSettingItemByTag(EVSSettingItem::Video::WindowMode))
-		{
-			SettingItem->OnUpdated_Native.RemoveAll(this);
-		}
+		SettingItem->OnUpdated_Native.RemoveAll(this);
 	}
 	
 	Super::Uninitialize_Implementation();

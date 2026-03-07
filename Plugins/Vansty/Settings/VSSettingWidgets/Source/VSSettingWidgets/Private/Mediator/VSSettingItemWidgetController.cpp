@@ -2,6 +2,7 @@
 
 #include "Mediator/VSSettingItemWidgetController.h"  
 #include "VSSettingSubsystem.h"
+#include "VSSettingSystemUtils.h"
 #include "Components/RichTextBlock.h"
 #include "Components/TextBlock.h"
 #include "Types/Math/VSContainer.h"
@@ -16,7 +17,7 @@ UVSSettingItemWidgetController::UVSSettingItemWidgetController(const FObjectInit
 #if WITH_EDITOR
 void UVSSettingItemWidgetController::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
-	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemWidgetController, ItemTag))
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemWidgetController, ItemIdentifier))
 	{
 		const bool PrevRegistered = IsRegistered();
 		if (PrevRegistered)
@@ -24,7 +25,11 @@ void UVSSettingItemWidgetController::PostEditChangeProperty(struct FPropertyChan
 			Unregister();
 		}
 
-		SettingItemPrivate = UVSSettingSubsystem::Get() ? UVSSettingSubsystem::Get()->GetSettingItemByTag(ItemTag) : GetSettingItem_Native();
+		SettingItemPrivate = UVSSettingSystemUtils::GetSettingItemByIdentifier(ItemIdentifier);
+		if (!SettingItemPrivate.IsValid())
+		{
+			SettingItemPrivate = GetSettingItem_Native();
+		}
 		Execute_EditorRefreshMediator(this);
 		SettingItemPrivate = nullptr;
 
@@ -69,7 +74,7 @@ void UVSSettingItemWidgetController::Initialize_Implementation()
 
 	if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
 	{
-		if (UVSSettingItemBase* SettingItem = SettingSubsystem->GetSettingItemByTag(ItemTag))
+		if (UVSSettingItemBase* SettingItem = UVSSettingSystemUtils::GetSettingItemByIdentifier(ItemIdentifier))
 		{
 			SettingItemPrivate = SettingItem;
 			SettingItemPrivate->OnUpdated_Native.AddUObject(this, &UVSSettingItemWidgetController::OnCurrentSettingItemUpdatedNative);
@@ -83,7 +88,7 @@ void UVSSettingItemWidgetController::Uninitialize_Implementation()
 	if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
 	{
 		SettingSubsystem->OnItemUpdated.RemoveDynamic(this, &UVSSettingItemWidgetController::OnAnySettingItemUpdated);
-		if (UVSSettingItemBase* SettingItem = SettingSubsystem->GetSettingItemByTag(ItemTag))
+		if (UVSSettingItemBase* SettingItem = UVSSettingSystemUtils::GetSettingItemByIdentifier(ItemIdentifier))
 		{
 			SettingItem->OnUpdated_Native.RemoveAll(this);
 		}

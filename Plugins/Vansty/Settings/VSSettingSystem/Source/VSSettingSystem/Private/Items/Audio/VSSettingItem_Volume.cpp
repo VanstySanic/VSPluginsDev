@@ -11,7 +11,8 @@
 UVSSettingItem_Volume::UVSSettingItem_Volume(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	ItemTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Audio::Volume::Master);
+	ItemIdentifier = EVSSettingItem::Audio::Volume::Master.GetTag().RequestDirectParent();
+	ItemInfo.ItemTags.AddTag(EVSSettingItem::Audio::Volume::Master.GetTag().RequestDirectParent());
 	ConfigSettings.FileName = "GameUserSettings";
 	ConfigSettings.Section = "VS.Settings.Item.Audio.Volume";
 
@@ -41,7 +42,7 @@ void UVSSettingItem_Volume::PostEditChangeProperty(struct FPropertyChangedEvent&
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItem_Volume, ItemTag))
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItem_Volume, ItemIdentifier))
 	{
 		bool bShouldAssignName = ItemInfo.DisplayName.IsEmpty();
 		if (!bShouldAssignName)
@@ -57,7 +58,7 @@ void UVSSettingItem_Volume::PostEditChangeProperty(struct FPropertyChangedEvent&
 		}
 		if (bShouldAssignName)
 		{
-			ItemInfo.DisplayName = GetVolumeTypeDisplayNames().FindRef(ItemTag);
+			ItemInfo.DisplayName = GetVolumeTypeDisplayNames().FindRef(ItemIdentifier);
 		}
 
 		bool bShouldAssignConfigKey = FName(ConfigSettings.PrimaryKey).IsNone();
@@ -65,9 +66,9 @@ void UVSSettingItem_Volume::PostEditChangeProperty(struct FPropertyChangedEvent&
 		{
 			for (const TPair<FGameplayTag, FString>& VolumeTypeConfigKeyName : GetVolumeTypeConfigKeyNames())
 			{
-				if (VolumeTypeConfigKeyName.Key == ItemTag)
+				if (VolumeTypeConfigKeyName.Key == ItemIdentifier)
 				{
-					ConfigSettings.PrimaryKey = GetVolumeTypeConfigKeyNames().FindRef(ItemTag);
+					ConfigSettings.PrimaryKey = GetVolumeTypeConfigKeyNames().FindRef(ItemIdentifier);
 					ConfigSettings.AdditionalNamedKeys.FindOrAdd("Muted", ConfigSettings.PrimaryKey + ".Muted");
 				}
 			}

@@ -42,6 +42,7 @@ void UVSSettingSubsystem::BeginDestroy()
 	DirectSettingItemAgents.Empty();
 	SettingItems.Empty();
 	TaggedSettingItems.Empty();
+	AllSettingItemIdentifiers.Reset();
 	
 	Super::BeginDestroy();
 }
@@ -51,16 +52,50 @@ bool UVSSettingSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 	return Super::ShouldCreateSubsystem(Outer);
 }
 
-UVSSettingItemBase* UVSSettingSubsystem::GetSettingItemByTag(const FGameplayTag& ItemTag)
+void UVSSettingSubsystem::ExecuteSettingAction(EVSSettingItemAction::Type Action)
 {
-	return TaggedSettingItems.FindRef(ItemTag).Get();
+	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
+	{
+		if (SettingItemAgent)
+		{
+			SettingItemAgent->ExecuteAction(Action);
+		}
+	}
+}
+
+void UVSSettingSubsystem::ExecuteSettingActions(const TArray<TEnumAsByte<EVSSettingItemAction::Type>>& Actions)
+{
+	for (const EVSSettingItemAction::Type Action : Actions)
+	{
+		for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
+		{
+			if (SettingItemAgent)
+			{
+				SettingItemAgent->ExecuteAction(Action);
+			}
+		}
+	}
+}
+
+void UVSSettingSubsystem::SetSettingsToBySource(EVSSettingItemValueSource::Type ValueSource)
+{
+	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
+	{
+		if (SettingItemAgent)
+		{
+			SettingItemAgent->SetToBySource(ValueSource);
+		}
+	}
 }
 
 void UVSSettingSubsystem::LoadSettings()
 {
 	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
 	{
-		SettingItemAgent->Load();
+		if (SettingItemAgent)
+		{
+			SettingItemAgent->Load();
+		}
 	}
 }
 
@@ -68,7 +103,10 @@ void UVSSettingSubsystem::ValidateSettings()
 {
 	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
 	{
-		SettingItemAgent->Validate();
+		if (SettingItemAgent)
+		{
+			SettingItemAgent->Validate();
+		}
 	}
 }
 
@@ -76,7 +114,10 @@ void UVSSettingSubsystem::ApplySettings()
 {
 	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
 	{
-		SettingItemAgent->Apply();
+		if (SettingItemAgent)
+		{
+			SettingItemAgent->Apply();
+		}
 	}
 }
 
@@ -84,7 +125,10 @@ void UVSSettingSubsystem::ConfirmSettings()
 {
 	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
 	{
-		SettingItemAgent->Confirm();
+		if (SettingItemAgent)
+		{
+			SettingItemAgent->Confirm();
+		}
 	}
 }
 
@@ -92,28 +136,55 @@ void UVSSettingSubsystem::SaveSettings()
 {
 	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
 	{
-		SettingItemAgent->Save();
-	}
-}
-
-
-void UVSSettingSubsystem::ExecuteSettingAction(EVSSettingItemAction::Type Action)
-{
-	for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
-	{
-		SettingItemAgent->ExecuteAction(Action);
-	}
-}
-
-void UVSSettingSubsystem::ExecuteSettingActions(const TArray<TEnumAsByte<EVSSettingItemAction::Type>>& Actions)
-{
-	for (TEnumAsByte<EVSSettingItemAction::Type> Action : Actions)
-	{
-		for (UVSSettingItemAgent* SettingItemAgent : DirectSettingItemAgents)
+		if (SettingItemAgent)
 		{
-			SettingItemAgent->ExecuteAction(Action);
+			SettingItemAgent->Save();
 		}
 	}
+}
+
+TArray<UVSSettingItemBase*> UVSSettingSubsystem::GetSettingItems() const
+{
+	TArray<UVSSettingItemBase*> OutItems;
+	OutItems.Reserve(SettingItems.Num());
+	for (UVSSettingItemBase* SettingItem : SettingItems)
+	{
+		if (SettingItem)
+		{
+			OutItems.Add(SettingItem);
+		}
+	}
+
+	return OutItems;
+}
+
+TMap<FGameplayTag, UVSSettingItemBase*> UVSSettingSubsystem::GetTaggedSettingItems() const
+{
+	TMap<FGameplayTag, UVSSettingItemBase*> OutTaggedItems;
+	OutTaggedItems.Reserve(TaggedSettingItems.Num());
+
+	for (const TPair<FGameplayTag, TWeakObjectPtr<UVSSettingItemBase>>& TaggedItem : TaggedSettingItems)
+	{
+		if (TaggedItem.Key.IsValid())
+		{
+			if (UVSSettingItemBase* SettingItem = TaggedItem.Value.Get())
+			{
+				OutTaggedItems.Add(TaggedItem.Key, SettingItem);
+			}
+		}
+	}
+
+	return OutTaggedItems;
+}
+
+UVSSettingItemBase* UVSSettingSubsystem::GetSettingItemByIdentifier(const FGameplayTag& Identifier) const
+{
+	return TaggedSettingItems.FindRef(Identifier).Get();
+}
+
+FGameplayTagContainer UVSSettingSubsystem::GetSettingItemIdentifiers() const
+{
+	return AllSettingItemIdentifiers;
 }
 
 void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftClassPtr<UVSSettingItemAgent>>& SettingItemAgentClasses)
@@ -137,17 +208,19 @@ void UVSSettingSubsystem::AddDirectSettingItemAgentClasses(const TArray<TSoftCla
 	for (UVSSettingItemAgent* SettingItemAgent : AgentsToAdd)
 	{
 		SettingItems.Add(SettingItemAgent);
-		if (SettingItemAgent->GetItemTag().IsValid())
+		if (SettingItemAgent->GetItemIdentifier().IsValid())
 		{
-			TaggedSettingItems.Add(SettingItemAgent->GetItemTag(), SettingItemAgent);
+			TaggedSettingItems.Add(SettingItemAgent->GetItemIdentifier(), SettingItemAgent);
+			AllSettingItemIdentifiers.AddTag(SettingItemAgent->GetItemIdentifier());
 		}
 		
 		for (UVSSettingItemBase* SettingItem : SettingItemAgent->GetRecursiveSubSettingItems())
 		{
-			if (!SettingItem || !SettingItem->GetItemTag().IsValid() || !SettingItem->ShouldCreateSettingItem()) continue;
+			if (!SettingItem || !SettingItem->GetItemIdentifier().IsValid() || !SettingItem->ShouldCreateSettingItem()) continue;
 
 			SettingItems.Add(SettingItem);
-			TaggedSettingItems.Add(SettingItem->GetItemTag(), SettingItem);
+			TaggedSettingItems.Add(SettingItem->GetItemIdentifier(), SettingItem);
+			AllSettingItemIdentifiers.AddTag(SettingItem->GetItemIdentifier());
 		}
 	}
 
@@ -215,6 +288,7 @@ void UVSSettingSubsystem::ClearEditorDirectSettingItemAgents()
 
 	SettingItems.Empty();
 	TaggedSettingItems.Empty();
+	AllSettingItemIdentifiers.Reset();
 	DirectSettingItemAgents.Empty();
 }
 

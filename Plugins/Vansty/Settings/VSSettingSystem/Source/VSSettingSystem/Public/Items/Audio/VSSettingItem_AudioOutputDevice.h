@@ -25,7 +25,7 @@ protected:
 	virtual FText ValueStringToText_Implementation(const FString& String) const override;
 
 #if WITH_EDITOR
-	virtual bool EditorAllowChangingItemTag_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingItemIdentifier_Implementation() const override { return false; }
 	virtual bool EditorAllowChangingValueType_Implementation() const override { return false; }
 #endif
 	//~ End UVSSettingItem Interface

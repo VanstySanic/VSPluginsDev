@@ -16,6 +16,10 @@ struct FVSSettingItemInfo
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText Description;
+	
+	/** Tags describing item properties and categories */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTagContainer ItemTags;
 };
 
 /** High-level actions that can be executed on a setting item. */
@@ -129,7 +133,7 @@ public:
 
 	/** Gameplay tag uniquely identifying this setting item. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
-	FGameplayTag GetItemTag() const { return ItemTag; }
+	FGameplayTag GetItemIdentifier() const { return ItemIdentifier; }
 	
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	FVSSettingItemInfo GetItemInfo() const { return ItemInfo; }
@@ -223,7 +227,7 @@ protected:
 #if WITH_EDITOR
 	/** Whether the ItemTag can be modified in the editor. */
 	UFUNCTION(BlueprintNativeEvent, Category = "Settings")
-	bool EditorAllowChangingItemTag() const;
+	bool EditorAllowChangingItemIdentifier() const;
 #endif
 	
 public:
@@ -236,8 +240,8 @@ public:
 	
 protected:
 	/** Unique gameplay tag that identifies this setting item. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (EditCondition = "EditorAllowChangingItemTag()"))
-	FGameplayTag ItemTag;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (EditCondition = "EditorAllowChangingItemIdentifier()"))
+	FGameplayTag ItemIdentifier;
 	
 	/** Readable metadata shown in setting widgets. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
@@ -248,16 +252,16 @@ protected:
 	FVSSettingItemConfigSettings ConfigSettings;
 
 	/** Execute when the game value changes inside the item. Runtime only. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Action")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Action")
 	TArray<TEnumAsByte<EVSSettingItemAction::Type>> InternalChangeActions;
 	
 	/** Execute when the game value changes outside the item. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Action")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Action")
 	TArray<TEnumAsByte<EVSSettingItemAction::Type>> ExternalChangeActions;
 
 #if WITH_EDITORONLY_DATA
 	/** Execute when the game value changes inside the item when in editor details. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Action")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Action")
 	TArray<TEnumAsByte<EVSSettingItemAction::Type>> EditorChangeActions;
 #endif
 	

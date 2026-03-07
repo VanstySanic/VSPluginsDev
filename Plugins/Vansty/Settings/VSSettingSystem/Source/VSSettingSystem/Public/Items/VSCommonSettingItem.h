@@ -155,15 +155,15 @@ protected:
 
 public:
 	/** Numeric display text format. Use `{0}` as the numeric placeholder. */
-	UPROPERTY(EditAnywhere, Category = "Display")
+	UPROPERTY(EditAnywhere, Category = "Settings|Display")
 	FText DisplayNumericTextFormat = FText::FromString("{0}");
 	
 	/** Fractional digit range used when formatting numeric display text. */
-	UPROPERTY(EditAnywhere, Category = "Display")
+	UPROPERTY(EditAnywhere, Category = "Settings|Display")
 	FIntPoint DisplayNumericFractionDigitRange = FIntPoint(0, 324);
 	
 	/** Multiplier applied before numeric value is converted to display text. */
-	UPROPERTY(EditAnywhere, Category = "Display")
+	UPROPERTY(EditAnywhere, Category = "Settings|Display")
 	double DisplayNumericValueMultiplier = 1.f;
 
 private:

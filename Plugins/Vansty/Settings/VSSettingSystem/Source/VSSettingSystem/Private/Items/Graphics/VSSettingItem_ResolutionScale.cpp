@@ -8,7 +8,8 @@
 UVSSettingItem_ResolutionScale::UVSSettingItem_ResolutionScale(const FObjectInitializer& FObjectInitializer)
 	: Super(FObjectInitializer)
 {
-	ItemTag = EVSSettingItem::Scalability::ResolutionScale;
+	ItemIdentifier = EVSSettingItem::Scalability::ResolutionScale;
+	ItemInfo.ItemTags.AddTag(EVSSettingItem::Scalability::ResolutionScale.GetTag().RequestDirectParent());
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Scalability.ResolutionScale", "DisplayName", "Resolution Scale");
 	ConfigSettings.FileName = GIsEditor ? "Editor" : "GameUserSettings";
 	ConfigSettings.Section = "ScalabilityGroups";

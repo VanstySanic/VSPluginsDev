@@ -14,15 +14,15 @@ UVSSettingItemMutableRangedWidgetBinder_CommonPresets::UVSSettingItemMutableRang
 FVector2D UVSSettingItemMutableRangedWidgetBinder_CommonPresets::GenerateValueRange_Implementation() const
 {
 	if (!GetSettingItem_Native()) return Super::GenerateValueRange_Implementation();
-	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemIdentifier = GetSettingItem_Native()->GetItemIdentifier();
 
 	static FGameplayTag AudioVolumeParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Audio::Volume::Master);
 	
-	if (ItemTag == EVSSettingItem::Video::FrameRateLimit)
+	if (ItemIdentifier == EVSSettingItem::Video::FrameRateLimit)
 	{
 		return FVector2D(0.0, 360.0);
 	}
-	if (ItemTag.MatchesTag(AudioVolumeParentTag))
+	if (ItemIdentifier.MatchesTag(AudioVolumeParentTag))
 	{
 		return FVector2D(0.0, 1.25);
 	}
@@ -34,12 +34,12 @@ FVector2D UVSSettingItemMutableRangedWidgetBinder_CommonPresets::GenerateValueRa
 bool UVSSettingItemMutableRangedWidgetBinder_CommonPresets::EditorAllowChangingStepSize_Implementation() const
 {
 	if (!GetSettingItem_Native()) return Super::EditorAllowChangingStepSize_Implementation();
-	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemIdentifier = GetSettingItem_Native()->GetItemIdentifier();
 
 	static FGameplayTag AudioVolumeParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Audio::Volume::Master);
 
-	if (ItemTag == EVSSettingItem::Video::FrameRateLimit
-		|| ItemTag.MatchesTag(AudioVolumeParentTag))
+	if (ItemIdentifier == EVSSettingItem::Video::FrameRateLimit
+		|| ItemIdentifier.MatchesTag(AudioVolumeParentTag))
 	{
 		return false;
 	}
@@ -50,12 +50,12 @@ bool UVSSettingItemMutableRangedWidgetBinder_CommonPresets::EditorAllowChangingS
 bool UVSSettingItemMutableRangedWidgetBinder_CommonPresets::EditorAllowChangingSnapByStep_Implementation() const
 {
 	if (!GetSettingItem_Native()) return Super::EditorAllowChangingSnapByStep_Implementation();
-	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemIdentifier = GetSettingItem_Native()->GetItemIdentifier();
 
 	static FGameplayTag AudioVolumeParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Audio::Volume::Master);
 
-	if (ItemTag == EVSSettingItem::Video::FrameRateLimit
-		|| ItemTag.MatchesTag(AudioVolumeParentTag))
+	if (ItemIdentifier == EVSSettingItem::Video::FrameRateLimit
+		|| ItemIdentifier.MatchesTag(AudioVolumeParentTag))
 	{
 		return false;
 	}
@@ -68,16 +68,16 @@ void UVSSettingItemMutableRangedWidgetBinder_CommonPresets::EditorRefreshMediato
 	Super::EditorRefreshMediator_Implementation();
 
 	if (!GetSettingItem_Native()) return;
-	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemIdentifier = GetSettingItem_Native()->GetItemIdentifier();
 
 	static FGameplayTag AudioVolumeParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Audio::Volume::Master);
 	
-	if (ItemTag == EVSSettingItem::Video::FrameRateLimit)
+	if (ItemIdentifier == EVSSettingItem::Video::FrameRateLimit)
 	{
 		StepSize = 1.f;
 		bSnapByStep = true;
 	}
-	else if (ItemTag.MatchesTag(AudioVolumeParentTag))
+	else if (ItemIdentifier.MatchesTag(AudioVolumeParentTag))
 	{
 		StepSize = 0.01f;
 		bSnapByStep = true;

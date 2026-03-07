@@ -36,6 +36,6 @@ private:
 	
 public:
 	/** Slot IDs to read/write from input mapping key maps in UI order. */
-	UPROPERTY(EditAnywhere, Category = "Key")
+	UPROPERTY(EditAnywhere, Category = "Settings|Key")
 	TArray<int32> KeySlots;
 };

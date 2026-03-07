@@ -80,17 +80,17 @@ protected:
 	float MuteStateValue = 0.f;
 	
 public:
-	UPROPERTY(EditAnywhere, Category = "Display")
+	UPROPERTY(EditAnywhere, Category = "Settings|Display")
 	FText DisplayTextFormat;
 
-	UPROPERTY(EditAnywhere, Category = "Display")
+	UPROPERTY(EditAnywhere, Category = "Settings|Display")
 	FIntPoint DisplayFractionDigitRange = FIntPoint(1, 324);
 
-	UPROPERTY(EditAnywhere, Category = "Display")
+	UPROPERTY(EditAnywhere, Category = "Settings|Display")
 	float DisplayValueMultiplier = 1.f;
 	
 	/** Optional text used when muted. If empty, numeric text formatting is used instead. */
-	UPROPERTY(EditAnywhere, Category = "Display")
+	UPROPERTY(EditAnywhere, Category = "Settings|Display")
 	FText DisplayMutedText;
 
 private:

@@ -2,6 +2,7 @@
 
 #include "Mediator/Binders/Presets/VSSettingItemEnabledStateControlWidgetBinder_CommonPresets.h"
 #include "VSSettingSubsystem.h"
+#include "VSSettingSystemUtils.h"
 #include "Items/VSCommonSettingItem.h"
 #include "Items/VSSettingItemBase.h"
 #include "Items/VSSettingSystemTags.h"
@@ -19,7 +20,7 @@ void UVSSettingItemEnabledStateControlWidgetBinder_CommonPresets::OnAnySettingIt
 {
 	Super::OnAnySettingItemUpdated_Implementation(SettingItem);
 
-	if (AutoRefreshUpdatedItems.HasTag(SettingItem->GetItemTag()))
+	if (AutoRefreshUpdatedItems.HasTag(SettingItem->GetItemIdentifier()))
 	{
 		RefreshEnabledState();
 	}
@@ -29,13 +30,13 @@ bool UVSSettingItemEnabledStateControlWidgetBinder_CommonPresets::GetDesiredEnab
 {
 	UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get();
 	if (!GetSettingItem_Native() || !SettingSubsystem) return Super::GetDesiredEnabledState_Implementation();
-	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemIdentifier = GetSettingItem_Native()->GetItemIdentifier();
 
-	if (ItemTag == EVSSettingItem::Video::ScreenResolution)
+	if (ItemIdentifier == EVSSettingItem::Video::ScreenResolution)
 	{
 		if (UVSSettingItem_ScreenResolution* ScreenResolutionItem = Cast<UVSSettingItem_ScreenResolution>(GetSettingItem_Native()))
 		{
-			if (UVSSettingItem_WindowMode* WindowModeItem = Cast<UVSSettingItem_WindowMode>(SettingSubsystem->GetSettingItemByTag(EVSSettingItem::Video::WindowMode)))
+			if (UVSSettingItem_WindowMode* WindowModeItem = Cast<UVSSettingItem_WindowMode>(UVSSettingSystemUtils::GetSettingItemByIdentifier(EVSSettingItem::Video::WindowMode)))
 			{
 				if (WindowModeItem->GetWindowMode(EVSSettingItemValueSource::System) == EWindowMode::WindowedFullscreen && ScreenResolutionItem->DisableInWindowedFullscreenMode)
 				{
@@ -44,11 +45,11 @@ bool UVSSettingItemEnabledStateControlWidgetBinder_CommonPresets::GetDesiredEnab
 			}
 		}
 	}
-	else if (ItemTag == EVSSettingItem::Video::Monitor)
+	else if (ItemIdentifier == EVSSettingItem::Video::Monitor)
 	{
 		if (UVSSettingItem_Monitor* MonitorItem = Cast<UVSSettingItem_Monitor>(GetSettingItem_Native()))
 		{
-			if (UVSSettingItem_WindowMode* WindowModeItem = Cast<UVSSettingItem_WindowMode>(SettingSubsystem->GetSettingItemByTag(EVSSettingItem::Video::WindowMode)))
+			if (UVSSettingItem_WindowMode* WindowModeItem = Cast<UVSSettingItem_WindowMode>(UVSSettingSystemUtils::GetSettingItemByIdentifier(EVSSettingItem::Video::WindowMode)))
 			{
 				const EWindowMode::Type WindowMode = WindowModeItem->GetWindowMode();
 				if (WindowMode == EWindowMode::Windowed || (!MonitorItem->bOverrideDesiredFullscreenMonitor && WindowMode == EWindowMode::Fullscreen))
@@ -69,9 +70,9 @@ void UVSSettingItemEnabledStateControlWidgetBinder_CommonPresets::EditorRefreshM
 	
 	UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get();
 	if (!GetSettingItem_Native() || !SettingSubsystem) return;
-	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemIdentifier = GetSettingItem_Native()->GetItemIdentifier();
 
-	if (ItemTag == EVSSettingItem::Video::ScreenResolution)
+	if (ItemIdentifier == EVSSettingItem::Video::ScreenResolution)
 	{
 		if (UVSSettingItemBase* SettingItem = GetSettingItem_Native())
 		{
@@ -79,7 +80,7 @@ void UVSSettingItemEnabledStateControlWidgetBinder_CommonPresets::EditorRefreshM
 			AutoRefreshUpdatedItems.AddTag(EVSSettingItem::Video::WindowMode);
 		}
 	}
-	else if (ItemTag == EVSSettingItem::Video::Monitor)
+	else if (ItemIdentifier == EVSSettingItem::Video::Monitor)
 	{
 		if (UVSCommonSettingItem* MonitorItem = Cast<UVSCommonSettingItem>(GetSettingItem_Native()))
 		{

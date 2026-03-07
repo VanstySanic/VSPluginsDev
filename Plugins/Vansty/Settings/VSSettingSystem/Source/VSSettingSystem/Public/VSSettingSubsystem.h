@@ -15,8 +15,8 @@ class UVSSettingItemBase;
 /**
  * Engine subsystem that owns and coordinates all setting items.
  *
- * Builds the runtime setting item registry from configured root agents, provides tag-based lookup,
- * and exposes batch operations (load/validate/apply/confirm/save) for the entire setting tree.
+ * Builds and owns the runtime setting item registry from configured root agents.
+ * Global batch operations live here, while item-scoped helper APIs are exposed by UVSSettingSystemUtils.
  *
  * In editor builds, it also supports clearing/rebuilding direct agents for live iteration.
  */
@@ -37,39 +37,57 @@ public:
 	virtual void BeginDestroy() override;
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 	//~ End UEngineSubsystem Interface
-	
-	/** Returns a registered setting item by tag, or nullptr if not found. */
-	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "ItemTag"))
-	UVSSettingItemBase* GetSettingItemByTag(const FGameplayTag& ItemTag);
 
-	/** Loads settings for all root agents. */
+	/** Returns a snapshot array of all currently registered setting items (root agents + sub items). */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
-	void LoadSettings();
-	
-	/** Validates settings for all root agents. */
-	UFUNCTION(BlueprintCallable, Category = "Settings")
-	void ValidateSettings();
+	TArray<UVSSettingItemBase*> GetSettingItems() const;
 
-	/** Applies settings for all root agents. */
+	/** Returns a snapshot map from item identifier tag to registered setting item. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
-	void ApplySettings();
-	
-	/** Confirms settings for all root agents. */
-	UFUNCTION(BlueprintCallable, Category = "Settings")
-	void ConfirmSettings();
+	TMap<FGameplayTag, UVSSettingItemBase*> GetTaggedSettingItems() const;
 
-	/** Saves settings for all root agents. */
+	/** Returns a registered setting item by identifier, or nullptr if not found. */
+	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "Identifier"))
+	UVSSettingItemBase* GetSettingItemByIdentifier(const FGameplayTag& Identifier) const;
+
+	/** Returns the cached set of all currently registered item identifiers. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
-	void SaveSettings();
+	FGameplayTagContainer GetSettingItemIdentifiers() const;
+
 	
-	/** Executes a single action on all root agents. */
+	/** Executes one action on every registered root agent. */
 	UFUNCTION(BlueprintCallable, Category = "Settings")
 	void ExecuteSettingAction(EVSSettingItemAction::Type Action);
 	
-	/** Executes actions on all root agents in order. */
+	/** Executes multiple actions in order on every registered root agent. */
 	UFUNCTION(BlueprintCallable, Category = "Settings", meta = (AutoCreateRefTerm = "Actions"))
 	void ExecuteSettingActions(const TArray<TEnumAsByte<EVSSettingItemAction::Type>>& Actions);
 
+	/** Sets all registered root-agent trees to values from the specified source. */
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void SetSettingsToBySource(EVSSettingItemValueSource::Type ValueSource);
+	
+	/** Calls Load on every registered root agent. */
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void LoadSettings();
+
+	/** Calls Validate on every registered root agent. */
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void ValidateSettings();
+
+	/** Calls Apply on every registered root agent. */
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void ApplySettings();
+
+	/** Calls Confirm on every registered root agent. */
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void ConfirmSettings();
+
+	/** Calls Save on every registered root agent. */
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void SaveSettings();
+
+	
 	/** Registers additional root agent classes and integrates their setting trees into the registry. */
 	void AddDirectSettingItemAgentClasses(const TArray<TSoftClassPtr<UVSSettingItemAgent>>& SettingItemAgentClasses);
 
@@ -102,4 +120,8 @@ private:
 	
 	/** Fast lookup table from valid item tag to setting item. */
 	TMap<FGameplayTag, TWeakObjectPtr<UVSSettingItemBase>> TaggedSettingItems;
+
+	/** Cached container of all valid registered item identifiers. */
+	UPROPERTY()
+	FGameplayTagContainer AllSettingItemIdentifiers;
 };

@@ -14,19 +14,19 @@ UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::UVSCommonSettingItemRa
 FVector2D UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::GenerateValueRange_Implementation() const
 {
 	if (!GetSettingItem_Native()) return Super::GenerateValueRange_Implementation();
-	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemIdentifier = GetSettingItem_Native()->GetItemIdentifier();
 
 	static FGameplayTag AudioVolumeParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Audio::Volume::Master);
 	
-	if (ItemTag == EVSSettingItem::Video::FrameRateLimit)
+	if (ItemIdentifier == EVSSettingItem::Video::FrameRateLimit)
 	{
 		return FVector2D(0.0, 360.0);
 	}
-	if (ItemTag == EVSSettingItem::Scalability::ResolutionScale)
+	if (ItemIdentifier == EVSSettingItem::Scalability::ResolutionScale)
 	{
 		return FVector2D(FMath::Max(Scalability::MinResolutionScale, 10.0), Scalability::MaxResolutionScale);
 	}
-	if (ItemTag.MatchesTag(AudioVolumeParentTag))
+	if (ItemIdentifier.MatchesTag(AudioVolumeParentTag))
 	{
 		return FVector2D(0.0, 1.25);
 	}
@@ -38,13 +38,13 @@ FVector2D UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::GenerateValu
 bool UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::EditorAllowChangingStepSize_Implementation() const
 {
 	if (!GetSettingItem_Native()) return Super::EditorAllowChangingStepSize_Implementation();
-	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemIdentifier = GetSettingItem_Native()->GetItemIdentifier();
 
 	static FGameplayTag AudioVolumeParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Audio::Volume::Master);
 
-	if (ItemTag == EVSSettingItem::Video::FrameRateLimit
-		|| ItemTag == EVSSettingItem::Scalability::ResolutionScale
-		|| ItemTag.MatchesTag(AudioVolumeParentTag))
+	if (ItemIdentifier == EVSSettingItem::Video::FrameRateLimit
+		|| ItemIdentifier == EVSSettingItem::Scalability::ResolutionScale
+		|| ItemIdentifier.MatchesTag(AudioVolumeParentTag))
 	{
 		return false;
 	}
@@ -55,13 +55,13 @@ bool UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::EditorAllowChangi
 bool UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::EditorAllowChangingSnapByStep_Implementation() const
 {
 	if (!GetSettingItem_Native()) return Super::EditorAllowChangingSnapByStep_Implementation();
-	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemIdentifier = GetSettingItem_Native()->GetItemIdentifier();
 
 	static FGameplayTag AudioVolumeParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Audio::Volume::Master);
 	
-	if (ItemTag == EVSSettingItem::Video::FrameRateLimit
-		|| ItemTag == EVSSettingItem::Scalability::ResolutionScale
-		|| ItemTag.MatchesTag(AudioVolumeParentTag))
+	if (ItemIdentifier == EVSSettingItem::Video::FrameRateLimit
+		|| ItemIdentifier == EVSSettingItem::Scalability::ResolutionScale
+		|| ItemIdentifier.MatchesTag(AudioVolumeParentTag))
 	{
 		return false;
 	}
@@ -74,21 +74,21 @@ void UVSCommonSettingItemRangeBasedWidgetBinder_CommonPresets::EditorRefreshMedi
 	Super::EditorRefreshMediator_Implementation();
 
 	if (!GetSettingItem_Native()) return;
-	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemIdentifier = GetSettingItem_Native()->GetItemIdentifier();
 
 	static FGameplayTag AudioVolumeParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Audio::Volume::Master);
 	
-	if (ItemTag == EVSSettingItem::Video::FrameRateLimit)
+	if (ItemIdentifier == EVSSettingItem::Video::FrameRateLimit)
 	{
 		StepSize = 1.f;
 		bSnapByStep = true;
 	}
-	else if (ItemTag == EVSSettingItem::Scalability::ResolutionScale)
+	else if (ItemIdentifier == EVSSettingItem::Scalability::ResolutionScale)
 	{
 		StepSize = 1.f;
 		bSnapByStep = true;
 	}
-	else if (ItemTag.MatchesTag(AudioVolumeParentTag))
+	else if (ItemIdentifier.MatchesTag(AudioVolumeParentTag))
 	{
 		StepSize = 0.01f;
 		bSnapByStep = true;

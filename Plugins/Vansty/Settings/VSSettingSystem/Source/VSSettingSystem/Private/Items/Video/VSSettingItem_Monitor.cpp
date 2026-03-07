@@ -9,7 +9,8 @@ UVSSettingItem_Monitor::UVSSettingItem_Monitor(const FObjectInitializer& FObject
 {
 	SetValueType(EVSCommonSettingValueType::String);
 	
-	ItemTag = EVSSettingItem::Video::Monitor;
+	ItemIdentifier = EVSSettingItem::Video::Monitor;
+	ItemInfo.ItemTags.AddTag(EVSSettingItem::Video::Monitor.GetTag().RequestDirectParent());
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.Monitor", "DisplayName", "Monitor");
 	ConfigSettings.Section = "VS.Settings.Item.Video";
 	ConfigSettings.PrimaryKey = "Monitor";

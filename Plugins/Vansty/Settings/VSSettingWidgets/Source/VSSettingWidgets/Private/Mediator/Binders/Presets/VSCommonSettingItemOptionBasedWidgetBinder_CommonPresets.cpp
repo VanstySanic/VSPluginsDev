@@ -17,16 +17,16 @@ UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::UVSCommonSettingItemO
 TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::GenerateOptions_Implementation() const
 {
 	if (!GetSettingItem_Native()) return {};
-	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemIdentifier = GetSettingItem_Native()->GetItemIdentifier();
 
 	static FGameplayTag ScalabilityQualityLevelParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Scalability::QualityLevel::AntiAliasing);
 
-	if (ItemTag == EVSSettingItem::Video::WindowMode)
+	if (ItemIdentifier == EVSSettingItem::Video::WindowMode)
 	{
 		static TArray<FString> WindowModeOptions = TArray<FString>({ "0", "1", "2" });
 		return WindowModeOptions;
 	}
-	if (ItemTag == EVSSettingItem::Video::ScreenResolution)
+	if (ItemIdentifier == EVSSettingItem::Video::ScreenResolution)
 	{
 		TArray<FString> ResolutionOptions;
 		TArray<FIntPoint> SupportedResolutions;
@@ -38,19 +38,19 @@ TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::Gener
 		}
 		return ResolutionOptions;
 	}
-	if (ItemTag == EVSSettingItem::Video::VSync)
+	if (ItemIdentifier == EVSSettingItem::Video::VSync)
 	{
 		static TArray<FString> ZeroOneOptions = TArray<FString>({ "0", "1" });
 		return ZeroOneOptions;
 	}
-	if (ItemTag.MatchesTag(ScalabilityQualityLevelParentTag)
-		|| ItemTag == EVSSettingItem::Graphics::AntiAliasingMethod
-		|| ItemTag == EVSSettingItem::Graphics::MotionBlur)
+	if (ItemIdentifier.MatchesTag(ScalabilityQualityLevelParentTag)
+		|| ItemIdentifier == EVSSettingItem::Graphics::AntiAliasingMethod
+		|| ItemIdentifier == EVSSettingItem::Graphics::MotionBlur)
 	{
 		static TArray<FString> FiveLevelOptions = TArray<FString>({ "0", "1", "2", "3", "4"});
 		return FiveLevelOptions;
 	}
-	if (ItemTag == EVSSettingItem::Video::Monitor)
+	if (ItemIdentifier == EVSSettingItem::Video::Monitor)
 	{
 		TArray<FString> MonitorIDs;
 		FDisplayMetrics Metrics;
@@ -61,7 +61,7 @@ TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::Gener
 		}
 		return MonitorIDs;
 	}
-	if (ItemTag == EVSSettingItem::Video::FrameRateLimit)
+	if (ItemIdentifier == EVSSettingItem::Video::FrameRateLimit)
 	{
 		static TArray<float> FrameRateLimits = TArray<float>
 		{
@@ -76,7 +76,7 @@ TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::Gener
 		
 		return OutOptions;
 	}
-	if (ItemTag == EVSSettingItem::Audio::Device::Output)
+	if (ItemIdentifier == EVSSettingItem::Audio::Device::Output)
 	{
 		TArray<FString> DeviceOptions;
 		const TArray<FAudioOutputDeviceInfo> DeviceInfos = UVSPlatformLibrary::GetAvailableAudioOutputDeviceInfos();
@@ -94,7 +94,7 @@ TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::Gener
 TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::GenerateDisabledOptions_Implementation() const
 {
 	if (!GetSettingItem_Native()) return {};
-	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemIdentifier = GetSettingItem_Native()->GetItemIdentifier();
 	
 	return Super::GenerateDisabledOptions_Implementation();
 }

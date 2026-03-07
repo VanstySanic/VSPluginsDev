@@ -15,7 +15,7 @@ UVSSettingItemBase::UVSSettingItemBase(const FObjectInitializer& ObjectInitializ
 #if WITH_EDITOR
 void UVSSettingItemBase::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
-	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase, ItemTag))
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItemBase, ItemIdentifier))
 	{
 		if (UVSSettingSubsystem* SettingSubsystem = UVSSettingSubsystem::Get())
 		{
@@ -164,7 +164,7 @@ void UVSSettingItemBase::ExecuteActions(const TArray<TEnumAsByte<EVSSettingItemA
 
 void UVSSettingItemBase::NotifyValueUpdated(bool bAllowCleanNotify)
 {
-	if (!HasBeenInitialized() || (!bAllowCleanNotify && !IsDirty()) || !ItemTag.IsValid()) return;
+	if (!HasBeenInitialized() || (!bAllowCleanNotify && !IsDirty()) || !ItemIdentifier.IsValid()) return;
 	
 	OnValueUpdated();
 	OnUpdated_Native.Broadcast(this);
@@ -199,7 +199,7 @@ void UVSSettingItemBase::OnValueUpdated_Implementation()
 }
 
 #if WITH_EDITOR
-bool UVSSettingItemBase::EditorAllowChangingItemTag_Implementation() const
+bool UVSSettingItemBase::EditorAllowChangingItemIdentifier_Implementation() const
 {
 	return true;
 }

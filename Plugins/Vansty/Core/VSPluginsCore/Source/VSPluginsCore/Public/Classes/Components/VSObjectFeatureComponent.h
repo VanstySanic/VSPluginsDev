@@ -66,13 +66,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Features")
 	void RemoveFeature(UVSObjectFeature* Feature);
 	
-	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
+	UFUNCTION(BlueprintCallable, Category = "Features", meta = (DeterminesOutputType = "Class"))
 	UVSObjectFeature* GetFeatureByClass(TSubclassOf<UVSObjectFeature> Class) const;
 	
-	UFUNCTION(BlueprintCallable, Category = "Feature", meta = (DeterminesOutputType = "Class"))
+	UFUNCTION(BlueprintCallable, Category = "Features", meta = (DeterminesOutputType = "Class"))
 	TArray<UVSObjectFeature*> GetFeaturesByClass(TSubclassOf<UVSObjectFeature> Class) const;
 
-	UFUNCTION(BlueprintCallable, Category = "Feature")
+	UFUNCTION(BlueprintCallable, Category = "Features")
 	UVSObjectFeature* GetFeatureByName(FName Name) const;
 	
 	template <typename T>

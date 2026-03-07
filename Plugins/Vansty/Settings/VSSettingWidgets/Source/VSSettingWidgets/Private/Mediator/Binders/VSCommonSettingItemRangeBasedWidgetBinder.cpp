@@ -1,7 +1,7 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Mediator/Binders/VSCommonSettingItemRangeBasedWidgetBinder.h"
-#include "VSSettingSubsystem.h"
+#include "VSSettingSystemUtils.h"
 #include "Mediator/VSWidgetController.h"
 #include "Components/Slider.h"
 #include "Components/SpinBox.h"
@@ -96,17 +96,17 @@ float UVSCommonSettingItemRangeBasedWidgetBinder::GetExternalValue_Implementatio
 void UVSCommonSettingItemRangeBasedWidgetBinder::EditorRefreshMediator_Implementation()
 {
 	if (!GetSettingItem_Native()) return;
-	const FGameplayTag ItemTag = GetSettingItem_Native()->GetItemTag();
+	const FGameplayTag ItemIdentifier = GetSettingItem_Native()->GetItemIdentifier();
 	
-	if (UVSSettingSubsystem* Subsystem = UVSSettingSubsystem::Get())
+	if (UVSSettingSystemUtils::GetSettingSubsystemVS())
 	{
-		if (UVSCommonSettingItem* CommonSettingItem = Cast<UVSCommonSettingItem>(Subsystem->GetSettingItemByTag(ItemTag)))
+		if (UVSCommonSettingItem* CommonSettingItem = Cast<UVSCommonSettingItem>(UVSSettingSystemUtils::GetSettingItemByIdentifier(ItemIdentifier)))
 		{
 			DisplayTextFormat = CommonSettingItem->DisplayNumericTextFormat;
 			DisplayFractionDigitRange = CommonSettingItem->DisplayNumericFractionDigitRange;
 			DisplayValueMultiplier = CommonSettingItem->DisplayNumericValueMultiplier;
 		}
-		else if (UVSMutableFloatSettingItem* MutableRanger = Cast<UVSMutableFloatSettingItem>(Subsystem->GetSettingItemByTag(ItemTag)))
+		else if (UVSMutableFloatSettingItem* MutableRanger = Cast<UVSMutableFloatSettingItem>(UVSSettingSystemUtils::GetSettingItemByIdentifier(ItemIdentifier)))
 		{
 			DisplayTextFormat = MutableRanger->DisplayTextFormat;
 			DisplayFractionDigitRange = MutableRanger->DisplayFractionDigitRange;

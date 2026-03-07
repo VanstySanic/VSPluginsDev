@@ -50,9 +50,9 @@ private:
 	void OnCurrentSettingItemUpdatedNative(UVSSettingItemBase* SettingItem);
 	
 protected:
-	/** Target setting item tag resolved through UVSSettingSubsystem. */
+	/** Target setting item tag identifier resolved through UVSSettingSubsystem. */
 	UPROPERTY(EditAnywhere, Category = "Settings")
-	FGameplayTag ItemTag;
+	FGameplayTag ItemIdentifier;
 
 private:
 	TWeakObjectPtr<UVSSettingItemBase> SettingItemPrivate;

@@ -10,8 +10,8 @@ UVSSettingItem_ScalabilityQualityLevel::UVSSettingItem_ScalabilityQualityLevel(c
 {
 	SetValueType(EVSCommonSettingValueType::Integer);
 	
-	ItemTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Scalability::QualityLevel::AntiAliasing);
-
+	ItemIdentifier = EVSSettingItem::Scalability::QualityLevel::AntiAliasing;
+	ItemInfo.ItemTags.AddTag(EVSSettingItem::Scalability::QualityLevel::AntiAliasing.GetTag().RequestDirectParent());
 	ConfigSettings.FileName = GIsEditor ? "Editor" : "GameUserSettings";
 	ConfigSettings.Section = FString("ScalabilityGroups");
 }
@@ -19,10 +19,10 @@ UVSSettingItem_ScalabilityQualityLevel::UVSSettingItem_ScalabilityQualityLevel(c
 #if WITH_EDITOR
 void UVSSettingItem_ScalabilityQualityLevel::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
-	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItem_ScalabilityQualityLevel, ItemTag))
+	if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItem_ScalabilityQualityLevel, ItemIdentifier))
 	{
-		SetConsoleVariableName(GetScalabilityQualityLevelConsoleVariableNames().FindRef(ItemTag));
-		ConfigSettings.PrimaryKey = GetScalabilityQualityLevelConsoleVariableNames().FindRef(ItemTag);
+		SetConsoleVariableName(GetScalabilityQualityLevelConsoleVariableNames().FindRef(ItemIdentifier));
+		ConfigSettings.PrimaryKey = GetScalabilityQualityLevelConsoleVariableNames().FindRef(ItemIdentifier);
 
 		bool bShouldAssignName = ItemInfo.DisplayName.IsEmpty();
 		if (!bShouldAssignName)
@@ -39,7 +39,7 @@ void UVSSettingItem_ScalabilityQualityLevel::PostEditChangeProperty(struct FProp
 		
 		if (bShouldAssignName)
 		{
-			ItemInfo.DisplayName = GetScalabilityQualityLevelDefaultDisplayNames().FindRef(ItemTag);
+			ItemInfo.DisplayName = GetScalabilityQualityLevelDefaultDisplayNames().FindRef(ItemIdentifier);
 		}
 	}
 	else if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UVSSettingItem_ScalabilityQualityLevel, EditorPreviewQualityLevel))
@@ -63,47 +63,47 @@ void UVSSettingItem_ScalabilityQualityLevel::OnValueUpdated_Implementation()
 
 	/** Sync to GameUserSettings. */
 	const int32 QualityLevel = GetIntegerValue(EVSSettingItemValueSource::System);
-	if (ItemTag == EVSSettingItem::Scalability::QualityLevel::AntiAliasing)
+	if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::AntiAliasing)
 	{
 		GEngine->GameUserSettings->SetAntiAliasingQuality(QualityLevel);
 	}
-	else if (ItemTag == EVSSettingItem::Scalability::QualityLevel::VisualEffect)
+	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::VisualEffect)
 	{
 		GEngine->GameUserSettings->SetVisualEffectQuality(QualityLevel);
 	}
-	else if (ItemTag == EVSSettingItem::Scalability::QualityLevel::Foliage)
+	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::Foliage)
 	{
 		GEngine->GameUserSettings->SetFoliageQuality(QualityLevel);
 	}
-	else if (ItemTag == EVSSettingItem::Scalability::QualityLevel::GlobalIllumination)
+	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::GlobalIllumination)
 	{
 		GEngine->GameUserSettings->SetGlobalIlluminationQuality(QualityLevel);
 	}
-	else if (ItemTag == EVSSettingItem::Scalability::QualityLevel::PostProcess)
+	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::PostProcess)
 	{
 		GEngine->GameUserSettings->SetPostProcessingQuality(QualityLevel);
 	}
-	else if (ItemTag == EVSSettingItem::Scalability::QualityLevel::Reflection)
+	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::Reflection)
 	{
 		GEngine->GameUserSettings->SetReflectionQuality(QualityLevel);
 	}
-	else if (ItemTag == EVSSettingItem::Scalability::QualityLevel::Shading)
+	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::Shading)
 	{
 		GEngine->GameUserSettings->SetShadingQuality(QualityLevel);
 	}
-	else if (ItemTag == EVSSettingItem::Scalability::QualityLevel::Shadow)
+	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::Shadow)
 	{
 		GEngine->GameUserSettings->SetShadowQuality(QualityLevel);
 	}
-	else if (ItemTag == EVSSettingItem::Scalability::QualityLevel::Texture)
+	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::Texture)
 	{
 		GEngine->GameUserSettings->SetTextureQuality(QualityLevel);
 	}
-	else if (ItemTag == EVSSettingItem::Scalability::QualityLevel::ViewDistance)
+	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::ViewDistance)
 	{
 		GEngine->GameUserSettings->SetViewDistanceQuality(QualityLevel);
 	}
-	else if (ItemTag == EVSSettingItem::Scalability::QualityLevel::Landscape)
+	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::Landscape)
 	{
 		/** Do nothing. */
 	}

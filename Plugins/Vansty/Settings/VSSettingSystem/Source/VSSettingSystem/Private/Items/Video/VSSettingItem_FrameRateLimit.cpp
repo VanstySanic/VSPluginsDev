@@ -1,7 +1,6 @@
 ﻿// Copyright VanstySanic. All Rights Reserved.
 
 #include "Items/Video/VSSettingItem_FrameRateLimit.h"
-
 #include "VSSettingSystemConfig.h"
 #include "GameFramework/GameUserSettings.h"
 #include "Items/VSSettingSystemTags.h"
@@ -9,7 +8,8 @@
 UVSSettingItem_FrameRateLimit::UVSSettingItem_FrameRateLimit(const FObjectInitializer& FObjectInitializer)
 	: Super(FObjectInitializer)
 {
-	ItemTag = EVSSettingItem::Video::FrameRateLimit;
+	ItemIdentifier = EVSSettingItem::Video::FrameRateLimit;
+	ItemInfo.ItemTags.AddTag(EVSSettingItem::Video::FrameRateLimit.GetTag().RequestDirectParent());
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.FrameRateLimit", "DisplayName", "Frame-Rate Limit");
 	ConfigSettings.Section = "/Script/Engine.GameUserSettings";
 	ConfigSettings.PrimaryKey = "t.MaxFPS";

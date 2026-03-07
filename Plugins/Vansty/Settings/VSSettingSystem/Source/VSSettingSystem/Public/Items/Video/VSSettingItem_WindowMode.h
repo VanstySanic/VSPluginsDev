@@ -39,7 +39,7 @@ protected:
 	virtual void OnValueUpdated_Implementation() override;
 	
 #if WITH_EDITOR
-	virtual bool EditorAllowChangingItemTag_Implementation() const override { return false; }
+	virtual bool EditorAllowChangingItemIdentifier_Implementation() const override { return false; }
 	virtual bool EditorAllowChangingValueType_Implementation() const override { return false; }
 	virtual bool EditorAllowChangingConfigParams_Implementation() const override { return false; }
 	virtual bool EditorAllowChangingEditorPreviewValue_Implementation() const override { return false; }
