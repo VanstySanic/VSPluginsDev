@@ -43,7 +43,7 @@ struct FVSEnhancedInputMappingKeySlot
  *
  * Stores per-slot mapped keys and applies them through `UEnhancedInputUserSettings`.
  */
-UCLASS()
+UCLASS(DisplayName = "VS.Settings.Item.Input.MappingKey.EnhancedAction")
 class VSSETTINGSYSTEM_API UVSEnhancedInputMappingKeySettingItem : public UVSSettingItemBase
 {
 	GENERATED_UCLASS_BODY()

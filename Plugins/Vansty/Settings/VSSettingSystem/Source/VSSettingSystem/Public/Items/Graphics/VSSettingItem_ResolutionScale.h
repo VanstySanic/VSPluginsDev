@@ -11,7 +11,7 @@
  *
  * Controls render resolution scale percentage through its bound cvar.
  */
-UCLASS(DisplayName = "VS.SettingSystem.Item.Scalability.ResolutionScale")
+UCLASS(DisplayName = "VS.Settings.Item.Scalability.ResolutionScale")
 class VSSETTINGSYSTEM_API UVSSettingItem_ResolutionScale : public UVSConsoleVariableSettingItem
 {
 	GENERATED_UCLASS_BODY()

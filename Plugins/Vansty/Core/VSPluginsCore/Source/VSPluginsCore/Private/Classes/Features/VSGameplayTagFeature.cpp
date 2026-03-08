@@ -436,8 +436,11 @@ void UVSGameplayTagFeatureBase::BindDelegateForObject(UObject* Object)
 	OnTagEventsNotified.Add(Delegate);
 
 	// Push current state once so the listener starts from a consistent view.
-	IVSGameplayTagFeatureInterface::Execute_OnGameplayTagFeatureTagsUpdated(Object, this);
-	IVSGameplayTagFeatureInterface::Execute_OnGameplayTagFeatureTagEventsNotified(Object, this, FGameplayTagContainer(VS_PLUGINSCORE_GAMEPAYTAGFEATURE_ONTAGSUPDATED));
+	if (HasBegunPlay())
+	{
+		IVSGameplayTagFeatureInterface::Execute_OnGameplayTagFeatureTagsUpdated(Object, this);
+		IVSGameplayTagFeatureInterface::Execute_OnGameplayTagFeatureTagEventsNotified(Object, this, FGameplayTagContainer(VS_PLUGINSCORE_GAMEPAYTAGFEATURE_ONTAGSUPDATED));
+	}
 }
 
 void UVSGameplayTagFeatureBase::UnbindDelegateForObject(UObject* Object)

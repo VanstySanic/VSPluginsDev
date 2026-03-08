@@ -8,8 +8,8 @@
 UVSSettingItem_VSync::UVSSettingItem_VSync(const FObjectInitializer& FObjectInitializer)
 	: Super(FObjectInitializer)
 {
-	ItemIdentifier = EVSSettingItem::Video::VSync;
-	ItemInfo.ItemTags.AddTag(EVSSettingItem::Video::VSync.GetTag().RequestDirectParent());
+	ItemIdentifier = VS::Settings::Item::Video::VSync;
+	ItemInfo.ItemTags.AddTag(VS::Settings::Item::Video::VSync.GetTag().RequestDirectParent());
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.VSync", "DisplayName", "VSync");
 	ConfigSettings.Section = "/Script/Engine.GameUserSettings";
 	ConfigSettings.PrimaryKey = "bUseVSync";

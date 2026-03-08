@@ -47,7 +47,7 @@ const UVSPluginsCoreEngineSettings* UVSPluginsCoreEngineSettings::Get()
 	return GetDefault<UVSPluginsCoreEngineSettings>();
 }
 
-const UVSPluginsCoreEngineSettings* UVSPluginsCoreEngineSettings::GetVSPluginsCoreEngineSettings()
+const UVSPluginsCoreEngineSettings* UVSPluginsCoreEngineSettings::GetPluginsCoreEngineSettingsVS()
 {
 	return Get();
 }

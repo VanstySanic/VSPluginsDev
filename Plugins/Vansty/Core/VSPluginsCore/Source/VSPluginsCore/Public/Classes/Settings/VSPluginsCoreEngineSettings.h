@@ -27,7 +27,7 @@ public:
 	static const UVSPluginsCoreEngineSettings* Get();
 	
 	UFUNCTION(BlueprintPure, Category = "Settings")
-	static const UVSPluginsCoreEngineSettings* GetVSPluginsCoreEngineSettings();
+	static const UVSPluginsCoreEngineSettings* GetPluginsCoreEngineSettingsVS();
 	
 public:
 

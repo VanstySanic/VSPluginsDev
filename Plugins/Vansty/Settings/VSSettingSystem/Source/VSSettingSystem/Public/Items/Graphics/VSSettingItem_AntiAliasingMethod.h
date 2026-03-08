@@ -11,7 +11,7 @@
  *
  * Wraps AA-method selection and maps values to display text.
  */
-UCLASS(DisplayName = "VS.SettingSystem.Item.Graphics.AntiAliasingMethod")
+UCLASS(DisplayName = "VS.Settings.Item.Graphics.AntiAliasingMethod")
 class VSSETTINGSYSTEM_API UVSSettingItem_AntiAliasingMethod : public UVSConsoleVariableSettingItem
 {
 	GENERATED_UCLASS_BODY()

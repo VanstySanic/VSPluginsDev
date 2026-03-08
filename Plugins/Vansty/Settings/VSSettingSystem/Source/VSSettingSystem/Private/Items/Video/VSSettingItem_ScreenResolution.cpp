@@ -23,8 +23,8 @@ UVSSettingItem_ScreenResolution::UVSSettingItem_ScreenResolution(const FObjectIn
 {
 	SetValueType(EVSCommonSettingValueType::String);
 	
-	ItemIdentifier = EVSSettingItem::Video::ScreenResolution;
-	ItemInfo.ItemTags.AddTag(EVSSettingItem::Video::ScreenResolution.GetTag().RequestDirectParent());
+	ItemIdentifier = VS::Settings::Item::Video::ScreenResolution;
+	ItemInfo.ItemTags.AddTag(VS::Settings::Item::Video::ScreenResolution.GetTag().RequestDirectParent());
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.ScreenResolution", "DisplayName", "Screen Resolution");
 	ConfigSettings.Section = FString("/Script/Engine.GameUserSettings");
 	ConfigSettings.AdditionalNamedKeys.Add("ResolutionSizeX", "ResolutionSizeX");
@@ -56,7 +56,7 @@ void UVSSettingItem_ScreenResolution::Uninitialize_Implementation()
 {
 	FCoreDelegates::OnSystemResolutionChanged.RemoveAll(this);
 
-	if (UVSSettingItemBase* SettingItem = UVSSettingSystemUtils::GetSettingItemByIdentifier(EVSSettingItem::Video::WindowMode))
+	if (UVSSettingItemBase* SettingItem = UVSSettingSystemUtils::GetSettingItemByIdentifier(VS::Settings::Item::Video::WindowMode))
 	{
 		SettingItem->OnUpdated_Native.RemoveAll(this);
 	}

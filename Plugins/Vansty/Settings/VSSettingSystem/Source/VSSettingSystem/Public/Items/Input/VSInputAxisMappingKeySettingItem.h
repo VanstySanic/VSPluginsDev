@@ -40,7 +40,7 @@ struct FVSInputMappingAxisSlot
  *
  * Manages slotted axis keys and applies them through `UPlayerInput`.
  */
-UCLASS()
+UCLASS(DisplayName = "VS.Settings.Item.Input.MappingKey.Axis")
 class VSSETTINGSYSTEM_API UVSInputAxisMappingKeySettingItem : public UVSSettingItemBase
 {
 	GENERATED_UCLASS_BODY()

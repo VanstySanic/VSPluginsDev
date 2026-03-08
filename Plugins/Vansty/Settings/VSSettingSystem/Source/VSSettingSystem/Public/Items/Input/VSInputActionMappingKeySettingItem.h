@@ -41,7 +41,7 @@ struct FVSInputMappingKeySlot
  *
  * Manages slotted action chords and applies them through `UPlayerInput`.
  */
-UCLASS()
+UCLASS(DisplayName = "VS.Settings.Item.Input.MappingKey.Action")
 class VSSETTINGSYSTEM_API UVSInputActionMappingKeySettingItem : public UVSSettingItemBase
 {
 	GENERATED_UCLASS_BODY()

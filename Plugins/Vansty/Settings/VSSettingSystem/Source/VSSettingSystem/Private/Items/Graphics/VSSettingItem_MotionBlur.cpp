@@ -9,8 +9,8 @@
 UVSSettingItem_MotionBlur::UVSSettingItem_MotionBlur(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	ItemIdentifier = EVSSettingItem::Graphics::MotionBlur;
-	ItemInfo.ItemTags.AddTag(EVSSettingItem::Graphics::MotionBlur.GetTag().RequestDirectParent());
+	ItemIdentifier = VS::Settings::Item::Graphics::MotionBlur;
+	ItemInfo.ItemTags.AddTag(VS::Settings::Item::Graphics::MotionBlur.GetTag().RequestDirectParent());
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Graphics.MotionBlur", "DisplayName", "Motion Blur");
 	ConfigSettings.FileName = GIsEditor ? "Editor" : "GameUserSettings";
 	ConfigSettings.Section = "VS.Settings.Item.Graphics";

@@ -11,7 +11,7 @@
  *
  * Controls max frame rate and formats special values (for example no limit).
  */
-UCLASS(DisplayName = "VS.SettingSystem.Item.Video.FrameRateLimit")
+UCLASS(DisplayName = "VS.Settings.Item.Video.FrameRateLimit")
 class VSSETTINGSYSTEM_API UVSSettingItem_FrameRateLimit : public UVSConsoleVariableSettingItem
 {
 	GENERATED_UCLASS_BODY()

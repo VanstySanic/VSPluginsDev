@@ -1,8 +1,27 @@
-﻿// Copyright VanstySanic. All Rights Reserved.
+// Copyright VanstySanic. All Rights Reserved.
 
 #include "Types/VSTreeQueryTypes.h"
+#include "Engine/EngineTypes.h"
 
 FVSGameplayTagEventQuery FVSGameplayTagEventQuery::Empty = FVSGameplayTagEventQuery();
+
+namespace VSTreeQueryTypesPrivate
+{
+	static bool EvaluateRange(const int32 MatchNum, const int32 CandidateNum, const EVSElementRange::Type Range)
+	{
+		switch (Range)
+		{
+		case EVSElementRange::None:
+			return MatchNum == 0;
+		case EVSElementRange::Any:
+			return MatchNum > 0;
+		case EVSElementRange::All:
+			return CandidateNum > 0 && MatchNum == CandidateNum;
+		default:
+			return false;
+		}
+	}
+}
 
 bool FVSGameplayTagEventQueryParams::Matches(const FGameplayTagContainer& InTagEvents, const FGameplayTagContainer& InGameplayTags) const
 {
@@ -51,18 +70,7 @@ bool FVSGameplayTagEventQueryExpression::Matches(const FGameplayTagContainer& Ta
 				}
 			}
 
-			switch (Range) {
-			case EVSTreeQueryMatchRange::None:
-				return MatchNum == 0;
-
-			case EVSTreeQueryMatchRange::Any:
-				return MatchNum > 0;
-				
-			case EVSTreeQueryMatchRange::All:
-				return MatchNum > 0 && MatchNum == Params.Num();
-
-			default: ;
-			}
+			return VSTreeQueryTypesPrivate::EvaluateRange(MatchNum, Params.Num(), Range);
 		}
 		break;
 		
@@ -78,18 +86,7 @@ bool FVSGameplayTagEventQueryExpression::Matches(const FGameplayTagContainer& Ta
 				}
 			}
 
-			switch (Range) {
-			case EVSTreeQueryMatchRange::None:
-				return MatchNum == 0;
-
-			case EVSTreeQueryMatchRange::Any:
-				return MatchNum > 0;
-				
-			case EVSTreeQueryMatchRange::All:
-				return MatchNum > 0 && MatchNum == Expressions.Num();
-
-			default: ;
-			}
+			return VSTreeQueryTypesPrivate::EvaluateRange(MatchNum, Expressions.Num(), Range);
 		}
 		break;
 		
@@ -102,7 +99,7 @@ bool FVSGameplayTagEventQueryExpression::Matches(const FGameplayTagContainer& Ta
 FVSGameplayTagEventQuery FVSGameplayTagEventQuery::GetEmptyPass()
 {
 	FVSGameplayTagEventQuery Query;
-	Query.RootExpression.Range = EVSTreeQueryMatchRange::None;
+	Query.RootExpression.Range = EVSElementRange::None;
 	Query.RootExpression.Type = EVSTreeQueryMatchType::Param;
 	return Query;
 }
@@ -126,47 +123,58 @@ bool FVSSceneComponentQueryParams::Matches(const USceneComponent* Component) con
 				return Class && Component->IsA(Class);
 			});
 
-		if (bInverseClassAllowance ? bHasComponentClass : !bHasComponentClass) return false;
+		if (bInverseClassAllowance ? bHasComponentClass : !bHasComponentClass)
+		{
+			return false;
+		}
 	}
 	
 	if (ObjectTypes.IsEmpty() && !bObjectTypesEmptyAsPass) return false;
 	if (!ObjectTypes.IsEmpty())
 	{
-		const bool bHasObjectType = ObjectTypes.Contains(Component->GetCollisionObjectType());
-		if (bInverseObjectTypes ? bHasObjectType : !bHasObjectType) return false; 
+		const EObjectTypeQuery ObjectType = UEngineTypes::ConvertToObjectType(Component->GetCollisionObjectType());
+		const bool bHasObjectType = ObjectTypes.Contains(ObjectType);
+		if (bInverseObjectTypes ? bHasObjectType : !bHasObjectType)
+		{
+			return false;
+		}
 	}
 	
 	if (ComponentTags.IsEmpty() && !bComponentTagsEmptyAsPass) return false;
 	if (!ComponentTags.IsEmpty())
 	{
-		bool bHasComponentTag = false;
+		int32 MatchNum = 0;
 		for (const FName& ComponentTag : ComponentTags)
 		{
 			if (Component->ComponentTags.Contains(ComponentTag))
 			{
-				bHasComponentTag = true;
-				break;
+				MatchNum++;
 			}
 		}
-		if (bInverseComponentTagAllowance ? bHasComponentTag : !bHasComponentTag) return false;
+		if (!VSTreeQueryTypesPrivate::EvaluateRange(MatchNum, ComponentTags.Num(), ComponentTagRange))
+		{
+			return false;
+		}
 	}
 	
 	if (ActorTags.IsEmpty() && !bActorTagsEmptyAsPass) return false;
 	if (!ActorTags.IsEmpty())
 	{
-		if (!Component->GetOwner()) return false;
-		
-		bool bHasActorTag = false;
+		const AActor* Owner = Component->GetOwner();
+		if (!Owner) return false;
+
+		int32 MatchNum = 0;
 		for (const FName& ActorTag : ActorTags)
 		{
-			if (Component->GetOwner()->Tags.Contains(ActorTag))
+			if (Owner->Tags.Contains(ActorTag))
 			{
-				bHasActorTag = true;
-				break;
+				MatchNum++;
 			}
 		}
-		
-		if (bInverseActorTagAllowance ? bHasActorTag : !bHasActorTag) return false;
+		if (!VSTreeQueryTypesPrivate::EvaluateRange(MatchNum, ActorTags.Num(), ActorTagRange))
+		{
+			return false;
+		}
 	}
 
 	return true;
@@ -186,18 +194,7 @@ bool FVSSceneComponentQueryExpression::Matches(const USceneComponent* Component)
 				}
 			}
 
-			switch (Range) {
-			case EVSTreeQueryMatchRange::None:
-				return MatchNum == 0;
-
-			case EVSTreeQueryMatchRange::Any:
-				return MatchNum > 0;
-				
-			case EVSTreeQueryMatchRange::All:
-				return MatchNum > 0 && MatchNum == Params.Num();
-
-			default: ;
-			}
+			return VSTreeQueryTypesPrivate::EvaluateRange(MatchNum, Params.Num(), Range);
 		}
 		break;
 		
@@ -206,24 +203,16 @@ bool FVSSceneComponentQueryExpression::Matches(const USceneComponent* Component)
 			int32 MatchNum = 0;
 			for (const TInstancedStruct<FVSSceneComponentQueryExpression>& Expression : Expressions)
 			{
-				if (Expression.Get<FVSSceneComponentQueryExpression>().Matches(Component))
+				if (Expression.IsValid())
 				{
-					MatchNum++;
+					if (Expression.Get<FVSSceneComponentQueryExpression>().Matches(Component))
+					{
+						MatchNum++;
+					}
 				}
 			}
 
-			switch (Range) {
-			case EVSTreeQueryMatchRange::None:
-				return MatchNum == 0;
-
-			case EVSTreeQueryMatchRange::Any:
-				return MatchNum > 0;
-				
-			case EVSTreeQueryMatchRange::All:
-				return MatchNum > 0 && MatchNum == Expressions.Num();
-
-			default: ;
-			}
+			return VSTreeQueryTypesPrivate::EvaluateRange(MatchNum, Expressions.Num(), Range);
 		}
 		break;
 		
@@ -237,4 +226,3 @@ bool FVSSceneComponentQuery::Matches(const USceneComponent* Component) const
 {
 	return RootExpression.Matches(Component);
 }
-

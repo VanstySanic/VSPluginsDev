@@ -11,7 +11,7 @@
  *
  * Applies mutable float + mute-state values to the configured sound class.
  */
-UCLASS(DisplayName = "VS.SettingSystem.Item.Audio.Volume")
+UCLASS(DisplayName = "VS.Settings.Item.Audio.Volume")
 class VSSETTINGSYSTEM_API UVSSettingItem_Volume : public UVSMutableFloatSettingItem
 {
 	GENERATED_UCLASS_BODY()

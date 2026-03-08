@@ -11,7 +11,7 @@
  *
  * Converts boolean enabled state to/from its underlying cvar representation.
  */
-UCLASS(DisplayName = "VS.SettingSystem.Item.Video.VSync")
+UCLASS(DisplayName = "VS.Settings.Item.Video.VSync")
 class VSSETTINGSYSTEM_API UVSSettingItem_VSync : public UVSConsoleVariableSettingItem
 {
 	GENERATED_UCLASS_BODY()

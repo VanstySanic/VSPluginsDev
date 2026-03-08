@@ -11,7 +11,7 @@
  *
  * Exposes quality-level control and convenience enabled-state query.
  */
-UCLASS(DisplayName = "VS.SettingSystem.Item.Graphics.MotionBlur")
+UCLASS(DisplayName = "VS.Settings.Item.Graphics.MotionBlur")
 class VSSETTINGSYSTEM_API UVSSettingItem_MotionBlur : public UVSConsoleVariableSettingItem
 {
 	GENERATED_UCLASS_BODY()

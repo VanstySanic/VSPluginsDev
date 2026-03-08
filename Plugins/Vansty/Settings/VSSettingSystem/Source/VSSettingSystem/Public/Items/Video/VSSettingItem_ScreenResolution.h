@@ -12,7 +12,7 @@
  *
  * Manages resolution value, validates supported modes, and applies it to user settings.
  */
-UCLASS(DisplayName = "VS.SettingSystem.Item.Video.ScreenResolution")
+UCLASS(DisplayName = "VS.Settings.Item.Video.ScreenResolution")
 class VSSETTINGSYSTEM_API UVSSettingItem_ScreenResolution : public UVSCommonSettingItem
 {
 	GENERATED_UCLASS_BODY()

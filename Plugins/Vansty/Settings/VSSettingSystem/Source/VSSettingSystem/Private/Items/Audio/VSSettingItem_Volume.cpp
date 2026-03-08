@@ -11,8 +11,8 @@
 UVSSettingItem_Volume::UVSSettingItem_Volume(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	ItemIdentifier = EVSSettingItem::Audio::Volume::Master.GetTag().RequestDirectParent();
-	ItemInfo.ItemTags.AddTag(EVSSettingItem::Audio::Volume::Master.GetTag().RequestDirectParent());
+	ItemIdentifier = VS::Settings::Item::Audio::Volume::Master.GetTag().RequestDirectParent();
+	ItemInfo.ItemTags.AddTag(VS::Settings::Item::Audio::Volume::Master.GetTag().RequestDirectParent());
 	ConfigSettings.FileName = "GameUserSettings";
 	ConfigSettings.Section = "VS.Settings.Item.Audio.Volume";
 
@@ -176,8 +176,8 @@ TMap<FGameplayTag, FText> UVSSettingItem_Volume::GetVolumeTypeDisplayNames()
 {
 	static TMap<FGameplayTag, FText> StaticNames = TMap<FGameplayTag, FText>
 	{
-		{ EVSSettingItem::Audio::Volume::Master, NSLOCTEXT("VS.SettingSystem.Item.Audio.Master", "DisplayName.Master", "Master Volume") },
-		{ EVSSettingItem::Audio::Volume::Music, NSLOCTEXT("VS.SettingSystem.Item.Audio.Music", "DisplayName.Music", "Music Volume") },
+		{ VS::Settings::Item::Audio::Volume::Master, NSLOCTEXT("VS.SettingSystem.Item.Audio.Master", "DisplayName.Master", "Master Volume") },
+		{ VS::Settings::Item::Audio::Volume::Music, NSLOCTEXT("VS.SettingSystem.Item.Audio.Music", "DisplayName.Music", "Music Volume") },
 	};
 
 	return StaticNames;
@@ -187,8 +187,8 @@ TMap<FGameplayTag, FString> UVSSettingItem_Volume::GetVolumeTypeConfigKeyNames()
 {
 	static TMap<FGameplayTag, FString> StaticNames = TMap<FGameplayTag, FString>
 	{
-		{ EVSSettingItem::Audio::Volume::Master, FString("MasterVolume") },
-		{ EVSSettingItem::Audio::Volume::Music, FString("MusicVolume") },
+		{ VS::Settings::Item::Audio::Volume::Master, FString("MasterVolume") },
+		{ VS::Settings::Item::Audio::Volume::Music, FString("MusicVolume") },
 	};
 
 	return StaticNames;

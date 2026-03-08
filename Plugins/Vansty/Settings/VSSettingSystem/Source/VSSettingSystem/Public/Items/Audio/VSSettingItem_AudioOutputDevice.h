@@ -11,7 +11,7 @@
  *
  * Stores and applies the selected output device ID.
  */
-UCLASS(DisplayName = "VS.SettingSystem.Item.Audio.Device.Output")
+UCLASS(DisplayName = "VS.Settings.Item.Audio.Device.Output")
 class VSSETTINGSYSTEM_API UVSSettingItem_AudioOutputDevice : public UVSCommonSettingItem
 {
 	GENERATED_UCLASS_BODY()

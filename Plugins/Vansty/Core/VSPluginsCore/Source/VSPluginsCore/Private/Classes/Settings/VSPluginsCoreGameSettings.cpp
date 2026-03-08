@@ -14,7 +14,7 @@ const UVSPluginsCoreGameSettings* UVSPluginsCoreGameSettings::Get()
 	return GetDefault<UVSPluginsCoreGameSettings>();
 }
 
-const UVSPluginsCoreGameSettings* UVSPluginsCoreGameSettings::GetVSPluginsCoreGameSettings()
+const UVSPluginsCoreGameSettings* UVSPluginsCoreGameSettings::GetPluginsCoreGameSettingsVS()
 {
 	return Get();
 }

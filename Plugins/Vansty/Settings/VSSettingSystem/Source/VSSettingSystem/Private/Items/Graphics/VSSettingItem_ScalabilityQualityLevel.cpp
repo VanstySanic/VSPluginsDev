@@ -10,8 +10,8 @@ UVSSettingItem_ScalabilityQualityLevel::UVSSettingItem_ScalabilityQualityLevel(c
 {
 	SetValueType(EVSCommonSettingValueType::Integer);
 	
-	ItemIdentifier = EVSSettingItem::Scalability::QualityLevel::AntiAliasing;
-	ItemInfo.ItemTags.AddTag(EVSSettingItem::Scalability::QualityLevel::AntiAliasing.GetTag().RequestDirectParent());
+	ItemIdentifier = VS::Settings::Item::Scalability::QualityLevel::AntiAliasing;
+	ItemInfo.ItemTags.AddTag(VS::Settings::Item::Scalability::QualityLevel::AntiAliasing.GetTag().RequestDirectParent());
 	ConfigSettings.FileName = GIsEditor ? "Editor" : "GameUserSettings";
 	ConfigSettings.Section = FString("ScalabilityGroups");
 }
@@ -63,47 +63,47 @@ void UVSSettingItem_ScalabilityQualityLevel::OnValueUpdated_Implementation()
 
 	/** Sync to GameUserSettings. */
 	const int32 QualityLevel = GetIntegerValue(EVSSettingItemValueSource::System);
-	if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::AntiAliasing)
+	if (ItemIdentifier == VS::Settings::Item::Scalability::QualityLevel::AntiAliasing)
 	{
 		GEngine->GameUserSettings->SetAntiAliasingQuality(QualityLevel);
 	}
-	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::VisualEffect)
+	else if (ItemIdentifier == VS::Settings::Item::Scalability::QualityLevel::VisualEffect)
 	{
 		GEngine->GameUserSettings->SetVisualEffectQuality(QualityLevel);
 	}
-	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::Foliage)
+	else if (ItemIdentifier == VS::Settings::Item::Scalability::QualityLevel::Foliage)
 	{
 		GEngine->GameUserSettings->SetFoliageQuality(QualityLevel);
 	}
-	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::GlobalIllumination)
+	else if (ItemIdentifier == VS::Settings::Item::Scalability::QualityLevel::GlobalIllumination)
 	{
 		GEngine->GameUserSettings->SetGlobalIlluminationQuality(QualityLevel);
 	}
-	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::PostProcess)
+	else if (ItemIdentifier == VS::Settings::Item::Scalability::QualityLevel::PostProcess)
 	{
 		GEngine->GameUserSettings->SetPostProcessingQuality(QualityLevel);
 	}
-	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::Reflection)
+	else if (ItemIdentifier == VS::Settings::Item::Scalability::QualityLevel::Reflection)
 	{
 		GEngine->GameUserSettings->SetReflectionQuality(QualityLevel);
 	}
-	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::Shading)
+	else if (ItemIdentifier == VS::Settings::Item::Scalability::QualityLevel::Shading)
 	{
 		GEngine->GameUserSettings->SetShadingQuality(QualityLevel);
 	}
-	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::Shadow)
+	else if (ItemIdentifier == VS::Settings::Item::Scalability::QualityLevel::Shadow)
 	{
 		GEngine->GameUserSettings->SetShadowQuality(QualityLevel);
 	}
-	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::Texture)
+	else if (ItemIdentifier == VS::Settings::Item::Scalability::QualityLevel::Texture)
 	{
 		GEngine->GameUserSettings->SetTextureQuality(QualityLevel);
 	}
-	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::ViewDistance)
+	else if (ItemIdentifier == VS::Settings::Item::Scalability::QualityLevel::ViewDistance)
 	{
 		GEngine->GameUserSettings->SetViewDistanceQuality(QualityLevel);
 	}
-	else if (ItemIdentifier == EVSSettingItem::Scalability::QualityLevel::Landscape)
+	else if (ItemIdentifier == VS::Settings::Item::Scalability::QualityLevel::Landscape)
 	{
 		/** Do nothing. */
 	}
@@ -172,17 +172,17 @@ TMap<FGameplayTag, FText> UVSSettingItem_ScalabilityQualityLevel::GetScalability
 {
 	static TMap<FGameplayTag, FText> ScalabilityQualityLevels = TMap<FGameplayTag, FText>
 	{
-		{ EVSSettingItem::Scalability::QualityLevel::ViewDistance, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.ViewDistance", "View Distance Quality") },
-		{ EVSSettingItem::Scalability::QualityLevel::AntiAliasing, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.AntiAliasing", "Anti-Aliasing Quality") },
-		{ EVSSettingItem::Scalability::QualityLevel::Shadow, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.Shadow", "Shadow Quality") },
-		{ EVSSettingItem::Scalability::QualityLevel::GlobalIllumination, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.GlobalIllumination", "Global Illumination Quality") },
-		{ EVSSettingItem::Scalability::QualityLevel::Reflection, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.Reflection", "Reflection Quality") },
-		{ EVSSettingItem::Scalability::QualityLevel::PostProcess, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.PostProcess", "Post-Process Quality") },
-		{ EVSSettingItem::Scalability::QualityLevel::Texture, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.Texture", "Texture Quality") },
-		{ EVSSettingItem::Scalability::QualityLevel::VisualEffect, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.Effects", "Effects Quality") },
-		{ EVSSettingItem::Scalability::QualityLevel::Foliage, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.Foliage", "Foliage Quality") },
-		{ EVSSettingItem::Scalability::QualityLevel::Shading, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.Shading", "Shading Quality") },
-		{ EVSSettingItem::Scalability::QualityLevel::Landscape, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.Landscape", "Landscape Quality") }
+		{ VS::Settings::Item::Scalability::QualityLevel::ViewDistance, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.ViewDistance", "View Distance Quality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::AntiAliasing, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.AntiAliasing", "Anti-Aliasing Quality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::Shadow, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.Shadow", "Shadow Quality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::GlobalIllumination, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.GlobalIllumination", "Global Illumination Quality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::Reflection, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.Reflection", "Reflection Quality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::PostProcess, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.PostProcess", "Post-Process Quality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::Texture, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.Texture", "Texture Quality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::VisualEffect, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.Effects", "Effects Quality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::Foliage, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.Foliage", "Foliage Quality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::Shading, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.Shading", "Shading Quality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::Landscape, NSLOCTEXT("VS.SettingSystem.Item.Scalability.QualityLevel", "DisplayName.Landscape", "Landscape Quality") }
 	};
 
 	return ScalabilityQualityLevels;
@@ -192,17 +192,17 @@ TMap<FGameplayTag, FString> UVSSettingItem_ScalabilityQualityLevel::GetScalabili
 {
 	static TMap<FGameplayTag, FString> ScalabilityQualityLevels = TMap<FGameplayTag, FString>
 	{
-		{ EVSSettingItem::Scalability::QualityLevel::ViewDistance, FString("sg.ViewDistanceQuality") },
-		{ EVSSettingItem::Scalability::QualityLevel::AntiAliasing, FString("sg.AntiAliasingQuality") },
-		{ EVSSettingItem::Scalability::QualityLevel::Shadow, FString("sg.ShadowQuality") },
-		{ EVSSettingItem::Scalability::QualityLevel::GlobalIllumination, FString("sg.GlobalIlluminationQuality") },
-		{ EVSSettingItem::Scalability::QualityLevel::Reflection, FString("sg.ReflectionQuality") },
-		{ EVSSettingItem::Scalability::QualityLevel::PostProcess, FString("sg.PostProcessQuality") },
-		{ EVSSettingItem::Scalability::QualityLevel::Texture, FString("sg.TextureQuality") },
-		{ EVSSettingItem::Scalability::QualityLevel::VisualEffect, FString("sg.EffectsQuality") },
-		{ EVSSettingItem::Scalability::QualityLevel::Foliage, FString("sg.FoliageQuality") },
-		{ EVSSettingItem::Scalability::QualityLevel::Shading, FString("sg.ShadingQuality") },
-		{ EVSSettingItem::Scalability::QualityLevel::Landscape, FString("sg.LandscapeQuality") }
+		{ VS::Settings::Item::Scalability::QualityLevel::ViewDistance, FString("sg.ViewDistanceQuality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::AntiAliasing, FString("sg.AntiAliasingQuality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::Shadow, FString("sg.ShadowQuality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::GlobalIllumination, FString("sg.GlobalIlluminationQuality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::Reflection, FString("sg.ReflectionQuality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::PostProcess, FString("sg.PostProcessQuality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::Texture, FString("sg.TextureQuality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::VisualEffect, FString("sg.EffectsQuality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::Foliage, FString("sg.FoliageQuality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::Shading, FString("sg.ShadingQuality") },
+		{ VS::Settings::Item::Scalability::QualityLevel::Landscape, FString("sg.LandscapeQuality") }
 	};
 
 	return ScalabilityQualityLevels;

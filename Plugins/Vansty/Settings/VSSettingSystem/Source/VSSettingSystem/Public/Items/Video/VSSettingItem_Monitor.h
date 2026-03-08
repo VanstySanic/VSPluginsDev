@@ -11,7 +11,7 @@
  *
  * Stores display monitor ID and applies monitor targeting for fullscreen modes.
  */
-UCLASS(DisplayName = "VS.SettingSystem.Item.Video.Monitor")
+UCLASS(DisplayName = "VS.Settings.Item.Video.Monitor")
 class VSSETTINGSYSTEM_API UVSSettingItem_Monitor : public UVSCommonSettingItem
 {
 	GENERATED_UCLASS_BODY()

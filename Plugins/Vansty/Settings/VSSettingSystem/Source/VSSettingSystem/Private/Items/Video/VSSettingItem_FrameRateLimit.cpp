@@ -8,8 +8,8 @@
 UVSSettingItem_FrameRateLimit::UVSSettingItem_FrameRateLimit(const FObjectInitializer& FObjectInitializer)
 	: Super(FObjectInitializer)
 {
-	ItemIdentifier = EVSSettingItem::Video::FrameRateLimit;
-	ItemInfo.ItemTags.AddTag(EVSSettingItem::Video::FrameRateLimit.GetTag().RequestDirectParent());
+	ItemIdentifier = VS::Settings::Item::Video::FrameRateLimit;
+	ItemInfo.ItemTags.AddTag(VS::Settings::Item::Video::FrameRateLimit.GetTag().RequestDirectParent());
 	ItemInfo.DisplayName = NSLOCTEXT("VS.SettingSystem.Item.Video.FrameRateLimit", "DisplayName", "Frame-Rate Limit");
 	ConfigSettings.Section = "/Script/Engine.GameUserSettings";
 	ConfigSettings.PrimaryKey = "t.MaxFPS";

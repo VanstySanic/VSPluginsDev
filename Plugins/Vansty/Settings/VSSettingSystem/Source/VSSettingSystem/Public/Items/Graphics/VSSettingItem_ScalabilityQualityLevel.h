@@ -11,7 +11,7 @@
  *
  * Maps integer quality values to `EPerQualityLevels` for display and control.
  */
-UCLASS(DisplayName = "VS.SettingSystem.Item.Scalability.QualityLevel")
+UCLASS(DisplayName = "VS.Settings.Item.Scalability.QualityLevel")
 class VSSETTINGSYSTEM_API UVSSettingItem_ScalabilityQualityLevel : public UVSConsoleVariableSettingItem
 {
 	GENERATED_UCLASS_BODY()

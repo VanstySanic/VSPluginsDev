@@ -23,7 +23,7 @@ public:
 	static const UVSPluginsCoreGameSettings* Get();
 	
 	UFUNCTION(BlueprintPure, Category = "Settings")
-	static const UVSPluginsCoreGameSettings* GetVSPluginsCoreGameSettings();
+	static const UVSPluginsCoreGameSettings* GetPluginsCoreGameSettingsVS();
 
 public:
 	/**

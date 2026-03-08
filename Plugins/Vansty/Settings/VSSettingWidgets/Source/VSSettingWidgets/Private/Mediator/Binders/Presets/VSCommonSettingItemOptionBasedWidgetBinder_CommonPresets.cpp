@@ -19,14 +19,14 @@ TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::Gener
 	if (!GetSettingItem_Native()) return {};
 	const FGameplayTag ItemIdentifier = GetSettingItem_Native()->GetItemIdentifier();
 
-	static FGameplayTag ScalabilityQualityLevelParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(EVSSettingItem::Scalability::QualityLevel::AntiAliasing);
+	static FGameplayTag ScalabilityQualityLevelParentTag = UGameplayTagsManager::Get().RequestGameplayTagDirectParent(VS::Settings::Item::Scalability::QualityLevel::AntiAliasing);
 
-	if (ItemIdentifier == EVSSettingItem::Video::WindowMode)
+	if (ItemIdentifier == VS::Settings::Item::Video::WindowMode)
 	{
 		static TArray<FString> WindowModeOptions = TArray<FString>({ "0", "1", "2" });
 		return WindowModeOptions;
 	}
-	if (ItemIdentifier == EVSSettingItem::Video::ScreenResolution)
+	if (ItemIdentifier == VS::Settings::Item::Video::ScreenResolution)
 	{
 		TArray<FString> ResolutionOptions;
 		TArray<FIntPoint> SupportedResolutions;
@@ -38,19 +38,19 @@ TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::Gener
 		}
 		return ResolutionOptions;
 	}
-	if (ItemIdentifier == EVSSettingItem::Video::VSync)
+	if (ItemIdentifier == VS::Settings::Item::Video::VSync)
 	{
 		static TArray<FString> ZeroOneOptions = TArray<FString>({ "0", "1" });
 		return ZeroOneOptions;
 	}
 	if (ItemIdentifier.MatchesTag(ScalabilityQualityLevelParentTag)
-		|| ItemIdentifier == EVSSettingItem::Graphics::AntiAliasingMethod
-		|| ItemIdentifier == EVSSettingItem::Graphics::MotionBlur)
+		|| ItemIdentifier == VS::Settings::Item::Graphics::AntiAliasingMethod
+		|| ItemIdentifier == VS::Settings::Item::Graphics::MotionBlur)
 	{
 		static TArray<FString> FiveLevelOptions = TArray<FString>({ "0", "1", "2", "3", "4"});
 		return FiveLevelOptions;
 	}
-	if (ItemIdentifier == EVSSettingItem::Video::Monitor)
+	if (ItemIdentifier == VS::Settings::Item::Video::Monitor)
 	{
 		TArray<FString> MonitorIDs;
 		FDisplayMetrics Metrics;
@@ -61,7 +61,7 @@ TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::Gener
 		}
 		return MonitorIDs;
 	}
-	if (ItemIdentifier == EVSSettingItem::Video::FrameRateLimit)
+	if (ItemIdentifier == VS::Settings::Item::Video::FrameRateLimit)
 	{
 		static TArray<float> FrameRateLimits = TArray<float>
 		{
@@ -76,7 +76,7 @@ TArray<FString> UVSCommonSettingItemOptionBasedWidgetBinder_CommonPresets::Gener
 		
 		return OutOptions;
 	}
-	if (ItemIdentifier == EVSSettingItem::Audio::Device::Output)
+	if (ItemIdentifier == VS::Settings::Item::Audio::Device::Output)
 	{
 		TArray<FString> DeviceOptions;
 		const TArray<FAudioOutputDeviceInfo> DeviceInfos = UVSPlatformLibrary::GetAvailableAudioOutputDeviceInfos();

@@ -107,11 +107,27 @@ namespace EVSRotationDirection
 {
 	enum Type
 	{
-		/** No deterministic direction can be resolved. */
-		None,
+		None				UMETA(Hidden),
 		/** Rotates clockwise toward the target/reference. */
 		Clockwise,
 		/** Rotates counter-clockwise toward the target/reference. */
 		CounterClockwise
+	};
+}
+
+/**
+ * Defines how many elements in a candidate set must match.
+ */
+UENUM(BlueprintType)
+namespace EVSElementRange
+{
+	enum Type
+	{
+		/** No candidate may match. */
+		None,
+		/** At least one candidate must match. */
+		Any,
+		/** All valid candidates must match. */
+		All,
 	};
 }
